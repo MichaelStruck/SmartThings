@@ -1,0 +1,1 @@
+Turn specific switches on when it gets dark and changes the mode (optionally). Will also turn off specific switches and optionally change modes when it becomes light again based on brightness from a connected light sensor.
