@@ -2,7 +2,7 @@
  *  Switch Activates Hello, Home Phrase
  *
  *  Copyright 2015 Michael Struck
- *  Version 1.0 3/7/15
+ *  Version 1.01 3/8/15
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -25,9 +25,9 @@ definition(
     author: "Michael Struck",
     description: "Ties a Hello, Home phrase to a switch's state. Perfect for use with IFTTT.",
     category: "Convenience",
-    iconUrl: "https://s3.amazonaws.com/smartapp-icons/Family/App-IMadeIt.png",
-    iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Family/App-IMadeIt%402x.png",
-    iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Family/App-IMadeIt%402x.png")
+    iconUrl: "https://github.com/MichaelStruck/SmartThings/blob/master/IFTTT-SmartApps/App1.png",
+    iconX2Url: "https://github.com/MichaelStruck/SmartThings/blob/master/IFTTT-SmartApps/App1@2x.png",
+    iconX3Url: "https://github.com/MichaelStruck/SmartThings/blob/master/IFTTT-SmartApps/App1@2x.png")
 
 
 preferences {
