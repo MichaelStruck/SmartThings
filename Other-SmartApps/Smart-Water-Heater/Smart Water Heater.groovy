@@ -66,15 +66,15 @@ def turnOffSwitchDay() {
 	def runToday = true
 	if (weekendRun != "Yes" && (today == 1 || today == 7)) {
 		runToday = false
-    }   
+    	}   
 
     def everyoneGone = true
     if (exceptionDay) {
         for (i in exceptionDay) {
            	if (i.currentPresence == "present") {
-               	everyoneGone = false
-                break
-            }
+               		everyoneGone = false
+                	break
+           	}
         }
     }
     
@@ -82,7 +82,7 @@ def turnOffSwitchDay() {
     	turnOffSwitch()
    	} else {
 		log.debug "It is the weekend or presense is detected so the water heater will remain on."
-    }    
+	}    
 }
     
 def turnOffSwitch() {
