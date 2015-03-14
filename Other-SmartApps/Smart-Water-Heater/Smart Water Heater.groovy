@@ -20,9 +20,9 @@ definition(
     author: "Michael Struck",
     description: "Allows for setting up schedules for turning on and off the power to a water heater. ",
     category: "Green Living",
-    iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
-    iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
-    iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png")
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Water-Heater/WHApp.png",
+    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Water-Heater/WHApp@2x.png",
+    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Water-Heater/WHApp@2x.png")
 
 
 preferences {
@@ -60,22 +60,14 @@ def init () {
 }
 
 def turnOffSwitchDay() {
-	if (!weekendRun) {
-    	weekendRun = "No"
-    }
     def calendar = Calendar.getInstance()
 	calendar.setTimeZone(location.timeZone)
 	def today = calendar.get(Calendar.DAY_OF_WEEK)
 	def runToday = true
-	if (today != "1" && today != "7") {
-        runToday = true
-        } else {
-    		if (weekendRun == "Yes") {
-        		runToday = false
-            } else {
-        		runToday = true
-    		}    
-    }
+	if (weekendRun != "Yes" && (today == 1 || today == 7)) {
+		runToday = false
+    }   
+
     def everyoneGone = true
     if (exceptionDay) {
         for (i in exceptionDay) {
@@ -85,7 +77,7 @@ def turnOffSwitchDay() {
             }
         }
     }
-	
+    
     if (runToday && everyoneGone) {
     	turnOffSwitch()
    	} else {
