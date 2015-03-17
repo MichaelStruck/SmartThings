@@ -46,7 +46,7 @@ def installed() {
 	init()
 }
 
-def updated(settings) {
+def updated() {
 	unschedule()
 	log.debug "Updated with settings: ${settings}"
     	init()
