@@ -1,6 +1,6 @@
 /**
  *  Smart Water Heater
- *  Version 1.0 3/14/2015
+ *  Version 1.01 3/17/2015
  *
  *  Copyright 2015 Michael Struck
  *
@@ -26,18 +26,18 @@ definition(
 
 
 preferences {
-    section("Select water heater switch..."){
+    	section("Select water heater switch..."){
 		input "switchWH", title: "Switch", "capability.switch", multiple: false
 	}
-    section("Daytime Schedule..."){
+    	section("Daytime Schedule..."){
 		input "timeOffDay", title: "Time to turn off", "time"
-        input "timeOnDay", title: "Time to turn back on", "time"
-        input "exceptionDay", "capability.presenceSensor", title: "Remain on if any of these people are home", multiple: true, required: false
-        input "weekendRun", "enum", title: "Run daytime schedule during the weekend?", multiple: false, required: true, options: ["Yes", "No"]
+        	input "timeOnDay", title: "Time to turn back on", "time"
+        	input "exceptionDay", "capability.presenceSensor", title: "Remain on if any of these people are home", multiple: true, required: false
+        	input "weekendRun", "enum", title: "Run daytime schedule during the weekend?", multiple: false, required: true, options: ["Yes", "No"]
 	}
-    section("Nighttime Schedule..."){
+    	section("Nighttime Schedule..."){
 		input "timeOffNight", title: "Time to turn off", "time"
-        input "timeOnNight", title: "Time to turn back on", "time"
+        	input "timeOnNight", title: "Time to turn back on", "time"
 	}
 }
 
@@ -49,40 +49,30 @@ def installed() {
 def updated(settings) {
 	unschedule()
 	log.debug "Updated with settings: ${settings}"
-    init()
+    	init()
 }
 
 def init () {
 	schedule(timeOffDay, "turnOffSwitchDay")
 	schedule(timeOnDay, "turnOnSwitch")
-    schedule(timeOffNight, "turnOffSwitch")
+    	schedule(timeOffNight, "turnOffSwitch")
 	schedule(timeOnNight, "turnOnSwitch")
 }
 
 def turnOffSwitchDay() {
-    def calendar = Calendar.getInstance()
+	def calendar = Calendar.getInstance()
 	calendar.setTimeZone(location.timeZone)
 	def today = calendar.get(Calendar.DAY_OF_WEEK)
 	def runToday = true
 	if (weekendRun != "Yes" && (today == 1 || today == 7)) {
 		runToday = false
-    	}   
+    }   
 
-    def everyoneGone = true
-    if (exceptionDay) {
-        for (i in exceptionDay) {
-           	if (i.currentPresence == "present") {
-               		everyoneGone = false
-                	break
-           	}
-        }
-    }
-    
-    if (runToday && everyoneGone) {
-    	turnOffSwitch()
-   	} else {
+    	if (runToday && everyoneGone()) {
+    		turnOffSwitch()
+   		} else {
 		log.debug "It is the weekend or presense is detected so the water heater will remain on."
-	}    
+    	}    
 }
     
 def turnOffSwitch() {
@@ -93,4 +83,17 @@ def turnOffSwitch() {
 def turnOnSwitch() {
     	switchWH.on()
         log.debug "Water heater turned on."
+}
+
+private everyoneGone() {
+    	def result = true
+	if (exceptionDay) {
+        	for (i in exceptionDay) {
+           		if (i.currentPresence == "present") {
+               		result = false
+        		break
+            		}
+        	}
+	}
+	return result
 }
