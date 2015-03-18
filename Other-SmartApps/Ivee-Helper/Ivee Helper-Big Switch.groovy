@@ -1,5 +1,5 @@
 /**
- *  Ivee Helper
+ *  Ivee Helper-Big Switch
  *  Version 1.0 3/18/15
  *
  *  Copyright 2015 Michael Struck
@@ -15,10 +15,10 @@
  *
  */
 definition(
-    name: "Ivee Helper-Master Toggle",
+    name: "Ivee Helper-Big Switch",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Allows you to control the status of a switch by changing its status based on a group of other switches.",
+    description: "Used to control a group of switches tied to a Master Swtich.",
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Ivee-Helper/Ivee.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Ivee-Helper/Ivee@2x.png",
@@ -29,9 +29,12 @@ preferences {
 	section("Define a 'Master Switch' which Ivee will use.") {
 		input "master", "capability.switch", multiple: false, title: "Master Switch", required: true
     }    
-    section("Toggle the master switch when lights in a group are on or off (i.e. any on=Master on, all off=Master off") {
-		input "lights1", "capability.switch", multiple: true, title: "Lights/Switches", required: true
+    section("When Ivee turns on the Master Switch, turn on these lights/switches") {
+		input "lightsOn", "capability.switch", multiple: true, title: "Lights/Switches", required: false
     } 
+    section("When Ivee turns off the Master Switch, turn off these lights/switches") {
+		input "lightsOff", "capability.switch", multiple: true, title: "Lights/Switches", required: false
+    }
 }
 
 def installed() {
@@ -48,27 +51,14 @@ def updated() {
 }
 
 def initialize() {
-	subscribe(lights1, "switch", "switchHandler")
+	subscribe(master, "switch.on", "onHandler")
+    subscribe(master, "switch.off", "offHandler")
 }
 
-def switchHandler(evt) {
-	if (allStatus()){
-    	master.on()
-    } 
-    else {
-    	master.off()
-    }
+def onHandler(evt) {
+	lightsOn.on()
 }
-   
-private allStatus() {
-    def result = false
-	def currSwitches = lights1.currentSwitch
-    def onSwitches = currSwitches.findAll { switchVal ->
-        switchVal == "on" ? true : false
-    }
-    if (onSwitches.size()) {
-    	result = true
-    }
-	return result
 
+def offHandler(evt) {
+	lightsOff.off()
 }
