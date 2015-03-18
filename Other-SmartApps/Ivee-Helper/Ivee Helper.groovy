@@ -1,5 +1,6 @@
 /**
  *  Ivee Helper
+ *  Version 1.0 3/18/15
  *
  *  Copyright 2015 Michael Struck
  *
@@ -14,7 +15,7 @@
  *
  */
 definition(
-    name: "Ivee Helper",
+    name: "Ivee Helper-Master Toggle",
     namespace: "MichaelStruck",
     author: "Michael Struck",
     description: "Allows you to control the status of a switch by changing its status based on a group of other switches.",
@@ -25,13 +26,12 @@ definition(
 
 
 preferences {
-	section("When any of these lights/switches are on or off...") {
-		input "lights1", "capability.switch", multiple: true, title: "Lights/Switches", required: true
-    }
-    section("Turn on or off this switch...") {
+	section("Define a 'Master Switch' which Ivee will use.") {
 		input "master", "capability.switch", multiple: false, title: "Master Switch", required: true
-    }
-    
+    }    
+    section("Toggle the master switch when lights in a group are on or off (i.e. any on=Master on, all off=Master off") {
+		input "lights1", "capability.switch", multiple: true, title: "Lights/Switches", required: true
+    } 
 }
 
 def installed() {
