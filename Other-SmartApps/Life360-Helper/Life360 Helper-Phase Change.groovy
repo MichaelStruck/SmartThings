@@ -41,13 +41,13 @@ def getPref() {
 	}
 	def phrases = location.helloHome?.getPhrases()*.label
 		if (phrases) {
-        	phrases.sort()
+        		phrases.sort()
 			section("Perform the following Hello, Home phrase when...") {
 				input "phrase1", "enum", title: "Any of the modes above are active", required: true, options: phrases
-				input "phrase2", "enum", title: "None of the modes are NOT active", required: true, options: phrases
+				input "phrase2", "enum", title: "None of the modes above are active", required: true, options: phrases
 			}
-        }
-    }
+        	}
+    	}
 }
 
 def installed() {
@@ -61,19 +61,19 @@ def updated() {
 	init()
 }
 
-def init() {
+def init(){
 	subscribe(people, "presence", presence)
 }
 
 def presence(evt){
-    if (everyoneIsPresent()){
-    	if (runMode()) {
-        	location.helloHome.execute(settings.phrase1)
-    	} 
-        else {
-    		location.helloHome.execute(settings.phrase2)
-    	}
-	}
+	if (everyoneIsPresent()){
+    		if (runMode()) {
+        		location.helloHome.execute(settings.phrase1)
+    		} 
+		 else {
+    			location.helloHome.execute(settings.phrase2)
+    		}
+	 }
 }
 
 private everyoneIsPresent() {
