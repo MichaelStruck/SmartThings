@@ -1,5 +1,5 @@
 /**
- *  Life360 Helper-Phase Change
+ *  Life360 Helper-Phrase Change
  *  Version 1.00 3/20/15
  *
  *
@@ -19,14 +19,14 @@
  */
 
 definition(
-    name: "Life360 Helper-Phase Change",
+    name: "Life360 Helper-Phrase Change",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Monitors the Life360 presence sensors to trigger differnt Hello, Home phases depending on the current mode.",
+    description: "Monitors the Life360 presence sensors to trigger differnt Hello, Home phrases depending on the current mode.",
     category: "Convenience",
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/App-LightUpMyWorld.png",
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/App-LightUpMyWorld@2x.png",
-	iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/App-LightUpMyWorld@2x.png")
+    iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/App-LightUpMyWorld@2x.png")
 
 preferences {
 	page(name: "getPref")
