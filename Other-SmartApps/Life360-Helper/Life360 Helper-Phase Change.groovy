@@ -10,7 +10,7 @@
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *	Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *  Turn specific switched on when it gets dark. Can also turn off specific switches when it becomes light again based on brightness from a connected light sensor.
@@ -25,11 +25,12 @@ definition(
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360@2x.png",
-    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360@2x.png")
+	iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360@2x.png")
 
 preferences {
 	page(name: "getPref")
 }
+
 
 def getPref() {
     dynamicPage(name: "getPref", title: "Choose Presence Sensors and Phrases", install:true, uninstall: true) {
@@ -42,9 +43,9 @@ def getPref() {
 	def phrases = location.helloHome?.getPhrases()*.label
 		if (phrases) {
         	phrases.sort()
-			section("Perform the following Hello, Home phrase...") {
-				input "phrase1", "enum", title: "Perform when any of the modes above are active", required: true, options: phrases
-				input "phrase2", "enum", title: "Perform when none of the modes are NOT active", required: true, options: phrases
+			section("Perform the following Hello, Home phrase when...") {
+				input "phrase1", "enum", title: "Any of the modes above are active", required: true, options: phrases
+				input "phrase2", "enum", title: "None of the modes are NOT active", required: true, options: phrases
 			}
         }
     }
