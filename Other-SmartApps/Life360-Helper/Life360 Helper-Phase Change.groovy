@@ -25,7 +25,7 @@ definition(
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360@2x.png",
-	iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360@2x.png")
+    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360@2x.png")
 
 preferences {
 	page(name: "getPref")
@@ -36,15 +36,15 @@ def getPref() {
     section("Choose the Life360 presence sensors you want to monitor...") {
 		input "people", "capability.presenceSensor", multiple: true, title: "Life360 Presence Sensor" 
 	}
-	section("When presence is detected and the mode is...") {
-		input "mode1", "mode", title: "Mode", required: true
+	section("When presence is detected and in one of these modes...") {
+		input "modes", "mode", title: "Mode(s)", required: true, multiple: true
 	}
 	def phrases = location.helloHome?.getPhrases()*.label
 		if (phrases) {
         	phrases.sort()
 			section("Perform the following Hello, Home phrase...") {
-				input "phrase1", "enum", title: "Perform when mode is active", required: true, options: phrases
-				input "phrase2", "enum", title: "Perform when mode is NOT active", required: true, options: phrases
+				input "phrase1", "enum", title: "Perform when any of the modes above are active", required: true, options: phrases
+				input "phrase2", "enum", title: "Perform when none of the modes are NOT active", required: true, options: phrases
 			}
         }
     }
@@ -67,11 +67,10 @@ def init(){
 
 def presence(evt){
     if (everyoneIsPresent()){
-    	if (location.mode == mode1) {
+    	if (runMode()) {
         	location.helloHome.execute(settings.phrase1)
     	} 
         else {
-
     		location.helloHome.execute(settings.phrase2)
     	}
 	}
@@ -85,7 +84,10 @@ private everyoneIsPresent() {
 			break
 		}
 	}
-	log.debug "everyoneIsPresent: $result"
 	return result
 }
 
+private runMode() {
+	def result = modes.contains(location.mode)
+	return result
+}
