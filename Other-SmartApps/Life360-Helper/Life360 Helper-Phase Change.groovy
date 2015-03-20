@@ -23,9 +23,9 @@ definition(
     author: "Michael Struck",
     description: "Monitors the Life360 presence sensors to trigger differnt Hello, Home phrases depending on the current mode.",
     category: "Convenience",
-    iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/App-LightUpMyWorld.png",
-    iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/App-LightUpMyWorld@2x.png",
-    iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/App-LightUpMyWorld@2x.png")
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360.png",
+    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360@2x.png",
+	iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360@2x.png")
 
 preferences {
 	page(name: "getPref")
