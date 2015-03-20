@@ -21,7 +21,7 @@ definition(
     name: "Life360 Helper-Phrase Change",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Monitors the Life360 presence sensors to trigger differnt Hello, Home phrases depending on the current mode.",
+    description: "Monitors the Life360 presence sensors to trigger differnt Hello, Home phrases depending on the current modes.",
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360@2x.png",
