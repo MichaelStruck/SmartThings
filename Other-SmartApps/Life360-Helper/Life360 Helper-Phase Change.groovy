@@ -3,7 +3,6 @@
  *  Version 1.00 3/20/15
  *
  *
- *	Using code from SmartThings Light Up The Night App and the Sunrise/Sunset app
  *  Copyright 2015 Michael Struck
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
