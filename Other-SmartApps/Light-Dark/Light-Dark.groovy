@@ -1,14 +1,17 @@
 /**
  *  Light > Dark
- *  Version 1.0 3/6/15
+ *  Version 1.02 3/21/15
  *
- *  Using code from SmartThings Light Up The Night App and the Sunrise/Sunset app
+ *	1.01 Added a verify so they event has to trip trice in a row to do the action.
+ *	1.02 Added custom icon	
+ *
+ *	Using code from SmartThings Light Up The Night App and the Sunrise/Sunset app
  *  Copyright 2015 Michael Struck
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
@@ -22,12 +25,11 @@ definition(
     author: "Michael Struck",
     description: "Turn specific switches on when it gets dark and optionally changes the mode. Will also turn off specific switches and optionally change modes when it becomes light again based on brightness from a connected light sensor.",
     category: "Convenience",
-    iconUrl: "https://s3.amazonaws.com/smartapp-icons/Meta/light_outlet-luminance.png",
-    iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Meta/light_outlet-luminance@2x.png",
-    iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Meta/light_outlet-luminance@2x.png")
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Light-Dark/LockDark.png",
+    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Light-Dark/LockDark@02x.png",
+    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Light-Dark/LockDark@02x.png")
 
 preferences {
-
     section("Monitor the luminosity...") {
 		input "lightSensor", "capability.illuminanceMeasurement", title: "Light Sensor"
 	}
@@ -56,15 +58,29 @@ def updated() {
 
 def illuminanceHandler(evt) {
 	def lastStatus = state.lastStatus
+    def luxVerify = state.luxVerify
+    log.debug "$luxVerify"
 	if (lastStatus != "on" && evt.integerValue < luxOn) {
-		lightsOn.on()
-        state.lastStatus = "on"
-        changeMode(onMode)
+		/ Prevent false positives by having the sensor trip twice before firing event /
+		if (luxVerify == "TurnOn") {
+        	lightsOn.on()
+        	state.lastStatus = "on"
+ 	        changeMode(onMode)
+        } 
+        else {
+        	state.luxVerify = "TurnOn"
+        }
 	}
 	else if (lightsOff && lastStatus != "off" && evt.integerValue > luxOff) {
-		lightsOff.off()
-        changeMode(offMode)
-        state.lastStatus = "off"
+		/ Prevent false positives by having the sensor trip twice before firing event /
+		if (luxVerify == "TurnOff") {
+			lightsOff.off()
+        	changeMode(offMode)
+        	state.lastStatus = "off"
+		} 
+        else {
+        	state.luxVerify = "TurnOff"
+        }
 	}
 }
 
@@ -78,3 +94,4 @@ def changeMode(newMode) {
 		}
 	}
 }
+
