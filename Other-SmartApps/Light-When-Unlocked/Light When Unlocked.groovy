@@ -19,7 +19,7 @@
  */
  
 definition(
-    name: "Light When Unlocked",​-
+    name: "Light When Unlocked",
     namespace: "MichaelStruck",
     author: "Michael Struck",
     description: "Will turn on certain lights when a door is unlocked and luminosity is below a certain level.",
@@ -60,7 +60,7 @@ def initialize() {
 }
 
 def eventHandler(evt) {
-	def oktoFire=true
+    def oktoFire=true
     if (lightSensor.currentIlluminance > luxOn){
 		oktoFire=false
     }
