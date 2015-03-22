@@ -1,7 +1,9 @@
 /**
  *  Light When Unlocked
  *
- *	Version 1.0 3/17/15
+ *	Version 1.1 3/22/15
+ *	Version 1.1 Adds a timer to turn off the lights after a certain amount of time
+ *
  *
  *  Copyright 2015 Michael Struck
  *
@@ -15,8 +17,9 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  */
+ 
 definition(
-    name: "Light When Unlocked",
+    name: "Light When Unlocked",​-
     namespace: "MichaelStruck",
     author: "Michael Struck",
     description: "Will turn on certain lights when a door is unlocked and luminosity is below a certain level.",
@@ -25,9 +28,7 @@ definition(
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Light-When-Unlocked/LockLight@2x.png",
     iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Light-When-Unlocked/LockLight@2x.png")
 
-
 preferences {
-
     section("When this lock is unlocked...") {
 		input "lock1","capability.lock", title: "Lock", multiple: false
 	}
@@ -37,6 +38,9 @@ preferences {
     section("Use this light sensor to determine when it is dark (enter 10,000 to have the light come on regardless of lighting)") {
 		input "lightSensor", "capability.illuminanceMeasurement", title: "Light Sensor", required: false, multiple: false
         input "luxOn", "number", title: "Lux Threshold", required: true, description:0
+	}
+    section("Turn off light(s) after this many minutes..."){
+		input "delayMinutes", "number", title: "Minutes"
 	}
 }
 
@@ -56,11 +60,25 @@ def initialize() {
 }
 
 def eventHandler(evt) {
-        def oktoFire=true
-        if (lightSensor.currentIlluminance > luxOn){
-			oktoFire=false
-        }
-        if (evt.value == "unlocked" && oktoFire){
+	def oktoFire=true
+    if (lightSensor.currentIlluminance > luxOn){
+		oktoFire=false
+    }
+    if (evt.value == "unlocked" && oktoFire){
+  		if (delayMinutes) {
         	lightsOn.on()
-        } 
+        	state.timerStart = now()
+      		runIn(delayMinutes * 60, turnOffAfterDelay, [overwrite: false])
+    	} else {
+        	turnOffAfterDelay()
+		}	
+	}
+}
+
+def turnOffAfterDelay() {
+	def elapsed = now() - state.timerStart
+	if (elapsed >= ((delayMinutes ?: 0) * 60000L) - 2000) {
+       	log.debug "Turning off lights"
+		lightsOn.off()
+	}
 }
