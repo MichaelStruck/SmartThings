@@ -1,7 +1,7 @@
 /**
  *  Life360 Helper-Phrase Change
  *  Version 1.00 3/20/15
- *
+ *	Version 1.01 3/24/15 - Updated with more effecient code
  *
  *  Copyright 2015 Michael Struck
  *
@@ -10,7 +10,7 @@
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *	Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *  Turn specific switched on when it gets dark. Can also turn off specific switches when it becomes light again based on brightness from a connected light sensor.
@@ -41,13 +41,13 @@ def getPref() {
 	}
 	def phrases = location.helloHome?.getPhrases()*.label
 		if (phrases) {
-        		phrases.sort()
+        	phrases.sort()
 			section("Perform the following Hello, Home phrase when...") {
 				input "phrase1", "enum", title: "Any of the modes above are active", required: true, options: phrases
 				input "phrase2", "enum", title: "None of the modes above are active", required: true, options: phrases
 			}
-        	}
-    	}
+        }
+    }
 }
 
 def installed() {
@@ -66,23 +66,21 @@ def init(){
 }
 
 def presence(evt){
-	if (everyoneIsPresent()){
-    		if (runMode()) {
-        		location.helloHome.execute(settings.phrase1)
-    		} 
-		 else {
-    			location.helloHome.execute(settings.phrase2)
-    		}
-	 }
+    if (everyoneIsPresent()){
+    	if (runMode()) {
+        	location.helloHome.execute(settings.phrase1)
+    	} 
+        else {
+    		location.helloHome.execute(settings.phrase2)
+    	}
+	}
 }
 
 private everyoneIsPresent() {
 	def result = true
-	for (person in people) {
-		if (person.currentPresence == "not present") {
-			result = false
-			break
-		}
+    def checkPresence = people.find {it.currentPresence == "not present"}
+	if (checkPresence) {
+		result = false
 	}
 	return result
 }
