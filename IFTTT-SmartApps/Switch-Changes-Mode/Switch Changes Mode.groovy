@@ -34,7 +34,7 @@ preferences {
     	section("Choose a switch to use...") {
 			input "controlSwitch", "capability.switch", title: "Switch", multiple: false, required: true
    		}
-		section("Change to a new mode when...") {
+		section("Change to which when...") {
 			input "onMode", "mode", title: "Switch is on", required: false
 			input "offMode", "mode", title: "Switch is off", required: false 
 		}
