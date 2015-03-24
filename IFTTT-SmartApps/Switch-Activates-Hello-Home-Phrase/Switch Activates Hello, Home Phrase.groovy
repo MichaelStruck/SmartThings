@@ -42,7 +42,7 @@ def getPref() {
     def phrases = location.helloHome?.getPhrases()*.label
 		if (phrases) {
         	phrases.sort()
-			section("Perform the following phrase when...") {
+			section("Perform which phrase when...") {
 				log.trace phrases
 				input "phrase_on", "enum", title: "Switch is on", required: true, options: phrases
 				input "phrase_off", "enum", title: "Switch is off", required: true, options: phrases
