@@ -1,7 +1,7 @@
 /**
  *  Life360 Helper-Phrase Change
  *  Version 1.00 3/20/15
- *	Version 1.01 3/24/15 - Updated with more effecient code
+ *  Version 1.01 3/24/15 - Updated with more effecient code
  *
  *  Copyright 2015 Michael Struck
  *
