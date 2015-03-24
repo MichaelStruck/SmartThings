@@ -26,8 +26,8 @@ definition(
     description: "Ties a mode to a switch's state. Perfect for use with IFTTT.",
     category: "Convenience",
     iconUrl: "https://github.com/MichaelStruck/SmartThings/blob/master/IFTTT-SmartApps/App1.png",
-    iconX2Url: "https://github.com/MichaelStruck/SmartThings/blob/master/IFTTT-SmartApps/App@2x.png",
-    iconX3Url: "https://github.com/MichaelStruck/SmartThings/blob/master/IFTTT-SmartApps/App@2x.png")
+    iconX2Url: "https://github.com/MichaelStruck/SmartThings/blob/master/IFTTT-SmartApps/App1@2x.png",
+    iconX3Url: "https://github.com/MichaelStruck/SmartThings/blob/master/IFTTT-SmartApps/App1@2x.png")
 
 preferences {
 	page(name: "getPref", title: "Choose Switch and Modes", install:true, uninstall: true) {
