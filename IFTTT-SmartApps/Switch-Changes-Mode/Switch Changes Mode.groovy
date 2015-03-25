@@ -3,6 +3,7 @@
  *
  *  Copyright 2015 Michael Struck
  *  Version 1.01 3/8/15
+ *  Version 1.02 3/24/15 Code revisions for better portability
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -25,16 +26,16 @@ definition(
     author: "Michael Struck",
     description: "Ties a mode to a switch's state. Perfect for use with IFTTT.",
     category: "Convenience",
-    iconUrl: "https://github.com/MichaelStruck/SmartThings/blob/master/IFTTT-SmartApps/App1.png",
-    iconX2Url: "https://github.com/MichaelStruck/SmartThings/blob/master/IFTTT-SmartApps/App1@2x.png",
-    iconX3Url: "https://github.com/MichaelStruck/SmartThings/blob/master/IFTTT-SmartApps/App1@2x.png")
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/IFTTT-SmartApps/App1.png",
+    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/IFTTT-SmartApps/App1@2x.png",
+    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/IFTTT-SmartApps/App1@2x.png")
 
 preferences {
 	page(name: "getPref", title: "Choose Switch and Modes", install:true, uninstall: true) {
     	section("Choose a switch to use...") {
 			input "controlSwitch", "capability.switch", title: "Switch", multiple: false, required: true
    		}
-		section("Change to which when...") {
+		section("Change to which mode when...") {
 			input "onMode", "mode", title: "Switch is on", required: false
 			input "offMode", "mode", title: "Switch is off", required: false 
 		}
@@ -43,16 +44,18 @@ preferences {
 
 def installed() {
 	log.debug "Installed with settings: ${settings}"
-
-	subscribe(controlSwitch, "switch", "switchHandler")
+	init() 
 }
 
 def updated() {
 	log.debug "Updated with settings: ${settings}"
-
 	unsubscribe()
-	subscribe(controlSwitch, "switch", "switchHandler")
+	init()
 }
+
+def init(){
+	subscribe(controlSwitch, "switch", "switchHandler")
+	}
 
 def switchHandler(evt) {
 	if (evt.value == "on") {
@@ -67,9 +70,8 @@ def changeMode(newMode) {
 	if (newMode && location.mode != newMode) {
 		if (location.modes?.find{it.name == newMode}) {
 			setLocationMode(newMode)
-		}
-		else {
-		log.debug "Unable to change to undefined mode '${newMode}'"
+		} else {
+			log.debug "Unable to change to undefined mode '${newMode}'"
 		}
 	}
 }
