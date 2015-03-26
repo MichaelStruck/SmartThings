@@ -15,7 +15,7 @@
  *
  */
 definition(
-    name: "Nest Helper-Mode change",
+    name: "Nest Helper-Mode Change",
     namespace: "MichaelStruck",
     author: "Michael Struck",
     description: "Allow the Nest Thermostat to follow a specific set of modes (Home/Away).",
