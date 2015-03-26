@@ -55,9 +55,9 @@ def initialize() {
 def locationHandler(evt) {
 	log.debug "locationHandler evt: ${evt.value}"
     if (homeMode.contains(evt.value)) {
-	    tstat1.present()
+	tstat1.present()
     }
     else if (awayMode.contains(evt.value)) {
-    	tstat1.away()
+	tstat1.away()
     }
 }
