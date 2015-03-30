@@ -1,8 +1,8 @@
 /**
  *  Light When Unlocked
  *
- *	Version 1.1 3/22/15
- *	Version 1.1 Adds a timer to turn off the lights after a certain amount of time
+ *	Version 1.1 3/22/15 -  Adds a timer to turn off the lights after a certain amount of time
+ *	Version 1.11 3/29/15 Fixes a small scheduling issue
  *
  *
  *  Copyright 2015 Michael Struck
@@ -39,7 +39,7 @@ preferences {
 		input "lightSensor", "capability.illuminanceMeasurement", title: "Light Sensor", required: false, multiple: false
         input "luxOn", "number", title: "Lux Threshold", required: true, description:0
 	}
-    section("Turn off light(s) after this many minutes..."){
+    section("Turn off light(s) after this many minutes (Enter 0 to not set time)..."){
 		input "delayMinutes", "number", title: "Minutes"
 	}
 }
@@ -60,25 +60,19 @@ def initialize() {
 }
 
 def eventHandler(evt) {
-    def oktoFire=true
+	def oktoFire=true
     if (lightSensor.currentIlluminance > luxOn){
 		oktoFire=false
     }
     if (evt.value == "unlocked" && oktoFire){
-  		if (delayMinutes) {
-        	lightsOn.on()
-        	state.timerStart = now()
-      		runIn(delayMinutes * 60, turnOffAfterDelay, [overwrite: false])
-    	} else {
-        	turnOffAfterDelay()
-		}	
+  		lightsOn.on()
+        if (delayMinutes) {
+        	runIn(delayMinutes * 60, turnOffAfterDelay, [overwrite: false])
+    	}	
 	}
 }
 
 def turnOffAfterDelay() {
-	def elapsed = now() - state.timerStart
-	if (elapsed >= ((delayMinutes ?: 0) * 60000L) - 2000) {
-       	log.debug "Turning off lights"
-		lightsOn.off()
-	}
+	log.debug "Turning off lights"
+	lightsOn.off()
 }
