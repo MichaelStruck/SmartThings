@@ -39,7 +39,7 @@ preferences {
 		input "lightSensor", "capability.illuminanceMeasurement", title: "Light Sensor", required: false, multiple: false
         input "luxOn", "number", title: "Lux Threshold", required: true, description:0
 	}
-    section("Turn off light(s) after this many minutes (Enter 0 to not set time)..."){
+    section("Turn off light(s) after this many minutes (Enter 0 to not set timer)..."){
 		input "delayMinutes", "number", title: "Minutes"
 	}
 }
