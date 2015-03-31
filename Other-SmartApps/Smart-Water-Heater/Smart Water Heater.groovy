@@ -33,7 +33,7 @@ definition(
 
 
 preferences {
-    page(name: "mainPage")
+	page(name: "mainPage")
     page(name: "daySchedule")
     page(name: "nightSchedule")
 }
@@ -78,41 +78,38 @@ def nightSchedule() {
 }
 
 def installed() {
-   log.debug "Installed with settings: ${settings}"
-   init()
+	log.debug "Installed with settings: ${settings}"
+	init()
 }
 
 def updated() {
-    unsubscribe()
-    unschedule()
+	unsubscribe()
+	unschedule()
     log.debug "Updated with settings: ${settings}"
     init()
 }
 
 def init () {
-    if (exceptionArrive){
+	if (exceptionArrive){
     	subscribe(presence1, "presence", homeEarly)
     }
     schedule(timeOffDay, "turnOffDay")
-    schedule(timeOnDay, "turnOnDay")
+	schedule(timeOnDay, "turnOnDay")
     schedule(timeOffNight, "turnOffNight")
-    schedule(timeOnNight, "turnOnNight")
+	schedule(timeOnNight, "turnOnNight")
 }
 
 def turnOffDay() {
-    def calendar = Calendar.getInstance()
-    calendar.setTimeZone(location.timeZone)
-    def today = calendar.get(Calendar.DAY_OF_WEEK)
-    def runToday = true
-    if (!weekendRun && (today == 1 || today == 7)) {
-    	runToday = false
+	def runToday = true
+	if (!weekendRun && isWeekend()) {
+		runToday = false
     }   
 
     if (runToday && everyoneGone()) {
     	state.status="Day off"
         turnOffSwitch()
-    } else {
-        log.debug "It is the weekend or presense is detected so the water heater will remain on."
+   	} else {
+		log.debug "It is the weekend or presense is detected so the water heater will remain on."
     }    
 }
 
@@ -122,23 +119,23 @@ def turnOnDay() {
 }
 
 def turnOnNight() {
-    state.status="Night on"
+	state.status="Night on"
     turnOnSwitch()
 }
 
 def turnOffNight() {
-    state.status="Night off"
+	state.status="Night off"
     turnOffSwitch()
 }
 
 def turnOffSwitch() {
-    switchWH.off()
-    log.debug "Water heater turned off."
+    	switchWH.off()
+        log.debug "Water heater turned off."
 }
     
 def turnOnSwitch() {
-   switchWH.on()
-   log.debug "Water heater turned on."
+    	switchWH.on()
+        log.debug "Water heater turned on."
 }
 
 def homeEarly(evt) {
@@ -153,13 +150,14 @@ private everyoneGone() {
     def result = true
     def someoneHome = presence1.find{it.currentPresence == "present"}
     if (someoneHome) {
-    	result = false
+	   	result = false
     }
-    return result
+	return result
 }
 
+
 def nightDescription() {
-    def title = ""
+	def title = ""
     if (timeOffNight) {
     	title += "Turn off at ${humanReadableTime(timeOffNight)} then turn back on at ${humanReadableTime(timeOnNight)}"
     }
@@ -167,7 +165,7 @@ def nightDescription() {
 }
 
 def dayDescription() {
-    def title = ""
+	def title = ""
     if (timeOffDay) {
     	title += "Turn off at ${humanReadableTime(timeOffDay)} then turn back on at ${humanReadableTime(timeOnDay)}"
     }
@@ -178,4 +176,19 @@ public smartThingsDateFormat() { "yyyy-MM-dd'T'HH:mm:ss.SSSZ" }
 
 public humanReadableTime(dateTxt) {
 	new Date().parse(smartThingsDateFormat(), dateTxt).format("h:mm a", timeZone(dateTxt))
+}
+
+private isWeekend() {
+    def isTheWeekend = false
+    if (dayOfWeek() == 1 || dayOfWeek() == 7) {
+    	isTheWeekend = true
+    } 
+    return isTheWeekend
+}
+
+public dayOfWeek() {
+	def calendar = Calendar.getInstance()
+    calendar.setTimeZone(location.timeZone)
+    def today = calendar.get(Calendar.DAY_OF_WEEK)
+    return today
 }
