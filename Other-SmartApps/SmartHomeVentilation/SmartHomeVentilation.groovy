@@ -1,7 +1,7 @@
 /**
  *  Smart Home Ventilation 3/27/15
  *  Version 1.00 3/28/15
- * 	Version 1.1 3/29/15-increased the number of options to control the fan
+ *  Version 1.1 3/29/15-increased the number of options to control the fan
  *
  *  Copyright 2015 Michael Struck
  *
@@ -113,12 +113,12 @@ def init () {
     	schedule(timeOnDay1 , "turnOnSwitchDaily")
  	} else if (timeOnWEDay1 && dayOfWeek() == 6 && runWeekend) {
     	subscribe(timeOnWEDay1 , "turnOnSwitchWE")
-    }
+	}
 }
 //-------Weekday Handler
 
 def turnOnSwitchDaily() {
-    turnOnSwitch()
+	turnOnSwitch()
     runOnce(timeOffDay1 , "turnOffWeekday1",  [overwrite: true])
     }
 
@@ -129,7 +129,7 @@ def turnOffWeekday1() {
     	runOnce(timeOffDay2, "turnOffWeekday2",  [overwrite: true])
     } else {
      	turnOffWeekday2()
-   }
+	}
 }
 def turnOffWeekday2() {
     turnOffSwitch()
@@ -138,7 +138,7 @@ def turnOffWeekday2() {
     	runOnce(timeOffNight1, "turnOffWeekday3",  [overwrite: true])
     } else {
      	turnOffWeekday3()
-    }
+	}
 }
 def turnOffWeekday3() {
     turnOffSwitch()
@@ -147,7 +147,7 @@ def turnOffWeekday3() {
     	runOnce(timeOffDay4, "nextDay",  [overwrite: true])
    } else {
      	nextDay()
-   }
+	}
 }
 
 //-------Weekend Handlers
@@ -164,7 +164,7 @@ def turnOffWeekend1() {
     	runOnce(timeOffDay2, "turnOffWeekend2",  [overwrite: true])
     } else {
      	turnOffWeekday2()
-    }
+	}
 }
 def turnOffWeekend2() {
     turnOffSwitch()
@@ -173,7 +173,7 @@ def turnOffWeekend2() {
     	runOnce(timeOffNight1, "turnOffWeekend3",  [overwrite: true])
     } else {
      	turnOffWeekday3()
-    }
+	}
 }
 
 def turnOffWeekend3() {
@@ -183,7 +183,7 @@ def turnOffWeekend3() {
     	runOnce(timeOffNight2, "nextDay",  [overwrite: true])
     } else {
      	nextDay()
-    }
+	}
 }
 
 //-----
@@ -199,7 +199,7 @@ def nextDay() {
 def turnOffSwitch() {
     if (switch1.currentValue("switch")=="on"){
     	switch1.off()
-   	log.debug "Home ventilation turned off."
+   		log.debug "Home ventilation turned off."
     }
 }
     
@@ -209,37 +209,37 @@ def turnOnSwitch() {
 }
 
 def DailyDesc() {
-    def titleDaily = ""
+    def title = ""
     if (timeOnDay1){
-    	titleDaily += "Day Schedule 1: ${humanReadableTime(timeOnDay1)} to ${humanReadableTime(timeOffDay1)}"
+    	title += "Day Schedule 1: ${humanReadableTime(timeOnDay1)} to ${humanReadableTime(timeOffDay1)}"
     }
     if (timeOnDay2) {
-    	titleDaily += "\nDay Schedule 2: ${humanReadableTime(timeOnDay2)} to ${humanReadableTime(timeOffDay2)}"
+    	title += "\nDay Schedule 2: ${humanReadableTime(timeOnDay2)} to ${humanReadableTime(timeOffDay2)}"
     }
     if (timeOnNight1) {
-    	titleDaily += "\nNight Schedule 1: ${humanReadableTime(timeOnNight1)} to ${humanReadableTime(timeOffNight1)}"
+    	title += "\nNight Schedule 1: ${humanReadableTime(timeOnNight1)} to ${humanReadableTime(timeOffNight1)}"
     }
     if (timeOnNight2) {
-    	titleDaily += "\nNight Schedule 2: ${humanReadableTime(timeOnNight2)} to ${humanReadableTime(timeOffNight2)}"
+    	title += "\nNight Schedule 2: ${humanReadableTime(timeOnNight2)} to ${humanReadableTime(timeOffNight2)}"
     }
-    return titleDaily
+    return title
 }
 
 def WEDesc() {
-	def titleWE = ""
+	def title = ""
     if (timeOnWEDay1) {
-    	titleWE += "Day Schedule 1: ${humanReadableTime(timeOnWEDay1)} to ${humanReadableTime(timeOffWEDay1)}"
+    	title += "Day Schedule 1: ${humanReadableTime(timeOnWEDay1)} to ${humanReadableTime(timeOffWEDay1)}"
     }
     if (timeOnWEDay2) {
-    	titleWE += "\nDay Schedule 2: ${humanReadableTime(timeOnWEDay2)} to ${humanReadableTime(timeOffWEDay2)}"
+    	title += "\nDay Schedule 2: ${humanReadableTime(timeOnWEDay2)} to ${humanReadableTime(timeOffWEDay2)}"
     }
     if (timeOnWENight1) {
-    	titleWE += "\nNight Schedule 1: ${humanReadableTime(timeOnWENight1)} to ${humanReadableTime(timeOffWENight1)}"
+    	title += "\nNight Schedule 1: ${humanReadableTime(timeOnWENight1)} to ${humanReadableTime(timeOffWENight1)}"
     }
     if (timeOnWENight2) {
-    	titleWE += "\nNight Schedule 2: ${humanReadableTime(timeOnWENight2)} to ${humanReadableTime(timeOffWENight2)}"
+    	title += "\nNight Schedule 2: ${humanReadableTime(timeOnWENight2)} to ${humanReadableTime(timeOffWENight2)}"
     }
-    return titleWE 
+    return title 
 }
 
 public smartThingsDateFormat() { "yyyy-MM-dd'T'HH:mm:ss.SSSZ" }
