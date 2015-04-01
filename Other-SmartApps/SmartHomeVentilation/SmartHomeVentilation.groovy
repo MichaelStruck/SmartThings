@@ -20,7 +20,7 @@ definition(
     name: "Smart Home Ventilation",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Allows for setting up schedules for turning on and off home ventilation fan.",
+    description: "Allows for setting up schedules for turning on and off a home ventilation fan.",
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/SmartHomeVentilation/HomeVent.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/SmartHomeVentilation/HomeVent@2x.png",
@@ -33,7 +33,7 @@ preferences {
 }
 
 def mainPage() {
-    dynamicPage(name: "mainPage", title: "", install: true, uninstall: true) {
+	dynamicPage(name: "mainPage", title: "", install: true, uninstall: true) {
     
     	section("Select home ventilation switch..."){
 			input "switch1", title: "Switch", "capability.switch", multiple: false
@@ -57,11 +57,11 @@ def dailySchedule() {
 	dynamicPage(name: "dailySchedule", title: "Daily Schedule-Be sure to list the schedules in chronological order for proper execution.") {
     	
     	section("Daytime Schedule 1..."){
-			input "timeOnDay1", title: "Time to turn on", "time"
+		input "timeOnDay1", title: "Time to turn on", "time"
         	input "timeOffDay1", title: "Time to turn off", "time"
 		}
     	section("Daytime Schedule 2..."){
-			input "timeOnDay2", title: "Time to turn on", "time", required: false
+		input "timeOnDay2", title: "Time to turn on", "time", required: false
         	input "timeOffDay2", title: "Time to turn off", "time", required: false
 		}
     	section("Nighttime Schedule 1..."){
@@ -76,14 +76,14 @@ def dailySchedule() {
 }
 
 def weekendSchedule() {
-	dynamicPage(name: "weekendSchedule", title: "Weekend Schedule-Be sure to list the schedules in chronological order for proper execution.") {
+    dynamicPage(name: "weekendSchedule", title: "Weekend Schedule-Be sure to list the schedules in chronological order for proper execution.") {
     	
     	section("Daytime Schedule 1..."){
-			input "timeOnWEDay1", title: "Time to turn on", "time", required: false
+		input "timeOnWEDay1", title: "Time to turn on", "time", required: false
         	input "timeOffWEDay1", title: "Time to turn off", "time", required: false
 		}
     	section("Daytime Schedule 2..."){
-			input "timeOnWEDay2", title: "Time to turn on", "time", required: false
+		input "timeOnWEDay2", title: "Time to turn on", "time", required: false
         	input "timeOffWEDay2", title: "Time to turn off", "time", required: false
 		}
     	section("Nighttime Schedule 1..."){
@@ -99,7 +99,7 @@ def weekendSchedule() {
 
 def installed() {
     log.debug "Installed with settings: ${settings}"
-	init()
+    init()
 }
 
 def updated() {
@@ -109,68 +109,78 @@ def updated() {
 }
 
 def init () {
-    if (timeOnDay1 && (dayOfWeek() == 1 || dayOfWeek() < 6 || !runWeekend)) {
-    	schedule(timeOnDay1 , "turnOnSwitchDaily")
- 	} else if (timeOnWEDay1 && dayOfWeek() == 6 && runWeekend) {
-    	subscribe(timeOnWEDay1 , "turnOnSwitchWE")
-	}
+    if (dayOfWeek() != 1 || dayOfWeek() < 6 || !runWeekend) {
+    	startWeekday()
+ 	} else if ((dayOfWeek() == 7 || dayOfWeek() == 1) && runWeekend) {
+    	startWeekend()
+    }
 }
+
 //-------Weekday Handler
 
-def turnOnSwitchDaily() {
-	turnOnSwitch()
-    runOnce(timeOffDay1 , "turnOffWeekday1",  [overwrite: true])
+def startWeekday() {
+    if (timeOnDay1) {
+    	schedule(timeOnDay1, "turnOnSwitch")
+    	schedule(timeOffDay1, "turnOffWeekday1")
+    } else {
+     	turnOffWeekday1()
     }
+}
 
 def turnOffWeekday1() {
     turnOffSwitch()
     if (timeOnDay2) {
-    	runOnce(timeOnDay2, "turnOnSwitch",  [overwrite: true])
-    	runOnce(timeOffDay2, "turnOffWeekday2",  [overwrite: true])
+    	schedule(timeOnDay2, "turnOnSwitch")
+    	schedule(timeOffDay2, "turnOffWeekday2")
     } else {
      	turnOffWeekday2()
-	}
+    }
 }
 def turnOffWeekday2() {
     turnOffSwitch()
     if (timeOnNight1) {
-    	runOnce(timeOnNight1, "turnOnSwitch",  [overwrite: true])
-    	runOnce(timeOffNight1, "turnOffWeekday3",  [overwrite: true])
+    	schedule(timeOnNight1, "turnOnSwitch")
+    	schedule(timeOffNight1, "turnOffWeekday3")
     } else {
      	turnOffWeekday3()
-	}
+    }
 }
 def turnOffWeekday3() {
     turnOffSwitch()
     if (timeOnNight2) {
-    	runOnce(timeOnNight2, "turnOnSwitch",  [overwrite: true])
-    	runOnce(timeOffDay4, "nextDay",  [overwrite: true])
+    	schedule(timeOnNight2, "turnOnSwitch")
+    	schedule(timeOffNight2, "nextDay")
    } else {
      	nextDay()
+   }
+}
+
+//-------Weekend Handlers 
+
+def startWeekend() {
+    if (timeOnWEDay1) {
+    	schedule(timeOnWEDay1, "turnOnSwitch")
+    	schedule(timeOffWEDay1, "turnOffWeekend1")
+    } else {
+     	turnOffWeekday1()
 	}
 }
 
-//-------Weekend Handlers
-
-def turnOnSwitchWE() {
-	turnOnSwitch()
-    runOnce(timeOffWEDay1 , "turnOffWeekend1",  [overwrite: true])
-    }
-    
 def turnOffWeekend1() {
     turnOffSwitch()
     if (timeOnWEDay2) {
-    	runOnce(timeOnWEDay2, "turnOnSwitch",  [overwrite: true])
-    	runOnce(timeOffDay2, "turnOffWeekend2",  [overwrite: true])
+    	schedule(timeOnWEDay2, "turnOnSwitch")
+    	schedule(timeOffWEDay2, "turnOffWeekend2")
     } else {
      	turnOffWeekday2()
 	}
 }
+
 def turnOffWeekend2() {
     turnOffSwitch()
-    if (timeOnNight1) {
-    	runOnce(timeOnNight1, "turnOnSwitch",  [overwrite: true])
-    	runOnce(timeOffNight1, "turnOffWeekend3",  [overwrite: true])
+    if (timeOnWENight1) {
+    	schedule(timeOnWENight1, "turnOnSwitch")
+    	schedule(timeOffWENight1, "turnOffWeekend3")
     } else {
      	turnOffWeekday3()
 	}
@@ -178,9 +188,9 @@ def turnOffWeekend2() {
 
 def turnOffWeekend3() {
     turnOffSwitch()
-    if (timeOnNight2) {
-    	runOnce(timeOnNight2, "turnOnSwitch",  [overwrite: true])
-    	runOnce(timeOffNight2, "nextDay",  [overwrite: true])
+    if (timeOnWENight2) {
+    	schedule(timeOnWENight2, "turnOnSwitch")
+    	schedule(timeOffWENight2, "nextDay")
     } else {
      	nextDay()
 	}
@@ -190,16 +200,13 @@ def turnOffWeekend3() {
 
 def nextDay() {
     turnOffSwitch()
-    if (runWeekend) {
-    	unschedule()
-        init()
-    }
+    init()
 }
 
 def turnOffSwitch() {
     if (switch1.currentValue("switch")=="on"){
     	switch1.off()
-   		log.debug "Home ventilation turned off."
+   	log.debug "Home ventilation turned off."
     }
 }
     
@@ -226,18 +233,18 @@ def DailyDesc() {
 }
 
 def WEDesc() {
-	def title = ""
+    def title = ""
     if (timeOnWEDay1) {
-    	title += "Day Schedule 1: ${humanReadableTime(timeOnWEDay1)} to ${humanReadableTime(timeOffWEDay1)}"
+    	title += "Weekend Day Schedule 1: ${humanReadableTime(timeOnWEDay1)} to ${humanReadableTime(timeOffWEDay1)}"
     }
     if (timeOnWEDay2) {
-    	title += "\nDay Schedule 2: ${humanReadableTime(timeOnWEDay2)} to ${humanReadableTime(timeOffWEDay2)}"
+    	title += "\nWeekend Day Schedule 2: ${humanReadableTime(timeOnWEDay2)} to ${humanReadableTime(timeOffWEDay2)}"
     }
     if (timeOnWENight1) {
-    	title += "\nNight Schedule 1: ${humanReadableTime(timeOnWENight1)} to ${humanReadableTime(timeOffWENight1)}"
+    	title += "\nWeekend Night Schedule 1: ${humanReadableTime(timeOnWENight1)} to ${humanReadableTime(timeOffWENight1)}"
     }
     if (timeOnWENight2) {
-    	title += "\nNight Schedule 2: ${humanReadableTime(timeOnWENight2)} to ${humanReadableTime(timeOffWENight2)}"
+    	title += "\nWeekend Night Schedule 2: ${humanReadableTime(timeOnWENight2)} to ${humanReadableTime(timeOffWENight2)}"
     }
     return title 
 }
@@ -257,7 +264,7 @@ private isWeekend() {
 }
 
 public dayOfWeek() {
-	def calendar = Calendar.getInstance()
+    def calendar = Calendar.getInstance()
     calendar.setTimeZone(location.timeZone)
     def today = calendar.get(Calendar.DAY_OF_WEEK)
     return today
