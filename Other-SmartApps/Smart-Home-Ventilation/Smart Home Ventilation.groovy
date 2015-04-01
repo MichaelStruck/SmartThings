@@ -1,7 +1,7 @@
 /**
  *  Smart Home Ventilation 3/27/15
  *  Version 1.00 3/28/15
- *  Version 1.1 3/29/15-increased the number of options to control the fan
+ *  Version 1.11 4/1/15-increased the number of options to control the fan
  *
  *  Copyright 2015 Michael Struck
  *
@@ -27,7 +27,7 @@ definition(
     iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/SmartHomeVentilation/HomeVent@2x.png")
 
 preferences {
-    page(name: "mainPage")
+	page(name: "mainPage")
     page(name: "dailySchedule")
     page(name: "weekendSchedule")
 }
@@ -57,11 +57,11 @@ def dailySchedule() {
 	dynamicPage(name: "dailySchedule", title: "Daily Schedule-Be sure to list the schedules in chronological order for proper execution.") {
     	
     	section("Daytime Schedule 1..."){
-		input "timeOnDay1", title: "Time to turn on", "time"
+			input "timeOnDay1", title: "Time to turn on", "time"
         	input "timeOffDay1", title: "Time to turn off", "time"
 		}
     	section("Daytime Schedule 2..."){
-		input "timeOnDay2", title: "Time to turn on", "time", required: false
+			input "timeOnDay2", title: "Time to turn on", "time", required: false
         	input "timeOffDay2", title: "Time to turn off", "time", required: false
 		}
     	section("Nighttime Schedule 1..."){
@@ -76,14 +76,14 @@ def dailySchedule() {
 }
 
 def weekendSchedule() {
-    dynamicPage(name: "weekendSchedule", title: "Weekend Schedule-Be sure to list the schedules in chronological order for proper execution.") {
+	dynamicPage(name: "weekendSchedule", title: "Weekend Schedule-Be sure to list the schedules in chronological order for proper execution.") {
     	
     	section("Daytime Schedule 1..."){
-		input "timeOnWEDay1", title: "Time to turn on", "time", required: false
+			input "timeOnWEDay1", title: "Time to turn on", "time", required: false
         	input "timeOffWEDay1", title: "Time to turn off", "time", required: false
 		}
     	section("Daytime Schedule 2..."){
-		input "timeOnWEDay2", title: "Time to turn on", "time", required: false
+			input "timeOnWEDay2", title: "Time to turn on", "time", required: false
         	input "timeOffWEDay2", title: "Time to turn off", "time", required: false
 		}
     	section("Nighttime Schedule 1..."){
@@ -99,7 +99,7 @@ def weekendSchedule() {
 
 def installed() {
     log.debug "Installed with settings: ${settings}"
-    init()
+	init()
 }
 
 def updated() {
@@ -124,7 +124,7 @@ def startWeekday() {
     	schedule(timeOffDay1, "turnOffWeekday1")
     } else {
      	turnOffWeekday1()
-    }
+	}
 }
 
 def turnOffWeekday1() {
@@ -134,7 +134,7 @@ def turnOffWeekday1() {
     	schedule(timeOffDay2, "turnOffWeekday2")
     } else {
      	turnOffWeekday2()
-    }
+	}
 }
 def turnOffWeekday2() {
     turnOffSwitch()
@@ -143,7 +143,7 @@ def turnOffWeekday2() {
     	schedule(timeOffNight1, "turnOffWeekday3")
     } else {
      	turnOffWeekday3()
-    }
+	}
 }
 def turnOffWeekday3() {
     turnOffSwitch()
@@ -152,10 +152,11 @@ def turnOffWeekday3() {
     	schedule(timeOffNight2, "nextDay")
    } else {
      	nextDay()
-   }
+	}
 }
 
 //-------Weekend Handlers 
+
 
 def startWeekend() {
     if (timeOnWEDay1) {
@@ -203,10 +204,12 @@ def nextDay() {
     init()
 }
 
+
 def turnOffSwitch() {
+    unschedule()
     if (switch1.currentValue("switch")=="on"){
     	switch1.off()
-   	log.debug "Home ventilation turned off."
+   		log.debug "Home ventilation turned off."
     }
 }
     
@@ -216,7 +219,7 @@ def turnOnSwitch() {
 }
 
 def DailyDesc() {
-    def title = ""
+	def title = ""
     if (timeOnDay1){
     	title += "Day Schedule 1: ${humanReadableTime(timeOnDay1)} to ${humanReadableTime(timeOffDay1)}"
     }
@@ -233,7 +236,7 @@ def DailyDesc() {
 }
 
 def WEDesc() {
-    def title = ""
+	def title = ""
     if (timeOnWEDay1) {
     	title += "Weekend Day Schedule 1: ${humanReadableTime(timeOnWEDay1)} to ${humanReadableTime(timeOffWEDay1)}"
     }
@@ -264,7 +267,7 @@ private isWeekend() {
 }
 
 public dayOfWeek() {
-    def calendar = Calendar.getInstance()
+	def calendar = Calendar.getInstance()
     calendar.setTimeZone(location.timeZone)
     def today = calendar.get(Calendar.DAY_OF_WEEK)
     return today
