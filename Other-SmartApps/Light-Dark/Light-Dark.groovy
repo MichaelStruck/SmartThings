@@ -30,6 +30,7 @@ definition(
     iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Light-Dark/LockDark@2x.png")
 
 preferences {
+
     section("Monitor the luminosity...") {
 		input "lightSensor", "capability.illuminanceMeasurement", title: "Light Sensor"
 	}
@@ -61,7 +62,7 @@ def illuminanceHandler(evt) {
     def luxVerify = state.luxVerify
     log.debug "$luxVerify"
 	if (lastStatus != "on" && evt.integerValue < luxOn) {
-		/ Prevent false positives by having the sensor trip twice before firing event /
+		// Prevent false positives by having the sensor trip twice before firing event 
 		if (luxVerify == "TurnOn") {
         	lightsOn.on()
         	state.lastStatus = "on"
@@ -72,7 +73,7 @@ def illuminanceHandler(evt) {
         }
 	}
 	else if (lightsOff && lastStatus != "off" && evt.integerValue > luxOff) {
-		/ Prevent false positives by having the sensor trip twice before firing event /
+		// Prevent false positives by having the sensor trip twice before firing event 
 		if (luxVerify == "TurnOff") {
 			lightsOff.off()
         	changeMode(offMode)
