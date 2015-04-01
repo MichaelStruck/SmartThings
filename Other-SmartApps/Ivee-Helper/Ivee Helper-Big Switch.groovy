@@ -29,10 +29,10 @@ preferences {
 	section("Define a 'Master Switch' which Ivee will use.") {
 		input "master", "capability.switch", multiple: false, title: "Master Switch", required: true
     }    
-    section("When Ivee turns on the Master Switch, turn on these lights/switches") {
+    section("When Ivee turns on the Master Switch, turn on these lights/switches...") {
 		input "lightsOn", "capability.switch", multiple: true, title: "Lights/Switches", required: false
     } 
-    section("When Ivee turns off the Master Switch, turn off these lights/switches") {
+    section("When Ivee turns off the Master Switch, turn off these lights/switches...") {
 		input "lightsOff", "capability.switch", multiple: true, title: "Lights/Switches", required: false
     }
 }
