@@ -32,7 +32,7 @@ preferences {
     section("When this lock is unlocked...") {
 		input "lock1","capability.lock", title: "Lock", multiple: false
 	}
-	section("Turn on these lights/switches") {
+	section("Turn on these lights/switches...") {
 		input "lightsOn", "capability.switch", multiple: true, title: "Lights/Switches", required: true
 	}
     section("Use this light sensor to determine when it is dark (enter 10,000 to have the light come on regardless of lighting)") {
