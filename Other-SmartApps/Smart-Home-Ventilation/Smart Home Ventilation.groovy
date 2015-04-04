@@ -1,12 +1,12 @@
 /**
  *  Smart Home Ventilation 3/27/15
- *  Version 1.11
+ *  Version 1.12
  *
  *  History:
  *  Version 1.00 3/28/15-Initial release
  *  Version 1.1 4/1/15-increased the number of options to control the fan
  *  Version 1.11 4/3/15-fixes a small scheduling bug
- *
+ *  Version 1.12 4/4/15-optimized code
  *
  *
  *  Copyright 2015 Michael Struck
@@ -33,7 +33,7 @@ definition(
     iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Home-Ventilation/HomeVent@2x.png")
 
 preferences {
-	page(name: "mainPage")
+    page(name: "mainPage")
     page(name: "dailySchedule")
     page(name: "weekendSchedule")
 }
@@ -116,7 +116,7 @@ def updated() {
 
 def init () {
     if (dayOfWeek() < 6 || !runWeekend) {
-    	startWeekday()
+        startWeekday()
  	} else if (dayOfWeek() > 5 && runWeekend) {
     	startWeekend()
     }
@@ -256,21 +256,11 @@ def WEDesc() {
     return title 
 }
 
-public smartThingsDateFormat() { "yyyy-MM-dd'T'HH:mm:ss.SSSZ" }
-
 public humanReadableTime(dateTxt) {
-	new Date().parse(smartThingsDateFormat(), dateTxt).format("h:mm a", timeZone(dateTxt))
+	new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", dateTxt).format("h:mm a", timeZone(dateTxt))
 }
 
-private isWeekend() {
-    def isTheWeekend = false
-    if (dayOfWeek() == 1 || dayOfWeek() == 7) {
-    	isTheWeekend = true
-    } 
-    return isTheWeekend
-}
-
-public dayOfWeek() {
+private dayOfWeek() {
 	def calendar = Calendar.getInstance()
     calendar.setTimeZone(location.timeZone)
     def today = calendar.get(Calendar.DAY_OF_WEEK)
