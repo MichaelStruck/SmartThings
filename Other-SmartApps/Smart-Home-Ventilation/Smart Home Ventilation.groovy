@@ -1,7 +1,13 @@
 /**
  *  Smart Home Ventilation 3/27/15
- *  Version 1.00 3/28/15
- *  Version 1.11 4/1/15-increased the number of options to control the fan
+ *  Version 1.11
+ *
+ *  History:
+ *  Version 1.00 3/28/15-Initial release
+ *  Version 1.1 4/1/15-increased the number of options to control the fan
+ *  Version 1.11 4/3/15-fixes a small scheduling bug
+ *
+ *
  *
  *  Copyright 2015 Michael Struck
  *
@@ -109,9 +115,9 @@ def updated() {
 }
 
 def init () {
-    if (dayOfWeek() != 1 || dayOfWeek() < 6 || !runWeekend) {
+    if (dayOfWeek() < 6 || !runWeekend) {
     	startWeekday()
- 	} else if ((dayOfWeek() == 7 || dayOfWeek() == 1) && runWeekend) {
+ 	} else if (dayOfWeek() > 5 && runWeekend) {
     	startWeekend()
     }
 }
@@ -156,7 +162,6 @@ def turnOffWeekday3() {
 }
 
 //-------Weekend Handlers 
-
 
 def startWeekend() {
     if (timeOnWEDay1) {
@@ -203,7 +208,6 @@ def nextDay() {
     turnOffSwitch()
     init()
 }
-
 
 def turnOffSwitch() {
     unschedule()
