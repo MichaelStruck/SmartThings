@@ -5,6 +5,15 @@
  *  Author: SmartThings
  *  Modified by Michael Struck 4/1/15-Adds a setting for the lux setting threshold
  *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *  for the specific language governing permissions and limitations under the License.
+ *
  */
 definition(
     name: "Smart Nightlight +",
@@ -12,15 +21,16 @@ definition(
     author: "Michael Struck",
     description: "Turns on lights when it's dark and motion is detected. Turns lights off when it becomes light or some time after motion ceases.",
     category: "Convenience",
-    iconUrl: "https://s3.amazonaws.com/smartapp-icons/Meta/light_motion-outlet-luminance.png",
-    iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Meta/light_motion-outlet-luminance@2x.png"
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Nightlight/SmartLight.png",
+    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Nightlight/SmartLight@2x.png",
+	iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Nightlight/SmartLight@2x.png"
 )
 
 preferences {
 	section("Control these lights..."){
 		input "lights", "capability.switch", multiple: true
 	}
-	section("Turning on when it's dark and there's movement..."){
+	section("Turn on when it's dark and there's movement..."){
 		input "motionSensor", "capability.motionSensor", title: "Where?"
 	}
 	section("And then off when it's light or there's been no movement for..."){
@@ -134,11 +144,6 @@ def turnOffMotionAfterDelay() {
 	}
 }
 
-def scheduleCheck() {
-	log.debug "In scheduleCheck - skipping"
-	//turnOffMotionAfterDelay()
-}
-
 def astroCheck() {
 	def s = getSunriseAndSunset(zipCode: zipCode, sunriseOffset: sunriseOffset, sunsetOffset: sunsetOffset)
 	state.riseTime = s.sunrise.time
@@ -174,3 +179,6 @@ private lightLevel(){
     }
     return lightLevel
 }
+
+
+    
