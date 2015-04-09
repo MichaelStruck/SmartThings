@@ -41,7 +41,7 @@ preferences {
 def mainPage() {
 	dynamicPage(name: "mainPage", title: "", install: true, uninstall: true) {
     
-    	section("Select home ventilation switch..."){
+    	section("Select home ventilation settings..."){
 			input "switch1", title: "Switch", "capability.switch", multiple: false
 		}
            
