@@ -1,8 +1,9 @@
 /**
  *  Nest Helper-Mode Change
  *
- *  Version 1.0 3/26/15
  *  Copyright 2015 Michael Struck
+ *  Version 1.00 3/26/15
+ *  Version 1.01 - 4/9/15 Added the ability to change the name of the app and removed modes to run in (redundent)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -24,17 +25,26 @@ definition(
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Partner/nest-home-app@2x.png",
     iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Partner/nest-home-app@2x.png")
 
-
 preferences {
-	section("Choose a Nest Thermostat...") {
-    	input "tstat1", "capability.thermostat", title: "Nest", multiple: false
+	page(name: "getPref")
+}
+
+def getPref() {
+    dynamicPage(name: "getPref", install:true, uninstall: true) {
+	
+    	section("Choose a Nest Thermostat...") {
+    		input "tstat1", "capability.thermostat", title: "Nest", multiple: false
+			}
+		section("Change to away on Nest when in which mode(s)...") {
+    		input "awayMode", "mode", required: true, multiple: true, title: "Modes?"
 		}
-	section("Change to away on Nest when in which mode(s)...") {
-    	input "awayMode", "mode", required: true, multiple: true, title: "Modes?"
-	}
-    section("Change to home on Nest when in which mode(s)...") {
-    	input "homeMode", "mode", required: true, multiple: true, title: "Modes?"
-	}
+    	section("Change to home on Nest when in which mode(s)...") {
+    		input "homeMode", "mode", required: true, multiple: true, title: "Modes?"
+		}
+		section([mobileOnly:true], "Options") {
+			label(title: "Assign a name", required: false, defaultValue: "Nest Helper-Mode Change")
+		}
+    }
 }
 
 def installed() {
@@ -55,9 +65,9 @@ def initialize() {
 def locationHandler(evt) {
 	log.debug "locationHandler evt: ${evt.value}"
     if (homeMode.contains(evt.value)) {
-	tstat1.present()
+	    tstat1.present()
     }
     else if (awayMode.contains(evt.value)) {
-	tstat1.away()
+    	tstat1.away()
     }
 }
