@@ -1,6 +1,7 @@
 /**
  *  Ivee Helper-Big Switch
  *  Version 1.0 3/18/15
+ *	Version 1.01 4/9/15 - Added options sub heading to last section of preferences
  *
  *  Copyright 2015 Michael Struck
  *
@@ -24,16 +25,25 @@ definition(
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Ivee-Helper/Ivee@2x.png",
     iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Ivee-Helper/Ivee@2x.png")
 
-
 preferences {
-	section("Define a 'Master Switch' which Ivee will use.") {
-		input "master", "capability.switch", multiple: false, title: "Master Switch", required: true
-    }    
-    section("When Ivee turns on the Master Switch, turn on these lights/switches...") {
-		input "lightsOn", "capability.switch", multiple: true, title: "Lights/Switches", required: false
-    } 
-    section("When Ivee turns off the Master Switch, turn off these lights/switches...") {
-		input "lightsOff", "capability.switch", multiple: true, title: "Lights/Switches", required: false
+	page(name: "getPref")
+}
+
+def getPref() {
+	dynamicPage(name: "getPref", install:true, uninstall: true) {
+		section("Define a 'Master Switch' which Ivee will use.") {
+			input "master", "capability.switch", multiple: false, title: "Master Switch", required: true
+   		}    
+   		section("When Ivee turns on the Master Switch, turn on these lights/switches...") {
+			input "lightsOn", "capability.switch", multiple: true, title: "Lights/Switches", required: false
+    	} 
+    	section("When Ivee turns off the Master Switch, turn off these lights/switches...") {
+			input "lightsOff", "capability.switch", multiple: true, title: "Lights/Switches", required: false
+    	}
+    	section([mobileOnly:true], "Options") {
+			label(title: "Assign a name", required: false, defaultValue: "Light When Unlocked")
+            mode title: "Set for specific mode(s)", required: false
+		}
     }
 }
 
