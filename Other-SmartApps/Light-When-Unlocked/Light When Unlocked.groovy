@@ -3,6 +3,7 @@
  *
  *	Version 1.1 3/22/15 -  Adds a timer to turn off the lights after a certain amount of time
  *	Version 1.11 3/29/15 Fixes a small scheduling issue
+ *	Version 1.12 4/9/15	Added an options section
  *
  *
  *  Copyright 2015 Michael Struck
@@ -29,18 +30,28 @@ definition(
     iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Light-When-Unlocked/LockLight@2x.png")
 
 preferences {
-    section("When this lock is unlocked...") {
-		input "lock1","capability.lock", title: "Lock", multiple: false
-	}
-	section("Turn on these lights/switches...") {
-		input "lightsOn", "capability.switch", multiple: true, title: "Lights/Switches", required: true
-	}
-    section("Use this light sensor to determine when it is dark (enter 10,000 to have the light come on regardless of lighting)") {
-		input "lightSensor", "capability.illuminanceMeasurement", title: "Light Sensor", required: false, multiple: false
-        input "luxOn", "number", title: "Lux Threshold", required: true, description:0
-	}
-    section("Turn off light(s) after this many minutes (Enter 0 to not set timer)..."){
-		input "delayMinutes", "number", title: "Minutes"
+	page(name: "getPref")
+}
+
+def getPref() {
+    dynamicPage(name: "getPref", install:true, uninstall: true) {
+    	section("When this lock is unlocked...") {
+			input "lock1","capability.lock", title: "Lock", multiple: false
+		}
+		section("Turn on these lights/switches...") {
+			input "lightsOn", "capability.switch", multiple: true, title: "Lights/Switches", required: true
+		}
+    	section("Use this light sensor to determine when it is dark (enter 10,000 to have the light come on regardless of lighting)") {
+			input "lightSensor", "capability.illuminanceMeasurement", title: "Light Sensor", required: false, multiple: false
+       		input "luxOn", "number", title: "Lux Threshold", required: true, description:0
+		}
+   		section("Turn off light(s) after this many minutes (Enter 0 to not set timer)..."){
+			input "delayMinutes", "number", title: "Minutes"
+		}
+		section([mobileOnly:true], "Options") {
+			label(title: "Assign a name", required: false, defaultValue: "Light When Unlocked")
+            mode title: "Set for specific mode(s)", required: false
+		}
 	}
 }
 
