@@ -2,6 +2,7 @@
  *  Life360 Helper-Phrase Change
  *  Version 1.00 3/20/15
  *  Version 1.01 3/24/15 - Updated with more effecient code
+ *  Version 1.02 4/9/15 - Added ability to change name of app
  *
  *  Copyright 2015 Michael Struck
  *
@@ -10,7 +11,7 @@
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *	Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *  Turn specific switched on when it gets dark. Can also turn off specific switches when it becomes light again based on brightness from a connected light sensor.
@@ -25,21 +26,23 @@ definition(
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360@2x.png",
-    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360@2x.png")
+	iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360@2x.png")
 
 preferences {
 	page(name: "getPref")
 }
 
+
 def getPref() {
     dynamicPage(name: "getPref", title: "Choose Presence Sensors and Phrases", install:true, uninstall: true) {
-    section("Choose the Life360 presence sensors you want to monitor...") {
-		input "people", "capability.presenceSensor", multiple: true, title: "Life360 Presence Sensor" 
-	}
-	section("When presence is detected and in one of these modes...") {
-		input "modes", "mode", title: "Mode(s)", required: true, multiple: true
-	}
-	def phrases = location.helloHome?.getPhrases()*.label
+    
+    	section("Choose the Life360 presence sensors you want to monitor...") {
+			input "people", "capability.presenceSensor", multiple: true, title: "Life360 Presence Sensor" 
+		}
+		section("When presence is detected and in one of these modes...") {
+			input "modes", "mode", title: "Mode(s)", required: true, multiple: true
+		}
+		def phrases = location.helloHome?.getPhrases()*.label
 		if (phrases) {
         	phrases.sort()
 			section("Perform the following Hello, Home phrase when...") {
@@ -47,7 +50,10 @@ def getPref() {
 				input "phrase2", "enum", title: "None of the modes above are active", required: true, options: phrases
 			}
         }
-    }
+		section([mobileOnly:true], "Options") {
+			label(title: "Assign a name", required: false, defaultValue: "Life360 Helper-Phrase Change")
+		}  
+	}
 }
 
 def installed() {
