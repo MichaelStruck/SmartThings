@@ -4,6 +4,7 @@
  *  Copyright 2015 Michael Struck
  *  Version 1.01 3/8/15
  *  Version 1.02 3/24/15 Code revisions for better portability
+ *  Version 1.03 4/9/15 Added the ability to change the name of the app
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -38,6 +39,9 @@ preferences {
 		section("Change to which mode when...") {
 			input "onMode", "mode", title: "Switch is on", required: false
 			input "offMode", "mode", title: "Switch is off", required: false 
+		}
+		section([mobileOnly:true], "Options") {
+			label(title: "Assign a name", required: false, defaultValue: "Switch Changes Mode")
 		}
 	}
 }
@@ -75,3 +79,4 @@ def changeMode(newMode) {
 		}
 	}
 }
+
