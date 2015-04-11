@@ -1,12 +1,12 @@
 /**
  *  Smart Water Heater
- *  Version 1.2 3/30/2015
+ *  Version 1.21 4/10/2015
  *
  *  Version 1.01-Initial release
  *  Version 1.1 added a function to turn water heater back on if someone comes home early.
  *  Version 1.11 Revised the interface for better flow
  *  Version 1.2 Revised the interface even more for better flow
- *
+ *  Version 1.21 Further interface revision
  * 
  *
  *  Copyright 2015 Michael Struck
@@ -52,7 +52,7 @@ def mainPage() {
     	section("Nighttime Options"){
     		href(name: "toNightSchedule", page: "nightSchedule", title: "Schedule", description: nightDescription(), state: "complete")
     	}
-    	section([mobileOnly:true]) {
+    	section([mobileOnly:true], "Other Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Smart Water Heater")
             mode title: "Set for specific mode(s)", required: false
 		}
