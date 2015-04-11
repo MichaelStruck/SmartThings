@@ -3,7 +3,9 @@
  *  Version 1.02 3/21/15
  *
  *	1.01 Added a verify so they event has to trip trice in a row to do the action.
- *	1.02 Added custom icon	
+ *	1.02 Added custom icon
+ *  1.03 Revision to interface for better flow
+ *
  *
  *	Using code from SmartThings Light Up The Night App and the Sunrise/Sunset app
  *  Copyright 2015 Michael Struck
@@ -30,19 +32,28 @@ definition(
     iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Light-Dark/LockDark@2x.png")
 
 preferences {
+	page(name: "getPref")
+}
 
-    section("Monitor the luminosity...") {
-		input "lightSensor", "capability.illuminanceMeasurement", title: "Light Sensor"
-	}
-	section("Turn on lights/set mode when brightness below specific luminosity") {
-		input "lightsOn", "capability.switch", multiple: true, title: "Lights/Switches", required: true
-		input "luxOn", "number", title: "Lux Setting", required: true, description:30
-        input "onMode", "mode", title: "Change mode to?", required: false
-	}
-    section("Optionally, turn off lights/set mode when brightness above specific luminosity") {
-		input "lightsOff", "capability.switch", multiple: true, title: "Lights/Switches", required: false
-		input "luxOff", "number", title: "Lux Setting", required: false, description:50
-        input "offMode", "mode", title: "Change mode to?", required: false
+def getPref() {
+    dynamicPage(name: "getPref", install:true, uninstall: true) {
+    	section("Monitor the luminosity...") {
+			input "lightSensor", "capability.illuminanceMeasurement", title: "Light Sensor"
+		}
+		section("Turn on lights/set mode when brightness below specific luminosity...") {
+			input "lightsOn", "capability.switch", multiple: true, title: "Lights/Switches", required: true
+			input "luxOn", "number", title: "Lux Setting", required: true, description:30
+        	input "onMode", "mode", title: "Change mode to?", required: false
+		}
+    	section("Optionally, turn off lights/set mode when brightness above specific luminosity...") {
+			input "lightsOff", "capability.switch", multiple: true, title: "Lights/Switches", required: false
+			input "luxOff", "number", title: "Lux Setting", required: false, description:50
+        	input "offMode", "mode", title: "Change mode to?", required: false
+        }
+        section([mobileOnly:true], "Options") {
+			label(title: "Assign a name", required: false, defaultValue: "Light > Dark")
+		    mode title: "Set for specific mode(s)", required: false
+        }
 	}
 }
 
