@@ -2,7 +2,7 @@
  *  Lighting Director
  *
  *  Version - 1.3
- *  Version - 1.30.1 Modification by Michael Struck - Fixed syntax of help text
+ *  Version - 1.30.1 Modification by Michael Struck - Fixed syntax of help text and null title. New icon.
  *
  *  Copyright 2015 Tim Slagle
  *
