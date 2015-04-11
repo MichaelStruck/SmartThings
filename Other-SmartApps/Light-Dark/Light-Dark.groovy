@@ -1,9 +1,9 @@
 /**
  *  Light > Dark
- *  Version 1.02 3/21/15
+ *  Version 1.03 4/11/15
  *
- *	1.01 Added a verify so they event has to trip trice in a row to do the action.
- *	1.02 Added custom icon
+ *  1.01 Added a verify so they event has to trip trice in a row to do the action.
+ *  1.02 Added custom icon
  *  1.03 Revision to interface for better flow
  *
  *
