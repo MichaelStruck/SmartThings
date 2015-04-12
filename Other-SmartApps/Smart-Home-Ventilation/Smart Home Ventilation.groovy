@@ -1,12 +1,12 @@
 /**
- *  Smart Home Ventilation 3/27/15
+ *  Smart Home Ventilation
  *  Version 1.12
  *
  *  History:
  *  Version 1.00 3/28/15-Initial release
  *  Version 1.1 4/1/15-increased the number of options to control the fan
  *  Version 1.11 4/3/15-fixes a small scheduling bug
- *  Version 1.12 4/9/15-optimized code
+ *  Version 1.12 4/12/15-optimized code
  *
  *
  *  Copyright 2015 Michael Struck
@@ -50,7 +50,7 @@ def mainPage() {
         }
         section {
         	input "runWeekend", title: "Run Different Schedule on Weekend", "bool", defaultValue: "false"
-            href(name: "toWeekendSchedule", page: "weekendSchedule", title: "Weekend Schedule", description: WEDesc())
+            href(name: "toWeekendSchedule", page: "weekendSchedule", title: "Weekend Schedule", description: WEDesc(), state: "complete" )
         }
 		section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Smart Home Ventilation")
