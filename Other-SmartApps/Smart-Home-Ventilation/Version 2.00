@@ -29,8 +29,8 @@ preferences {
 	page(name: "mainPage")
 	page(name: "A_Scenario")
 	page(name: "B_Scenario")
-    page(name: "C_Scenario")
-    page(name: "D_Scenario")
+	page(name: "C_Scenario")
+   	page(name: "D_Scenario")
 }
 
 def mainPage() {
@@ -177,11 +177,11 @@ def updated() {
 
 def init () {
     createDayArray() 
-	state.dayCount=state.data.size()
+    state.dayCount=state.data.size()
     schedule ("2015-04-01T00:00:00.000-0700", midNight)
     if (state.dayCount){
-		state.counter = 0
-        startDay()
+	state.counter = 0
+       	startDay()
     }
 }    
 
@@ -202,7 +202,7 @@ def startDay() {
 def incDay() {
     turnOffSwitch()
     state.counter = state.counter + 1
-    if (state.counter < state.dayCount-1) {
+    if (state.counter < state.dayCount) {
     	startDay()
     }
 }
