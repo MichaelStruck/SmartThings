@@ -1,13 +1,6 @@
 /**
  *  Smart Home Ventilation
- *  Version 1.12
- *
- *  History:
- *  Version 1.00 3/28/15-Initial release
- *  Version 1.1 4/1/15-increased the number of options to control the fan
- *  Version 1.11 4/3/15-fixes a small scheduling bug
- *  Version 1.12 4/12/15-optimized code
- *
+ *	Version 2.00
  *
  *  Copyright 2015 Michael Struck
  *
@@ -23,10 +16,10 @@
  */
  
 definition(
-    name: "Smart Home Ventilation",
+    name: "Smart Home Ventilation-2.00",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Allows for setting up schedules for turning on and off a home ventilation fan.",
+    description: "Allows for setting up various schedule scenarios for turning on and off home ventilation switches.",
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Home-Ventilation/HomeVent.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Home-Ventilation/HomeVent@2x.png",
@@ -34,74 +27,142 @@ definition(
 
 preferences {
 	page(name: "mainPage")
-	page(name: "dailySchedule")
-	page(name: "weekendSchedule")
+	page(name: "A_Scenario")
+	page(name: "B_Scenario")
+    page(name: "C_Scenario")
+    page(name: "D_Scenario")
 }
 
 def mainPage() {
 	dynamicPage(name: "mainPage", title: "", install: true, uninstall: true) {
-    
-    	section("Select home ventilation settings..."){
-			input "switch1", title: "Switch", "capability.switch", multiple: false
+     	section("Select ventilation switches..."){
+			input "switches", title: "Switches", "capability.switch", multiple: true
 		}
-           
-        section {
-        	href(name: "toDailySchedule", page: "dailySchedule", title: "Daily Schedule", description: DailyDesc(), state: "complete")
-        }
-        section {
-        	input "runWeekend", title: "Run Different Schedule on Weekend", "bool", defaultValue: "false"
-            href(name: "toWeekendSchedule", page: "weekendSchedule", title: "Weekend Schedule", description: WEDesc(), state: "complete" )
+        section ("Scheduling scenarios...") {
+        	href(name: "toA_Scenario", page: "A_Scenario", title: getTitle (titleA, "A"), description: schedDesc(timeOnA1,timeOffA1,timeOnA2,timeOffA2,timeOnA3,timeOffA3,timeOnA4,timeOffA4, modeA, daysA), state: greyOut(timeOnA1,timeOnA2,timeOnA3,timeOnA4))
+        	href(name: "toB_Scenario", page: "B_Scenario", title: getTitle (titleB, "B"), description: schedDesc(timeOnB1,timeOffB1,timeOnB2,timeOffB2,timeOnB3,timeOffB3,timeOnB4,timeOffB4, modeB, daysB), state: greyOut(timeOnB1,timeOnB2,timeOnB3,timeOnB4))
+        	href(name: "toC_Scenario", page: "C_Scenario", title: getTitle (titleC, "C"), description: schedDesc(timeOnC1,timeOffC1,timeOnC2,timeOffC2,timeOnC3,timeOffC3,timeOnC4,timeOffC4, modeC, daysC), state: greyOut(timeOnC1,timeOnC2,timeOnC3,timeOnC4))
+        	href(name: "toD_Scenario", page: "D_Scenario", title: getTitle (titleD, "D"), description: schedDesc(timeOnD1,timeOffD1,timeOnD2,timeOffD2,timeOnD3,timeOffD3,timeOnD4,timeOffD4, modeD, daysD), state: greyOut(timeOnD1,timeOnD2,timeOnD3,timeOnD4))
         }
 		section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Smart Home Ventilation")
-            mode title: "Set for specific mode(s)", required: false
+		}
+    }
+}
+//----Scheduling Pages
+def A_Scenario() {
+	dynamicPage(name: "A_Scenario", title: getTitle (titleA, "A") + " - Be sure to list the schedules in chronological order for proper execution.") {
+    	section {
+        	input "titleA", title: "Scenario Name", "text", required: false
+        }
+        section("Schedule 1..."){
+			input "timeOnA1", title: "Time to turn on", "time", required: false
+        	input "timeOffA1", title: "Time to turn off", "time", required: false
+		}
+    	section("Schedule 2..."){
+			input "timeOnA2", title: "Time to turn on", "time", required: false
+        	input "timeOffA2", title: "Time to turn off", "time", required: false
+		}
+    	section("Schedule 3..."){
+        	input "timeOnA3", title: "Time to turn on", "time", required: false
+        	input "timeOffA3", title: "Time to turn off", "time", required: false
+		}
+    	section("Schedule 4..."){
+        	input "timeOnA4", title: "Time to turn on", "time", required: false
+        	input "timeOffA4", title: "Time to turn off", "time", required: false
+		}
+		section("Run this scenario in the these modes and days of the week") {
+    		input "modeA", "mode", required: false, multiple: true, title: "Modes?"
+		   	input "daysA", "enum", multiple: true, title: "Days?", required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 		}
     }
 }
 
-def dailySchedule() {
-	dynamicPage(name: "dailySchedule", title: "Daily Schedule-Be sure to list the schedules in chronological order for proper execution.") {
-    	
-    	section("Daytime Schedule 1..."){
-			input "timeOnDay1", title: "Time to turn on", "time"
-        	input "timeOffDay1", title: "Time to turn off", "time"
+def B_Scenario() {
+	dynamicPage(name: "B_Scenario", title: getTitle (titleB, "B") + " - Be sure to list the schedules in chronological order for proper execution.") {
+    	section {
+        	input "titleB", title: "Scenario Name", "text", required: false
+        }
+    	section("Schedule 1..."){
+			input "timeOnB1", title: "Time to turn on", "time", required: false
+        	input "timeOffB1", title: "Time to turn off", "time", required: false
 		}
-    	section("Daytime Schedule 2..."){
-			input "timeOnDay2", title: "Time to turn on", "time", required: false
-        	input "timeOffDay2", title: "Time to turn off", "time", required: false
+    	section("Schedule 2..."){
+			input "timeOnB2", title: "Time to turn on", "time", required: false
+        	input "timeOffB2", title: "Time to turn off", "time", required: false
 		}
-    	section("Nighttime Schedule 1..."){
-        	input "timeOnNight1", title: "Time to turn on", "time", required: false
-        	input "timeOffNight1", title: "Time to turn off", "time", required: false
+    	section("Schedule 3..."){
+        	input "timeOnB3", title: "Time to turn on", "time", required: false
+        	input "timeOffB3", title: "Time to turn off", "time", required: false
 		}
-    	section("Nighttime Schedule 2..."){
-        	input "timeOnNight2", title: "Time to turn on", "time", required: false
-        	input "timeOffNight2", title: "Time to turn off", "time", required: false
+    	section("Schedule 4..."){
+        	input "timeOnB4", title: "Time to turn on", "time", required: false
+        	input "timeOffB4", title: "Time to turn off", "time", required: false
+		}
+		section("Run this scenario in the these modes and days of the week") {
+    		input "modeB", "mode", required: false, multiple: true, title: "Modes?"
+		   	input "daysB", "enum", multiple: true, title: "Days?", required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 		}
     }
 }
 
-def weekendSchedule() {
-	dynamicPage(name: "weekendSchedule", title: "Weekend Schedule-Be sure to list the schedules in chronological order for proper execution.") {
-    	
-    	section("Daytime Schedule 1..."){
-			input "timeOnWEDay1", title: "Time to turn on", "time", required: false
-        	input "timeOffWEDay1", title: "Time to turn off", "time", required: false
+def C_Scenario() {
+	dynamicPage(name: "C_Scenario", title: getTitle (titleC, "C") + " - Be sure to list the schedules in chronological order for proper execution.") {
+    	section {
+        	input "titleC", title: "Scenario Name", "text", required: false
+        }
+    	section("Schedule 1..."){
+			input "timeOnC1", title: "Time to turn on", "time", required: false
+        	input "timeOffC1", title: "Time to turn off", "time", required: false
 		}
-    	section("Daytime Schedule 2..."){
-			input "timeOnWEDay2", title: "Time to turn on", "time", required: false
-        	input "timeOffWEDay2", title: "Time to turn off", "time", required: false
+    	section("Schedule 2..."){
+			input "timeOnC2", title: "Time to turn on", "time", required: false
+        	input "timeOffC2", title: "Time to turn off", "time", required: false
 		}
-    	section("Nighttime Schedule 1..."){
-        	input "timeOnWENight1", title: "Time to turn on", "time", required: false
-        	input "timeOffWENight1", title: "Time to turn off", "time", required: false
+    	section("Schedule 3..."){
+        	input "timeOnC3", title: "Time to turn on", "time", required: false
+        	input "timeOffC3", title: "Time to turn off", "time", required: false
 		}
-    	section("Nighttime Schedule 2..."){
-        	input "timeOnWENight2", title: "Time to turn on", "time", required: false
-        	input "timeOffWENight2", title: "Time to turn off", "time", required: false
+    	section("Schedule 4..."){
+        	input "timeOnC4", title: "Time to turn on", "time", required: false
+        	input "timeOffC4", title: "Time to turn off", "time", required: false
+		}
+		section("Run this scenario in the these modes and days of the week") {
+    		input "modeC", "mode", required: false, multiple: true, title: "Modes?"
+		   	input "daysC", "enum", multiple: true, title: "Days?", required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 		}
     }
 }
+
+def D_Scenario() {
+	dynamicPage(name: "D_Scenario", title: getTitle (titleD, "D") + " - Be sure to list the schedules in chronological order for proper execution.") {
+    	section {
+        	input "titleD", title: "Scenario Name", "text", required: false
+        }
+    	section("Schedule 1..."){
+			input "timeOnD1", title: "Time to turn on", "time", required: false
+        	input "timeOffD1", title: "Time to turn off", "time", required: false
+		}
+    	section("Schedule 2..."){
+			input "timeOnD2", title: "Time to turn on", "time", required: false
+        	input "timeOffD2", title: "Time to turn off", "time", required: false
+		}
+    	section("Schedule 3..."){
+        	input "timeOnD3", title: "Time to turn on", "time", required: false
+        	input "timeOffD3", title: "Time to turn off", "time", required: false
+		}
+    	section("Schedule 4..."){
+        	input "timeOnD4", title: "Time to turn on", "time", required: false
+        	input "timeOffD4", title: "Time to turn off", "time", required: false
+		}
+        section("Run this scenario in the these modes and days of the week") {
+    		input "modeD", "mode", required: false, multiple: true, title: "Modes?"
+		   	input "daysD", "enum", multiple: true, title: "Days?", required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+		}
+    }
+}
+
+// Install and initiate
 
 def installed() {
     log.debug "Installed with settings: ${settings}"
@@ -115,154 +176,206 @@ def updated() {
 }
 
 def init () {
-    if (dayOfWeek() < 6 || !runWeekend) {
-        startWeekday()
- 	} else if (dayOfWeek() > 5 && runWeekend) {
-    	startWeekend()
+    createDayArray() 
+	state.dayCount=state.data.size()
+    schedule ("2015-04-01T00:00:00.000-0700", midNight)
+    if (state.dayCount){
+		state.counter = 0
+        startDay()
+    }
+}    
+
+// Common methods
+
+def startDay() {
+    def times = "${state.data.get(state.counter)}"
+    def startTime = times.substring(0,13)
+    def endTime = times.substring(13,26)
+    
+    def start = convertEpochString(startTime)
+    def stop = convertEpochString(endTime)
+    
+    runOnce(start, turnOnSwitch)
+    runOnce(stop, incDay)
+}
+
+def incDay() {
+    turnOffSwitch()
+    state.counter = state.counter + 1
+    if (state.counter < state.dayCount) {
+    	startDay()
     }
 }
 
-//-------Weekday Handler
-
-def startWeekday() {
-    if (timeOnDay1) {
-    	schedule(timeOnDay1, "turnOnSwitch")
-    	schedule(timeOffDay1, "turnOffWeekday1")
-    } else {
-     	turnOffWeekday1()
-	}
-}
-
-def turnOffWeekday1() {
-    turnOffSwitch()
-    if (timeOnDay2) {
-    	schedule(timeOnDay2, "turnOnSwitch")
-    	schedule(timeOffDay2, "turnOffWeekday2")
-    } else {
-     	turnOffWeekday2()
-	}
-}
-def turnOffWeekday2() {
-    turnOffSwitch()
-    if (timeOnNight1) {
-    	schedule(timeOnNight1, "turnOnSwitch")
-    	schedule(timeOffNight1, "turnOffWeekday3")
-    } else {
-     	turnOffWeekday3()
-	}
-}
-def turnOffWeekday3() {
-    turnOffSwitch()
-    if (timeOnNight2) {
-    	schedule(timeOnNight2, "turnOnSwitch")
-    	schedule(timeOffNight2, "nextDay")
-   } else {
-     	nextDay()
-	}
-}
-
-//-------Weekend Handlers 
-
-def startWeekend() {
-    if (timeOnWEDay1) {
-    	schedule(timeOnWEDay1, "turnOnSwitch")
-    	schedule(timeOffWEDay1, "turnOffWeekend1")
-    } else {
-     	turnOffWeekday1()
-	}
-}
-
-def turnOffWeekend1() {
-    turnOffSwitch()
-    if (timeOnWEDay2) {
-    	schedule(timeOnWEDay2, "turnOnSwitch")
-    	schedule(timeOffWEDay2, "turnOffWeekend2")
-    } else {
-     	turnOffWeekday2()
-	}
-}
-
-def turnOffWeekend2() {
-    turnOffSwitch()
-    if (timeOnWENight1) {
-    	schedule(timeOnWENight1, "turnOnSwitch")
-    	schedule(timeOffWENight1, "turnOffWeekend3")
-    } else {
-     	turnOffWeekday3()
-	}
-}
-
-def turnOffWeekend3() {
-    turnOffSwitch()
-    if (timeOnWENight2) {
-    	schedule(timeOnWENight2, "turnOnSwitch")
-    	schedule(timeOffWENight2, "nextDay")
-    } else {
-     	nextDay()
-	}
-}
-
-//-----
-
-def nextDay() {
-    turnOffSwitch()
+def midNight(){
+	unschedule()
     init()
 }
 
-def turnOffSwitch() {
-    unschedule()
-    if (switch1.currentValue("switch")=="on"){
-    	switch1.off()
-   		log.debug "Home ventilation turned off."
-    }
-}
-    
 def turnOnSwitch() {
-    switch1.on()
+    switches.on()
     log.debug "Home ventilation turned on."
 }
 
-def DailyDesc() {
+def turnOffSwitch() {
+    switches.off()
+   	log.debug "Home ventilation turned off."
+}
+    
+def schedDesc(on1, off1, on2, off2, on3, off3, on4, off4, modeList, dayList) {
 	def title = ""
-    if (timeOnDay1){
-    	title += "Day Schedule 1: ${humanReadableTime(timeOnDay1)} to ${humanReadableTime(timeOffDay1)}"
+	def dayListClean = "On "
+    def modeListClean ="Scenario runs in "
+    if (dayList) {
+    	def dayListSize = dayList.size()
+        for (dayName in dayList) {
+        	dayListClean = "${dayListClean}"+"${dayName}"
+    		dayListSize = dayListSize -1
+            if (dayListSize) {
+            	dayListClean = "${dayListClean}, "
+            }
+        }
+	} 
+    else {
+    	dayListClean = "Every day"
     }
-    if (timeOnDay2) {
-    	title += "\nDay Schedule 2: ${humanReadableTime(timeOnDay2)} to ${humanReadableTime(timeOffDay2)}"
+    if (modeList) {
+    	def modeListSize = modeList.size()
+        def modePrefix ="modes"
+        if (modeListSize == 1) {
+        	modePrefix = "mode"
+        }
+        for (modeName in modeList) {
+        	modeListClean = "${modeListClean}"+"'${modeName}'"
+    		modeListSize = modeListSize -1
+            if (modeListSize) {
+            	modeListClean = "${modeListClean}, "
+            }
+            else {
+            	modeListClean = "${modeListClean} ${modePrefix}"
+        	}
+        }
+	} 
+    else {
+    	modeListClean = "${modeListClean}all modes"
     }
-    if (timeOnNight1) {
-    	title += "\nNight Schedule 1: ${humanReadableTime(timeOnNight1)} to ${humanReadableTime(timeOffNight1)}"
+    if (on1 && off1){
+    	title += "Schedule 1: ${humanReadableTime(on1)} to ${humanReadableTime(off1)}"
     }
-    if (timeOnNight2) {
-    	title += "\nNight Schedule 2: ${humanReadableTime(timeOnNight2)} to ${humanReadableTime(timeOffNight2)}"
+    if (on2 && off2) {
+    	title += "\nSchedule 2: ${humanReadableTime(on2)} to ${humanReadableTime(off2)}"
     }
-    return title
+    if (on3 && off3) {
+    	title += "\nSchedule 3: ${humanReadableTime(on3)} to ${humanReadableTime(off3)}" 
+    }
+    if (on4 && off4) {
+    	title += "\nSchedule 4: ${humanReadableTime(on4)} to ${humanReadableTime(off4)}" 
+    }
+    if (on1 || on2 || on3 || on4) {
+    	title += "\n$modeListClean"
+    	title += "\n$dayListClean" 
+    }
+    
+    if (!on1 && !on2 && !on3 && !on4) {
+    	title="Click to configure scenario"
+    }
+    title
 }
 
-def WEDesc() {
-	def title = ""
-    if (timeOnWEDay1) {
-    	title += "Weekend Day Schedule 1: ${humanReadableTime(timeOnWEDay1)} to ${humanReadableTime(timeOffWEDay1)}"
+def greyOut(on1, on2, on3, on4){
+	def result = ""
+    if (on1 || on2 || on3 || on4) {
+    	result = "complete"
     }
-    if (timeOnWEDay2) {
-    	title += "\nWeekend Day Schedule 2: ${humanReadableTime(timeOnWEDay2)} to ${humanReadableTime(timeOffWEDay2)}"
-    }
-    if (timeOnWENight1) {
-    	title += "\nWeekend Night Schedule 1: ${humanReadableTime(timeOnWENight1)} to ${humanReadableTime(timeOffWENight1)}"
-    }
-    if (timeOnWENight2) {
-    	title += "\nWeekend Night Schedule 2: ${humanReadableTime(timeOnWENight2)} to ${humanReadableTime(timeOffWENight2)}"
-    }
-    return title 
+    result
 }
 
 public humanReadableTime(dateTxt) {
 	new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", dateTxt).format("h:mm a", timeZone(dateTxt))
 }
 
-private dayOfWeek() {
-	def calendar = Calendar.getInstance()
-    calendar.setTimeZone(location.timeZone)
-    def today = calendar.get(Calendar.DAY_OF_WEEK)
-    return today
+public convertEpochString(dateTxt) {
+	long longDate = Long.valueOf(dateTxt).longValue()
+    new Date(longDate).format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", location.timeZone)
 }
+
+private getTitle(txt, scenario) {
+	def title = "Scenario ${scenario}"
+    if (txt) {
+    	title=txt
+    }
+    title	
+}
+
+private daysOk(dayList) {
+	def result = true
+	if (dayList) {
+		def df = new java.text.SimpleDateFormat("EEEE")
+		if (location.timeZone) {
+			df.setTimeZone(location.timeZone)
+		}
+		else {
+			df.setTimeZone(TimeZone.getTimeZone("America/New_York"))
+		}
+		def day = df.format(new Date())
+		result = dayList.contains(day)
+	}
+	result
+}
+
+private modeOk(modeList) {
+	def result=true
+    if (modeList){
+    	result = modeList.contains(location.mode)
+	}
+    result
+}
+
+private timeOk(starting, ending) {
+    if (starting && ending) {
+		def currTime = now()
+		def start = timeToday(starting).time
+		def stop = timeToday(ending).time
+        if (start < stop && start >= currTime) {
+        	state.data << "${start}${stop}"
+        }
+    }
+}
+
+def createDayArray() {
+	state.data = []
+    if (modeOk(modeA)) {
+        if (daysOk(daysA)){
+			timeOk(timeOnA1, timeOffA1)
+			timeOk(timeOnA2, timeOffA2)
+			timeOk(timeOnA3, timeOffA3)
+			timeOk(timeOnA4, timeOffA4)
+        }
+    }
+	if (modeOk(modeB)) {
+        if (daysOk(daysB)){
+			timeOk(timeOnB1, timeOffB1)
+            timeOk(timeOnB2, timeOffB2)
+            timeOk(timeOnB3, timeOffB3)
+            timeOk(timeOnB4, timeOffB4)
+        }
+    }
+    if (modeOk(modeC)) {
+        if (daysOk(daysC)){
+            timeOk(timeOnC1, timeOffC1)
+            timeOk(timeOnC2, timeOffC2)
+            timeOk(timeOnC3, timeOffC3)
+            timeOk(timeOnC4, timeOffC4)
+        }
+    }
+	if (modeOk(modeD)) {
+        if (daysOk(daysD)){
+           timeOk(timeOnD1, timeOffD1)
+           timeOk(timeOnD2, timeOffD2)
+           timeOk(timeOnD3, timeOffD3)
+           timeOk(timeOnD4, timeOffD4)        
+        }
+    }
+    state.data.sort()
+}
+
