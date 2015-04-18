@@ -29,8 +29,8 @@ preferences {
 	page(name: "mainPage")
 	page(name: "A_Scenario")
 	page(name: "B_Scenario")
-	page(name: "C_Scenario")
-	page(name: "D_Scenario")
+    page(name: "C_Scenario")
+    page(name: "D_Scenario")
 }
 
 def mainPage() {
@@ -168,7 +168,7 @@ def updated() {
 }
 
 def init() {
-    schedule ("2015-04-01T00:00:00.000-0700", midNight)
+    schedule ("2015-04-01T00:01:00.000-0700", midNight)
 	startProcess()
 }    
 
@@ -225,7 +225,7 @@ def schedDesc(on1, off1, on2, off2, on3, off3, on4, off4, modeList, dayList) {
 	def title = ""
 	def dayListClean = "On "
     def modeListClean ="Scenario runs in "
-    if (dayList) {
+    if (dayList && dayList.size() < 7) {
     	def dayListSize = dayList.size()
         for (dayName in dayList) {
         	dayListClean = "${dayListClean}"+"${dayName}"
@@ -295,7 +295,7 @@ public humanReadableTime(dateTxt) {
 
 public convertEpochString(dateTxt) {
 	long longDate = Long.valueOf(dateTxt).longValue()
-	new Date(longDate).format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", location.timeZone)
+    new Date(longDate).format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", location.timeZone)
 }
 
 private getTitle(txt, scenario) {
@@ -308,7 +308,7 @@ private getTitle(txt, scenario) {
 
 private daysOk(dayList) {
 	def result = true
-	if (dayList) {
+    if (dayList) {
 		def df = new java.text.SimpleDateFormat("EEEE")
 		if (location.timeZone) {
 			df.setTimeZone(location.timeZone)
@@ -319,7 +319,7 @@ private daysOk(dayList) {
 		def day = df.format(new Date())
 		result = dayList.contains(day)
 	}
-	result
+    result
 }
 
 private modeOk(modeList) {
@@ -332,7 +332,9 @@ private modeOk(modeList) {
 
 private timeOk(starting, ending) {
     if (starting && ending) {
-		def currTime = now()
+		log.debug starting
+        log.debug ending
+        def currTime = now()
 		def start = timeToday(starting).time
 		def stop = timeToday(ending).time
         if (start < stop && start >= currTime && stop>=currTime) {
@@ -345,7 +347,7 @@ def createDayArray() {
 	state.data = []
     if (modeOk(modeA)) {
         if (daysOk(daysA)){
-			timeOk(timeOnA1, timeOffA1)
+            timeOk(timeOnA1, timeOffA1)
 			timeOk(timeOnA2, timeOffA2)
 			timeOk(timeOnA3, timeOffA3)
 			timeOk(timeOnA4, timeOffA4)
