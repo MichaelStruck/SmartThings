@@ -3,6 +3,7 @@
  *
  *  Copyright 2015 Michael Struck
  *  Version 1.01 3/8/15
+ *  Version 1.02 4/24/15 added the ability to rename the app and limit it to certain modes
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -25,9 +26,9 @@ definition(
     author: "Michael Struck",
     description: "Ties a Hello, Home phrase to a switch's state. Perfect for use with IFTTT.",
     category: "Convenience",
-    iconUrl: "https://github.com/MichaelStruck/SmartThings/blob/master/IFTTT-SmartApps/App1.png",
-    iconX2Url: "https://github.com/MichaelStruck/SmartThings/blob/master/IFTTT-SmartApps/App1@2x.png",
-    iconX3Url: "https://github.com/MichaelStruck/SmartThings/blob/master/IFTTT-SmartApps/App1@2x.png")
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/IFTTT-SmartApps/App1.png",
+    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/IFTTT-SmartApps/App1@2x.png",
+    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/IFTTT-SmartApps/App1@2x.png")
 
 
 preferences {
@@ -39,6 +40,7 @@ def getPref() {
     section("Choose a switch to use...") {
 		input "controlSwitch", "capability.switch", title: "Switch", multiple: false, required: true
     }
+   
     def phrases = location.helloHome?.getPhrases()*.label
 		if (phrases) {
         	phrases.sort()
@@ -48,7 +50,11 @@ def getPref() {
 				input "phrase_off", "enum", title: "Switch is off", required: true, options: phrases
 			}
 		}
-	}
+		section([mobileOnly:true], "Options") {
+			label(title: "Assign a name", required: false)
+            mode title: "Set for specific mode(s)", required: false
+		}
+    }
 }
 
 def installed() {
@@ -69,3 +75,4 @@ def switchHandler(evt) {
     	location.helloHome.execute(settings.phrase_off)
     }
 }
+
