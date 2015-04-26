@@ -1,10 +1,11 @@
 /**
  *  Smart Nightlight +
- *	Version 1.11 
+ *	Version 1.12 
  *
  *  Author: SmartThings
  *  Modified by Michael Struck 4/1/15-Adds a setting for the lux setting threshold
- *	Update 1.11 4/8/15-eliminate unneeded code within the app.=
+ *	Update 1.11 4/8/15-eliminate unneeded code within the app.
+ *	Update 1.12 4/26/15-fixed some syntax issues.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -34,7 +35,7 @@ preferences {
 	section("Turn on when it's dark and there's movement..."){
 		input "motionSensor", "capability.motionSensor", title: "Where?"
 	}
-	section("And then off and a certain luminance or there's been no movement for..."){
+	section("And then off at a certain luminance or there's been no movement for..."){
 		input "delayMinutes", "number", title: "Minutes?"
 	}
 	section("Determine luminance using a light sensor (and lux threshold) or the local sunrise and sunset..."){
