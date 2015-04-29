@@ -41,7 +41,7 @@ def getPref() {
 			input "lightsOff", "capability.switch", multiple: true, title: "Lights/Switches", required: false
     	}
     	section([mobileOnly:true], "Options") {
-			label(title: "Assign a name", required: false, defaultValue: "Light When Unlocked")
+			label(title: "Assign a name", required: false, defaultValue: "Ivee Helper-Big Switch")
             mode title: "Set for specific mode(s)", required: false
 		}
     }
