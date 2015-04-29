@@ -1,22 +1,22 @@
 /**
- *  Smart Home Ventilation
- *  Version 2.00-4/19/15
+ *	Smart Home Ventilation
+ *	Version 2.10 - 4/27/15
  *
- *  Copyright 2015 Michael Struck
+ *	Copyright 2015 Michael Struck
  *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License. You may obtain a copy of the License at:
+ *	Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *	in compliance with the License. You may obtain a copy of the License at:
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *		http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
- *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
- *  for the specific language governing permissions and limitations under the License.
+ *	Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *	on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *	for the specific language governing permissions and limitations under the License.
  *
  */
  
 definition(
-    name: "Smart Home Ventilation",
+	name: "Smart Home Ventilation",
     namespace: "MichaelStruck",
     author: "Michael Struck",
     description: "Allows for setting up various schedule scenarios for turning on and off home ventilation switches.",
@@ -163,13 +163,15 @@ def installed() {
 
 def updated() {
     unschedule()
+    unsubscribe
     log.debug "Updated with settings: ${settings}"
     init()
 }
 
 def init() {
     schedule ("2015-04-01T00:01:00.000-0700", midNight)
-	startProcess()
+	subscribe(location, "mode", locationHandler)
+    startProcess()
 }    
 
 // Common methods
@@ -184,23 +186,37 @@ def startProcess () {
 }
 
 def startDay() {
-    def times = "${state.data.get(state.counter)}"
-    def startTime = times.substring(0,13)
-    def endTime = times.substring(13,26)
-    
-    def start = convertEpochString(startTime)
-    def stop = convertEpochString(endTime)
-    
+	def start = convertEpoch(state.data[state.counter].start)
+	def stop = convertEpoch(state.data[state.counter].stop)
+      
     runOnce(start, turnOnSwitch, [overwrite: true])
     runOnce(stop, incDay, [overwrite: true])
 }
 
 def incDay() {
     turnOffSwitch()
-    state.counter = state.counter + 1
-    if (state.counter < state.dayCount) {
-    	startDay()
+    if (state.modeChange) {
+    	startProcess()
     }
+    else {
+    	state.counter = state.counter + 1
+    	if (state.counter < state.dayCount) {
+    		startDay()
+    	}
+    }
+}
+
+def locationHandler(evt) {
+	def result = false
+    state.modeChange = true
+    switches.each {
+    	if (it.currentValue("switch")=="on"){
+           result = true
+        }
+    }
+	if (!result) {
+    	startProcess()
+    }	
 }
 
 def midNight(){
@@ -293,9 +309,8 @@ public humanReadableTime(dateTxt) {
 	new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", dateTxt).format("h:mm a", timeZone(dateTxt))
 }
 
-public convertEpochString(dateTxt) {
-	long longDate = Long.valueOf(dateTxt).longValue()
-    new Date(longDate).format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", location.timeZone)
+public convertEpoch(epochDate) {
+    new Date(epochDate).format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", location.timeZone)
 }
 
 private getTitle(txt, scenario) {
@@ -323,7 +338,7 @@ private daysOk(dayList) {
 }
 
 private modeOk(modeList) {
-	def result=true
+	def result = true
     if (modeList){
     	result = modeList.contains(location.mode)
 	}
@@ -332,19 +347,18 @@ private modeOk(modeList) {
 
 private timeOk(starting, ending) {
     if (starting && ending) {
-		log.debug starting
-        log.debug ending
         def currTime = now()
 		def start = timeToday(starting).time
 		def stop = timeToday(ending).time
         if (start < stop && start >= currTime && stop>=currTime) {
-        	state.data << "${start}${stop}"
+        	state.data << [start:start, stop:stop]
         }
     }
 }
 
 def createDayArray() {
-	state.data = []
+	state.modeChange = false
+    state.data = []
     if (modeOk(modeA)) {
         if (daysOk(daysA)){
             timeOk(timeOnA1, timeOffA1)
@@ -377,7 +391,5 @@ def createDayArray() {
            timeOk(timeOnD4, timeOffD4)        
         }
     }
-    state.data.sort()
+    state.data.sort{it.start}
 }
-
-
