@@ -169,7 +169,9 @@ def updated() {
 }
 
 def init() {
-    schedule ("2015-04-01T00:01:00.000-0700", midNight)
+   
+	def midnightTime = timeToday("2000-01-01T00:01:00.999-0000", location.timeZone)
+    schedule (midnightTime, midNight)
 	subscribe(location, "mode", locationHandler)
     startProcess()
 }    
