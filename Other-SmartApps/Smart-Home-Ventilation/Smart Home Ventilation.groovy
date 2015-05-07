@@ -16,7 +16,7 @@
  */
  
 definition(
-	name: "Smart Home Ventilation",
+    name: "Smart Home Ventilation",
     namespace: "MichaelStruck",
     author: "Michael Struck",
     description: "Allows for setting up various schedule scenarios for turning on and off home ventilation switches.",
@@ -29,8 +29,8 @@ preferences {
 	page(name: "mainPage")
 	page(name: "A_Scenario")
 	page(name: "B_Scenario")
-    page(name: "C_Scenario")
-    page(name: "D_Scenario")
+    	page(name: "C_Scenario")
+	 page(name: "D_Scenario")
 }
 
 def mainPage() {
@@ -163,13 +163,13 @@ def installed() {
 
 def updated() {
     unschedule()
+    turnOffSwitch() //Turn off all switches if the schedules are changed while in mid-schedule
     unsubscribe
     log.debug "Updated with settings: ${settings}"
     init()
 }
 
 def init() {
-   
 	def midnightTime = timeToday("2000-01-01T00:01:00.999-0000", location.timeZone)
     schedule (midnightTime, midNight)
 	subscribe(location, "mode", locationHandler)
