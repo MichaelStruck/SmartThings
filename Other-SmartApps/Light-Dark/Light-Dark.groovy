@@ -4,7 +4,7 @@
  *
  *	1.01 Added a verify so they event has to trip trice in a row to do the action.
  *	1.02 Added custom icon
- *  1.03 Revision to interface for better flow
+ *  	1.03 Revision to interface for better flow
  *	1.04 Added dimmer switches/levels
  *
  *
