@@ -1,10 +1,11 @@
 /**
  *  Light > Dark
- *  Version 1.03 4/11/15
+ *  Version 1.04 5/5/15
  *
- *  1.01 Added a verify so they event has to trip trice in a row to do the action.
- *  1.02 Added custom icon
+ *	1.01 Added a verify so they event has to trip trice in a row to do the action.
+ *	1.02 Added custom icon
  *  1.03 Revision to interface for better flow
+ *	1.04 Added dimmer switches/levels
  *
  *
  *	Using code from SmartThings Light Up The Night App and the Sunrise/Sunset app
@@ -42,12 +43,16 @@ def getPref() {
 		}
 		section("Turn on lights/set mode when brightness below specific luminosity...") {
 			input "lightsOn", "capability.switch", multiple: true, title: "Lights/Switches", required: true
-			input "luxOn", "number", title: "Lux Setting", required: true, description:30
+			input "dimmersOn","capability.switchLevel", multiple: true, required: false, title: "Dimmers"
+            input "dimmerLevelOn", "enum", multiple:false, required: false, options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]], title: "Turn on dimmers to this level (100% default)"
+            input "luxOn", "number", title: "Lux Setting", required: true, description:30
         	input "onMode", "mode", title: "Change mode to?", required: false
 		}
     	section("Optionally, turn off lights/set mode when brightness above specific luminosity...") {
 			input "lightsOff", "capability.switch", multiple: true, title: "Lights/Switches", required: false
-			input "luxOff", "number", title: "Lux Setting", required: false, description:50
+			input "dimmersOff","capability.switchLevel", multiple: true, title: "Dimmers", required: false
+            input "dimmerLevelOff", "enum", multiple:false, required: false, options: [[0:"Off"],[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]], title: "Turn off dimmers to this level (0% default)"
+            input "luxOff", "number", title: "Lux Setting", required: false, description:50
         	input "offMode", "mode", title: "Change mode to?", required: false
         }
         section([mobileOnly:true], "Options") {
@@ -69,13 +74,20 @@ def updated() {
 }
 
 def illuminanceHandler(evt) {
-	def lastStatus = state.lastStatus
-    def luxVerify = state.luxVerify
-    log.debug "$luxVerify"
-	if (lastStatus != "on" && evt.integerValue < luxOn) {
+    def dimLevelOn = dimmerLevelOn as Integer
+    def dimLevelOff = dimmerLevelOff as Integer
+    if (!dimLevelOn) {
+    	dimLevelOn = 100
+    }
+    if (!dimLevelOff) {
+    	dimLevelOff = 0
+    }
+    log.debug "${state.luxVerify}"
+	if (state.lastStatus != "on" && evt.integerValue < luxOn) {
 		// Prevent false positives by having the sensor trip twice before firing event 
-		if (luxVerify == "TurnOn") {
+		if (state.luxVerify == "TurnOn") {
         	lightsOn.on()
+            dimmersOn.setLevel(dimLevelOn)
         	state.lastStatus = "on"
  	        changeMode(onMode)
         } 
@@ -83,10 +95,11 @@ def illuminanceHandler(evt) {
         	state.luxVerify = "TurnOn"
         }
 	}
-	else if (lightsOff && lastStatus != "off" && evt.integerValue > luxOff) {
+	else if (lightsOff && state.lastStatus != "off" && evt.integerValue > luxOff) {
 		// Prevent false positives by having the sensor trip twice before firing event 
-		if (luxVerify == "TurnOff") {
+		if (state.luxVerify == "TurnOff") {
 			lightsOff.off()
+            dimmersOff.setLevel(dimLevelOff)
         	changeMode(offMode)
         	state.lastStatus = "off"
 		} 
