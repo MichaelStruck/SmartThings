@@ -4,6 +4,7 @@
  *	Version 1.1 3/22/15 -  Adds a timer to turn off the lights after a certain amount of time
  *	Version 1.11 3/29/15 Fixes a small scheduling issue
  *	Version 1.12 4/9/15	Added an options section
+ *	Version 1.13 4/22/15 Added a door open option in addition to just a lock
  *
  *
  *  Copyright 2015 Michael Struck
@@ -36,18 +37,22 @@ preferences {
 def getPref() {
     dynamicPage(name: "getPref", install:true, uninstall: true) {
     	section("When this lock is unlocked...") {
-			input "lock1","capability.lock", title: "Lock", multiple: false
+			input "lock1","capability.lock", title: "Lock", multiple: false, required: false
 		}
+        section("Or when these door(s) open...") {
+        	input "contact1", "capability.contactSensor", title: "Door Sensor(s)", multiple: true, required: false
+        }
 		section("Turn on these lights/switches...") {
 			input "lightsOn", "capability.switch", multiple: true, title: "Lights/Switches", required: true
 		}
     	section("Use this light sensor to determine when it is dark (enter 10,000 to have the light come on regardless of lighting)") {
 			input "lightSensor", "capability.illuminanceMeasurement", title: "Light Sensor", required: false, multiple: false
-       		input "luxOn", "number", title: "Lux Threshold", required: true, description:0
+       		input "luxOn", "number", title: "Lux Threshold", required: false, description:0 
 		}
    		section("Turn off light(s) after this many minutes (Enter 0 to not set timer)..."){
 			input "delayMinutes", "number", title: "Minutes"
-		}
+        	input "onClose","bool", title: "Start timer only after door(s) lock/close?"
+        }
 		section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Light When Unlocked")
             mode title: "Set for specific mode(s)", required: false
@@ -67,18 +72,23 @@ def updated() {
 }
 
 def initialize() {
-	subscribe(lock1, "lock", eventHandler)
+	subscribe(lock1, "lock.unlocked", eventHandler)
+    subscribe(contact1, "contact.open", eventHandler)
+    if (onClose && delayMinutes) {
+    	subscribe(lock1, "lock.locked", startTimer)
+        subscribe(contact1, "contact.closed", startTimer)
+    }
 }
 
 def eventHandler(evt) {
 	def oktoFire=true
-    if (lightSensor.currentIlluminance > luxOn){
+    if (lightSensor && lightSensor.currentIlluminance > luxOn){
 		oktoFire=false
     }
-    if (evt.value == "unlocked" && oktoFire){
+    if (oktoFire){
   		lightsOn.on()
-        if (delayMinutes) {
-        	runIn(delayMinutes * 60, turnOffAfterDelay, [overwrite: false])
+        if (delayMinutes && !onClose) {
+        	startTimer()
     	}	
 	}
 }
@@ -86,4 +96,8 @@ def eventHandler(evt) {
 def turnOffAfterDelay() {
 	log.debug "Turning off lights"
 	lightsOn.off()
+}
+
+def startTimer(evt) {
+		runIn(delayMinutes * 60, turnOffAfterDelay, [overwrite: true])
 }
