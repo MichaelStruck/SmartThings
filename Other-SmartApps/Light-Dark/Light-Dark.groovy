@@ -1,11 +1,11 @@
 /**
  *  Light > Dark
- *  Version 1.04 5/5/15
+ *  Version 1.04 5/8/15
  *
  *	1.01 Added a verify so they event has to trip trice in a row to do the action.
  *	1.02 Added custom icon
  *  	1.03 Revision to interface for better flow
- *	1.04 Added dimmer switches/levels
+ *	1.04 Added dimmer switches/levels, reorganized interface and added time restrictions options
  *
  *
  *	Using code from SmartThings Light Up The Night App and the Sunrise/Sunset app
@@ -30,7 +30,8 @@ definition(
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Light-Dark/LockDark.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Light-Dark/LockDark@2x.png",
-    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Light-Dark/LockDark@2x.png")
+    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Light-Dark/LockDark@2x.png"
+    )
 
 preferences {
 	page(name: "getPref")
@@ -38,74 +39,78 @@ preferences {
 
 def getPref() {
     dynamicPage(name: "getPref", install:true, uninstall: true) {
-    	section("Monitor the luminosity...") {
+    	section("Monitor the luminosity and set brightness thresholds...") {
 			input "lightSensor", "capability.illuminanceMeasurement", title: "Light Sensor"
-		}
-		section("Turn on lights/set mode when brightness below specific luminosity...") {
-			input "lightsOn", "capability.switch", multiple: true, title: "Lights/Switches", required: true
+			input "luxOn", "number", title: "Lower lux threshold", required: false, description:30
+            input "luxOff", "number", title: "Upper lux threshold", required: false
+        }
+		section("Turn on lights/set mode when brightness below lower lux threshold...") {
+			input "lightsOn", "capability.switch", multiple: true, title: "Lights/Switches", required: false
 			input "dimmersOn","capability.switchLevel", multiple: true, required: false, title: "Dimmers"
             input "dimmerLevelOn", "enum", multiple:false, required: false, options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]], title: "Turn on dimmers to this level (100% default)"
-            input "luxOn", "number", title: "Lux Setting", required: true, description:30
         	input "onMode", "mode", title: "Change mode to?", required: false
 		}
-    	section("Optionally, turn off lights/set mode when brightness above specific luminosity...") {
+    	section("Optionally, turn off lights/set mode when brightness above upper lux threshold...") {
 			input "lightsOff", "capability.switch", multiple: true, title: "Lights/Switches", required: false
 			input "dimmersOff","capability.switchLevel", multiple: true, title: "Dimmers", required: false
             input "dimmerLevelOff", "enum", multiple:false, required: false, options: [[0:"Off"],[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]], title: "Turn off dimmers to this level (0% default)"
-            input "luxOff", "number", title: "Lux Setting", required: false, description:50
         	input "offMode", "mode", title: "Change mode to?", required: false
         }
+        
         section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Light > Dark")
-		    mode title: "Set for specific mode(s)", required: false
+		    href "timeIntervalInput", title: "Set for specific times", description: getTimeLabel(timeStart, timeEnd), state: greyedOutTime(timeStart, timeEnd), refreshAfterSelection:true
+            mode title: "Set for specific mode(s)", required: false
         }
 	}
 }
 
 def installed() {
 	log.debug "Installed with settings: ${settings}"
-    subscribe(lightSensor, "illuminance", illuminanceHandler)
+    init()
 }
 
 def updated() {
 	log.debug "Updated with settings: ${settings}"
     unsubscribe()
-	subscribe(lightSensor, "illuminance", illuminanceHandler)
+	init()
 }
 
+def init(){
+    subscribe(lightSensor, "illuminance", illuminanceHandler)
+}
+//Handlers
 def illuminanceHandler(evt) {
-    def dimLevelOn = dimmerLevelOn as Integer
-    def dimLevelOff = dimmerLevelOff as Integer
-    if (!dimLevelOn) {
-    	dimLevelOn = 100
-    }
-    if (!dimLevelOff) {
-    	dimLevelOff = 0
-    }
-    log.debug "${state.luxVerify}"
-	if (state.lastStatus != "on" && evt.integerValue < luxOn) {
-		// Prevent false positives by having the sensor trip twice before firing event 
-		if (state.luxVerify == "TurnOn") {
-        	lightsOn.on()
-            dimmersOn.setLevel(dimLevelOn)
-        	state.lastStatus = "on"
+    if (getTimeOk()) {
+		def dimLevelOn = dimmerLevelOn as Integer
+   		def dimLevelOff = dimmerLevelOff as Integer
+		def lumOn = luxOn
+        	def lumOff = luxOff
+        if (!lumOn) {
+        	lumOn=30
+            }
+        if (!lumOff) {
+        	lumOff=lumOn
+            }
+        if (!dimLevelOn) {
+    		dimLevelOn = 100
+    	}
+    	if (!dimLevelOff) {
+    		dimLevelOff = 0
+    	}
+    	if (!state.lastStatus && evt.integerValue < lumOn) {
+           	lightsOn?.on()
+            dimmersOn?.setLevel(dimLevelOn)
+        	state.lastStatus = "true"
  	        changeMode(onMode)
+            log.debug state.lastStatus
         } 
-        else {
-        	state.luxVerify = "TurnOn"
-        }
-	}
-	else if (lightsOff && state.lastStatus != "off" && evt.integerValue > luxOff) {
-		// Prevent false positives by having the sensor trip twice before firing event 
-		if (state.luxVerify == "TurnOff") {
-			lightsOff.off()
-            dimmersOff.setLevel(dimLevelOff)
-        	changeMode(offMode)
-        	state.lastStatus = "off"
+		if (state.lastStatus && evt.integerValue > lumOff) {
+           	lightsOff?.off()
+           	dimmersOff?.setLevel(dimLevelOff)
+        	state.lastStatus = "false"
+            changeMode(offMode)
 		} 
-        else {
-        	state.luxVerify = "TurnOff"
-        }
 	}
 }
 
@@ -120,3 +125,53 @@ def changeMode(newMode) {
 	}
 }
 
+//Common Methods
+
+def getTimeLabel(start, end){
+	def timeLabel = "Tap to set"
+	
+    if(start && end){
+    	timeLabel = "Between" + " " + hhmm(start) + " "  + "and" + " " +  hhmm(end)
+    }
+    else if (start) {
+		timeLabel = "Start at" + " " + hhmm(start)
+    }
+    else if(end){
+    timeLabel = "End at" + hhmm(end)
+    }
+	timeLabel	
+}
+
+def greyedOutTime(start, end){
+	def result = ""
+    if (start || end) {
+    	result = "complete"	
+    }
+    result
+}
+
+private hhmm(time, fmt = "h:mm a")
+{
+	def t = timeToday(time, location.timeZone)
+	def f = new java.text.SimpleDateFormat(fmt)
+	f.setTimeZone(location.timeZone ?: timeZone(time))
+	f.format(t)
+}
+
+private getTimeOk() {
+	def result = true
+	if (timeStart && timeEnd) {
+		def currTime = now()
+		def start = timeToday(timeStart).time
+		def stop = timeToday(timeEnd).time
+		result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start || currTime <= stop
+	}
+	result
+}
+
+page(name: "timeIntervalInput", title: "Run only during a certain time", refreshAfterSelection:true) {
+		section {
+			input "timeStart", "time", title: "Starting", required: false, refreshAfterSelection:true
+			input "timeEnd", "time", title: "Ending", required: false, refreshAfterSelection:true
+		}
+        }
