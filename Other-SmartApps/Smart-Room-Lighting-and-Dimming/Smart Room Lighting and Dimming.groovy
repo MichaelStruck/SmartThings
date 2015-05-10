@@ -45,7 +45,7 @@ definition(
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Room-Lighting-and-Dimming/SmartLight.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Room-Lighting-and-Dimming/SmartLight@2x.png",
-    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Room-Lighting-and-Dimming/SmartLight@2x.png"
+	iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Room-Lighting-and-Dimming/SmartLight@2x.png"
     )
 
 preferences {
@@ -97,12 +97,11 @@ def pageSetupScenarioA() {
             
 	section("Restrictions") {            
         input name: "A_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
-        input name: "A_switchDisable", type:"bool", title: "Stop triggering if switches are pressed...", defaultValue:false
+        input name: "A_switchDisable", type:"bool", title: "Stop triggering if physical switches are pressed...", defaultValue:false
         href "timeIntervalInputA", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state: greyedOutTime(A_timeStart, A_timeEnd), refreshAfterSelection: true
         input name:  "A_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
         input name: "A_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
 	}
-
 	section("Help") {
     	paragraph helpText()
     	}
@@ -136,7 +135,7 @@ def pageSetupScenarioB() {
             
 	section("Restrictions") {            
         input name: "B_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
-        input name: "B_switchDisable", type:"bool", title: "Stop triggering if switches are pressed...", defaultValue:false
+        input name: "B_switchDisable", type:"bool", title: "Stop triggering if physical switches are pressed...", defaultValue:false
         href "timeIntervalInputB", title: "Only during a certain time...", description: getTimeLabel(B_timeStart, B_timeEnd), state: greyedOutTime(B_timeStart, B_timeEnd), refreshAfterSelection:true
         input name: "B_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
         input name: "B_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
@@ -175,7 +174,7 @@ def pageSetupScenarioC() {
             
 	section("Restrictions") {            
         input name: "C_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
-        input name: "C_switchDisable", type:"bool", title: "Stop triggering if switches are pressed...", defaultValue:false
+        input name: "C_switchDisable", type:"bool", title: "Stop triggering if physical switches are pressed...", defaultValue:false
         href "timeIntervalInputC", title: "Only during a certain time...", description: getTimeLabel(C_timeStart, C_timeEnd), state: greyedOutTime(C_timeStart, C_timeEnd), refreshAfterSelection:true
         input name: "C_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
         input name: "C_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
@@ -214,7 +213,7 @@ def pageSetupScenarioD() {
             
 	section("Restrictions") {            
         input name: "D_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
-        input name: "D_switchDisable", type:"bool", title: "Stop triggering if switches are pressed...", defaultValue:false
+        input name: "D_switchDisable", type:"bool", title: "Stop triggering if physical switches are pressed...", defaultValue:false
         href "timeIntervalInputD", title: "Only during a certain time...", description: getTimeLabel(D_timeStart, D_timeEnd), state: greyedOutTime(D_timeStart, D_timeEnd), refreshAfterSelection:true
         input name: "D_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
         input name: "D_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
@@ -296,7 +295,6 @@ if (!A_luxSensors || (A_luxSensors.latestValue("illuminance") <= A_turnOnLux)){
                		levelSetOn = 100
                	}
     		}
-   			log.debug levelSetOn
         	A_dimmers?.setLevel(levelSetOn)
         	A_switches?.on()
         	if (A_triggerOnce){
@@ -378,7 +376,6 @@ if (!B_luxSensors || (B_luxSensors.latestValue("illuminance") <= B_turnOnLux)){
                		levelSetOn = 100
                	}
     		}
-   			log.debug levelSetOn
         	B_dimmers?.setLevel(levelSetOn)
         	B_switches?.on()
         	if (B_triggerOnce){
@@ -410,7 +407,6 @@ else {
     			runOnce (getMidnight(), midNightReset)
     		}
         }
-	
 }
 }
 }
@@ -461,7 +457,6 @@ if (!C_luxSensors || (C_luxSensors.latestValue("illuminance") <= C_turnOnLux)){
                		levelSetOn = 100
                	}
     		}
-   			log.debug levelSetOn
         	C_dimmers?.setLevel(levelSetOn)
         	C_switches?.on()
         	if (C_triggerOnce){
@@ -544,7 +539,6 @@ if (!D_luxSensors || (D_luxSensors.latestValue("illuminance") <= D_turnOnLux)){
                		levelSetOn = 100
                	}
     		}
-   			log.debug levelSetOn
         	D_dimmers?.setLevel(levelSetOn)
         	D_switches?.on()
         	if (D_triggerOnce){
@@ -621,6 +615,15 @@ private def helpText() {
         "to modes or between certain times and turned off after motion " +
         "motion stops. Scenarios can also be limited to running once " +
         "or to stop running if the physical switches are pressed."
+	text
+}
+
+private def helpDimmers() {
+	def text =
+    	"Enter the 'on' or 'off' levels for the dimmers. You can choose to have the " +
+        "dimmers' level calculated between the 'on' and 'off' settings " +
+        "based on the current lux value. In other words, as it gets " +
+        "darker, the brighter the light level will be when motion is sensed."
 	text
 }
 
@@ -774,30 +777,42 @@ page(name: "levelInputA", title: "Set dimmers options...", refreshAfterSelection
 		section {
 			input name: "A_levelDimOn", type: "number", title: "On Level", multiple: false, required: false, refreshAfterSelection:true
         	input name: "A_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false, refreshAfterSelection:true
-			input name: "A_calcOn",type: "bool",title: "Calculate 'on' level via lux and value above", defaultValue: false
+			input name: "A_calcOn",type: "bool",title: "Calculate 'on' level via lux", defaultValue: false
         }
+		section("Help") {
+    		paragraph helpDimmers()
+    	}
 }
 
 page(name: "levelInputB", title: "Set dimmers options...", refreshAfterSelection:true) {
 		section {
 			input name: "B_levelDimOn", type: "number", title: "On Level", multiple: false, required: false, refreshAfterSelection:true
         	input name: "B_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false, refreshAfterSelection:true
-            input name: "B_calcOn",type: "bool",title: "Calculate 'on' level via lux and value above", defaultValue: false
+            input name: "B_calcOn",type: "bool",title: "Calculate 'on' level via lux", defaultValue: false
         }
+		section("Help") {
+    		paragraph helpDimmers()
+    	}
 }
 
 page(name: "levelInputC", title: "Set dimmers options...", refreshAfterSelection:true) {
 		section {
 			input name: "C_levelDimOn", type: "number", title: "On Level", multiple: false, required: false, refreshAfterSelection:true
         	input name: "C_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false, refreshAfterSelection:true
-            input name: "C_calcOn",type: "bool",title: "Calculate 'on' level via lux and value above", defaultValue: false
+            input name: "C_calcOn",type: "bool",title: "Calculate 'on' level via lux", defaultValue: false
         }
+		section("Help") {
+    		paragraph helpDimmers()
+    	}
 }
 
 page(name: "levelInputD", title: "Set dimmers options...", refreshAfterSelection:true) {
 		section {
 			input name: "D_levelDimOn", type: "number", title: "On Level", multiple: false, required: false, refreshAfterSelection:true
         	input name: "D_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false, refreshAfterSelection:true
-            input name: "D_calcOn",type: "bool",title: "Calculate 'on' level via lux and value above", defaultValue: false
+            input name: "D_calcOn",type: "bool",title: "Calculate 'on' level via lux", defaultValue: false
         }
+		section("Help") {
+    		paragraph helpDimmers()
+    	}
 }
