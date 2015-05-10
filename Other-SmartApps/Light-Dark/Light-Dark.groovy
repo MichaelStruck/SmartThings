@@ -1,6 +1,6 @@
 /**
  *  Light > Dark
- *  Version 1.04 5/8/15
+ *  Version 1.04 5/9/15
  *
  *	1.01 Added a verify so they event has to trip trice in a row to do the action.
  *	1.02 Added custom icon
@@ -8,7 +8,7 @@
  *	1.04 Added dimmer switches/levels, reorganized interface and added time restrictions options
  *
  *
- *	Using code from SmartThings Light Up The Night App and the Sunrise/Sunset app
+ *  Using code from SmartThings Light Up The Night App and the Sunrise/Sunset app
  *  Copyright 2015 Michael Struck
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -41,7 +41,7 @@ def getPref() {
     dynamicPage(name: "getPref", install:true, uninstall: true) {
     	section("Monitor the luminosity and set brightness thresholds...") {
 			input "lightSensor", "capability.illuminanceMeasurement", title: "Light Sensor"
-			input "luxOn", "number", title: "Lower lux threshold", required: false, description:30
+			input "luxOn", "number", title: "Lower lux threshold (default=100)", required: false, description:100
             input "luxOff", "number", title: "Upper lux threshold", required: false
         }
 		section("Turn on lights/set mode when brightness below lower lux threshold...") {
@@ -56,7 +56,6 @@ def getPref() {
             input "dimmerLevelOff", "enum", multiple:false, required: false, options: [[0:"Off"],[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]], title: "Turn off dimmers to this level (0% default)"
         	input "offMode", "mode", title: "Change mode to?", required: false
         }
-        
         section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Light > Dark")
 		    href "timeIntervalInput", title: "Set for specific times", description: getTimeLabel(timeStart, timeEnd), state: greyedOutTime(timeStart, timeEnd), refreshAfterSelection:true
@@ -77,38 +76,45 @@ def updated() {
 }
 
 def init(){
+	state.dimLevelOn = dimmerLevelOn as Integer
+	state.dimLevelOff = dimmerLevelOff as Integer
+    	state.lumOn = luxOn
+    	state.lumOff = luxOff
+    
+    if (!luxOn) {
+       	state.lumOn=100
+    } 
+    if (!luxOff) {
+       	state.lumOff = state.lumOn
+    }
+   	if (!state.dimLevelOn) {
+		state.dimLevelOn = 100
+   	}
+   	if (!state.dimLevelOff) {
+   		state.dimLevelOff = 0
+   	}
+    if (lightSensor.latestValue("illuminance") < state.lumOn) {
+    	state.lastStatus = "on"
+    }
+    else {
+    	state.lastStatus = "off"
+    }
     subscribe(lightSensor, "illuminance", illuminanceHandler)
 }
 //Handlers
 def illuminanceHandler(evt) {
+  
     if (getTimeOk()) {
-		def dimLevelOn = dimmerLevelOn as Integer
-   		def dimLevelOff = dimmerLevelOff as Integer
-		def lumOn = luxOn
-        	def lumOff = luxOff
-        if (!lumOn) {
-        	lumOn=30
-            }
-        if (!lumOff) {
-        	lumOff=lumOn
-            }
-        if (!dimLevelOn) {
-    		dimLevelOn = 100
-    	}
-    	if (!dimLevelOff) {
-    		dimLevelOff = 0
-    	}
-    	if (!state.lastStatus && evt.integerValue < lumOn) {
+        if (state.lastStatus == "off" && evt.integerValue < state.lumOn) {
            	lightsOn?.on()
-            dimmersOn?.setLevel(dimLevelOn)
-        	state.lastStatus = "true"
+            dimmersOn?.setLevel(state.dimLevelOn)
+        	state.lastStatus = "on"
  	        changeMode(onMode)
-            log.debug state.lastStatus
         } 
-		if (state.lastStatus && evt.integerValue > lumOff) {
+		if (state.lastStatus  == "on" && evt.integerValue > state.lumOff) {
            	lightsOff?.off()
-           	dimmersOff?.setLevel(dimLevelOff)
-        	state.lastStatus = "false"
+           	dimmersOff?.setLevel(state.dimLevelOff)
+        	state.lastStatus = "off"
             changeMode(offMode)
 		} 
 	}
