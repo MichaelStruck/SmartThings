@@ -4,11 +4,11 @@
  *
  *	1.01 Added a verify so they event has to trip trice in a row to do the action.
  *	1.02 Added custom icon
- *  	1.03 Revision to interface for better flow
+ *  1.03 Revision to interface for better flow
  *	1.04 Added dimmer switches/levels, reorganized interface and added time restrictions options
  *
  *
- *  Using code from SmartThings Light Up The Night App and the Sunrise/Sunset app
+ *	Using code from SmartThings Light Up The Night App and the Sunrise/Sunset app
  *  Copyright 2015 Michael Struck
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -76,13 +76,13 @@ def updated() {
 }
 
 def init(){
-	state.dimLevelOn = dimmerLevelOn as Integer
+ 	state.dimLevelOn = dimmerLevelOn as Integer
 	state.dimLevelOff = dimmerLevelOff as Integer
-    	state.lumOn = luxOn
-    	state.lumOff = luxOff
+    state.lumOn = luxOn
+    state.lumOff = luxOff
     
     if (!luxOn) {
-       	state.lumOn=100
+       	state.lumOn = 100
     } 
     if (!luxOff) {
        	state.lumOff = state.lumOn
