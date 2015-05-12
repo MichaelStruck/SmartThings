@@ -1,6 +1,6 @@
 /**
  *  Smart Water Heater
- *  Version 1.21 5/11/2015
+ *  Version 1.3 5/11/2015
  *
  *  Version 1.01-Initial release
  *  Version 1.1 added a function to turn water heater back on if someone comes home early.
