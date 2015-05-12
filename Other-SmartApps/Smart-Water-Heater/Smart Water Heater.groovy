@@ -1,12 +1,13 @@
 /**
  *  Smart Water Heater
- *  Version 1.21 4/10/2015
+ *  Version 1.21 5/11/2015
  *
  *  Version 1.01-Initial release
  *  Version 1.1 added a function to turn water heater back on if someone comes home early.
  *  Version 1.11 Revised the interface for better flow
  *  Version 1.2 Revised the interface even more for better flow
  *  Version 1.21 Further interface revision
+ *  Version 1.3 Added the option to turn off the water heater early if everyone leaves before the scheduled time.
  * 
  *
  *  Copyright 2015 Michael Struck
@@ -46,7 +47,8 @@ def mainPage() {
     	section("Daytime Options"){
         	href(name: "toDaySchedule", page: "daySchedule", title: "Schedule", description: dayDescription(), state: "complete")
         	input "presence1", "capability.presenceSensor", title: "Remain on if any of these people are home", multiple: true, required: false
-        	input "exceptionArrive", "bool", title: "Turn on when someone above arrives home early", defaultValue: "true"
+        	input "exceptionLeave", "bool", title: "Turn off when everyone leaves before the scheduled turn off time", defaultValue: "true"
+            input "exceptionArrive", "bool", title: "Turn on when someone arrives home early", defaultValue: "true"
         	input "weekendRun", "bool", title: "Run daytime schedule during the weekend", defaultValue: "false"
 		}
     	section("Nighttime Options"){
@@ -90,8 +92,8 @@ def updated() {
 }
 
 def init () {
-	if (exceptionArrive){
-    	subscribe(presence1, "presence", homeEarly)
+	if (exceptionArrive || exceptionLeave){
+    	subscribe(presence1, "presence", presenceHandler)
     }
     schedule(timeOffDay, "turnOffDay")
 	schedule(timeOnDay, "turnOnDay")
@@ -138,11 +140,15 @@ def turnOnSwitch() {
         log.debug "Water heater turned on."
 }
 
-def homeEarly(evt) {
-    def someoneArrived = presence1.find{it.currentPresence == "present"}
-    if (someoneArrived && state.status=="Day off"){
+def presenceHandler(evt) {
+    if (!everyoneGone() && state.status=="Day off"){
     	log.debug "Presence detected, turning water heater back on"
     	turnOnDay()
+    }
+
+	if (everyoneGone() && checkTime()){
+    	log.debug "Everyone has left early, turning water heater off"
+		turnOffDay()
     }
 }
 
@@ -152,7 +158,7 @@ private everyoneGone() {
     if (someoneHome) {
 	   	result = false
     }
-	return result
+	result
 }
 
 
@@ -161,7 +167,7 @@ def nightDescription() {
     if (timeOffNight) {
     	title += "Turn off at ${humanReadableTime(timeOffNight)} then turn back on at ${humanReadableTime(timeOnNight)}"
     }
-    return title
+    title
 }
 
 def dayDescription() {
@@ -169,7 +175,7 @@ def dayDescription() {
     if (timeOffDay) {
     	title += "Turn off at ${humanReadableTime(timeOffDay)} then turn back on at ${humanReadableTime(timeOnDay)}"
     }
-    return title
+    title
 }
 
 public smartThingsDateFormat() { "yyyy-MM-dd'T'HH:mm:ss.SSSZ" }
@@ -183,12 +189,22 @@ private isWeekend() {
     if (dayOfWeek() == 1 || dayOfWeek() == 7) {
     	isTheWeekend = true
     } 
-    return isTheWeekend
+    isTheWeekend
 }
 
 public dayOfWeek() {
 	def calendar = Calendar.getInstance()
     calendar.setTimeZone(location.timeZone)
     def today = calendar.get(Calendar.DAY_OF_WEEK)
-    return today
+    today
+}
+
+private checkTime() {
+	def result = true
+	if (timeOffDay) {
+		def currTime = now()
+		def start = timeToday(timeOffDay).time
+		result = currTime < start
+	}
+	result
 }
