@@ -2,6 +2,7 @@
  *  Smart Room Lighting and Dimming
  *
  *  Version - 1.0 5/4/15
+ *  Version - 1.01 5/13/15 Code clean up for timeframe conditional check
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -281,8 +282,10 @@ if (!A_luxSensors || (A_luxSensors.latestValue("illuminance") <= A_turnOnLux)){
     if (A_motion.latestValue("motion").contains("active")) {
          if ((!A_triggerOnce || (A_triggerOnce && !state.A_triggered)) && (!A_switchDisable || (A_switchDisable && !state.A_triggered))) {
         	log.debug("Motion Detected Running '${ScenarioNameA}'")
+            
             def levelSetOn = A_levelDimOn
             def levelSetOff = A_levelDimOff
+            
             if (!levelSetOn) {
             	levelSetOn = 100
             }
@@ -678,7 +681,7 @@ private getTimeOk(startTime, endTime) {
 		def currTime = now()
 		def start = timeToday(startTime).time
 		def stop = timeToday(endTime).time
-		result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start || currTime <= stop
+		result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start
 	}
 	result
 }
