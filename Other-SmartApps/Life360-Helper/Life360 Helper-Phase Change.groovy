@@ -1,8 +1,9 @@
 /**
  *  Life360 Helper-Phrase Change
  *  Version 1.00 3/20/15
- *  Version 1.01 3/24/15 - Updated with more effecient code
+ *	Version 1.01 3/24/15 - Updated with more effecient code
  *  Version 1.02 4/9/15 - Added ability to change name of app
+ *	Version 1.03 5/15/15 - Optimized code, added a switch to limit the trigger to once a day
  *
  *  Copyright 2015 Michael Struck
  *
@@ -50,6 +51,9 @@ def getPref() {
 				input "phrase2", "enum", title: "None of the modes above are active", required: true, options: phrases
 			}
         }
+        section ("Limit the trigger to once a day") {
+        	input "triggerOnce", title: "Trigger only once per day...", "bool", defaultValue: true
+        }
 		section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Life360 Helper-Phrase Change")
 		}  
@@ -63,35 +67,40 @@ def installed() {
 
 def updated() {
 	log.debug "Updated with settings: ${settings}"
-	unsubscribe()
+	unschedule()
+    unsubscribe()
 	init()
 }
 
 def init(){
-	subscribe(people, "presence", presence)
+	state.triggered = false
+    def midnightToday = timeToday("2000-01-01T23:59:59.999-0000", location.timeZone)
+    schedule (midnightToday, midNightReset)
+    subscribe(people, "presence", presence)
 }
 
 def presence(evt){
-    if (everyoneIsPresent()){
+    if (everyoneIsPresent() && (!triggerOnce || (triggerOnce && !state.triggered))){
     	if (runMode()) {
         	location.helloHome.execute(settings.phrase1)
     	} 
         else {
     		location.helloHome.execute(settings.phrase2)
     	}
-	}
+	state.triggered = true
+    }
 }
 
 private everyoneIsPresent() {
-	def result = true
-    def checkPresence = people.find {it.currentPresence == "not present"}
-	if (checkPresence) {
-		result = false
-	}
-	return result
+    def result = people.find {it.currentPresence == "not present"} ? false : true
+	result
 }
 
 private runMode() {
 	def result = modes.contains(location.mode)
-	return result
+	result
+}
+
+def midNightReset() {
+	state.triggered = false
 }
