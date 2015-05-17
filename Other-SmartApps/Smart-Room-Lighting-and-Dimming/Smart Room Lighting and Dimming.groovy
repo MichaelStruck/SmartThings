@@ -2,7 +2,7 @@
  *  Smart Room Lighting and Dimming
  *
  *  Version - 1.0 5/4/15
- *  Version - 1.01 5/13/15 Code clean up for timeframe conditional check
+ *  Version - 1.01 5/17/15 Code clean up for timeframe conditional check
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -59,7 +59,7 @@ preferences {
 
 // Show setup page
 def pageSetup() {
-	dynamicPage(name: "pageSetup", title: "Status", nextPage: null, install: true, uninstall: true) {
+	dynamicPage(name: "pageSetup", install: true, uninstall: true) {
         section("Setup Menu") {
             href "pageSetupScenarioA", title: getTitle(settings.ScenarioNameA), description: getDesc(settings.ScenarioNameA), state: greyOut(settings.ScenarioNameA)
             href "pageSetupScenarioB", title: getTitle(settings.ScenarioNameB), description: getDesc(settings.ScenarioNameB), state: greyOut(settings.ScenarioNameB)
@@ -74,19 +74,11 @@ def pageSetup() {
 
 // Show "pageSetupScenarioA" page
 def pageSetupScenarioA() {
-    def pageName = ""
-    if (ScenarioNameA) {
-        	pageName = ScenarioNameA
-   		}
-    return dynamicPage(name: "pageSetupScenarioA", title: "${pageName}", nextPage: "pageSetup") {
-		section("Name your scenario") {
-            input name:"ScenarioNameA", type: "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
-    	}
-
+    dynamicPage(name: "pageSetupScenarioA") {
 	section("Devices included in the scenario") {
     	input name: "A_motion",type: "capability.motionSensor", title: "Using these motion sensors...", multiple: true, required: false
         input name: "A_switches", type: "capability.switch",title: "Control the following switches...", multiple: true, required: false
-        input name: "A_dimmers", type: "capability.switchLevel", title: "Dim the following...", multiple: true, required:false, refreshAfterSelection: true
+        input name: "A_dimmers", type: "capability.switchLevel", title: "Dim the following...", multiple: true, required:false
 	}
 
 	section("Lighting settings") {
@@ -98,33 +90,28 @@ def pageSetupScenarioA() {
             
 	section("Restrictions") {            
         input name: "A_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
-        input name: "A_switchDisable", type:"bool", title: "Stop triggering if physical switches are pressed...", defaultValue:false
+        input name: "A_switchDisable", type:"bool", title: "Stop triggering if physical switches/dimmers are turned off...", defaultValue:false
         href "timeIntervalInputA", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state: greyedOutTime(A_timeStart, A_timeEnd), refreshAfterSelection: true
         input name:  "A_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
         input name: "A_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
 	}
-	section("Help") {
+	section("Name your scenario") {
+            input name:"ScenarioNameA", type: "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
+    }
+    section("Help") {
     	paragraph helpText()
-    	}
+    }
     }
     
 }
 
 // Show "pageSetupScenarioB" page
 def pageSetupScenarioB() {
-    def pageName = ""
-    if (ScenarioNameB) {
-        	pageName = ScenarioNameB
-   		}
-    return dynamicPage(name: "pageSetupScenarioB", title: "${pageName}", nextPage: "pageSetup") {
-		section("Name your scenario") {
-            input name:"ScenarioNameB", type: "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
-    	}
-
+    dynamicPage(name: "pageSetupScenarioB") {
 	section("Devices included in the scenario") {
     	input name: "B_motion",type: "capability.motionSensor", title: "Using these motion sensors...", multiple: true, required: false
         input name: "B_switches", type: "capability.switch",title: "Control the following switches...", multiple: true, required: false
-        input name: "B_dimmers", type: "capability.switchLevel", title: "Dim the following...", multiple: true, required:false, refreshAfterSelection: true
+        input name: "B_dimmers", type: "capability.switchLevel", title: "Dim the following...", multiple: true, required:false
 	}
 
 	section("Lighting settings") {
@@ -136,34 +123,28 @@ def pageSetupScenarioB() {
             
 	section("Restrictions") {            
         input name: "B_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
-        input name: "B_switchDisable", type:"bool", title: "Stop triggering if physical switches are pressed...", defaultValue:false
+        input name: "B_switchDisable", type:"bool", title: "Stop triggering if physical switches/dimmers are turned off...", defaultValue:false
         href "timeIntervalInputB", title: "Only during a certain time...", description: getTimeLabel(B_timeStart, B_timeEnd), state: greyedOutTime(B_timeStart, B_timeEnd), refreshAfterSelection:true
         input name: "B_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
         input name: "B_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
 	}
-
+	section("Name your scenario") {
+            input name:"ScenarioNameB", type: "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
+    }
 	section("Help") {
     	paragraph helpText()
-    	}
+    }
     }
     
 }
 
 // Show "pageSetupScenarioC" page
 def pageSetupScenarioC() {
-    def pageName = ""
-    if (ScenarioNameC) {
-        	pageName = ScenarioNameC
-   		}
-    return dynamicPage(name: "pageSetupScenarioC", title: "${pageName}", nextPage: "pageSetup") {
-		section("Name your scenario") {
-            input name:"ScenarioNameC", type: "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
-    	}
-
+    dynamicPage(name: "pageSetupScenarioC") {
 	section("Devices included in the scenario") {
     	input name: "C_motion",type: "capability.motionSensor", title: "Using these motion sensors...", multiple: true, required: false
         input name: "C_switches", type: "capability.switch",title: "Control the following switches...", multiple: true, required: false
-        input name: "C_dimmers", type: "capability.switchLevel", title: "Dim the following...", multiple: true, required:false,refreshAfterSelection: true
+        input name: "C_dimmers", type: "capability.switchLevel", title: "Dim the following...", multiple: true, required:false
 	}
 
 	section("Lighting settings") {
@@ -175,34 +156,27 @@ def pageSetupScenarioC() {
             
 	section("Restrictions") {            
         input name: "C_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
-        input name: "C_switchDisable", type:"bool", title: "Stop triggering if physical switches are pressed...", defaultValue:false
+        input name: "C_switchDisable", type:"bool", title: "Stop triggering if physical switches/dimmers are turned off...", defaultValue:false
         href "timeIntervalInputC", title: "Only during a certain time...", description: getTimeLabel(C_timeStart, C_timeEnd), state: greyedOutTime(C_timeStart, C_timeEnd), refreshAfterSelection:true
         input name: "C_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
         input name: "C_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
 	}
-
+	section("Name your scenario") {
+           input name:"ScenarioNameC", type: "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
+    }
 	section("Help") {
     	paragraph helpText()
     	}
     }
-    
 }
 
 // Show "pageSetupScenarioD" page
 def pageSetupScenarioD() {
-    def pageName = ""
-    if (ScenarioNameD) {
-        	pageName = ScenarioNameD
-   		}
-    return dynamicPage(name: "pageSetupScenarioD", title: "${pageName}", nextPage: "pageSetup") {
-		section("Name your scenario") {
-            input name:"ScenarioNameD", type: "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
-    	}
-
+    dynamicPage(name: "pageSetupScenarioD") {
 	section("Devices included in the scenario") {
     	input name: "D_motion",type: "capability.motionSensor", title: "Using these motion sensors...", multiple: true, required: false
         input name: "D_switches", type: "capability.switch",title: "Control the following switches...", multiple: true, required: false
-        input name: "D_dimmers", type: "capability.switchLevel", title: "Dim the following...", multiple: true, required:false, refreshAfterSelection: true
+        input name: "D_dimmers", type: "capability.switchLevel", title: "Dim the following...", multiple: true, required:false
 	}
 
 	section("Lighting settings") {
@@ -214,17 +188,18 @@ def pageSetupScenarioD() {
             
 	section("Restrictions") {            
         input name: "D_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
-        input name: "D_switchDisable", type:"bool", title: "Stop triggering if physical switches are pressed...", defaultValue:false
+        input name: "D_switchDisable", type:"bool", title: "Stop triggering if physical switches/dimmers are turned off...", defaultValue:false
         href "timeIntervalInputD", title: "Only during a certain time...", description: getTimeLabel(D_timeStart, D_timeEnd), state: greyedOutTime(D_timeStart, D_timeEnd), refreshAfterSelection:true
         input name: "D_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
         input name: "D_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
 	}
-
+	section("Name your scenario") {
+    	input name:"ScenarioNameD", type: "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
+    }
 	section("Help") {
     	paragraph helpText()
     	}
     }
-    
 }
 
 def installed() {
@@ -259,19 +234,23 @@ if(D_motion) {
 }
 
 if(A_switchDisable) {
-	subscribe(A_switches, "switch", onPressA)
+	subscribe(A_switches, "switch.off", onPressA)
+    subscribe(A_dimmers, "switch.off", onPressA)
 }
 
 if(B_switchDisable) {
-	subscribe(B_switches, "switch", onPressB)
+	subscribe(B_switches, "switch.off", onPressB)
+    subscribe(B_dimmers, "switch.off", onPressB)
 }
 
 if(C_switchDisable) {
-	subscribe(C_switches, "switch", onPressC)
+	subscribe(C_switches, "switch.off", onPressC)
+    subscribe(C_dimmers, "switch.off", onPressC)
 }
 
 if(D_switchDisable) {
-	subscribe(D_switches, "switch", onPressD)
+	subscribe(D_switches, "switch.off", onPressD)
+    subscribe(D_dimmers, "switch.off", onPressD)
 }
 }
 
@@ -283,15 +262,9 @@ if (!A_luxSensors || (A_luxSensors.latestValue("illuminance") <= A_turnOnLux)){
          if ((!A_triggerOnce || (A_triggerOnce && !state.A_triggered)) && (!A_switchDisable || (A_switchDisable && !state.A_triggered))) {
         	log.debug("Motion Detected Running '${ScenarioNameA}'")
             
-            def levelSetOn = A_levelDimOn
-            def levelSetOff = A_levelDimOff
-            
-            if (!levelSetOn) {
-            	levelSetOn = 100
-            }
-            if (!levelSetOff) {
-            	levelSetOff = 0
-            }
+            def levelSetOn = A_levelDimOn ? A_levelDimOn : 100
+            def levelSetOff = A_levelDimOff ? A_levelDimOff : 0
+
             if (A_calcOn && A_luxSensors) {
     			levelSetOn = (levelSetOn * (1-(A_luxSensors.latestValue("illuminance")/A_turnOnLux))) + levelSetOff
                 if (levelSetOn > 100) {
@@ -319,10 +292,7 @@ else {
         }
         else {
         A_switches?.off()
-        def levelSetOff = A_levelDimOff
-        if (!levelSetOff) {
-        	levelSetOff = 0
-        }
+        def levelSetOff = A_levelDimOff ? A_levelDimOff : 0
         A_dimmers?.setLevel(levelSetOff)
         	if (state.A_triggered) {
     			runOnce (getMidnight(), midNightReset)
@@ -338,24 +308,27 @@ log.debug("Motion outside of mode or time/date/trigger restriction.  Not running
 
 def delayTurnOffA(){
 	A_switches?.off()
-	def levelSetOff = A_levelDimOff
-        if (!levelSetOff) {
-        	levelSetOff = 0
-        }
+	def levelSetOff = A_levelDimOff ? A_levelDimOff : 0
     A_dimmers?.setLevel(levelSetOff)
 	state.A_timerStart = false
 	if (state.A_triggered) {
     	runOnce (getMidnight(), midNightReset)
     }
-
 }
 
 def onPressA(evt) {
-	if (evt.physical){
+if ((!A_mode || A_mode.contains(location.mode)) && getTimeOk (A_timeStart, A_timeEnd) && getDayOk(A_day)) {
+if (!A_luxSensors || (A_luxSensors.latestValue("illuminance") <= A_turnOnLux)){
+if ((!A_triggerOnce || (A_triggerOnce && !state.A_triggered)) && (!A_switchDisable || (A_switchDisable && !state.A_triggered))) {	
+    if (evt.physical){
     	state.A_triggered = true
         unschedule(delayTurnOffA)
+        runOnce (getMidnight(), midNightReset)
         log.debug "Physical switch in '${ScenarioNameA}' pressed. Trigger for this scenario disabled."
 	}
+}
+}
+}
 }
 
 def onEventB(evt) {
@@ -365,14 +338,9 @@ if (!B_luxSensors || (B_luxSensors.latestValue("illuminance") <= B_turnOnLux)){
     if (B_motion.latestValue("motion").contains("active")) {
          if ((!B_triggerOnce || (B_triggerOnce && !state.B_triggered)) && (!B_switchDisable || (B_switchDisable && !state.B_triggered))) {
         	log.debug("Motion Detected Running '${ScenarioNameB}'")
-            def levelSetOn = B_levelDimOn
-            def levelSetOff = B_levelDimOff
-            if (!levelSetOn) {
-            	levelSetOn = 100
-            }
-            if (!levelSetOff) {
-            	levelSetOff = 0
-            }
+            def levelSetOn = B_levelDimOn ? B_levelDimOn : 100
+            def levelSetOff = B_levelDimOff ? B_levelDimOff : 0
+
             if (B_calcOn && B_luxSensors) {
     			levelSetOn = (levelSetOn * (1-(B_luxSensors.latestValue("illuminance")/B_turnOnLux))) + levelSetOff
                 if (levelSetOn > 100) {
@@ -401,10 +369,7 @@ else {
         
         else {
         	B_switches?.off()
-			def levelSetOff = B_levelDimOff
-        	if (!levelSetOff) {
-        		levelSetOff = 0
-        		}
+			def levelSetOff = B_levelDimOff ? B_levelDimOff : 0
     		B_dimmers?.setLevel(levelSetOff)
             if (state.B_triggered) {
     			runOnce (getMidnight(), midNightReset)
@@ -420,10 +385,7 @@ log.debug("Motion outside of mode or time/date/trigger restriction.  Not running
 
 def delayTurnOffB(){
 	B_switches?.off()
-	def levelSetOff = B_levelDimOff
-        if (!levelSetOff) {
-        	levelSetOff = 0
-        }
+	def levelSetOff = B_levelDimOff ? B_levelDimOff : 0
     B_dimmers?.setLevel(levelSetOff)
 	state.B_timerStart = false
     if (state.B_triggered) {
@@ -432,11 +394,18 @@ def delayTurnOffB(){
 }
 
 def onPressB(evt) {
+if ((!B_mode || B_mode.contains(location.mode)) && getTimeOk (B_timeStart, B_timeEnd) && getDayOk(B_day)) {
+if (!B_luxSensors || (B_luxSensors.latestValue("illuminance") <= B_turnOnLux)){
+if ((!B_triggerOnce || (B_triggerOnce && !state.B_triggered)) && (!B_switchDisable || (B_switchDisable && !state.B_triggered))) {
 	if (evt.physical){
     	state.B_triggered = true
         unschedule(delayTurnOffB)
-        log.debug "Physical switch in '${ScenarioNameB}' pressed. Trigger for this scenario disabled."
+        runOnce (getMidnight(), midNightReset)
+        log.debug "Physical switch in '${ScenarioNameB}' pressed. Triggers for this scenario disabled."
 	}
+}
+}
+}
 }
 
 def onEventC(evt) {
@@ -446,14 +415,9 @@ if (!C_luxSensors || (C_luxSensors.latestValue("illuminance") <= C_turnOnLux)){
     if (C_motion.latestValue("motion").contains("active")) {
          if ((!C_triggerOnce || (C_triggerOnce && !state.C_triggered)) && (!C_switchDisable || (C_switchDisable && !state.C_triggered))) {
         	log.debug("Motion Detected Running '${ScenarioNameB}'")
-            def levelSetOn = C_levelDimOn
-            def levelSetOff = C_levelDimOff
-            if (!levelSetOn) {
-            	levelSetOn = 100
-            }
-            if (!levelSetOff) {
-            	levelSetOff = 0
-            }
+            def levelSetOn = C_levelDimOn ? C_levelDimOn : 100
+            def levelSetOff = C_levelDimOff ? C_levelDimOff : 0
+
             if (C_calcOn && C_luxSensors) {
     			levelSetOn = (levelSetOn * (1-(C_luxSensors.latestValue("illuminance")/C_turnOnLux))) + levelSetOff
                 if (levelSetOn > 100) {
@@ -481,10 +445,7 @@ else {
         }
         else {
         C_switches?.off()
-		def levelSetOff = C_levelDimOff
-        if (!levelSetOff) {
-        	levelSetOff = 0
-        }
+		def levelSetOff = C_levelDimOff ? C_levelDimOff : 0
     	C_dimmers?.setLevel(levelSetOff)
         	if (state.C_triggered) {
     			runOnce (getMidnight(), midNightReset)
@@ -501,10 +462,7 @@ log.debug("Motion outside of mode or time/date/trigger restriction.  Not running
 
 def delayTurnOffC(){
 	C_switches?.off()
-	def levelSetOff = C_levelDimOff
-        if (!levelSetOff) {
-        	levelSetOff = 0
-        }
+	def levelSetOff = C_levelDimOff ? C_levelDimOff : 0
     C_dimmers?.setLevel(levelSetOff)
 	state.C_timerStart = false
 	if (state.C_triggered) {
@@ -514,11 +472,18 @@ def delayTurnOffC(){
 }
 
 def onPressC(evt) {
+if ((!C_mode || C_mode.contains(location.mode)) && getTimeOk (C_timeStart, C_timeEnd) && getDayOk(C_day)) {
+if (!C_luxSensors || (C_luxSensors.latestValue("illuminance") <= C_turnOnLux)){
+if ((!C_triggerOnce || (C_triggerOnce && !state.C_triggered)) && (!C_switchDisable || (C_switchDisable && !state.C_triggered))) {
 	if (evt.physical){
     	state.C_triggered = true
         unschedule(delayTurnOffC)
-        log.debug "Physical switch in '${ScenarioNameC}' pressed. Trigger for this scenario disabled."
+        runOnce (getMidnight(), midNightReset)
+        log.debug "Physical switch in '${ScenarioNameC}' pressed. Triggers for this scenario disabled."
 	}
+}
+}
+}
 }
 
 def onEventD(evt) {
@@ -528,15 +493,10 @@ if (!D_luxSensors || (D_luxSensors.latestValue("illuminance") <= D_turnOnLux)){
     if (D_motion.latestValue("motion").contains("active")) {
          if ((!D_triggerOnce || (D_triggerOnce && !state.D_triggered)) && (!D_switchDisable || (D_switchDisable && !state.D_triggered))) {
         	log.debug("Motion Detected Running '${ScenarioNameB}'")
-            def levelSetOn = D_levelDimOn
-            def levelSetOff = D_levelDimOff
-            if (!levelSetOn) {
-            	levelSetOn = 100
-            }
-            if (!levelSetOff) {
-            	levelSetOff = 0
-            }
-            if (D_calcOn && D_luxSensors) {
+            def levelSetOn = D_levelDimOn ? D_levelDimOn : 100
+            def levelSetOff = D_levelDimOff ? D_levelDimOff : 0
+
+			if (D_calcOn && D_luxSensors) {
     			levelSetOn = (levelSetOn * (1-(D_luxSensors.latestValue("illuminance")/D_turnOnLux))) + levelSetOff
                 if (levelSetOn > 100) {
                		levelSetOn = 100
@@ -563,10 +523,7 @@ else {
         }
         else {
         D_switches?.off()
-		def levelSetOff = D_levelDimOff
-        if (!levelSetOff) {
-        	levelSetOff = 0
-        }
+		def levelSetOff = D_levelDimOff ? D_levelDimOff : 0
     	D_dimmers?.setLevel(levelSetOff)
         	if (state.D_triggered) {
     			runOnce (getMidnight(), midNightReset)
@@ -582,10 +539,7 @@ log.debug("Motion outside of mode or time/date/trigger restriction.  Not running
 
 def delayTurnOffD(){
 	D_switches?.off()
-	def levelSetOff = D_levelDimOff
-        if (!levelSetOff) {
-        	levelSetOff = 0
-        }
+	def levelSetOff = D_levelDimOff ? D_levelDimOff : 0
     D_dimmers?.setLevel(levelSetOff)
 	state.D_timerStart = false
 	if (state.D_triggered) {
@@ -595,11 +549,18 @@ def delayTurnOffD(){
 }
 
 def onPressD(evt) {
+if ((!D_mode || D_mode.contains(location.mode)) && getTimeOk (D_timeStart, D_timeEnd) && getDayOk(D_day)) {
+if (!D_luxSensors || (D_luxSensors.latestValue("illuminance") <= D_turnOnLux)){
+if ((!D_triggerOnce || (D_triggerOnce && !state.D_triggered)) && (!D_switchDisable || (D_switchDisable && !state.D_triggered))) {
 	if (evt.physical){
-    	state.D_triggered = true
-        unschedule(delayTurnOffD)
-        log.debug "Physical switch in '${ScenarioNameD}' pressed. Trigger for this scenario disabled."
+    	state.C_triggered = true
+        unschedule(delayTurnOffC)
+        runOnce (getMidnight(), midNightReset)
+        log.debug "Physical switch in '${ScenarioNameC}' pressed. Triggers for this scenario disabled."
 	}
+}
+}
+}
 }
 
 //Common Methods
@@ -631,42 +592,27 @@ private def helpDimmers() {
 }
 
 def greyOut(scenario){
-	def result = ""
-    if (scenario) {
-    	result = "complete"	
-    }
+    def result = scenario ? "complete" : ""
     result
 }
 
 def greyedOutTime(start, end){
-	def result = ""
-    if (start || end) {
-    	result = "complete"	
-    }
+	def result = start || end ? "complete" : ""
     result
 }
 
 def greyedOutLevel(dimmers){
-	def result = ""
-    if (dimmers) {
-    	result = "complete"	
-    }
+	def result = dimmers ? "complete" : ""
     result
 }
 
 def getTitle(scenario) {
-	def title = "Empty"
-	if (scenario) {
-		title = scenario
-    }
+	def title = scenario ? scenario : "Empty"
 	title
 }
 
 def getDesc(scenario) {
-	def desc = "Tap to create a scenario"
-	if (scenario) {
-		desc = "Tap to edit scenario"
-    }
+	def desc = scenario ? "Tap to edit scenario" : "Tap to create a scenario"
 	desc	
 }
 
@@ -685,7 +631,6 @@ private getTimeOk(startTime, endTime) {
 	}
 	result
 }
-
 
 def getTimeLabel(start, end){
 	def timeLabel = "Tap to set"
@@ -725,13 +670,8 @@ def getLevelLabel(on, off, dimmers, calcOn) {
     levelLabel
 }
 
-
-private hhmm(time, fmt = "h:mm a")
-{
-	def t = timeToday(time, location.timeZone)
-	def f = new java.text.SimpleDateFormat(fmt)
-	f.setTimeZone(location.timeZone ?: timeZone(time))
-	f.format(t)
+private hhmm(time) {
+	new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", time).format("h:mm a", timeZone(time))
 }
 
 private getDayOk(dayList) {
@@ -750,36 +690,36 @@ private getDayOk(dayList) {
     result
 }
 
-page(name: "timeIntervalInputA", title: "Only during a certain time", refreshAfterSelection:true) {
+page(name: "timeIntervalInputA", title: "Only during a certain time") {
 		section {
-			input "A_timeStart", "time", title: "Starting", required: false, refreshAfterSelection:true
-			input "A_timeEnd", "time", title: "Ending", required: false, refreshAfterSelection:true
+			input "A_timeStart", "time", title: "Starting", required: false
+			input "A_timeEnd", "time", title: "Ending", required: false
 		}
 }  
-page(name: "timeIntervalInputB", title: "Only during a certain time", refreshAfterSelection:true) {
+page(name: "timeIntervalInputB", title: "Only during a certain time") {
 		section {
-			input "B_timeStart", "time", title: "Starting", required: false, refreshAfterSelection:true
-			input "B_timeEnd", "time", title: "Ending", required: false, refreshAfterSelection:true
+			input "B_timeStart", "time", title: "Starting", required: false
+			input "B_timeEnd", "time", title: "Ending", required: false
 		}
 }  
-page(name: "timeIntervalInputC", title: "Only during a certain time", refreshAfterSelection:true) {
+page(name: "timeIntervalInputC", title: "Only during a certain time") {
 		section {
-			input "C_timeStart", "time", title: "Starting", required: false, refreshAfterSelection:true
-			input "C_timeEnd", "time", title: "Ending", required: false, refreshAfterSelection:true
+			input "C_timeStart", "time", title: "Starting", required: false
+			input "C_timeEnd", "time", title: "Ending", required: false
 		}
 }         
 
-page(name: "timeIntervalInputD", title: "Only during a certain time", refreshAfterSelection:true) {
+page(name: "timeIntervalInputD", title: "Only during a certain time") {
 		section {
-			input "D_timeStart", "time", title: "Starting", required: false, refreshAfterSelection:true
-			input "D_timeEnd", "time", title: "Ending", required: false, refreshAfterSelection:true
+			input "D_timeStart", "time", title: "Starting", required: false
+			input "D_timeEnd", "time", title: "Ending", required: false
 		}
 }
 
-page(name: "levelInputA", title: "Set dimmers options...", refreshAfterSelection:true) {
+page(name: "levelInputA", title: "Set dimmers options...") {
 		section {
-			input name: "A_levelDimOn", type: "number", title: "On Level", multiple: false, required: false, refreshAfterSelection:true
-        	input name: "A_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false, refreshAfterSelection:true
+			input name: "A_levelDimOn", type: "number", title: "On Level", multiple: false, required: false
+        	input name: "A_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false
 			input name: "A_calcOn",type: "bool",title: "Calculate 'on' level via lux", defaultValue: false
         }
 		section("Help") {
@@ -787,10 +727,10 @@ page(name: "levelInputA", title: "Set dimmers options...", refreshAfterSelection
     	}
 }
 
-page(name: "levelInputB", title: "Set dimmers options...", refreshAfterSelection:true) {
+page(name: "levelInputB", title: "Set dimmers options...") {
 		section {
-			input name: "B_levelDimOn", type: "number", title: "On Level", multiple: false, required: false, refreshAfterSelection:true
-        	input name: "B_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false, refreshAfterSelection:true
+			input name: "B_levelDimOn", type: "number", title: "On Level", multiple: false, required: false
+        	input name: "B_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false
             input name: "B_calcOn",type: "bool",title: "Calculate 'on' level via lux", defaultValue: false
         }
 		section("Help") {
@@ -798,10 +738,10 @@ page(name: "levelInputB", title: "Set dimmers options...", refreshAfterSelection
     	}
 }
 
-page(name: "levelInputC", title: "Set dimmers options...", refreshAfterSelection:true) {
+page(name: "levelInputC", title: "Set dimmers options...") {
 		section {
-			input name: "C_levelDimOn", type: "number", title: "On Level", multiple: false, required: false, refreshAfterSelection:true
-        	input name: "C_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false, refreshAfterSelection:true
+			input name: "C_levelDimOn", type: "number", title: "On Level", multiple: false, required: false
+        	input name: "C_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false
             input name: "C_calcOn",type: "bool",title: "Calculate 'on' level via lux", defaultValue: false
         }
 		section("Help") {
@@ -809,10 +749,10 @@ page(name: "levelInputC", title: "Set dimmers options...", refreshAfterSelection
     	}
 }
 
-page(name: "levelInputD", title: "Set dimmers options...", refreshAfterSelection:true) {
+page(name: "levelInputD", title: "Set dimmers options...") {
 		section {
-			input name: "D_levelDimOn", type: "number", title: "On Level", multiple: false, required: false, refreshAfterSelection:true
-        	input name: "D_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false, refreshAfterSelection:true
+			input name: "D_levelDimOn", type: "number", title: "On Level", multiple: false, required: false
+        	input name: "D_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false
             input name: "D_calcOn",type: "bool",title: "Calculate 'on' level via lux", defaultValue: false
         }
 		section("Help") {
