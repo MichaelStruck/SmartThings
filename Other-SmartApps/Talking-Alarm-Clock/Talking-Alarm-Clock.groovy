@@ -42,7 +42,7 @@ definition(
     name: "Talking Alarm Clock",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Control up to 4 waking alarms using the Sonos speaker as an alarm.",
+    description: "Control up to 4 waking schedules using the Sonos speaker as an alarm.",
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock@2x.png",
@@ -512,7 +512,7 @@ def getDescOption() {
 private def helpText() {
 	def text =
     	"Choose an alarm time along with switches, dimmers and thermostats to control " +
-        "when the alarm is triggered. You can also choose to have a weather "+
+        "when the alarm is triggered. You can also choose to have a weather " +
         "report spoken as part of the alarm."
 	text
 }
@@ -581,7 +581,6 @@ private getDayNum(date) {
 
 private getGreeting(msg) {
 	def day = getDay()
-    def today = now()
     def time = hhmm(convertEpoch(now()))
     def month = getMonth(convertEpoch(now()))
     def year = getYear(convertEpoch(now()))
