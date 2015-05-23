@@ -1,7 +1,7 @@
 /**
  *  Talking Alarm Clock
  *
- *  Version - 1.0 5/20/15
+ *  Version - 1.0 5/23/15
  *  
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -39,47 +39,46 @@
  */
  
 definition(
-    name: "Talking Alarm Clock",
-    namespace: "MichaelStruck",
-    author: "Michael Struck",
-    description: "Control up to 4 waking schedules using the Sonos speaker as an alarm.",
-    category: "Convenience",
-    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock.png",
-    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock@2x.png",
+    	name: "Talking Alarm Clock",
+    	namespace: "MichaelStruck",
+    	author: "Michael Struck",
+    	description: "Control up to 4 waking schedules using a Sonos speaker as an alarm.",
+    	category: "Convenience",
+    	iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock.png",
+    	iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock@2x.png",
 	iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock@2x.png"
     )
 
 preferences {
-    page name:"pageMain"
-    page name:"pageSetupScenarioA"
-    page name:"pageSetupScenarioB"
-    page name:"pageSetupScenarioC"
-    page name:"pageSetupScenarioD"
-    page name:"pageSetupOptions"
+    	page name:"pageMain"
+    	page name:"pageSetupScenarioA"
+    	page name:"pageSetupScenarioB"
+    	page name:"pageSetupScenarioC"
+    	page name:"pageSetupScenarioD"
 }
 
 // Show setup page
 def pageMain() {
 	dynamicPage(name: "pageMain", install: true, uninstall: true) {
         section ("Alarms") {
-            href "pageSetupScenarioA", title: getTitle(ScenarioNameA, 1), description: getDesc(A_timeStart, A_day, A_mode), state: greyOut(ScenarioNameA, A_timeStart, A_alarmOn)
+            href "pageSetupScenarioA", title: getTitle(ScenarioNameA, 1), description: getDesc(A_timeStart, A_sonos, A_day, A_mode), state: greyOut(ScenarioNameA, A_sonos, A_timeStart, A_alarmOn)
             input "A_alarmOn", "bool", title: "Enable this alarm?", defaultValue: "true", refreshAfterSelection:true
         }
         section {
-            href "pageSetupScenarioB", title: getTitle(ScenarioNameB, 2), description: getDesc(B_timeStart, B_day, B_mode), state: greyOut(ScenarioNameB, B_timeStart, B_alarmOn)
+            href "pageSetupScenarioB", title: getTitle(ScenarioNameB, 2), description: getDesc(B_timeStart, B_sonos, B_day, B_mode), state: greyOut(ScenarioNameB, B_sonos, B_timeStart, B_alarmOn)
             input "B_alarmOn", "bool", title: "Enable this alarm?", defaultValue: "false", refreshAfterSelection:true
         }
         section {
-            href "pageSetupScenarioC", title: getTitle(ScenarioNameC, 3), description: getDesc(C_timeStart, C_day, C_mode), state: greyOut(ScenarioNameC, C_timeStart, C_alarmOn)
+            href "pageSetupScenarioC", title: getTitle(ScenarioNameC, 3), description: getDesc(C_timeStart, C_sonos, C_day, C_mode), state: greyOut(ScenarioNameC, C_sonos, C_timeStart, C_alarmOn)
             input "C_alarmOn", "bool", title: "Enable this alarm?", defaultValue: "false", refreshAfterSelection:true
         }
         section {
-            href "pageSetupScenarioD", title: getTitle(ScenarioNameD, 4), description: getDesc(D_timeStart, D_day, D_mode), state: greyOut(ScenarioNameD, D_timeStart, D_alarmOn)
+            href "pageSetupScenarioD", title: getTitle(ScenarioNameD, 4), description: getDesc(D_timeStart, D_sonos, D_day, D_mode), state: greyOut(ScenarioNameD, D_sonos, D_timeStart, D_alarmOn)
             input "D_alarmOn", "bool", title: "Enable this alarm?", defaultValue: "false", refreshAfterSelection:true
         }
         
         section([title:"Options", mobileOnly:true]) {
-            href "pageSetupOptions",title: "Global Options", description: getDescOption(), state: greyOut("*","","")
+            input "zipCode", "text", title: "Zip Code", required: false
             label title:"Assign a name", required:false
         }
     }
@@ -90,6 +89,7 @@ def pageSetupScenarioA() {
     dynamicPage(name: "pageSetupScenarioA") {
 		section("Alarm settings") {
         	input "ScenarioNameA", "text", title: "Scenario Name", multiple: false, required: false
+            	input "A_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
         	input "A_timeStart", "time", title: "Time to trigger alarm", required: false
         	input "A_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Alarm on certain days of the week...", multiple: true, required: false
     		input "A_mode", "mode", title: "Alarm only during the following modes...", multiple: true, required: false
@@ -98,18 +98,19 @@ def pageSetupScenarioA() {
         section("Devices to control in this alarm scenario") {
         	input "A_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false
         	input "A_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false
-			input "A_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
+		input "A_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
         	input "A_thermostats", "capability.thermostat", title: "Thermostats?", multiple: true, required: false
-            input "A_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
-			input "A_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+            	input "A_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
+		input "A_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
         }
         
         section("Other Options") {
+        	input "A_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
         	input "A_wakeMsg", "text", title: "Wake voice message", defaultValue: "Good morning! Today is %day%, %date%. It is currently %time%."
-            input "A_weatherReport", "bool", title: "Give today's weather report", defaultValue: "false"
-            def phrases = location.helloHome?.getPhrases()*.label
+            	input "A_weatherReport", "bool", title: "Speak today's weather report", defaultValue: "false"
+            	def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
-        		phrases.sort()
+        			phrases.sort()
 				input "A_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false
 			}
         }
@@ -123,8 +124,9 @@ def pageSetupScenarioA() {
 def pageSetupScenarioB() {
     dynamicPage(name: "pageSetupScenarioB") {
 		section("Alarm settings") {
-        	input "ScenarioNameB", "text", title: "Scenario Name", multiple: false, required: false
-        	input "B_timeStart", "time", title: "Time to trigger alarm", required: false
+        	input "ScenarioNameB", "text", title: "Scenario Name", multiple: false, required: true
+            	input "B_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
+        	input "B_timeStart", "time", title: "Time to trigger alarm", required: true
         	input "B_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Alarm on certain days of the week...", multiple: true, required: false
     		input "B_mode", "mode", title: "Alarm only during the following modes...", multiple: true, required: false
     	}
@@ -132,19 +134,20 @@ def pageSetupScenarioB() {
         section("Devices to control in this alarm scenario") {
         	input "B_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false
         	input "B_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false
-			input "B_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
+		input "B_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
         	input "B_thermostats", "capability.thermostat", title: "Thermostats?", multiple: true, required: false
-            input "B_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
-			input "B_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+            	input "B_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
+		input "B_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
         }
         
         section("Other Options") {
+        	input "B_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
         	input "B_wakeMsg", "text", title: "Wake voice message", defaultValue: "Good morning! Today is %day%, %date%. It is currently %time%."
-            input "B_weatherReport", "bool", title: "Give today's weather report", defaultValue: "false"
-            def phrases = location.helloHome?.getPhrases()*.label
+            	input "B_weatherReport", "bool", title: "Speak today's weather report", defaultValue: "false"
+            	def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
         		phrases.sort()
-				input "B_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false
+			input "B_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false
 			}
         }
     	section("Help") {
@@ -157,8 +160,9 @@ def pageSetupScenarioB() {
 def pageSetupScenarioC() {
     dynamicPage(name: "pageSetupScenarioC") {
 		section("Alarm settings") {
-        	input "ScenarioNameC", "text", title: "Scenario Name", multiple: false, required: false
-        	input "C_timeStart", "time", title: "Time to trigger alarm", required: false
+        	input "ScenarioNameC", "text", title: "Scenario Name", multiple: false, required: true
+            	input "C_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
+        	input "C_timeStart", "time", title: "Time to trigger alarm", required: true
         	input "C_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Alarm on certain days of the week...", multiple: true, required: false
     		input "C_mode", "mode", title: "Alarm only during the following modes...", multiple: true, required: false
     	}
@@ -166,20 +170,21 @@ def pageSetupScenarioC() {
         section("Devices to control in this alarm scenario") {
         	input "C_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false
         	input "C_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false
-			input "C_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
+		input "C_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
         	input "C_thermostats", "capability.thermostat", title: "Thermostats?", multiple: true, required: false
-            input "C_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
-			input "C_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+        	input "C_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
+		input "C_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
         }
         
         section("Other Options") {
+        	input "C_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
         	input "C_wakeMsg", "text", title: "Wake voice message", defaultValue: "Good morning! Today is %day%, %date%. It is currently %time%."
-            input "C_weatherReport", "bool", title: "Give today's weather report", defaultValue: "false"
-            def phrases = location.helloHome?.getPhrases()*.label
-			if (phrases) {
+            	input "C_weatherReport", "bool", title: "Speak today's weather report", defaultValue: "false"
+            	def phrases = location.helloHome?.getPhrases()*.label
+		if (phrases) {
         		phrases.sort()
-				input "C_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false
-			}
+			input "C_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false
+		}
         }
     	section("Help") {
     		paragraph helpText()
@@ -191,8 +196,9 @@ def pageSetupScenarioC() {
 def pageSetupScenarioD() {
     dynamicPage(name: "pageSetupScenarioD") {
 		section("Alarm settings") {
-        	input "ScenarioNameD", "text", title: "Scenario Name", multiple: false, required: false
-        	input "D_timeStart", "time", title: "Time to trigger alarm", required: false
+        	input "ScenarioNameD", "text", title: "Scenario Name", multiple: false, required: true
+            	input "D_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
+        	input "D_timeStart", "time", title: "Time to trigger alarm", required: true
         	input "D_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Alarm on certain days of the week...", multiple: true, required: false
     		input "D_mode", "mode", title: "Alarm only during the following modes...", multiple: true, required: false
     	}
@@ -200,38 +206,26 @@ def pageSetupScenarioD() {
         section("Devices to control in this alarm scenario") {
         	input "D_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false
         	input "D_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false
-			input "D_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
+		input "D_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
         	input "D_thermostats", "capability.thermostat", title: "Thermostats?", multiple: true, required: false
-            input "D_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
-			input "D_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+            	input "D_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
+		input "D_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
         }
         
         section("Other Options") {
+        	input "D_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
         	input "D_wakeMsg", "text", title: "Wake voice message", defaultValue: "Good morning! Today is %day%, %date%. It is currently %time%."
-            input "D_weatherReport", "bool", title: "Give today's weather report", defaultValue: "false"
-            def phrases = location.helloHome?.getPhrases()*.label
-			if (phrases) {
+            	input "D_weatherReport", "bool", title: "Speak today's weather report", defaultValue: "false"
+            	def phrases = location.helloHome?.getPhrases()*.label
+		if (phrases) {
         		phrases.sort()
-				input "D_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false
-			}
+			input "D_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false
+		}
         }
     	section("Help") {
     		paragraph helpText()
     	}  
     } 
-}
-
-// Show "pageSetupOptions" page
-def pageSetupOptions() {
-    dynamicPage(name: "pageSetupOptions") {
-		section("Alarm Settings") {
-        	input "sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
-            input "volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
-    	}
-        section("Weather Report Options") {
-        	input "zipCode", "text", title: "Zip Code", required: false
-        }
-    }  
 }
 
 //--------------------------------------
@@ -246,16 +240,16 @@ def updated() {
 }
 
 def initialize() {
-	if (ScenarioNameA && A_timeStart && A_alarmOn){
+	if (ScenarioNameA && A_timeStart && A_sonos && A_alarmOn){
 		schedule (A_timeStart, alarm_A)
 	}
-    if (ScenarioNameB && B_timeStart && B_alarmOn){
+    if (ScenarioNameB && B_timeStart && B_sonos &&B_alarmOn){
 		schedule (B_timeStart, alarm_B)
 	}
-    if (ScenarioNameC && C_timeStart && C_alarmOn){
+    if (ScenarioNameC && C_timeStart && C_sonos && C_alarmOn){
 		schedule (C_timeStart, alarm_C)
 	}
-	if (ScenarioNameD && D_timeStart && D_alarmOn){
+	if (ScenarioNameD && D_timeStart && D_sonos && D_alarmOn){
 		schedule (D_timeStart, alarm_D)
 	}    
 }
@@ -264,13 +258,20 @@ def initialize() {
 
 def alarm_A() {
 	if ((!A_mode || A_mode.contains(location.mode)) && getDayOk(A_day)) {	
-   	 	def dimLevel = A_level as Integer
-    	//Lights/switches----------
-        A_switches?.on()
-    	A_dimmers?.setLevel(dimLevel)
-        //Thermostates-------------
-        if (A_thermostats) {
-        	def thermostatState = A_thermostats.currentThermostatMode
+   		def dimLevel = A_level as Integer
+
+        state.fullMsg = ""
+        if (A_wakeMsg) {
+	       	getGreeting(A_wakeMsg)
+        }    
+        if (A_weatherReport) {
+          	getWeatherReport()
+        }
+      	if (A_switches || A_dimmers || A_thermostats) {
+        	A_switches?.on()
+    		A_dimmers?.setLevel(dimLevel)
+            	if (A_thermostats) {
+        		def thermostatState = A_thermostats.currentThermostatMode
 			if (thermostatState == "auto") {
 				A_thermostats.setHeatingSetpoint(A_temperatureH)
 				A_thermostats.setCoolingSetpoint(A_temperatureC)
@@ -281,198 +282,175 @@ def alarm_A() {
 			}
 			else {
 				A_thermostats.setCoolingSetpoint(A_temperatureC)
-        		log.info "Set $A_thermostats Cool $A_temperatureC°"
-            }
+        			log.info "Set $A_thermostats Cool $A_temperatureC°"
+            		}
 		}
- 		if (sonos) {
-            state.fullMsg = ""
-            if (A_wakeMsg) {
-            	getGreeting(A_wakeMsg)
-            }    
-            if (A_weatherReport) {
-            	getWeatherReport()
-            }
-        	if (A_switches || A_dimmers || A_thermostats) {
-        		getOnConfimation(A_switches, A_dimmers, A_thermostats)
-        	}
-            if (A_phrase) {
-            	getPhraseConfirmation(A_phrase)
-            }
+       		getOnConfimation(A_switches, A_dimmers, A_thermostats)
+       	}
+        if (A_phrase) {
+        	location.helloHome.execute(A_phrase)
+        	 getPhraseConfirmation(A_phrase)
         }
         
     	state.sound = textToSpeech(state.fullMsg, true)
-    	if (volume) {
-        	sonos.playTrackAtVolume(state.sound.uri, volume)
-        }
-        else{
-        	sonos.playTrack(state.sound.uri)
-        }
-    }
+    	if (A_volume) {
+        	A_sonos.setLevel(A_volume)
+	}
+        A_sonos.playTrack(state.sound.uri)
+	}
 }
 
 def alarm_B() {
 	if ((!B_mode || B_mode.contains(location.mode)) && getDayOk(B_day)) {	
    	 	def dimLevel = B_level as Integer
-    	//Lights/switches----------
-        B_switches?.on()
-    	B_dimmers?.setLevel(dimLevel)
-        //Thermostates-------------
-        if (B_thermostats) {
-        	def thermostatState = B_thermostats.currentThermostatMode
+		
+        state.fullMsg = ""
+        if (B_wakeMsg) {
+        	getGreeting(B_wakeMsg)
+        }    
+        if (B_weatherReport) {
+        	getWeatherReport()
+        }
+        if (B_switches || B_dimmers || B_thermostats) {
+        	B_switches?.on()
+    		B_dimmers?.setLevel(dimLevel)
+        	if (B_thermostats) {
+        		def thermostatState = B_thermostats.currentThermostatMode
 			if (thermostatState == "auto") {
-				A_thermostats.setHeatingSetpoint(B_temperatureH)
-				A_thermostats.setCoolingSetpoint(B_temperatureC)
+				B_thermostats.setHeatingSetpoint(B_temperatureH)
+				B_thermostats.setCoolingSetpoint(B_temperatureC)
 			}
 			else if (thermostatState == "heat") {
-				A_thermostats.setHeatingSetpoint(B_temperatureH)
+				B_thermostats.setHeatingSetpoint(B_temperatureH)
         		log.info "Set $B_thermostats Heat $B_temperatureH°"
 			}
 			else {
-				A_thermostats.setCoolingSetpoint(B_temperatureC)
+				B_thermostats.setCoolingSetpoint(B_temperatureC)
         		log.info "Set $B_thermostats Cool $B_temperatureC°"
-            }
+            		}
 		}
- 		if (sonos) {
-            state.fullMsg = ""
-            if (B_wakeMsg) {
-            	getGreeting(B_wakeMsg)
-            }    
-            if (B_weatherReport) {
-            	getWeatherReport()
-            }
-        	if (B_switches || B_dimmers || B_thermostats) {
-        		getOnConfimation(B_switches, B_dimmers, B_thermostats)
-        	}
-            if (B_phrase) {
-            	getPhraseConfirmation(B_phrase)
-            }
+            	getOnConfimation(B_switches, B_dimmers, B_thermostats)
         }
-        
+        if (B_phrase) {
+        	location.helloHome.execute(B_phrase)
+        	getPhraseConfirmation(B_phrase)
+        }
+                
     	state.sound = textToSpeech(state.fullMsg, true)
-    	if (volume) {
-        	sonos.playTrackAtVolume(state.sound.uri, volume)
-        }
-        else{
-        	sonos.playTrack(state.sound.uri)
-        }
+    	if (B_volume) {
+        	B_sonos.setLevel(B_volume)
+	}
+        B_sonos.playTrack(state.sound.uri)
     }
 }
 
 def alarm_C() {
 	if ((!C_mode || C_mode.contains(location.mode)) && getDayOk(C_day)) {	
    	 	def dimLevel = C_level as Integer
-    	//Lights/switches----------
-        C_switches?.on()
-    	C_dimmers?.setLevel(dimLevel)
-        //Thermostates-------------
-        if (C_thermostats) {
-        	def thermostatState = C_thermostats.currentThermostatMode
+ 
+ 		state.fullMsg = ""
+		if (C_wakeMsg) {
+			getGreeting(C_wakeMsg)
+        	}    
+        	if (C_weatherReport) {
+           		getWeatherReport()
+        	}
+       		if (C_switches || C_dimmers || C_thermostats) {
+       			C_switches?.on()
+    			C_dimmers?.setLevel(dimLevel)
+            		if (C_thermostats) {
+        		def thermostatState = C_thermostats.currentThermostatMode
 			if (thermostatState == "auto") {
-				A_thermostats.setHeatingSetpoint(C_temperatureH)
-				A_thermostats.setCoolingSetpoint(C_temperatureC)
+				C_thermostats.setHeatingSetpoint(C_temperatureH)
+				C_thermostats.setCoolingSetpoint(C_temperatureC)
 			}
 			else if (thermostatState == "heat") {
-				A_thermostats.setHeatingSetpoint(C_temperatureH)
+				C_thermostats.setHeatingSetpoint(C_temperatureH)
         		log.info "Set $C_thermostats Heat $C_temperatureH°"
 			}
 			else {
-				A_thermostats.setCoolingSetpoint(C_temperatureC)
-        		log.info "Set $C_thermostats Cool $C_temperatureC°"
-            }
+				C_thermostats.setCoolingSetpoint(C_temperatureC)
+        			log.info "Set $C_thermostats Cool $C_temperatureC°"
+            		}
 		}
- 		if (sonos) {
-            state.fullMsg = ""
-            if (C_wakeMsg) {
-            	getGreeting(C_wakeMsg)
-            }    
-            if (C_weatherReport) {
-            	getWeatherReport()
-            }
-        	if (C_switches || C_dimmers || C_thermostats) {
-        		getOnConfimation(C_switches, C_dimmers, C_thermostats)
-        	}
-            if (C_phrase) {
-            	getPhraseConfirmation(C_phrase)
-            }
+            	getOnConfimation(C_switches, C_dimmers, C_thermostats)
+       	}
+        if (C_phrase) {
+           	location.helloHome.execute(C_phrase)
+        	getPhraseConfirmation(C_phrase)
         }
         
     	state.sound = textToSpeech(state.fullMsg, true)
-    	if (volume) {
-        	sonos.playTrackAtVolume(state.sound.uri, volume)
-        }
-        else{
-        	sonos.playTrack(state.sound.uri)
-        }
+    	if (C_volume) {
+        	C_sonos.setLevel(C_volume)
+	}
+        C_sonos.playTrack(state.sound.uri)
     }
 }
 
 def alarm_D() {
 	if ((!D_mode || D_mode.contains(location.mode)) && getDayOk(D_day)) {	
-   	 	def dimLevel = D_level as Integer
-    	//Lights/switches----------
-        C_switches?.on()
-    	C_dimmers?.setLevel(dimLevel)
-        //Thermostates-------------
-        if (D_thermostats) {
-        	def thermostatState = D_thermostats.currentThermostatMode
+		def dimLevel = D_level as Integer
+
+	    	state.fullMsg = ""
+        	if (D_wakeMsg) {
+           		getGreeting(D_wakeMsg)
+        	}    
+        	if (D_weatherReport) {
+           		getWeatherReport()
+        	}
+       		if (D_switches || D_dimmers || D_thermostats) {
+      			D_switches?.on()
+    			D_dimmers?.setLevel(dimLevel)
+            	if (D_thermostats) {
+        		def thermostatState = D_thermostats.currentThermostatMode
 			if (thermostatState == "auto") {
-				A_thermostats.setHeatingSetpoint(D_temperatureH)
-				A_thermostats.setCoolingSetpoint(D_temperatureC)
+				D_thermostats.setHeatingSetpoint(D_temperatureH)
+				D_thermostats.setCoolingSetpoint(D_temperatureC)
 			}
 			else if (thermostatState == "heat") {
-				A_thermostats.setHeatingSetpoint(D_temperatureH)
-        		log.info "Set $D_thermostats Heat $D_temperatureH°"
-			}
+				D_thermostats.setHeatingSetpoint(D_temperatureH)
+        			log.info "Set $D_thermostats Heat $D_temperatureH°"
+				}
 			else {
-				A_thermostats.setCoolingSetpoint(D_temperatureC)
-        		log.info "Set $D_thermostats Cool $D_temperatureC°"
-            }
-		}
- 		if (sonos) {
-            state.fullMsg = ""
-            if (D_wakeMsg) {
-            	getGreeting(D_wakeMsg)
-            }    
-            if (D_weatherReport) {
-            	getWeatherReport()
-            }
-        	if (D_switches || D_dimmers || D_thermostats) {
-        		getOnConfimation(D_switches, D_dimmers, D_thermostats)
-        	}
-            if (D_phrase) {
-            	getPhraseConfirmation(D_phrase)
-            }
+				D_thermostats.setCoolingSetpoint(D_temperatureC)
+        			log.info "Set $D_thermostats Cool $D_temperatureC°"
+            		}
+            	}
+            	getOnConfimation(D_switches, D_dimmers, D_thermostats)
+       	}
+        if (D_phrase) {
+        	location.helloHome.execute(D_phrase)
+        	getPhraseConfirmation(D_phrase)
         }
         
     	state.sound = textToSpeech(state.fullMsg, true)
-    	if (volume) {
-        	sonos.playTrackAtVolume(state.sound.uri, volume)
-        }
-        else{
-        	sonos.playTrack(state.sound.uri)
-        }
+    	if (D_volume) {
+        	D_sonos.setLevel(D_volume)
+	}
+        D_sonos.playTrack(state.sound.uri)
     }
 }
 
 //--------------------------------------
 
-def getDesc(timeStart, day, mode) {
-	def desc = "Tap to create scenario"
+def getDesc(timeStart, sonos, day, mode) {
+	def desc = "Tap to set alarm"
    
 	if (timeStart) {
-    	desc = "Alarm set to " + hhmm(timeStart) +"\n"
+    	desc = "Alarm set to " + hhmm(timeStart) +" on ${sonos}\n"
 		
-        def dayListSize = day ? day.size() :7
+        def dayListSize = day ? day.size() : 7
              
         if (day && dayListSize < 7) {
         	desc = desc + "On "
             
-            for (dayName in day) {
- 				desc = desc + "${dayName}"
+            	for (dayName in day) {
+ 			desc = desc + "${dayName}"
     			dayListSize = dayListSize -1
-                if (dayListSize) {
-            		desc = "${desc}, "
-            	}
+                	if (dayListSize) {
+            			desc = "${desc}, "
+        		}
         	}
         }
         else {
@@ -496,7 +474,7 @@ def getDesc(timeStart, day, mode) {
             		desc = "${desc}"
         		}
         	}
-		}
+	}
      	else {
     		desc = desc + "\nIn all modes"
         }
@@ -504,47 +482,30 @@ def getDesc(timeStart, day, mode) {
 	desc	
 }
 
-def getDescOption() {
-	def desc = sonos ? "Tap to edit" : "Not configured"
-    desc
-}
-
 private def helpText() {
 	def text =
-    	"Choose an alarm time along with switches, dimmers and thermostats to control " +
-        "when the alarm is triggered. You can also choose to have a weather " +
-        "report spoken as part of the alarm."
+    	"Choose a Sonos speaker along with an alarm time and switches, dimmers " +
+        "and thermostats to control when the alarm is triggered. You can also " +
+        "choose to have a weather report spoken as part of the alarm."
 	text
 }
 
-def greyOut(scenario, alarmTime, alarmOn){
-    def result = scenario && alarmTime && alarmOn ? "complete" : ""
-    if (scenario == "*") {
-    	result = sonos ? "complete" : ""
-    }
-    result
+def greyOut(scenario, sonos, alarmTime, alarmOn){
+	def result = scenario && sonos  && alarmTime && alarmOn ? "complete" : ""
+	result
 }
 
 def getTitle(scenario, num) {
 	def title = scenario ? scenario : "Alarm ${num} not configured"
-    title
-}
-
-def getTimeLabel(alarmTime){
-	def timeLabel = "Tap to set"
-	
-    if(alarmTime){
-		timeLabel = "Alarm at" + " " + hhmm(start)
-    }
-	timeLabel	
+    	title
 }
 
 private getDayOk(dayList) {
 	def result = true
-    if (dayList) {
+    	if (dayList) {
 		result = dayList.contains(getDay())
 	}
-    result
+    	result
 }
 
 private getDay(){
@@ -556,7 +517,7 @@ private getDay(){
 		df.setTimeZone(TimeZone.getTimeZone("America/New_York"))
 	}
 	def day = df.format(new Date())
-    day
+    	day
 }
 
 private hhmm(time) {
@@ -564,7 +525,7 @@ private hhmm(time) {
 }
 
 public convertEpoch(epochDate) {
-    new Date(epochDate).format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", location.timeZone)
+	new Date(epochDate).format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", location.timeZone)
 }
 
 private getMonth(date) {
@@ -581,15 +542,15 @@ private getDayNum(date) {
 
 private getGreeting(msg) {
 	def day = getDay()
-    def time = hhmm(convertEpoch(now()))
-    def month = getMonth(convertEpoch(now()))
-    def year = getYear(convertEpoch(now()))
-    def dayNum = getDayNum(convertEpoch(now()))
+    	def time = hhmm(convertEpoch(now()))
+    	def month = getMonth(convertEpoch(now()))
+    	def year = getYear(convertEpoch(now()))
+    	def dayNum = getDayNum(convertEpoch(now()))
 	msg = msg.replace('%day%', day)
-    msg = msg.replace('%date%', "${month} ${dayNum}, ${year}")
-    msg = msg.replace('%time%', "${time}")
-    log.debug "msg = ${msg}"
-    state.fullMsg = "${msg} "
+    	msg = msg.replace('%date%', "${month} ${dayNum}, ${year}")
+    	msg = msg.replace('%time%', "${time}")
+    	log.debug "msg = ${msg}"
+    	state.fullMsg = "${msg} "
 }
 
 private getWeatherReport() {
@@ -597,17 +558,13 @@ private getWeatherReport() {
 		def weather = getWeatherFeature("forecast", zipCode)
 		def current = getWeatherFeature("conditions", zipCode)
 		def isMetric = location.temperatureScale == "C"
-		def delim = ""
-		def sb = new StringBuilder()
+        	def sb = new StringBuilder()
 		if (isMetric) {
-        	sb << "The current temperature is ${Math.round(current.current_observation.temp_c)} degrees."
+        	sb << "The current temperature is ${Math.round(current.current_observation.temp_c)} degrees. "
         }
         else {
-           	sb << "The current temperature is ${Math.round(current.current_observation.temp_f)} degrees."
+           	sb << "The current temperature is ${Math.round(current.current_observation.temp_f)} degrees. "
         }
-		delim = " "
-
-		sb << delim
 		sb << "Today's forecast is "
 		if (isMetric) {
         	sb << weather.forecast.txt_forecast.forecastday[0].fcttext_metric 
@@ -615,37 +572,35 @@ private getWeatherReport() {
         else {
           	sb << weather.forecast.txt_forecast.forecastday[0].fcttext
         }
-                
 		def msg = sb.toString()
-        msg = msg.replaceAll(/([0-9]+)C/,'$1 degrees') // TODO - remove after next release
+        	msg = msg.replaceAll(/([0-9]+)C/,'$1 degrees')
 		log.debug "msg = ${msg}"
-        state.fullMsg = state.fullMsg + "${msg} "
+        	state.fullMsg = state.fullMsg + "${msg} "
 	}
 	else {
 		msg = "Please set the location of your hub with the SmartThings mobile app, or enter a zip code to receive weather forecasts."
-        state.fullMsg = state.fullMsg + "${msg} "
+        	state.fullMsg = state.fullMsg + "${msg} "
 	}
 }
 
 private getOnConfimation(switches, dimmers, thermostats) {
 	def msg = ""
-    if ((switches || dimmers) && !thermostats) {
-    	msg = "All switches"	
-    }
-    if (!switches && !dimmers && thermostats) {
-    	msg = "Thermostats"
-    }
-    if ((switches || dimmers) && thermostats) {
-    	msg = "All switches and thermostats"
-    } 
-    msg="${msg} are now on and set. "
-    log.debug "msg = ${msg}"
-    state.fullMsg = state.fullMsg + "${msg} "
+    	if ((switches || dimmers) && !thermostats) {
+    		msg = "All switches"	
+    	}
+    	if (!switches && !dimmers && thermostats) {
+    		msg = "Thermostats"
+    	}
+    	if ((switches || dimmers) && thermostats) {
+    		msg = "All switches and thermostats"
+    	} 
+    	msg = "${msg} are now on and set. "
+    	log.debug "msg = ${msg}"
+    	state.fullMsg = state.fullMsg + "${msg} "
 }
 
 private getPhraseConfirmation(phrase) {
 	def msg="The Smart Things Hello Home phrase, ${phrase}, has been activated."
-    log.debug "msg = ${msg}"
-    state.fullMsg = state.fullMsg + "${msg} "
+	log.debug "msg = ${msg}"
+	state.fullMsg = state.fullMsg + "${msg} "
 }
-
