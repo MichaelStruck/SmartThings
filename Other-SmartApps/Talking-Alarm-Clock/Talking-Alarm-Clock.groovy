@@ -589,7 +589,7 @@ private getGreeting(msg) {
     msg = msg.replace('%date%', "${month} ${dayNum}, ${year}")
     msg = msg.replace('%time%', "${time}")
     log.debug "msg = ${msg}"
-    state.fullMsg = msg
+    state.fullMsg = "${msg} "
 }
 
 private getWeatherReport() {
@@ -619,11 +619,11 @@ private getWeatherReport() {
 		def msg = sb.toString()
         msg = msg.replaceAll(/([0-9]+)C/,'$1 degrees') // TODO - remove after next release
 		log.debug "msg = ${msg}"
-        state.fullMsg = state.fullMsg + "${msg}"
+        state.fullMsg = state.fullMsg + "${msg} "
 	}
 	else {
 		msg = "Please set the location of your hub with the SmartThings mobile app, or enter a zip code to receive weather forecasts."
-        state.fullMsg = state.fullMsg + "${msg}"
+        state.fullMsg = state.fullMsg + "${msg} "
 	}
 }
 
@@ -638,14 +638,14 @@ private getOnConfimation(switches, dimmers, thermostats) {
     if ((switches || dimmers) && thermostats) {
     	msg = "All switches and thermostats"
     } 
-    msg="${msg} are now on and set."
+    msg="${msg} are now on and set. "
     log.debug "msg = ${msg}"
-    state.fullMsg = state.fullMsg + "${msg}"
+    state.fullMsg = state.fullMsg + "${msg} "
 }
 
 private getPhraseConfirmation(phrase) {
 	def msg="The Smart Things Hello Home phrase, ${phrase}, has been activated."
     log.debug "msg = ${msg}"
-    state.fullMsg = state.fullMsg + "${msg}"
+    state.fullMsg = state.fullMsg + "${msg} "
 }
 
