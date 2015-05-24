@@ -49,21 +49,21 @@ definition(
     )
 
 preferences {
-    page name:"pageSetup"
-    page name:"pageSetupScenarioA"
-    page name:"pageSetupScenarioB"
-    page name:"pageSetupScenarioC"
-    page name:"pageSetupScenarioD"
+	page name:"pageSetup"
+	page name:"pageSetupScenarioA"
+	page name:"pageSetupScenarioB"
+	page name:"pageSetupScenarioC"
+	page name:"pageSetupScenarioD"
 }
 
 // Show setup page
 def pageSetup() {
 	dynamicPage(name: "pageSetup", install: true, uninstall: true) {
         section("Setup Menu") {
-            href "pageSetupScenarioA", title: getTitle(ScenarioNameA), description: getDesc(ScenarioNameA), state: greyOut(ScenarioNameA)
-            href "pageSetupScenarioB", title: getTitle(ScenarioNameB), description: getDesc(ScenarioNameB), state: greyOut(ScenarioNameB)
-            href "pageSetupScenarioC", title: getTitle(ScenarioNameC), description: getDesc(ScenarioNameC), state: greyOut(ScenarioNameC)
-            href "pageSetupScenarioD", title: getTitle(ScenarioNameD), description: getDesc(ScenarioNameD), state: greyOut(ScenarioNameD)
+			href "pageSetupScenarioA", title: getTitle(ScenarioNameA), description: getDesc(ScenarioNameA), state: greyOut(ScenarioNameA)
+			href "pageSetupScenarioB", title: getTitle(ScenarioNameB), description: getDesc(ScenarioNameB), state: greyOut(ScenarioNameB)
+			href "pageSetupScenarioC", title: getTitle(ScenarioNameC), description: getDesc(ScenarioNameC), state: greyOut(ScenarioNameC)
+			href "pageSetupScenarioD", title: getTitle(ScenarioNameD), description: getDesc(ScenarioNameD), state: greyOut(ScenarioNameD)
         }
         section([title:"Options", mobileOnly:true]) {
             label title:"Assign a name", required:false
@@ -75,9 +75,9 @@ def pageSetup() {
 def pageSetupScenarioA() {
     dynamicPage(name: "pageSetupScenarioA") {
 		section("Devices included in the scenario") {
-    		input "A_switch","capability.switch", title: "Monitor this light switch...", multiple: false, required: true
-        	input "A_humidity", "capability.relativeHumidityMeasurement",title: "Monitor the following humidity sensor...", multiple: false, required: true
-        	input "A_fans", "capability.switch", title: "Control the following ventilation fans...", multiple: true, required: true
+			input "A_switch","capability.switch", title: "Monitor this light switch...", multiple: false, required: true
+			input "A_humidity", "capability.relativeHumidityMeasurement",title: "Monitor the following humidity sensor...", multiple: false, required: true
+			input "A_fans", "capability.switch", title: "Control the following ventilation fans...", multiple: true, required: true
 		}
 		section("Fan settings") {
         	input "A_humidityDelta", title: "Fan(s) turns on when lights are on and humidy rises", "number", required: false, description: "0-50%"
@@ -184,30 +184,34 @@ def updated() {
 def initialize() {
 	
     if(A_switch) {
+        state.A_runTime = A_fanTime ? A_fanTime as Integer : 98
         subscribe(A_switch, "switch.on", onEventA)
     	subscribe(A_switch, "switch.off", offEventA)
-    	if (A_humidityDelta || A_fanTime == 99) {
+    	if (A_humidityDelta || state.A_runTime == 99) {
     		subscribe(A_humidity, "humidity", humidityHandlerA)
 		}
 	}
     if(B_switch) {
+        state.B_runTime = B_fanTime ? B_fanTime as Integer : 98
         subscribe(B_switch, "switch.on", onEventB)
     	subscribe(B_switch, "switch.off", offEventB)
-    	if (B_humidityDelta || B_fanTime == 99) {
+    	if (B_humidityDelta || state.B_runTime == 99) {
     		subscribe(B_humidity, "humidity", humidityHandlerB)
 		}
 	}
     if(C_switch) {
-		subscribe(C_switch, "switch.on", onEventC)
+		state.C_runTime = C_fanTime ? C_fanTime as Integer : 98
+        subscribe(C_switch, "switch.on", onEventC)
     	subscribe(C_switch, "switch.off", offEventC)
-    	if (C_humidityDelta || C_fanTime == 99) {
+    	if (C_humidityDelta || state.C_runTime == 99) {
     		subscribe(C_humidity, "humidity", humidityHandlerC)
 		}
 	}
     if(D_switch) {
-		subscribe(D_switch, "switch.on", onEventD)
+		state.D_runTime = D_fanTime ? D_fanTime as Integer : 98
+        subscribe(D_switch, "switch.on", onEventD)
     	subscribe(D_switch, "switch.off", offEventD)
-    	if (D_humidityDelta || D_fanTime == 99) {
+    	if (D_humidityDelta || state.D_runTime == 99) {
     		subscribe(D_humidity, "humidity", humidityHandlerD)
 		}
 	}
@@ -219,10 +223,9 @@ def turnOnA(){
     if ((!A_mode || A_mode.contains(location.mode)) && getDayOk(A_day) && A_switch.currentValue("switch")=="on") {
         log.debug "Ventilation fans turned on in ${ScenarioNameA}."
     	A_fans?.on()
-        def runTime = A_fanTime ? A_fanTime : 98
-        if (runTime < 98) {
-			log.debug "Humidity fans will be turned off in ${A_fanTime} minutes in ${ScenarioNameA}."
-            runIn (A_fanTime*60, turnOffA)
+        if (state.A_runTime < 98) {
+			log.debug "Humidity fans will be turned off in ${state.A_runTime} minutes in ${ScenarioNameA}."
+            runIn (state.A_runTime*60, turnOffA)
         }
 	}
 }
@@ -238,7 +241,7 @@ def humidityHandlerA(evt){
 	if (state.humidityLimitA && currentHumidityA >= state.humidityLimitA) {
         turnOnA()
     }
-	if (state.humidityStartA && currentHumidityA <= state.humidityStartA && A_fanTime == 99){
+	if (state.humidityStartA && currentHumidityA <= state.humidityStartA && state.A_runTime == 99){
     	turnOffA()
     }      
 }
@@ -256,8 +259,7 @@ def onEventA(evt) {
 def offEventA(evt) {
 	def currentHumidityA = A_humidity.currentValue("humidity")
     log.debug "Light turned off in ${ScenarioNameA}. Humidity value is ${currentHumidityA} in ${ScenarioNameA}"
-    def runTime = A_fanTime ? A_fanTime : 98
-    if (runTime == 98){
+    if (state.A_runTime == 98){
     	turnOffA()
     }
 }
@@ -266,10 +268,9 @@ def turnOnB(){
     if ((!B_mode || B_mode.contains(location.mode)) && getDayOk(B_day) && B_switch.currentValue("switch")=="on") {
         log.debug "Ventilation fans turned on in ${ScenarioNameB}."
     	B_fans?.on()
-        def runTime = B_fanTime ? B_fanTime : 98
-        if (runTime < 98) {
-			log.debug "Humidity fans will be turned off in ${B_fanTime} minutes in ${ScenarioNameB}."
-            runIn (B_fanTime*60, turnOffB)
+        if (state.B_runTime < 98) {
+			log.debug "Humidity fans will be turned off in ${state.B_runTime} minutes in ${ScenarioNameB}."
+            runIn (state.B_runTime*60, turnOffB)
         }
 	}
 }
@@ -285,7 +286,7 @@ def humidityHandlerB(evt){
 	if (state.humidityLimitB && currentHumidityB >= state.humidityLimitB) {
         turnOnB()
     }
-	if (state.humidityStartB && currentHumidityB <= state.humidityStartB && B_fanTime == 99){
+	if (state.humidityStartB && currentHumidityB <= state.humidityStartB && state.B_runTime == 99){
     	turnOffB()
     }      
 }
@@ -303,8 +304,7 @@ def onEventB(evt) {
 def offEventB(evt) {
 	def currentHumidityB = B_humidity.currentValue("humidity")
     log.debug "Light turned off in ${ScenarioNameB}. Humidity value is ${currentHumidityB} in ${ScenarioNameB}"
-    def runTime = B_fanTime ? B_fanTime : 98
-    if (runTime == 98){
+    if (state.B_runTime == 98){
     	turnOffB()
     }
 }
@@ -314,10 +314,9 @@ def turnOnC(){
     if ((!C_mode || C_mode.contains(location.mode)) && getDayOk(C_day) && C_switch.currentValue("switch")=="on") {
         log.debug "Ventilation fans turned on in ${ScenarioNameC}."
     	C_fans?.on()
-        def runTime = C_fanTime ? C_fanTime : 98
-        if (runTime < 98) {
-			log.debug "Humidity fans will be turned off in ${C_fanTime} minutes in ${ScenarioNameC}."
-            runIn (C_fanTime*60, turnOffC)
+        if (state.C_runTime < 98) {
+			log.debug "Humidity fans will be turned off in ${state.C_runTime} minutes in ${ScenarioNameC}."
+            runIn (state.C_runTime*60, turnOffC)
         }
 	}
 }
@@ -333,7 +332,7 @@ def humidityHandlerC(evt){
 	if (state.humidityLimitC && currentHumidityC >= state.humidityLimitC) {
         turnOnC()
     }
-	if (state.humidityStartC && currentHumidityC <= state.humidityStartC && C_fanTime == 99){
+	if (state.humidityStartC && currentHumidityC <= state.humidityStartC && state.C_runTime == 99){
     	turnOffC()
     }      
 }
@@ -351,8 +350,7 @@ def onEventC(evt) {
 def offEventC(evt) {
 	def currentHumidityC = C_humidity.currentValue("humidity")
     log.debug "Light turned off in ${ScenarioNameC}. Humidity value is ${currentHumidityC} in ${ScenarioNameC}"
-    def runTime = C_fanTime ? C_fanTime : 98
-    if (runTime == 98){
+    if (state.C_runTime == 98){
     	turnOffC()
     }
 }
@@ -362,17 +360,16 @@ def turnOnD(){
     if ((!D_mode || D_mode.contains(location.mode)) && getDayOk(D_day) && D_switch.currentValue("switch")=="on") {
         log.debug "Ventilation fans turned on in ${ScenarioNameD}."
     	D_fans?.on()
-        def runTime = D_fanTime ? D_fanTime : 98
-        if (runTime < 98) {
-			log.debug "Humidity fans will be turned off in ${D_fanTime} minutes in ${ScenarioNameD}."
-            runIn (D_fanTime*60, turnOffD)
+        if (state.D_runTime < 98) {
+			log.debug "Humidity fans will be turned off in ${state.D_runTime} minutes in ${ScenarioNameD}."
+            runIn (state.D_runTime*60, turnOffD)
         }
 	}
 }
 
 def turnOffD() {
 	log.debug "Ventilation fans turned off in ${ScenarioNameD}."
-    D_fans?.off()
+    	D_fans?.off()
 }
 
 def humidityHandlerD(evt){
@@ -381,28 +378,27 @@ def humidityHandlerD(evt){
 	if (state.humidityLimitD && currentHumidityD >= state.humidityLimitD) {
         turnOnD()
     }
-	if (state.humidityStartD && currentHumidityD <= state.humidityStartD && D_fanTime == 99){
+	if (state.humidityStartD && currentHumidityD <= state.humidityStartD && state.D_runTime == 99){
     	turnOffD()
     }      
 }
 
 def onEventD(evt) {
-    def humidityDelta = D_humidityDelta ? D_humidityDelta as Integer : 0
-    state.humidityStartD = D_humidity.currentValue("humidity")
-    state.humidityLimitD = state.humidityStartD + humidityDelta
-    log.debug "Light turned on in ${ScenarioNameD}. Humidity starting value is ${state.humidityStartD} in ${ScenarioNameD}. Ventilation threshold is ${state.humidityLimitD}"
-    if (!D_humidityDelta) {
-    	turnOnD()
-    }
+	def humidityDelta = D_humidityDelta ? D_humidityDelta as Integer : 0
+    	state.humidityStartD = D_humidity.currentValue("humidity")
+    	state.humidityLimitD = state.humidityStartD + humidityDelta
+    	log.debug "Light turned on in ${ScenarioNameD}. Humidity starting value is ${state.humidityStartD} in ${ScenarioNameD}. Ventilation threshold is ${state.humidityLimitD}"
+    	if (!D_humidityDelta) {
+    		turnOnD()
+    	}
 }
 
 def offEventD(evt) {
 	def currentHumidityD = D_humidity.currentValue("humidity")
-    log.debug "Light turned off in ${ScenarioNameD}. Humidity value is ${currentHumidityD} in ${ScenarioNameD}"
-    def runTime = D_fanTime ? D_fanTime : 98
-    if (runTime == 98){
-    	turnOffD()
-    }
+    	log.debug "Light turned off in ${ScenarioNameD}. Humidity value is ${currentHumidityD} in ${ScenarioNameD}"
+    	if (state.D_runTime == 98){
+    		turnOffD()
+    	}
 }
 
 
@@ -418,8 +414,8 @@ private def helpText() {
 }
 
 def greyOut(scenario){
-    def result = scenario ? "complete" : ""
-    result
+    	def result = scenario ? "complete" : ""
+    	result
 }
 
 def getTitle(scenario) {
@@ -434,7 +430,7 @@ def getDesc(scenario) {
 
 private getDayOk(dayList) {
 	def result = true
-    if (dayList) {
+    	if (dayList) {
 		def df = new java.text.SimpleDateFormat("EEEE")
 		if (location.timeZone) {
 			df.setTimeZone(location.timeZone)
@@ -445,5 +441,5 @@ private getDayOk(dayList) {
 		def day = df.format(new Date())
 		result = dayList.contains(day)
 	}
-    result
+	result
 }
