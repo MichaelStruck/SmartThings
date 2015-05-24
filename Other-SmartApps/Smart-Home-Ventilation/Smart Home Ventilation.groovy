@@ -1,6 +1,6 @@
 /**
  *	Smart Home Ventilation
- *	Version 2.10 - 4/27/15
+ *	Version 2.11 - 5/13/15
  *
  *	Copyright 2015 Michael Struck
  *
@@ -16,7 +16,7 @@
  */
  
 definition(
-    name: "Smart Home Ventilation",
+	name: "Smart Home Ventilation",
     namespace: "MichaelStruck",
     author: "Michael Struck",
     description: "Allows for setting up various schedule scenarios for turning on and off home ventilation switches.",
@@ -29,8 +29,8 @@ preferences {
 	page(name: "mainPage")
 	page(name: "A_Scenario")
 	page(name: "B_Scenario")
-    	page(name: "C_Scenario")
-	 page(name: "D_Scenario")
+    page(name: "C_Scenario")
+    page(name: "D_Scenario")
 }
 
 def mainPage() {
@@ -300,10 +300,7 @@ def schedDesc(on1, off1, on2, off2, on3, off3, on4, off4, modeList, dayList) {
 }
 
 def greyOut(on1, on2, on3, on4){
-	def result = ""
-    if (on1 || on2 || on3 || on4) {
-    	result = "complete"
-    }
+    def result = on1 || on2 || on3 || on4 ? "complete" : ""
     result
 }
 
@@ -316,10 +313,7 @@ public convertEpoch(epochDate) {
 }
 
 private getTitle(txt, scenario) {
-	def title = "Scenario ${scenario}"
-    if (txt) {
-    	title=txt
-    }
+    def title = txt ? txt : "Scenario ${scenario}"
     title	
 }
 
@@ -339,14 +333,6 @@ private daysOk(dayList) {
     result
 }
 
-private modeOk(modeList) {
-	def result = true
-    if (modeList){
-    	result = modeList.contains(location.mode)
-	}
-    result
-}
-
 private timeOk(starting, ending) {
     if (starting && ending) {
         def currTime = now()
@@ -361,7 +347,7 @@ private timeOk(starting, ending) {
 def createDayArray() {
 	state.modeChange = false
     state.data = []
-    if (modeOk(modeA)) {
+    if (modeA && modeA.contains(location.mode)) {
         if (daysOk(daysA)){
             timeOk(timeOnA1, timeOffA1)
 			timeOk(timeOnA2, timeOffA2)
@@ -369,7 +355,7 @@ def createDayArray() {
 			timeOk(timeOnA4, timeOffA4)
         }
     }
-	if (modeOk(modeB)) {
+    if (modeB && modeB.contains(location.mode)) {
         if (daysOk(daysB)){
 			timeOk(timeOnB1, timeOffB1)
             timeOk(timeOnB2, timeOffB2)
@@ -377,7 +363,7 @@ def createDayArray() {
             timeOk(timeOnB4, timeOffB4)
         }
     }
-    if (modeOk(modeC)) {
+    if (modeC && modeC.contains(location.mode)) {
         if (daysOk(daysC)){
             timeOk(timeOnC1, timeOffC1)
             timeOk(timeOnC2, timeOffC2)
@@ -385,7 +371,7 @@ def createDayArray() {
             timeOk(timeOnC4, timeOffC4)
         }
     }
-	if (modeOk(modeD)) {
+    if (modeD && modeD.contains(location.mode)) {
         if (daysOk(daysD)){
            timeOk(timeOnD1, timeOffD1)
            timeOk(timeOnD2, timeOffD2)
