@@ -1,3 +1,5 @@
+Control up to 4 rooms (scenarios) of light/dimmers based on motion and lux levels.
+
 Instructions for installation:
 
 1.Copy the RAW code from GitHub for this application
