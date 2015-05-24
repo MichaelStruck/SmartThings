@@ -1,11 +1,12 @@
 /**
  *  Light > Dark
- *  Version 1.04 5/9/15
+ *  Version 1.05 5/17/15
  *
  *	1.01 Added a verify so they event has to trip trice in a row to do the action.
  *	1.02 Added custom icon
  *  1.03 Revision to interface for better flow
  *	1.04 Added dimmer switches/levels, reorganized interface and added time restrictions options
+ *  1.05 Fixed an inconsistent time limitiation code issue
  *
  *
  *	Using code from SmartThings Light Up The Night App and the Sunrise/Sunset app
@@ -76,29 +77,12 @@ def updated() {
 }
 
 def init(){
- 	state.dimLevelOn = dimmerLevelOn as Integer
-	state.dimLevelOff = dimmerLevelOff as Integer
-    state.lumOn = luxOn
-    state.lumOff = luxOff
+ 	state.dimLevelOn = dimmerLevelOn ? dimmerLevelOn as Integer : 100
+	state.dimLevelOff = dimmerLevelOff ? dimmerLevelOff as Integer : 0
+    state.lumOn = luxOn ? luxOn : 100
+    state.lumOff = luxOff ? luxOff : state.lumOn
+	state.lastStatus = lightSensor.latestValue("illuminance") < state.lumOn ? "on" : "off"
     
-    if (!luxOn) {
-       	state.lumOn = 100
-    } 
-    if (!luxOff) {
-       	state.lumOff = state.lumOn
-    }
-   	if (!state.dimLevelOn) {
-		state.dimLevelOn = 100
-   	}
-   	if (!state.dimLevelOff) {
-   		state.dimLevelOff = 0
-   	}
-    if (lightSensor.latestValue("illuminance") < state.lumOn) {
-    	state.lastStatus = "on"
-    }
-    else {
-    	state.lastStatus = "off"
-    }
     subscribe(lightSensor, "illuminance", illuminanceHandler)
 }
 //Handlers
@@ -149,19 +133,12 @@ def getTimeLabel(start, end){
 }
 
 def greyedOutTime(start, end){
-	def result = ""
-    if (start || end) {
-    	result = "complete"	
-    }
+	def result = start || end ? "complete" : ""
     result
 }
 
-private hhmm(time, fmt = "h:mm a")
-{
-	def t = timeToday(time, location.timeZone)
-	def f = new java.text.SimpleDateFormat(fmt)
-	f.setTimeZone(location.timeZone ?: timeZone(time))
-	f.format(t)
+private hhmm(time){
+	new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", time).format("h:mm a", timeZone(time))
 }
 
 private getTimeOk() {
@@ -170,9 +147,15 @@ private getTimeOk() {
 		def currTime = now()
 		def start = timeToday(timeStart).time
 		def stop = timeToday(timeEnd).time
-		result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start || currTime <= stop
+		result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start
 	}
-	result
+	else if (timeStart){
+    	result = currTime >= start
+    }
+    else if (timeEnd){
+    	result = currTime <= stop
+    }
+    result
 }
 
 page(name: "timeIntervalInput", title: "Run only during a certain time", refreshAfterSelection:true) {
