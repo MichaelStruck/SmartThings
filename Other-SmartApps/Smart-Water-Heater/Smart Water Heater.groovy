@@ -1,13 +1,13 @@
 /**
  *  Smart Water Heater
- *  Version 1.3 5/11/2015
+ *  Version 1.3 5/15/2015
  *
  *  Version 1.01-Initial release
- *  Version 1.1 added a function to turn water heater back on if someone comes home early.
+ *  Version 1.1 added a function to turn water heater back on if someone comes home early
  *  Version 1.11 Revised the interface for better flow
  *  Version 1.2 Revised the interface even more for better flow
  *  Version 1.21 Further interface revision
- *  Version 1.3 Added the option to turn off the water heater early if everyone leaves before the scheduled time.
+ *  Version 1.3 Added the option to turn off the water heater early if everyone leaves before the scheduled time and code opimization
  * 
  *
  *  Copyright 2015 Michael Struck
@@ -102,10 +102,10 @@ def init () {
 }
 
 def turnOffDay() {
-	def runToday = true
-	if (!weekendRun && isWeekend()) {
-		runToday = false
-    }   
+	def runToday = !weekendRun && isWeekend() ? false : true
+	//if (!weekendRun && isWeekend()) {
+	//	runToday = false
+    //}   
 
     if (runToday && everyoneGone()) {
     	state.status="Day off"
@@ -153,11 +153,7 @@ def presenceHandler(evt) {
 }
 
 private everyoneGone() {
-    def result = true
-    def someoneHome = presence1.find{it.currentPresence == "present"}
-    if (someoneHome) {
-	   	result = false
-    }
+    def result = presence1.find{it.currentPresence == "present"} ? false : true
 	result
 }
 
@@ -165,7 +161,7 @@ private everyoneGone() {
 def nightDescription() {
 	def title = ""
     if (timeOffNight) {
-    	title += "Turn off at ${humanReadableTime(timeOffNight)} then turn back on at ${humanReadableTime(timeOnNight)}"
+    	title += "Turn off at ${hhmm(timeOffNight)} then turn back on at ${hhmm(timeOnNight)}"
     }
     title
 }
@@ -173,22 +169,19 @@ def nightDescription() {
 def dayDescription() {
 	def title = ""
     if (timeOffDay) {
-    	title += "Turn off at ${humanReadableTime(timeOffDay)} then turn back on at ${humanReadableTime(timeOnDay)}"
+    	title += "Turn off at ${hhmm(timeOffDay)} then turn back on at ${hhmm(timeOnDay)}"
     }
     title
 }
 
 public smartThingsDateFormat() { "yyyy-MM-dd'T'HH:mm:ss.SSSZ" }
 
-public humanReadableTime(dateTxt) {
+public hhmm(dateTxt) {
 	new Date().parse(smartThingsDateFormat(), dateTxt).format("h:mm a", timeZone(dateTxt))
 }
 
 private isWeekend() {
-    def isTheWeekend = false
-    if (dayOfWeek() == 1 || dayOfWeek() == 7) {
-    	isTheWeekend = true
-    } 
+    def isTheWeekend = dayOfWeek() == 1 || dayOfWeek() == 7 ? true : false
     isTheWeekend
 }
 
