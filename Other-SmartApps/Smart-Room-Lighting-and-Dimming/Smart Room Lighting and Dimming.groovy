@@ -2,7 +2,7 @@
  *  Smart Room Lighting and Dimming
  *
  *  Version - 1.0 5/4/15
- *  Version - 1.01 5/17/15 Code clean up for timeframe conditional check
+ *  Version - 1.02 5/19/15 Code clean up for timeframe conditional check
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -61,10 +61,10 @@ preferences {
 def pageSetup() {
 	dynamicPage(name: "pageSetup", install: true, uninstall: true) {
         section("Setup Menu") {
-            href "pageSetupScenarioA", title: getTitle(settings.ScenarioNameA), description: getDesc(settings.ScenarioNameA), state: greyOut(settings.ScenarioNameA)
-            href "pageSetupScenarioB", title: getTitle(settings.ScenarioNameB), description: getDesc(settings.ScenarioNameB), state: greyOut(settings.ScenarioNameB)
-            href "pageSetupScenarioC", title: getTitle(settings.ScenarioNameC), description: getDesc(settings.ScenarioNameC), state: greyOut(settings.ScenarioNameC)
-			href "pageSetupScenarioD", title: getTitle(settings.ScenarioNameD), description: getDesc(settings.ScenarioNameD), state: greyOut(settings.ScenarioNameD)
+            href "pageSetupScenarioA", title: getTitle(ScenarioNameA), description: getDesc(ScenarioNameA), state: greyOut(ScenarioNameA)
+            href "pageSetupScenarioB", title: getTitle(ScenarioNameB), description: getDesc(ScenarioNameB), state: greyOut(ScenarioNameB)
+            href "pageSetupScenarioC", title: getTitle(ScenarioNameC), description: getDesc(ScenarioNameC), state: greyOut(ScenarioNameC)
+			href "pageSetupScenarioD", title: getTitle(ScenarioNameD), description: getDesc(ScenarioNameD), state: greyOut(ScenarioNameD)
             }
         section([title:"Options", mobileOnly:true]) {
             label title:"Assign a name", required:false
@@ -255,54 +255,54 @@ if(D_switchDisable) {
 }
 
 def onEventA(evt) {
-  	
+if ((!A_triggerOnce || (A_triggerOnce && !state.A_triggered)) && (!A_switchDisable || (A_switchDisable && !state.A_triggered))) {  	
 if ((!A_mode || A_mode.contains(location.mode)) && getTimeOk (A_timeStart, A_timeEnd) && getDayOk(A_day)) {
-if (!A_luxSensors || (A_luxSensors.latestValue("illuminance") <= A_turnOnLux)){
-    if (A_motion.latestValue("motion").contains("active")) {
-         if ((!A_triggerOnce || (A_triggerOnce && !state.A_triggered)) && (!A_switchDisable || (A_switchDisable && !state.A_triggered))) {
-        	log.debug("Motion Detected Running '${ScenarioNameA}'")
+	if (!A_luxSensors || (A_luxSensors.latestValue("illuminance") <= A_turnOnLux)){
+    	if (A_motion.latestValue("motion").contains("active")) {
+        	
+        		log.debug("Motion Detected Running '${ScenarioNameA}'")
             
-            def levelSetOn = A_levelDimOn ? A_levelDimOn : 100
-            def levelSetOff = A_levelDimOff ? A_levelDimOff : 0
+            	def levelSetOn = A_levelDimOn ? A_levelDimOn : 100
+            	def levelSetOff = A_levelDimOff ? A_levelDimOff : 0
 
-            if (A_calcOn && A_luxSensors) {
-    			levelSetOn = (levelSetOn * (1-(A_luxSensors.latestValue("illuminance")/A_turnOnLux))) + levelSetOff
-                if (levelSetOn > 100) {
-               		levelSetOn = 100
-               	}
-    		}
-        	A_dimmers?.setLevel(levelSetOn)
-        	A_switches?.on()
-        	if (A_triggerOnce){
-           		state.A_triggered = true
-            	if (!A_turnOff) {
-					runOnce (getMidnight(), midNightReset)
-            	}
-			}
-			if (state.A_timerStart){
-           		unschedule(delayTurnOffA)
-       	   		state.A_timerStart = false
-        	}	
+            	if (A_calcOn && A_luxSensors) {
+    				levelSetOn = (levelSetOn * (1-(A_luxSensors.latestValue("illuminance")/A_turnOnLux))) + levelSetOff
+                	if (levelSetOn > 100) {
+               			levelSetOn = 100
+               		}
+    			}
+        		A_dimmers?.setLevel(levelSetOn)
+        		A_switches?.on()
+        		if (A_triggerOnce){
+           			state.A_triggered = true
+            		if (!A_turnOff) {
+						runOnce (getMidnight(), midNightReset)
+            		}
+				}
+				if (state.A_timerStart){
+           			unschedule(delayTurnOffA)
+       	   			state.A_timerStart = false
+        		}	
 		}
-}
-else {
-    	if (A_turnOff) {
-		runIn(A_turnOff * 60, "delayTurnOffA")
-        state.A_timerStart = true
-        }
-        else {
-        A_switches?.off()
-        def levelSetOff = A_levelDimOff ? A_levelDimOff : 0
-        A_dimmers?.setLevel(levelSetOff)
-        	if (state.A_triggered) {
-    			runOnce (getMidnight(), midNightReset)
-    		}
-        }
-}
-}
+		else {
+    		if (A_turnOff) {
+				runIn(A_turnOff * 60, "delayTurnOffA")
+        		state.A_timerStart = true
+        	}
+        	else {
+        		A_switches?.off()
+        		def levelSetOff = A_levelDimOff ? A_levelDimOff : 0
+        		A_dimmers?.setLevel(levelSetOff)
+        		if (state.A_triggered) {
+    				runOnce (getMidnight(), midNightReset)
+    			}
+        	}
+		}
+	}
 }
 else{
-log.debug("Motion outside of mode or time/date/trigger restriction.  Not running scenario.")
+	log.debug("Motion outside of mode or time/day restriction.  Not running scenario.")
+}
 }
 }
 
@@ -332,11 +332,10 @@ if ((!A_triggerOnce || (A_triggerOnce && !state.A_triggered)) && (!A_switchDisab
 }
 
 def onEventB(evt) {
-
+if ((!B_triggerOnce || (B_triggerOnce && !state.B_triggered)) && (!B_switchDisable || (B_switchDisable && !state.B_triggered))) {
 if ((!B_mode || B_mode.contains(location.mode)) && getTimeOk (B_timeStart, B_timeEnd) && getDayOk(B_day)) {
 if (!B_luxSensors || (B_luxSensors.latestValue("illuminance") <= B_turnOnLux)){
     if (B_motion.latestValue("motion").contains("active")) {
-         if ((!B_triggerOnce || (B_triggerOnce && !state.B_triggered)) && (!B_switchDisable || (B_switchDisable && !state.B_triggered))) {
         	log.debug("Motion Detected Running '${ScenarioNameB}'")
             def levelSetOn = B_levelDimOn ? B_levelDimOn : 100
             def levelSetOff = B_levelDimOff ? B_levelDimOff : 0
@@ -359,7 +358,6 @@ if (!B_luxSensors || (B_luxSensors.latestValue("illuminance") <= B_turnOnLux)){
            		unschedule(delayTurnOffB)
        	   		state.B_timerStart = false
         	}	
-		}
 }
 else {
     	if (B_turnOff) {
@@ -379,7 +377,8 @@ else {
 }
 }
 else{
-log.debug("Motion outside of mode or time/date/trigger restriction.  Not running scenario.")
+log.debug("Motion outside of mode or time/day restriction.  Not running scenario.")
+}
 }
 }
 
@@ -409,12 +408,11 @@ if ((!B_triggerOnce || (B_triggerOnce && !state.B_triggered)) && (!B_switchDisab
 }
 
 def onEventC(evt) {
-
+if ((!C_triggerOnce || (C_triggerOnce && !state.C_triggered)) && (!C_switchDisable || (C_switchDisable && !state.C_triggered))) {
 if ((!C_mode || C_mode.contains(location.mode)) && getTimeOk (C_timeStart, C_timeEnd) && getDayOk(C_day)) {
 if (!C_luxSensors || (C_luxSensors.latestValue("illuminance") <= C_turnOnLux)){
     if (C_motion.latestValue("motion").contains("active")) {
-         if ((!C_triggerOnce || (C_triggerOnce && !state.C_triggered)) && (!C_switchDisable || (C_switchDisable && !state.C_triggered))) {
-        	log.debug("Motion Detected Running '${ScenarioNameB}'")
+	       	log.debug("Motion Detected Running '${ScenarioNameB}'")
             def levelSetOn = C_levelDimOn ? C_levelDimOn : 100
             def levelSetOff = C_levelDimOff ? C_levelDimOff : 0
 
@@ -436,7 +434,6 @@ if (!C_luxSensors || (C_luxSensors.latestValue("illuminance") <= C_turnOnLux)){
            		unschedule(delayTurnOffC)
        	   		state.C_timerStart = false
         	}	
-		}
 }
 else {
     	if (C_turnOff) {
@@ -456,7 +453,8 @@ else {
 }
 }
 else{
-log.debug("Motion outside of mode or time/date/trigger restriction.  Not running scenario.")
+log.debug("Motion outside of mode or time/day restriction.  Not running scenario.")
+}
 }
 }
 
@@ -487,12 +485,11 @@ if ((!C_triggerOnce || (C_triggerOnce && !state.C_triggered)) && (!C_switchDisab
 }
 
 def onEventD(evt) {
-
+if ((!D_triggerOnce || (D_triggerOnce && !state.D_triggered)) && (!D_switchDisable || (D_switchDisable && !state.D_triggered))) {
 if ((!D_mode || D_mode.contains(location.mode)) && getTimeOk (D_timeStart, D_timeEnd) && getDayOk(D_day)) {
 if (!D_luxSensors || (D_luxSensors.latestValue("illuminance") <= D_turnOnLux)){
     if (D_motion.latestValue("motion").contains("active")) {
-         if ((!D_triggerOnce || (D_triggerOnce && !state.D_triggered)) && (!D_switchDisable || (D_switchDisable && !state.D_triggered))) {
-        	log.debug("Motion Detected Running '${ScenarioNameB}'")
+           	log.debug("Motion Detected Running '${ScenarioNameB}'")
             def levelSetOn = D_levelDimOn ? D_levelDimOn : 100
             def levelSetOff = D_levelDimOff ? D_levelDimOff : 0
 
@@ -514,7 +511,6 @@ if (!D_luxSensors || (D_luxSensors.latestValue("illuminance") <= D_turnOnLux)){
            		unschedule(delayTurnOffD)
        	   		state.D_timerStart = false
         	}	
-		}
 }
 else {
     	if (D_turnOff) {
@@ -533,7 +529,8 @@ else {
 }
 }
 else{
-log.debug("Motion outside of mode or time/date/trigger restriction.  Not running scenario.")
+log.debug("Motion outside of mode or time/day restriction.  Not running scenario.")
+}
 }
 }
 
@@ -578,7 +575,7 @@ private def helpText() {
         "can control dimmers and switches but can also be restricted " +
         "to modes or between certain times and turned off after motion " +
         "motion stops. Scenarios can also be limited to running once " +
-        "or to stop running if the physical switches are pressed."
+        "or to stop running if the physical switches are turned off."
 	text
 }
 
@@ -629,7 +626,13 @@ private getTimeOk(startTime, endTime) {
 		def stop = timeToday(endTime).time
 		result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start
 	}
-	result
+	else if (startTime){
+    	result = currTime >= start
+    }
+    else if (endTime){
+    	result = currTime <= stop
+    }
+    result
 }
 
 def getTimeLabel(start, end){
