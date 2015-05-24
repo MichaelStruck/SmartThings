@@ -1,9 +1,9 @@
 /**
  *  Life360 Helper-Phrase Change
  *  Version 1.00 3/20/15
- *	Version 1.01 3/24/15 - Updated with more effecient code
+ *  Version 1.01 3/24/15 - Updated with more effecient code
  *  Version 1.02 4/9/15 - Added ability to change name of app
- *	Version 1.03 5/15/15 - Optimized code, added a switch to limit the trigger to once a day
+ *  Version 1.03 5/15/15 - Optimized code, added a switch to limit the trigger to once a day
  *
  *  Copyright 2015 Michael Struck
  *
