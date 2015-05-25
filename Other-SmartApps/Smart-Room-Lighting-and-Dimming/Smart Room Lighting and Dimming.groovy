@@ -3,6 +3,7 @@
  *
  *  Version - 1.0 5/4/15
  *  Version - 1.02 5/19/15 Code clean up for timeframe conditional check
+ *  Version - 1.03 5/24/15 Added About screen from main menu
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -55,6 +56,7 @@ preferences {
     page name:"pageSetupScenarioB"
     page name:"pageSetupScenarioC"
     page name:"pageSetupScenarioD"
+    page name:"pageAbout"
 }
 
 // Show setup page
@@ -66,6 +68,9 @@ def pageSetup() {
             href "pageSetupScenarioC", title: getTitle(ScenarioNameC), description: getDesc(ScenarioNameC), state: greyOut(ScenarioNameC)
 			href "pageSetupScenarioD", title: getTitle(ScenarioNameD), description: getDesc(ScenarioNameD), state: greyOut(ScenarioNameD)
             }
+		section{
+        	href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
+        }
         section([title:"Options", mobileOnly:true]) {
             label title:"Assign a name", required:false
         }
@@ -98,9 +103,6 @@ def pageSetupScenarioA() {
 	section("Name your scenario") {
             input name:"ScenarioNameA", type: "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     }
-    section("Help") {
-    	paragraph helpText()
-    }
     }
     
 }
@@ -130,9 +132,6 @@ def pageSetupScenarioB() {
 	}
 	section("Name your scenario") {
             input name:"ScenarioNameB", type: "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
-    }
-	section("Help") {
-    	paragraph helpText()
     }
     }
     
@@ -164,9 +163,6 @@ def pageSetupScenarioC() {
 	section("Name your scenario") {
            input name:"ScenarioNameC", type: "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     }
-	section("Help") {
-    	paragraph helpText()
-    	}
     }
 }
 
@@ -196,12 +192,21 @@ def pageSetupScenarioD() {
 	section("Name your scenario") {
     	input name:"ScenarioNameD", type: "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     }
-	section("Help") {
-    	paragraph helpText()
-    	}
     }
 }
 
+def pageAbout() {
+	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
+        section {
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
+        }
+        section("License") {
+            paragraph textLicense()
+        }
+    }
+}
+
+//----------------------
 def installed() {
     initialize()
 }
@@ -569,25 +574,6 @@ def midNightReset() {
     state.D_triggered = false
 }
 
-private def helpText() {
-	def text =
-    	"Select motion sensors to control a set of lights. Each scenario " +
-        "can control dimmers and switches but can also be restricted " +
-        "to modes or between certain times and turned off after motion " +
-        "motion stops. Scenarios can also be limited to running once " +
-        "or to stop running if the physical switches are turned off."
-	text
-}
-
-private def helpDimmers() {
-	def text =
-    	"Enter the 'on' or 'off' levels for the dimmers. You can choose to have the " +
-        "dimmers' level calculated between the 'on' and 'off' settings " +
-        "based on the current lux value. In other words, as it gets " +
-        "darker, the brighter the light level will be when motion is sensed."
-	text
-}
-
 def greyOut(scenario){
     def result = scenario ? "complete" : ""
     result
@@ -725,9 +711,6 @@ page(name: "levelInputA", title: "Set dimmers options...") {
         	input name: "A_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false
 			input name: "A_calcOn",type: "bool",title: "Calculate 'on' level via lux", defaultValue: false
         }
-		section("Help") {
-    		paragraph helpDimmers()
-    	}
 }
 
 page(name: "levelInputB", title: "Set dimmers options...") {
@@ -736,9 +719,6 @@ page(name: "levelInputB", title: "Set dimmers options...") {
         	input name: "B_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false
             input name: "B_calcOn",type: "bool",title: "Calculate 'on' level via lux", defaultValue: false
         }
-		section("Help") {
-    		paragraph helpDimmers()
-    	}
 }
 
 page(name: "levelInputC", title: "Set dimmers options...") {
@@ -747,9 +727,6 @@ page(name: "levelInputC", title: "Set dimmers options...") {
         	input name: "C_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false
             input name: "C_calcOn",type: "bool",title: "Calculate 'on' level via lux", defaultValue: false
         }
-		section("Help") {
-    		paragraph helpDimmers()
-    	}
 }
 
 page(name: "levelInputD", title: "Set dimmers options...") {
@@ -758,7 +735,46 @@ page(name: "levelInputD", title: "Set dimmers options...") {
         	input name: "D_levelDimOff", type: "number", title: "Off Level", multiple: false, required: false
             input name: "D_calcOn",type: "bool",title: "Calculate 'on' level via lux", defaultValue: false
         }
-		section("Help") {
-    		paragraph helpDimmers()
-    	}
+}
+
+//Version/Copyright/Information/Help
+
+private def textAppName() {
+	def text = "Smart Room Lighting and Dimming"
+}	
+
+private def textVersion() {
+    def text = "Version 1.0.3 (05/24/2015)"
+}
+
+private def textCopyright() {
+    def text = "Copyright © 2015 Michael Struck"
+}
+
+private def textLicense() {
+    def text =
+        "This program is free software: you can redistribute it and/or " +
+        "modify it under the terms of the GNU General Public License as " +
+        "published by the Free Software Foundation, either version 3 of " +
+        "the License, or (at your option) any later version.\n\n" +
+        "This program is distributed in the hope that it will be useful, " +
+        "but WITHOUT ANY WARRANTY; without even the implied warranty of " +
+        "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU " +
+        "General Public License for more details.\n\n" +
+        "You should have received a copy of the GNU General Public License " +
+        "along with this program. If not, see <http://www.gnu.org/licenses/>."
+}
+
+private def textHelp() {
+	def text =
+        "Instructions:\nWithin each scenarios, you can select motion sensors to control a set of lights. " +
+        "Each scenario can control dimmers and switches but can also be restricted " +
+        "to modes or between certain times and turned off after motion " +
+        "motion stops. Scenarios can also be limited to running once " +
+        "or to stop running if the physical switches are turned off."+
+        "\n\nOn the dimmer options page, enter the 'on' or 'off' levels for the dimmers. You can choose to have the " +
+        "dimmers' level calculated between the 'on' and 'off' settings " +
+        "based on the current lux value. In other words, as it gets " +
+        "darker, the brighter the light level will be when motion is sensed."
+    
 }
