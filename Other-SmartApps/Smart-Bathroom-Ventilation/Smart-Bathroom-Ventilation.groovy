@@ -1,7 +1,7 @@
 /**
  *  Smart Bathroom Ventilation
  *
- *  Version - 1.0 5/23/15
+ *  Version - 1.0 5/24/15
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
