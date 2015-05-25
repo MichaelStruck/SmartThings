@@ -3,7 +3,7 @@
  *
  *  Version - 1.0 5/4/15
  *  Version - 1.02 5/19/15 Code clean up for timeframe conditional check
- *  Version - 1.03 5/24/15 Added About screen from main menu
+ *  Version - 1.03 5/25/15 Added About screen from main menu
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -68,11 +68,9 @@ def pageSetup() {
             href "pageSetupScenarioC", title: getTitle(ScenarioNameC), description: getDesc(ScenarioNameC), state: greyOut(ScenarioNameC)
 			href "pageSetupScenarioD", title: getTitle(ScenarioNameD), description: getDesc(ScenarioNameD), state: greyOut(ScenarioNameD)
             }
-		section{
-        	href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
-        }
         section([title:"Options", mobileOnly:true]) {
             label title:"Assign a name", required:false
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
         }
     }
 }
@@ -87,7 +85,7 @@ def pageSetupScenarioA() {
 	}
 
 	section("Lighting settings") {
-        href "levelInputA", title: "Dimmer Options", description: getLevelLabel(A_levelDimOn, A_levelDimOff, A_dimmers, A_calcOn), state: greyedOutLevel(A_dimmers), refreshAfterSelection: true
+        href "levelInputA", title: "Dimmer Options", description: getLevelLabel(A_levelDimOn, A_levelDimOff, A_dimmers, A_calcOn), state: greyOut(A_dimmers), refreshAfterSelection: true
         input name: "A_turnOnLux",type: "number",title: "Only run this scenario if lux is below...", multiple: false, required: false
         input name: "A_luxSensors",type: "capability.illuminanceMeasurement",title: "On these lux sensors",multiple: false,required: false
         input name: "A_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
@@ -117,7 +115,7 @@ def pageSetupScenarioB() {
 	}
 
 	section("Lighting settings") {
-        href "levelInputB", title: "Dimmer Options", description: getLevelLabel(B_levelDimOn, B_levelDimOff, B_dimmers, B_calcOn), state: greyedOutLevel(B_dimmers), refreshAfterSelection: true
+        href "levelInputB", title: "Dimmer Options", description: getLevelLabel(B_levelDimOn, B_levelDimOff, B_dimmers, B_calcOn), state: greyOut(B_dimmers), refreshAfterSelection: true
         input name: "B_turnOnLux",type: "number",title: "Only run this scenario if lux is below...", multiple: false, required: false
         input name: "B_luxSensors",type: "capability.illuminanceMeasurement",title: "On these lux sensors",multiple: false,required: false
         input name: "B_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
@@ -147,7 +145,7 @@ def pageSetupScenarioC() {
 	}
 
 	section("Lighting settings") {
-        href "levelInputC", title: "Dimmer Options", description: getLevelLabel(C_levelDimOn, C_levelDimOff, C_dimmers, C_calcOn), state: greyedOutLevel(C_dimmers), refreshAfterSelection: true
+        href "levelInputC", title: "Dimmer Options", description: getLevelLabel(C_levelDimOn, C_levelDimOff, C_dimmers, C_calcOn), state: greyOut(C_dimmers), refreshAfterSelection: true
         input name: "C_turnOnLux",type: "number", title: "Only run this scenario if lux is below...", multiple: false, required: false
         input name: "C_luxSensors",type: "capability.illuminanceMeasurement",title: "On these lux sensors",multiple: false,required: false
         input name: "C_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
@@ -176,7 +174,7 @@ def pageSetupScenarioD() {
 	}
 
 	section("Lighting settings") {
-		href "levelInputD", title: "Dimmer Options", description: getLevelLabel(D_levelDimOn, D_levelDimOff, D_dimmers, D_calcOn), state: greyedOutLevel(D_dimmers), refreshAfterSelection: true
+		href "levelInputD", title: "Dimmer Options", description: getLevelLabel(D_levelDimOn, D_levelDimOff, D_dimmers, D_calcOn), state: greyOut(D_dimmers), refreshAfterSelection: true
         input name: "D_turnOnLux",type: "number",title: "Only run this scenario if lux is below...", multiple: false, required: false
         input name: "D_luxSensors",type: "capability.illuminanceMeasurement",title: "On these lux sensors",multiple: false,required: false
         input name: "D_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
@@ -574,29 +572,20 @@ def midNightReset() {
     state.D_triggered = false
 }
 
-def greyOut(scenario){
-    def result = scenario ? "complete" : ""
-    result
+def greyOut(parameter){
+    def result = parameter ? "complete" : ""
 }
 
 def greyedOutTime(start, end){
 	def result = start || end ? "complete" : ""
-    result
-}
-
-def greyedOutLevel(dimmers){
-	def result = dimmers ? "complete" : ""
-    result
 }
 
 def getTitle(scenario) {
 	def title = scenario ? scenario : "Empty"
-	title
 }
 
 def getDesc(scenario) {
 	def desc = scenario ? "Tap to edit scenario" : "Tap to create a scenario"
-	desc	
 }
 
 def getMidnight() {
@@ -744,7 +733,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.3 (05/24/2015)"
+    def text = "Version 1.0.3 (05/25/2015)"
 }
 
 private def textCopyright() {
@@ -776,5 +765,4 @@ private def textHelp() {
         "dimmers' level calculated between the 'on' and 'off' settings " +
         "based on the current lux value. In other words, as it gets " +
         "darker, the brighter the light level will be when motion is sensed."
-    
 }
