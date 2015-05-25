@@ -245,7 +245,7 @@ def turnOffA() {
 def humidityHandlerA(evt){
     def currentHumidityA =evt.value as Integer
     log.debug "Humidity value is ${currentHumidityA} in ${ScenarioNameA}."
-	if (state.humidityLimitA && currentHumidityA >= state.humidityLimitA) {
+	if (state.humidityLimitA && currentHumidityA > state.humidityLimitA) {
         turnOnA()
     }
 	if (state.humidityStartA && currentHumidityA <= state.humidityStartA && state.A_runTime == 99){
@@ -292,7 +292,7 @@ def turnOffB() {
 def humidityHandlerB(evt){
     def currentHumidityB =evt.value as Integer
     log.debug "Humidity value is ${currentHumidityB} in ${ScenarioNameB}."
-	if (state.humidityLimitB && currentHumidityB >= state.humidityLimitB) {
+	if (state.humidityLimitB && currentHumidityB > state.humidityLimitB) {
         turnOnB()
     }
 	if (state.humidityStartB && currentHumidityB <= state.humidityStartB && state.B_runTime == 99){
@@ -340,7 +340,7 @@ def turnOffC() {
 def humidityHandlerC(evt){
     def currentHumidityC =evt.value as Integer
     log.debug "Humidity value is ${currentHumidityC} in ${ScenarioNameC}."
-	if (state.humidityLimitC && currentHumidityC >= state.humidityLimitC) {
+	if (state.humidityLimitC && currentHumidityC > state.humidityLimitC) {
         turnOnC()
     }
 	if (state.humidityStartC && currentHumidityC <= state.humidityStartC && state.C_runTime == 99){
@@ -388,7 +388,7 @@ def turnOffD() {
 def humidityHandlerD(evt){
     def currentHumidityD =evt.value as Integer
     log.debug "Humidity value is ${currentHumidityD} in ${ScenarioNameD}."
-	if (state.humidityLimitD && currentHumidityD >= state.humidityLimitD) {
+	if (state.humidityLimitD && currentHumidityD > state.humidityLimitD) {
         turnOnD()
     }
 	if (state.humidityStartD && currentHumidityD <= state.humidityStartD && state.D_runTime == 99){
