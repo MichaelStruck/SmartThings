@@ -45,12 +45,10 @@ def mainPage() {
         	href(name: "toC_Scenario", page: "C_Scenario", title: getTitle (titleC, "C"), description: schedDesc(timeOnC1,timeOffC1,timeOnC2,timeOffC2,timeOnC3,timeOffC3,timeOnC4,timeOffC4, modeC, daysC), state: greyOut(timeOnC1,timeOnC2,timeOnC3,timeOnC4))
         	href(name: "toD_Scenario", page: "D_Scenario", title: getTitle (titleD, "D"), description: schedDesc(timeOnD1,timeOffD1,timeOnD2,timeOffD2,timeOnD3,timeOffD3,timeOnD4,timeOffD4, modeD, daysD), state: greyOut(timeOnD1,timeOnD2,timeOnD3,timeOnD4))
         }
-		section{
-        	href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
-        }
         section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Smart Home Ventilation")
-		}
+			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
+        }
     }
 }
 //----Scheduling Pages
@@ -316,7 +314,6 @@ def schedDesc(on1, off1, on2, off2, on3, off3, on4, off4, modeList, dayList) {
 
 def greyOut(on1, on2, on3, on4){
     def result = on1 || on2 || on3 || on4 ? "complete" : ""
-    result
 }
 
 public humanReadableTime(dateTxt) {
@@ -329,7 +326,6 @@ public convertEpoch(epochDate) {
 
 private getTitle(txt, scenario) {
     def title = txt ? txt : "Scenario ${scenario}"
-    title	
 }
 
 private daysOk(dayList) {
