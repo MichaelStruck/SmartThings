@@ -54,6 +54,7 @@ preferences {
 	page name:"pageSetupScenarioB"
 	page name:"pageSetupScenarioC"
 	page name:"pageSetupScenarioD"
+    page name:"pageAbout"
 }
 
 // Show setup page
@@ -64,6 +65,9 @@ def pageSetup() {
 			href "pageSetupScenarioB", title: getTitle(ScenarioNameB), description: getDesc(ScenarioNameB), state: greyOut(ScenarioNameB)
 			href "pageSetupScenarioC", title: getTitle(ScenarioNameC), description: getDesc(ScenarioNameC), state: greyOut(ScenarioNameC)
 			href "pageSetupScenarioD", title: getTitle(ScenarioNameD), description: getDesc(ScenarioNameD), state: greyOut(ScenarioNameD)
+        }
+        section{
+        	href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
         }
         section([title:"Options", mobileOnly:true]) {
             label title:"Assign a name", required:false
@@ -90,9 +94,6 @@ def pageSetupScenarioA() {
 		section("Name your scenario") {
             input "ScenarioNameA", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     	}
-    	section("Help") {
-    		paragraph helpText()
-    	}
     }
 }
 
@@ -114,9 +115,6 @@ def pageSetupScenarioB() {
 		}
 		section("Name your scenario") {
             input "ScenarioNameB", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
-    	}
-    	section("Help") {
-    		paragraph helpText()
     	}
     }
 }
@@ -140,9 +138,6 @@ def pageSetupScenarioC() {
 		section("Name your scenario") {
             input "ScenarioNameC", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     	}
-    	section("Help") {
-    		paragraph helpText()
-    	}
     }
 }
 
@@ -165,9 +160,17 @@ def pageSetupScenarioD() {
 		section("Name your scenario") {
             input "ScenarioNameD", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     	}
-    	section("Help") {
-    		paragraph helpText()
-    	}
+    }
+}
+
+def pageAbout() {
+	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
+        section {
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
+        }
+        section("License") {
+            paragraph textLicense()
+        }
     }
 }
 
@@ -225,7 +228,7 @@ def turnOnA(){
     	A_fans?.on()
         if (state.A_runTime < 98) {
 			log.debug "Humidity fans will be turned off in ${state.A_runTime} minutes in ${ScenarioNameA}."
-            runIn (state.A_runTime*60, turnOffA)
+            runIn (state.A_runTime*60, "turnOffA")
         }
 	}
 }
@@ -270,7 +273,7 @@ def turnOnB(){
     	B_fans?.on()
         if (state.B_runTime < 98) {
 			log.debug "Humidity fans will be turned off in ${state.B_runTime} minutes in ${ScenarioNameB}."
-            runIn (state.B_runTime*60, turnOffB)
+            runIn (state.B_runTime*60, "turnOffB")
         }
 	}
 }
@@ -362,14 +365,14 @@ def turnOnD(){
     	D_fans?.on()
         if (state.D_runTime < 98) {
 			log.debug "Humidity fans will be turned off in ${state.D_runTime} minutes in ${ScenarioNameD}."
-            runIn (state.D_runTime*60, turnOffD)
+            runIn (state.D_runTime*60, "turnOffD")
         }
 	}
 }
 
 def turnOffD() {
 	log.debug "Ventilation fans turned off in ${ScenarioNameD}."
-    	D_fans?.off()
+    D_fans?.off()
 }
 
 def humidityHandlerD(evt){
@@ -384,38 +387,29 @@ def humidityHandlerD(evt){
 }
 
 def onEventD(evt) {
-	def humidityDelta = D_humidityDelta ? D_humidityDelta as Integer : 0
-    	state.humidityStartD = D_humidity.currentValue("humidity")
-    	state.humidityLimitD = state.humidityStartD + humidityDelta
-    	log.debug "Light turned on in ${ScenarioNameD}. Humidity starting value is ${state.humidityStartD} in ${ScenarioNameD}. Ventilation threshold is ${state.humidityLimitD}"
-    	if (!D_humidityDelta) {
-    		turnOnD()
-    	}
+    def humidityDelta = D_humidityDelta ? D_humidityDelta as Integer : 0
+    state.humidityStartD = D_humidity.currentValue("humidity")
+    state.humidityLimitD = state.humidityStartD + humidityDelta
+    log.debug "Light turned on in ${ScenarioNameD}. Humidity starting value is ${state.humidityStartD} in ${ScenarioNameD}. Ventilation threshold is ${state.humidityLimitD}"
+    if (!D_humidityDelta) {
+    	turnOnD()
+    }
 }
 
 def offEventD(evt) {
 	def currentHumidityD = D_humidity.currentValue("humidity")
-    	log.debug "Light turned off in ${ScenarioNameD}. Humidity value is ${currentHumidityD} in ${ScenarioNameD}"
-    	if (state.D_runTime == 98){
-    		turnOffD()
-    	}
+    log.debug "Light turned off in ${ScenarioNameD}. Humidity value is ${currentHumidityD} in ${ScenarioNameD}"
+    if (state.D_runTime == 98){
+    	turnOffD()
+    }
 }
 
 
 //Common Methods-------------
 
-private def helpText() {
-	def text =
-    	"Select a light switch to monitor. When the switch is turned on, and humidity reading is taken. You can choose when " +
-        "the ventilation fan comes on; either when the room humidity rises over a certain level or come on with the light switch. "+
-        "The ventilation fans will turn off based on either a timer setting, humidity, or the light switch being turned off. " +
-        "Each scenario can be restricted to specific modes or certain days of the week."
-	text
-}
-
 def greyOut(scenario){
-    	def result = scenario ? "complete" : ""
-    	result
+    def result = scenario ? "complete" : ""
+    result
 }
 
 def getTitle(scenario) {
@@ -430,7 +424,7 @@ def getDesc(scenario) {
 
 private getDayOk(dayList) {
 	def result = true
-    	if (dayList) {
+    if (dayList) {
 		def df = new java.text.SimpleDateFormat("EEEE")
 		if (location.timeZone) {
 			df.setTimeZone(location.timeZone)
@@ -441,5 +435,42 @@ private getDayOk(dayList) {
 		def day = df.format(new Date())
 		result = dayList.contains(day)
 	}
-	result
+    result
+}
+
+//Version/Copyright/Information/Help
+
+private def textAppName() {
+	def text = "Smart Bathroom Ventilation"
+}	
+
+private def textVersion() {
+    def text = "Version 1.0.0 (05/24/2015)"
+}
+
+private def textCopyright() {
+    def text = "Copyright © 2015 Michael Struck"
+}
+
+private def textLicense() {
+    def text =
+        "This program is free software: you can redistribute it and/or " +
+        "modify it under the terms of the GNU General Public License as " +
+        "published by the Free Software Foundation, either version 3 of " +
+        "the License, or (at your option) any later version.\n\n" +
+        "This program is distributed in the hope that it will be useful, " +
+        "but WITHOUT ANY WARRANTY; without even the implied warranty of " +
+        "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU " +
+        "General Public License for more details.\n\n" +
+        "You should have received a copy of the GNU General Public License " +
+        "along with this program. If not, see <http://www.gnu.org/licenses/>."
+}
+
+private def textHelp() {
+	def text =
+    	"Instructions:\nSelect a light switch to monitor. When the switch is turned on, a humidity reading is taken. You can choose when " +
+        "the ventilation fan comes on; either when the room humidity rises over a certain level or come on with the light switch. "+
+        "The ventilation fans will turn off based on either a timer setting, humidity, or the light switch being turned off. " +
+        "Each scenario can be restricted to specific modes or certain days of the week."
+	text
 }
