@@ -1,6 +1,6 @@
 /**
  *	Smart Home Ventilation
- *	Version 2.11 - 5/13/15
+ *	Version 2.1.2 - 5/24/15
  *
  *	Copyright 2015 Michael Struck
  *
@@ -26,11 +26,12 @@ definition(
     iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Home-Ventilation/HomeVent@2x.png")
 
 preferences {
-	page(name: "mainPage")
-	page(name: "A_Scenario")
-	page(name: "B_Scenario")
-    page(name: "C_Scenario")
-    page(name: "D_Scenario")
+	page name: "mainPage"
+	page name: "A_Scenario"
+	page name: "B_Scenario"
+    page name: "C_Scenario"
+    page name: "D_Scenario"
+    page name: "pageAbout"
 }
 
 def mainPage() {
@@ -44,7 +45,10 @@ def mainPage() {
         	href(name: "toC_Scenario", page: "C_Scenario", title: getTitle (titleC, "C"), description: schedDesc(timeOnC1,timeOffC1,timeOnC2,timeOffC2,timeOnC3,timeOffC3,timeOnC4,timeOffC4, modeC, daysC), state: greyOut(timeOnC1,timeOnC2,timeOnC3,timeOnC4))
         	href(name: "toD_Scenario", page: "D_Scenario", title: getTitle (titleD, "D"), description: schedDesc(timeOnD1,timeOffD1,timeOnD2,timeOffD2,timeOnD3,timeOffD3,timeOnD4,timeOffD4, modeD, daysD), state: greyOut(timeOnD1,timeOnD2,timeOnD3,timeOnD4))
         }
-		section([mobileOnly:true], "Options") {
+		section{
+        	href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
+        }
+        section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Smart Home Ventilation")
 		}
     }
@@ -151,6 +155,17 @@ def D_Scenario() {
             input "modeD", "mode", required: false, multiple: true, title: "Run in specific mode(s)", description: "Choose Modes"
 		   	input "daysD", "enum", multiple: true, title: "Run on specific day(s)", description: "Choose Days", required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 		}
+    }
+}
+
+def pageAbout() {
+	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
+        section {
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
+        }
+        section("License") {
+            paragraph textLicense()
+        }
     }
 }
 
@@ -380,4 +395,41 @@ def createDayArray() {
         }
     }
     state.data.sort{it.start}
+}
+
+//Version/Copyright/Information/Help
+
+private def textAppName() {
+	def text = "Smart Home Ventilation"
+}	
+
+private def textVersion() {
+    def text = "Version 2.1.2 (05/24/2015)"
+}
+
+private def textCopyright() {
+    def text = "Copyright © 2015 Michael Struck"
+}
+
+private def textLicense() {
+    def text =
+        "This program is free software: you can redistribute it and/or " +
+        "modify it under the terms of the GNU General Public License as " +
+        "published by the Free Software Foundation, either version 3 of " +
+        "the License, or (at your option) any later version.\n\n" +
+        "This program is distributed in the hope that it will be useful, " +
+        "but WITHOUT ANY WARRANTY; without even the implied warranty of " +
+        "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU " +
+        "General Public License for more details.\n\n" +
+        "You should have received a copy of the GNU General Public License " +
+        "along with this program. If not, see <http://www.gnu.org/licenses/>."
+}
+
+private def textHelp() {
+	def text =
+    	"Instructions:\nWithin each scenario, choose a start and end time for the ventilation fan. You can have up to 4 different " +
+        "venting scenarios, and 4 schedules within each scenario. Each scenario can be restricted to specific modes or certain days of the week. It is recommended "+
+        "that each scenario does not overlap and run in separate modes (i.e. Home, Out of town, etc). Also note that you should  " +
+        "avoid scheduling the ventilation fan at exactly midnight; the app resets itself at that time. It is suggested to start any new schedule " +
+        "at 12:15 am or later."
 }
