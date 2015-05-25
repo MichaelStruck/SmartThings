@@ -1,7 +1,7 @@
 /**
  *  Ivee Helper-Big Switch
  *  Version 1.0 3/18/15
- *	Version 1.01 4/9/15 - Added options sub heading to last section of preferences
+ *  Version 1.01 4/9/15 - Added options sub heading to last section of preferences
  *  Version 1.0.2 5/25/15 - Added About screen
  *
  *  Copyright 2015 Michael Struck
