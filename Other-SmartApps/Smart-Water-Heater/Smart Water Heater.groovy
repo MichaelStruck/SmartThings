@@ -1,6 +1,6 @@
 /**
  *  Smart Water Heater
- *  Version 1.3 5/15/2015
+ *  Version 1.3 5/25/2015
  *
  *  Version 1.01-Initial release
  *  Version 1.1 added a function to turn water heater back on if someone comes home early
@@ -8,6 +8,7 @@
  *  Version 1.2 Revised the interface even more for better flow
  *  Version 1.21 Further interface revision
  *  Version 1.3 Added the option to turn off the water heater early if everyone leaves before the scheduled time and code opimization
+ *  Version 1.3.1 Added About screen
  * 
  *
  *  Copyright 2015 Michael Struck
@@ -37,6 +38,7 @@ preferences {
 	page(name: "mainPage")
     page(name: "daySchedule")
     page(name: "nightSchedule")
+    page name: "pageAbout"
 }
 
 def mainPage() {
@@ -54,10 +56,11 @@ def mainPage() {
     	section("Nighttime Options"){
     		href(name: "toNightSchedule", page: "nightSchedule", title: "Schedule", description: nightDescription(), state: "complete")
     	}
-    	section([mobileOnly:true], "Other Options") {
+        section([mobileOnly:true], "Other Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Smart Water Heater")
             mode title: "Set for specific mode(s)", required: false
-		}
+			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
+        }
     }
 }
 
@@ -78,6 +81,19 @@ def nightSchedule() {
 		}
 	}
 }
+
+def pageAbout() {
+	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
+        section {
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
+        }
+        section("License") {
+            paragraph textLicense()
+        }
+    }
+}
+
+//---------------------------------------------------
 
 def installed() {
 	log.debug "Installed with settings: ${settings}"
@@ -103,9 +119,6 @@ def init () {
 
 def turnOffDay() {
 	def runToday = !weekendRun && isWeekend() ? false : true
-	//if (!weekendRun && isWeekend()) {
-	//	runToday = false
-    //}   
 
     if (runToday && everyoneGone()) {
     	state.status="Day off"
@@ -200,4 +213,39 @@ private checkTime() {
 		result = currTime < start
 	}
 	result
+}
+
+//Version/Copyright/Information/Help
+
+private def textAppName() {
+	def text = "Smart Water Heater"
+}	
+
+private def textVersion() {
+    def text = "Version 1.3.1 (05/25/2015)"
+}
+
+private def textCopyright() {
+    def text = "Copyright © 2015 Michael Struck"
+}
+
+private def textLicense() {
+    def text =
+        "This program is free software: you can redistribute it and/or " +
+        "modify it under the terms of the GNU General Public License as " +
+        "published by the Free Software Foundation, either version 3 of " +
+        "the License, or (at your option) any later version.\n\n" +
+        "This program is distributed in the hope that it will be useful, " +
+        "but WITHOUT ANY WARRANTY; without even the implied warranty of " +
+        "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU " +
+        "General Public License for more details.\n\n" +
+        "You should have received a copy of the GNU General Public License " +
+        "along with this program. If not, see <http://www.gnu.org/licenses/>."
+}
+
+private def textHelp() {
+	def text =
+    	"Instructions:\nChoose the day and night schedule in which the water heater power is turned " +
+        "on and off. During the day, you have various options to determine whether to run the schedule " +
+        "based on the status of various presence sensors."
 }
