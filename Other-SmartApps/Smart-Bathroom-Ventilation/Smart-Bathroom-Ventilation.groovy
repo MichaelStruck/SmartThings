@@ -1,7 +1,7 @@
 /**
  *  Smart Bathroom Ventilation
  *
- *  Version - 1.0 5/24/15
+ *  Version - 1.0 5/25/15
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -66,11 +66,9 @@ def pageSetup() {
 			href "pageSetupScenarioC", title: getTitle(ScenarioNameC), description: getDesc(ScenarioNameC), state: greyOut(ScenarioNameC)
 			href "pageSetupScenarioD", title: getTitle(ScenarioNameD), description: getDesc(ScenarioNameD), state: greyOut(ScenarioNameD)
         }
-        section{
-        	href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
-        }
         section([title:"Options", mobileOnly:true]) {
             label title:"Assign a name", required:false
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
         }
     }
 }
@@ -179,6 +177,10 @@ def installed() {
 }
 
 def updated() {
+    state.triggeredA = false
+    state.triggeredB = false
+    state.triggeredC = false
+    state.triggeredD = false
     unschedule()
     unsubscribe()
     initialize()
@@ -223,9 +225,10 @@ def initialize() {
 //Handlers----------------
 //A Handlers
 def turnOnA(){
-    if ((!A_mode || A_mode.contains(location.mode)) && getDayOk(A_day) && A_switch.currentValue("switch")=="on") {
+    if ((!A_mode || A_mode.contains(location.mode)) && getDayOk(A_day) && A_switch.currentValue("switch")=="on" && !state.triggeredA) {
         log.debug "Ventilation fans turned on in ${ScenarioNameA}."
     	A_fans?.on()
+        state.triggeredA = true
         if (state.A_runTime < 98) {
 			log.debug "Humidity fans will be turned off in ${state.A_runTime} minutes in ${ScenarioNameA}."
             runIn (state.A_runTime*60, "turnOffA")
@@ -236,6 +239,7 @@ def turnOnA(){
 def turnOffA() {
 	log.debug "Ventilation fans turned off in ${ScenarioNameA}."
     A_fans?.off()
+    state.triggeredA = false
 }
 
 def humidityHandlerA(evt){
@@ -268,9 +272,10 @@ def offEventA(evt) {
 }
 //B Handlers
 def turnOnB(){
-    if ((!B_mode || B_mode.contains(location.mode)) && getDayOk(B_day) && B_switch.currentValue("switch")=="on") {
+    if ((!B_mode || B_mode.contains(location.mode)) && getDayOk(B_day) && B_switch.currentValue("switch")=="on" && !state.triggeredB ) {
         log.debug "Ventilation fans turned on in ${ScenarioNameB}."
     	B_fans?.on()
+        state.triggeredB = true
         if (state.B_runTime < 98) {
 			log.debug "Humidity fans will be turned off in ${state.B_runTime} minutes in ${ScenarioNameB}."
             runIn (state.B_runTime*60, "turnOffB")
@@ -281,6 +286,7 @@ def turnOnB(){
 def turnOffB() {
 	log.debug "Ventilation fans turned off in ${ScenarioNameB}."
     B_fans?.off()
+    state.triggeredB = false
 }
 
 def humidityHandlerB(evt){
@@ -314,9 +320,10 @@ def offEventB(evt) {
 
 //C Handlers
 def turnOnC(){
-    if ((!C_mode || C_mode.contains(location.mode)) && getDayOk(C_day) && C_switch.currentValue("switch")=="on") {
+    if ((!C_mode || C_mode.contains(location.mode)) && getDayOk(C_day) && C_switch.currentValue("switch")=="on" && !state.triggeredC) {
         log.debug "Ventilation fans turned on in ${ScenarioNameC}."
     	C_fans?.on()
+        state.triggeredC = true
         if (state.C_runTime < 98) {
 			log.debug "Humidity fans will be turned off in ${state.C_runTime} minutes in ${ScenarioNameC}."
             runIn (state.C_runTime*60, turnOffC)
@@ -327,6 +334,7 @@ def turnOnC(){
 def turnOffC() {
 	log.debug "Ventilation fans turned off in ${ScenarioNameC}."
     C_fans?.off()
+    state.triggeredC = false
 }
 
 def humidityHandlerC(evt){
@@ -360,9 +368,10 @@ def offEventC(evt) {
 
 //D Handlers
 def turnOnD(){
-    if ((!D_mode || D_mode.contains(location.mode)) && getDayOk(D_day) && D_switch.currentValue("switch")=="on") {
+    if ((!D_mode || D_mode.contains(location.mode)) && getDayOk(D_day) && D_switch.currentValue("switch")=="on" && !state.triggeredD) {
         log.debug "Ventilation fans turned on in ${ScenarioNameD}."
     	D_fans?.on()
+        state.triggeredD = true
         if (state.D_runTime < 98) {
 			log.debug "Humidity fans will be turned off in ${state.D_runTime} minutes in ${ScenarioNameD}."
             runIn (state.D_runTime*60, "turnOffD")
@@ -373,6 +382,7 @@ def turnOnD(){
 def turnOffD() {
 	log.debug "Ventilation fans turned off in ${ScenarioNameD}."
     D_fans?.off()
+    state.triggeredD = false
 }
 
 def humidityHandlerD(evt){
@@ -409,17 +419,14 @@ def offEventD(evt) {
 
 def greyOut(scenario){
     def result = scenario ? "complete" : ""
-    result
 }
 
 def getTitle(scenario) {
 	def title = scenario ? scenario : "Empty"
-	title
 }
 
 def getDesc(scenario) {
 	def desc = scenario ? "Tap to edit scenario" : "Tap to create a scenario"
-	desc	
 }
 
 private getDayOk(dayList) {
@@ -445,7 +452,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.0 (05/24/2015)"
+    def text = "Version 1.0.0 (05/25/2015)"
 }
 
 private def textCopyright() {
@@ -472,5 +479,4 @@ private def textHelp() {
         "the ventilation fan comes on; either when the room humidity rises over a certain level or come on with the light switch. "+
         "The ventilation fans will turn off based on either a timer setting, humidity, or the light switch being turned off. " +
         "Each scenario can be restricted to specific modes or certain days of the week."
-	text
 }
