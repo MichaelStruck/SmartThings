@@ -4,6 +4,7 @@
  *  Version 1.01 3/24/15 - Updated with more effecient code
  *  Version 1.02 4/9/15 - Added ability to change name of app
  *  Version 1.03 5/15/15 - Optimized code, added a switch to limit the trigger to once a day
+ *  Version 1.0.4 5/26/15 - Added About screen
  *
  *  Copyright 2015 Michael Struck
  *
@@ -30,7 +31,8 @@ definition(
 	iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Life360-Helper/life360@2x.png")
 
 preferences {
-	page(name: "getPref")
+	page name: "getPref"
+    page name: "pageAbout"
 }
 
 
@@ -56,10 +58,23 @@ def getPref() {
         }
 		section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Life360 Helper-Phrase Change")
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
 		}  
 	}
 }
 
+def pageAbout() {
+	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
+        section {
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
+        }
+        section("License") {
+            paragraph textLicense()
+        }
+    }
+}
+
+//--------------------------------------
 def installed() {
 	log.debug "Installed with settings: ${settings}"
 	init()
@@ -103,4 +118,40 @@ private runMode() {
 
 def midNightReset() {
 	state.triggered = false
+}
+
+//Version/Copyright/Information/Help
+
+private def textAppName() {
+	def text = "Life360 Helper-Phrase Change"
+}	
+
+private def textVersion() {
+    def text = "Version 1.0.4 (05/26/2015)"
+}
+
+private def textCopyright() {
+    def text = "Copyright © 2015 Michael Struck"
+}
+
+private def textLicense() {
+    def text =
+        "This program is free software: you can redistribute it and/or " +
+        "modify it under the terms of the GNU General Public License as " +
+        "published by the Free Software Foundation, either version 3 of " +
+        "the License, or (at your option) any later version.\n\n" +
+        "This program is distributed in the hope that it will be useful, " +
+        "but WITHOUT ANY WARRANTY; without even the implied warranty of " +
+        "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU " +
+        "General Public License for more details.\n\n" +
+        "You should have received a copy of the GNU General Public License " +
+        "along with this program. If not, see <http://www.gnu.org/licenses/>."
+}
+
+private def textHelp() {
+	def text =
+    	"Instructions:\nIn Life360, choose a location you want to monitor. This does NOT need to be the location where the SmartThings " +
+        "hub is located; this could be your work location, or a location on the way home during your commute. Choose this sensor in this app; " +
+        "when you are in a certain mode and this sensor shows 'present' you can activate a Hello, Home phrase. This can be used to pre-heat a house "+ 
+        "or turn on a specific set of lights. "
 }
