@@ -2,7 +2,8 @@
  *  Talking Alarm Clock
  *
  *  Version - 1.0 5/23/15
- *	Version - 1.1 5/24/15 - A song can now be selected to play after the voice greeting and bug fixes
+ *  Version - 1.1 5/24/15 - A song can now be selected to play after the voice greeting and bug fixes
+ *  Version - 1.2.0 5/27/15 - Added About screen and misc code clean up and GUI revisions
  *  
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -40,22 +41,31 @@
  */
  
 definition(
-	name: "Talking Alarm Clock",
-	namespace: "MichaelStruck",
-	author: "Michael Struck",
-	description: "Control up to 4 waking schedules using a Sonos speaker as an alarm.",
-	category: "Convenience",
-	iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock.png",
-	iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock@2x.png",
+    name: "Talking Alarm Clock",
+    namespace: "MichaelStruck",
+    author: "Michael Struck",
+    description: "Control up to 4 waking schedules using a Sonos speaker as an alarm.",
+    category: "Convenience",
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock.png",
+    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock@2x.png",
 	iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock@2x.png"
     )
 
 preferences {
 	page name:"pageMain"
 	page name:"pageSetupScenarioA"
+    	page name:"pageDimmersA"
+        page name:"pageThermostatsA"
 	page name:"pageSetupScenarioB"
+    	page name:"pageDimmersB"
+        page name:"pageThermostatsB"
 	page name:"pageSetupScenarioC"
-	page name:"pageSetupScenarioD"
+		page name:"pageDimmersC"
+        page name:"pageThermostatsC"
+    page name:"pageSetupScenarioD"
+    	page name:"pageDimmersD"
+        page name:"pageThermostatsD"
+    page name:"pageAbout"
 }
 
 // Show setup page
@@ -77,10 +87,10 @@ def pageMain() {
             href "pageSetupScenarioD", title: getTitle(ScenarioNameD, 4), description: getDesc(D_timeStart, D_sonos, D_day, D_mode), state: greyOut(ScenarioNameD, D_sonos, D_timeStart, D_alarmOn)
             input "D_alarmOn", "bool", title: "Enable this alarm?", defaultValue: "false", refreshAfterSelection:true
         }
-        
         section([title:"Options", mobileOnly:true]) {
             input "zipCode", "text", title: "Zip Code", required: false
             label title:"Assign a name", required:false
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
         }
     }
 }
@@ -97,29 +107,43 @@ def pageSetupScenarioA() {
     	}
         
         section("Devices to control in this alarm scenario") {
-        	input "A_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false
-        	input "A_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false
-			input "A_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
-        	input "A_thermostats", "capability.thermostat", title: "Thermostats?", multiple: true, required: false
-            input "A_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
-		input "A_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+			input "A_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false
+			href "pageDimmersA", title: "Dimmer Settings", description: dimmerDesc(A_dimmers), state: greyOutOption(A_dimmers)
+            href "pageThermostatsA", title: "Thermostat Settings", description: thermostatDesc(A_thermostats), state: greyOutOption(A_thermostats)
         }
         
         section("Other Options") {
         	input "A_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
-        	input "A_wakeMsg", "text", title: "Wake voice message", defaultValue: "Good morning! Today is %day%, %date%. It is currently %time%."
-			input "A_weatherReport", "bool", title: "Speak today's weather report", defaultValue: "false"
-            input "A_musicTrack", "enum", title: "Play this track after voice message", required:false, multiple: false, options: songOptions(A_sonos,1)
-			def phrases = location.helloHome?.getPhrases()*.label
+        	input "A_wakeMsg", "text", title: "Wake voice message", defaultValue: "Good morning! It is %time% on %day%, %date%."
+			input "A_weatherReport", "bool", title: "Speak today's weather forecast", defaultValue: "false"
+            def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
 				phrases.sort()
 				input "A_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false
 			}
+        	input "A_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+            input "A_musicTrack", "enum", title: "Play this track after voice message", required:false, multiple: false, options: songOptions(A_sonos, 1)
         }
-    	section("Help") {
-    		paragraph helpText()
-    	}  
     } 
+}
+
+def pageDimmersA() {
+	dynamicPage(name: "pageDimmersA", title: "Dimmer Settings") {
+		section {
+        	input "A_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false	
+			input "A_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
+		}
+	}
+}
+
+def pageThermostatsA() {
+	dynamicPage(name: "pageThermostatsA", title: "Thermostat Settings") {
+		section {
+        	input "A_thermostats", "capability.thermostat", title: "Thermostats?", multiple: true, required: false
+			input "A_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
+			input "A_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+		}
+	}
 }
 
 // Show "pageSetupScenarioB" page
@@ -135,29 +159,44 @@ def pageSetupScenarioB() {
         
         section("Devices to control in this alarm scenario") {
         	input "B_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false
-        	input "B_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false
-			input "B_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
-        	input "B_thermostats", "capability.thermostat", title: "Thermostats?", multiple: true, required: false
-			input "B_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
-			input "B_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+        	href "pageDimmersB", title: "Dimmer Settings", description: dimmerDesc(B_dimmers), state: greyOutOption(B_dimmers)
+            href "pageThermostatsB", title: "Thermostat Settings", description: thermostatDesc(B_thermostats), state: greyOutOption(B_thermostats)
         }
         
         section("Other Options") {
         	input "B_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
-        	input "B_wakeMsg", "text", title: "Wake voice message", defaultValue: "Good morning! Today is %day%, %date%. It is currently %time%."
-			input "B_weatherReport", "bool", title: "Speak today's weather report", defaultValue: "false"
-            input "B_musicTrack", "enum", title: "Play this track after voice message", required:false, multiple: false, options: songOptions(B_sonos,1)
-			def phrases = location.helloHome?.getPhrases()*.label
+        	input "B_wakeMsg", "text", title: "Wake voice message", defaultValue: "Good morning! It is %time% on %day%, %date%."
+			input "B_weatherReport", "bool", title: "Speak today's weather forecast", defaultValue: "false"
+            def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
-        		phrases.sort()
+				phrases.sort()
 				input "B_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false
 			}
+        	input "B_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+            input "B_musicTrack", "enum", title: "Play this track after voice message", required:false, multiple: false, options: songOptions(B_sonos, 2)
         }
-    	section("Help") {
-    		paragraph helpText()
-    	}  
     } 
 }
+
+def pageDimmersB() {
+	dynamicPage(name: "pageDimmersB", title: "Dimmer Settings") {
+		section {
+        	input "B_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false	
+			input "B_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
+		}
+	}
+}
+
+def pageThermostatsB() {
+	dynamicPage(name: "pageThermostatsB", title: "Thermostat Settings") {
+		section {
+        	input "B_thermostats", "capability.thermostat", title: "Thermostats?", multiple: true, required: false
+			input "B_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
+			input "B_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+		}
+	}
+}
+
 
 // Show "pageSetupScenarioC" page
 def pageSetupScenarioC() {
@@ -172,28 +211,42 @@ def pageSetupScenarioC() {
         
         section("Devices to control in this alarm scenario") {
         	input "C_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false
-        	input "C_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false
-			input "C_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
-        	input "C_thermostats", "capability.thermostat", title: "Thermostats?", multiple: true, required: false
-        	input "C_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
-			input "C_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+        	href "pageDimmersC", title: "Dimmer Settings", description: dimmerDesc(C_dimmers), state: greyOutOption(C_dimmers)
+            href "pageThermostatsC", title: "Thermostat Settings", description: thermostatDesc(C_thermostats), state: greyOutOption(C_thermostats)
         }
         
         section("Other Options") {
         	input "C_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
-        	input "C_wakeMsg", "text", title: "Wake voice message", defaultValue: "Good morning! Today is %day%, %date%. It is currently %time%."
-			input "C_weatherReport", "bool", title: "Speak today's weather report", defaultValue: "false"
-            input "C_musicTrack", "enum", title: "Play this track after voice message", required:false, multiple: false, options: songOptions(C_sonos,1)
-			def phrases = location.helloHome?.getPhrases()*.label
+        	input "C_wakeMsg", "text", title: "Wake voice message", defaultValue: "Good morning! It is %time% on %day%, %date%."
+			input "C_weatherReport", "bool", title: "Speak today's weather forecast", defaultValue: "false"
+            def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
 				phrases.sort()
 				input "C_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false
 			}
+        	input "C_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+            input "C_musicTrack", "enum", title: "Play this track after voice message", required:false, multiple: false, options: songOptions(C_sonos, 3)
         }
-    	section("Help") {
-    		paragraph helpText()
-    	}  
     } 
+}
+
+def pageDimmersC() {
+	dynamicPage(name: "pageDimmersC", title: "Dimmer Settings") {
+		section {
+        	input "C_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false	
+			input "C_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
+		}
+	}
+}
+
+def pageThermostatsC() {
+	dynamicPage(name: "pageThermostatsC", title: "Thermostat Settings") {
+		section {
+        	input "C_thermostats", "capability.thermostat", title: "Thermostats?", multiple: true, required: false
+			input "C_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
+			input "C_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+		}
+	}
 }
 
 // Show "pageSetupScenarioD" page
@@ -209,28 +262,53 @@ def pageSetupScenarioD() {
         
         section("Devices to control in this alarm scenario") {
         	input "D_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false
-        	input "D_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false
-			input "D_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
-        	input "D_thermostats", "capability.thermostat", title: "Thermostats?", multiple: true, required: false
-			input "D_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
-			input "D_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+        	href "pageDimmersD", title: "Dimmer Settings", description: dimmerDesc(D_dimmers), state: greyOutOption(D_dimmers)
+            href "pageThermostatsD", title: "Thermostat Settings", description: thermostatDesc(D_thermostats), state: greyOutOption(D_thermostats)
         }
         
         section("Other Options") {
         	input "D_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
-        	input "D_wakeMsg", "text", title: "Wake voice message", defaultValue: "Good morning! Today is %day%, %date%. It is currently %time%."
-			input "D_weatherReport", "bool", title: "Speak today's weather report", defaultValue: "false"
-            input "D_musicTrack", "enum", title: "Play this track after voice message", required:false, multiple: false, options: songOptions(D_sonos,1)
+        	input "D_wakeMsg", "text", title: "Wake voice message", defaultValue: "Good morning! It is %time% on %day%, %date%."
+			input "D_weatherReport", "bool", title: "Speak today's weather forecast", defaultValue: "false"
             def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
-        		phrases.sort()
+				phrases.sort()
 				input "D_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false
 			}
+        	input "D_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+            input "D_musicTrack", "enum", title: "Play this track after voice message", required:false, multiple: false, options: songOptions(D_sonos, 4)
         }
-    	section("Help") {
-    		paragraph helpText()
-    	}  
     } 
+}
+
+def pageDimmersD() {
+	dynamicPage(name: "pageDimmersD", title: "Dimmer Settings") {
+		section {
+        	input "D_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false	
+			input "D_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
+		}
+	}
+}
+
+def pageThermostatsD() {
+	dynamicPage(name: "pageThermostatsB", title: "Thermostat Settings") {
+		section {
+        	input "D_thermostats", "capability.thermostat", title: "Thermostats?", multiple: true, required: false
+			input "D_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
+			input "D_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+		}
+	}
+}
+
+def pageAbout() {
+	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
+        section {
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
+        }
+        section("License") {
+            paragraph textLicense()
+        }
+    }
 }
 
 //--------------------------------------
@@ -303,9 +381,9 @@ def alarm_A() {
             }
        		getOnConfimation(A_switches, A_dimmers, A_thermostats, 1)
        	}
-        if (A_phrase) {
+        if (A_phrase && A_confirmPhrase) {
         	location.helloHome.execute(A_phrase)
-        	getPhraseConfirmation(A_phrase)
+        	getPhraseConfirmation(1, A_phrase)
         }
         
     	state.soundA = textToSpeech(state.fullMsgA, true)
@@ -351,9 +429,9 @@ def alarm_B() {
             }
 		   	getOnConfimation(B_switches, B_dimmers, B_thermostats, 2)
         }
-        if (B_phrase) {
+        if (B_phrase && B_confirmPhrase) {
         	location.helloHome.execute(B_phrase)
-        	getPhraseConfirmation(B_phrase)
+        	getPhraseConfirmation(2, B_phrase)
         }
                 
     	state.soundB = textToSpeech(state.fullMsgB, true)
@@ -399,9 +477,9 @@ def alarm_C() {
             }
             getOnConfimation(C_switches, C_dimmers, C_thermostats, 3)
        	}
-        if (C_phrase) {
+        if (C_phrase && C_confirmPhrase) {
            	location.helloHome.execute(C_phrase)
-        	getPhraseConfirmation(C_phrase)
+        	getPhraseConfirmation(3, C_phrase)
         }
         
     	state.soundC = textToSpeech(state.fullMsgC, true)
@@ -447,9 +525,9 @@ def alarm_D() {
             }
             getOnConfimation(D_switches, D_dimmers, D_thermostats, 4)
        	}
-        if (D_phrase) {
+        if (D_phrase && D_confirmPhrase) {
         	location.helloHome.execute(D_phrase)
-        	getPhraseConfirmation(D_phrase)
+        	getPhraseConfirmation(4, D_phrase)
         }
         
     	state.soundD = textToSpeech(state.fullMsgD, true)
@@ -513,32 +591,32 @@ def getDesc(timeStart, sonos, day, mode) {
     }
 	desc	
 }
-
-private def helpText() {
-	def text =
-    	"Choose a Sonos speaker along with an alarm time and switches, dimmers " +
-        "and thermostats to control when the alarm is triggered. You can also " +
-        "choose to have a weather report spoken as part of the alarm and a song " +
-        "to play after the voice greetings."
-	text
-}
-
 def greyOut(scenario, sonos, alarmTime, alarmOn){
 	def result = scenario && sonos  && alarmTime && alarmOn ? "complete" : ""
-	result
+}
+
+def greyOutOption(device){
+	def result = device ? "complete" : ""
 }
 
 def getTitle(scenario, num) {
 	def title = scenario ? scenario : "Alarm ${num} not configured"
-    title
+}
+
+def dimmerDesc(dimmer){
+	def desc = dimmer ? "Tap to edit dimmer settings" : "Tap to set dimmer setting"
+}
+
+def thermostatDesc(dimmer){
+	def desc = dimmer ? "Tap to edit thermostat settings" : "Tap to set thermostat setting"
 }
 
 private getDayOk(dayList) {
 	def result = true
-    	if (dayList) {
+	if (dayList) {
 		result = dayList.contains(getDay())
-		}
-    result
+	}
+	result
 }
 
 private getDay(){
@@ -550,7 +628,6 @@ private getDay(){
 		df.setTimeZone(TimeZone.getTimeZone("America/New_York"))
 	}
 	def day = df.format(new Date())
-    	day
 }
 
 private hhmm(time) {
@@ -641,10 +718,13 @@ private getOnConfimation(switches, dimmers, thermostats, scenario) {
     if (scenario == 4) {state.fullMsgD = state.fullMsgD + "${msg} "}
 }
 
-private getPhraseConfirmation(phrase) {
+private getPhraseConfirmation(scenario, phrase) {
 	def msg="The Smart Things Hello Home phrase, ${phrase}, has been activated."
 	log.debug "msg = ${msg}"
-	state.fullMsg = state.fullMsg + "${msg} "
+	if (scenario == 1) {state.fullMsgA = state.fullMsgA + "${msg} "}
+    if (scenario == 2) {state.fullMsgB = state.fullMsgB + "${msg} "}
+    if (scenario == 3) {state.fullMsgC = state.fullMsgC + "${msg} "}
+    if (scenario == 4) {state.fullMsgD = state.fullMsgD + "${msg} "}
 }
 
 //Sonos Aquire Track from SmartThings code
@@ -730,4 +810,40 @@ private saveSelectedSong(sonos, song, scenario) {
 	catch (Throwable t) {
 		log.error t
 	}
+}
+
+//Version/Copyright/Information/Help
+
+private def textAppName() {
+	def text = "Talking Alarm Clock"
+}	
+
+private def textVersion() {
+    def text = "Version 1.2.0 (05/27/2015)"
+}
+
+private def textCopyright() {
+    def text = "Copyright © 2015 Michael Struck"
+}
+
+private def textLicense() {
+    def text =
+        "This program is free software: you can redistribute it and/or " +
+        "modify it under the terms of the GNU General Public License as " +
+        "published by the Free Software Foundation, either version 3 of " +
+        "the License, or (at your option) any later version.\n\n" +
+        "This program is distributed in the hope that it will be useful, " +
+        "but WITHOUT ANY WARRANTY; without even the implied warranty of " +
+        "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU " +
+        "General Public License for more details.\n\n" +
+        "You should have received a copy of the GNU General Public License " +
+        "along with this program. If not, see <http://www.gnu.org/licenses/>."
+}
+
+private def textHelp() {
+	def text =
+    	"Instructions:\nWithin each alarm scenario, choose a Sonos speaker along with an alarm time " +
+        "and switches, dimmers and thermostats to control when the alarm is triggered. You can also " +
+        "choose to have a weather report spoken as part of the alarm and a song to play after the " +
+        "voice greetings."
 }
