@@ -2,10 +2,10 @@
  *  Switch Changes Mode
  *
  *  Copyright 2015 Michael Struck
- *  Version 1.01 3/8/15
- *  Version 1.02 3/24/15 Code revisions for better portability
- *  Version 1.03 4/9/15 Added the ability to change the name of the app
- *  Version 1.04 5/29/14 Added an About screen
+ *  Version 1.0.1 3/8/15
+ *  Version 1.0.2 3/24/15 Code revisions for better portability
+ *  Version 1.0.3 4/9/15 Added the ability to change the name of the app
+ *  Version 1.0.4 5/29/14 Added an About screen
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -99,7 +99,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.6 (05/29/2015)"
+    def text = "Version 1.0.4 (05/29/2015)"
 }
 
 private def textCopyright() {
