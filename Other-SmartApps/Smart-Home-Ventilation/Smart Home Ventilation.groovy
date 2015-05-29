@@ -1,8 +1,30 @@
 /**
- *	Smart Home Ventilation
- *	Version 2.1.2 - 5/24/15
+ *  Smart Bathroom Ventilation
  *
- *	Copyright 2015 Michael Struck
+ *  Version - 1.0 5/25/15
+ * 
+ *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *	The original licensing applies, with the following exceptions:
+ *		1.	These modifications may NOT be used without freely distributing all these modifications freely
+ *			and without limitation, in source form.	 The distribution may be met with a link to source code
+ *			with these modifications.
+ *		2.	These modifications may NOT be used, directly or indirectly, for the purpose of any type of
+ *			monetary gain.	These modifications may not be used in a larger entity which is being sold,
+ *			leased, or anything other than freely given.
+ *		3.	To clarify 1 and 2 above, if you use these modifications, it must be a free project, and
+ *			available to anyone with "no strings attached."	 (You may require a free registration on
+ *			a free website or portal in order to distribute the modifications.)
+ *		4.	The above listed exceptions to the original licensing do not apply to the holder of the
+ *			copyright of the original work.	 The original copyright holder can use the modifications
+ *			to hopefully improve their original work.  In that event, this author transfers all claim
+ *			and ownership of the modifications to "SmartThings."
+ *
  *
  *	Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *	in compliance with the License. You may obtain a copy of the License at:
@@ -16,143 +38,126 @@
  */
  
 definition(
-	name: "Smart Home Ventilation",
+    name: "Smart Bathroom Ventilation",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Allows for setting up various schedule scenarios for turning on and off home ventilation switches.",
+    description: "Control up to 4 ventilation fans based on humidity in each respective scenario.",
     category: "Convenience",
-    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Home-Ventilation/HomeVent.png",
-    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Home-Ventilation/HomeVent@2x.png",
-    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Home-Ventilation/HomeVent@2x.png")
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Bathroom-Ventilation/BathVent.png",
+    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Bathroom-Ventilation/BathVent@2x.png",
+    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Bathroom-Ventilation/BathVent@2x.png"
+    )
 
 preferences {
-	page name: "mainPage"
-	page name: "A_Scenario"
-	page name: "B_Scenario"
-    page name: "C_Scenario"
-    page name: "D_Scenario"
-    page name: "pageAbout"
+	page name:"pageSetup"
+	page name:"pageSetupScenarioA"
+	page name:"pageSetupScenarioB"
+	page name:"pageSetupScenarioC"
+	page name:"pageSetupScenarioD"
+    page name:"pageAbout"
 }
 
-def mainPage() {
-	dynamicPage(name: "mainPage", title: "", install: true, uninstall: true) {
-     	section("Select ventilation switches..."){
-			input "switches", title: "Switches", "capability.switch", multiple: true
-		}
-        section ("Scheduling scenarios...") {
-        	href(name: "toA_Scenario", page: "A_Scenario", title: getTitle (titleA, "A"), description: schedDesc(timeOnA1,timeOffA1,timeOnA2,timeOffA2,timeOnA3,timeOffA3,timeOnA4,timeOffA4, modeA, daysA), state: greyOut(timeOnA1,timeOnA2,timeOnA3,timeOnA4))
-        	href(name: "toB_Scenario", page: "B_Scenario", title: getTitle (titleB, "B"), description: schedDesc(timeOnB1,timeOffB1,timeOnB2,timeOffB2,timeOnB3,timeOffB3,timeOnB4,timeOffB4, modeB, daysB), state: greyOut(timeOnB1,timeOnB2,timeOnB3,timeOnB4))
-        	href(name: "toC_Scenario", page: "C_Scenario", title: getTitle (titleC, "C"), description: schedDesc(timeOnC1,timeOffC1,timeOnC2,timeOffC2,timeOnC3,timeOffC3,timeOnC4,timeOffC4, modeC, daysC), state: greyOut(timeOnC1,timeOnC2,timeOnC3,timeOnC4))
-        	href(name: "toD_Scenario", page: "D_Scenario", title: getTitle (titleD, "D"), description: schedDesc(timeOnD1,timeOffD1,timeOnD2,timeOffD2,timeOnD3,timeOffD3,timeOnD4,timeOffD4, modeD, daysD), state: greyOut(timeOnD1,timeOnD2,timeOnD3,timeOnD4))
+// Show setup page
+def pageSetup() {
+	dynamicPage(name: "pageSetup", install: true, uninstall: true) {
+        section("Setup Menu") {
+			href "pageSetupScenarioA", title: getTitle(ScenarioNameA), description: getDesc(ScenarioNameA), state: greyOut(ScenarioNameA)
+			href "pageSetupScenarioB", title: getTitle(ScenarioNameB), description: getDesc(ScenarioNameB), state: greyOut(ScenarioNameB)
+			href "pageSetupScenarioC", title: getTitle(ScenarioNameC), description: getDesc(ScenarioNameC), state: greyOut(ScenarioNameC)
+			href "pageSetupScenarioD", title: getTitle(ScenarioNameD), description: getDesc(ScenarioNameD), state: greyOut(ScenarioNameD)
         }
-        section([mobileOnly:true], "Options") {
-			label(title: "Assign a name", required: false, defaultValue: "Smart Home Ventilation")
-			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
+        section([title:"Options", mobileOnly:true]) {
+            label title:"Assign a name", required:false
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
         }
     }
 }
-//----Scheduling Pages
-def A_Scenario() {
-	dynamicPage(name: "A_Scenario", title: getTitle (titleA, "A")) {
-    	section("Schedule 1..."){
-			input "timeOnA1", title: "Time to turn on", "time", required: false
-        	input "timeOffA1", title: "Time to turn off", "time", required: false
+
+// Show "pageSetupScenarioA" page
+def pageSetupScenarioA() {
+    dynamicPage(name: "pageSetupScenarioA") {
+		section("Devices included in the scenario") {
+			input "A_switch","capability.switch", title: "Monitor this light switch...", multiple: false, required: true
+			input "A_humidity", "capability.relativeHumidityMeasurement",title: "Monitor the following humidity sensor...", multiple: false, required: true
+			input "A_fans", "capability.switch", title: "Control the following ventilation fans...", multiple: true, required: true
 		}
-    	section("Schedule 2..."){
-			input "timeOnA2", title: "Time to turn on", "time", required: false
-        	input "timeOffA2", title: "Time to turn off", "time", required: false
+		section("Fan settings") {
+        	input "A_humidityDelta", title: "Fan(s) turns on when lights are on and humidy rises", "number", required: false, description: "0-50%"
+        	input "A_fanTime", title: "Turn off ventilation after...", "enum", required: false, options: [[5:"5 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
 		}
-    	section("Schedule 3..."){
-        	input "timeOnA3", title: "Time to turn on", "time", required: false
-        	input "timeOffA3", title: "Time to turn off", "time", required: false
+		section("Restrictions") {            
+			input "A_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
+        	input "A_mode", "mode", title: "Only during the following modes...", multiple: true, required: false
 		}
-    	section("Schedule 4..."){
-        	input "timeOnA4", title: "Time to turn on", "time", required: false
-        	input "timeOffA4", title: "Time to turn off", "time", required: false
-		}
-		section("Option") {
-    		input "titleA", title: "Assign a scenario name", "text", required: false
-            input "modeA", "mode", required: false, multiple: true, title: "Run in specific mode(s)", description: "Choose Modes"
-		   	input "daysA", "enum", multiple: true, title: "Run on specific day(s)", description: "Choose Days", required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-		}
+		section("Name your scenario") {
+            input "ScenarioNameA", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
+    	}
     }
 }
 
-def B_Scenario() {
-	dynamicPage(name: "B_Scenario", title: getTitle (titleB, "B")) {
-    	section("Schedule 1..."){
-			input "timeOnB1", title: "Time to turn on", "time", required: false
-        	input "timeOffB1", title: "Time to turn off", "time", required: false
+// Show "pageSetupScenarioB" page
+def pageSetupScenarioB() {
+    dynamicPage(name: "pageSetupScenarioB") {
+		section("Devices included in the scenario") {
+    		input "B_switch","capability.switch", title: "Monitor this light switch...", multiple: false, required: true
+        	input "B_humidity", "capability.relativeHumidityMeasurement",title: "Monitor the following humidity sensor...", multiple: false, required: true
+        	input "B_fans", "capability.switch",title: "Control the following ventilation fans...", multiple: true, required: true
 		}
-    	section("Schedule 2..."){
-			input "timeOnB2", title: "Time to turn on", "time", required: false
-        	input "timeOffB2", title: "Time to turn off", "time", required: false
+		section("Fan settings") {
+        	input "B_humidityDelta", title: "Fan(s) turns on when lights are on and humidy rises", "number", required: false, description: "0-50%"
+        	input "B_fanTime", title: "Turn off ventilation after...", "enum", required: false, options: [[5:"5 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
 		}
-    	section("Schedule 3..."){
-        	input "timeOnB3", title: "Time to turn on", "time", required: false
-        	input "timeOffB3", title: "Time to turn off", "time", required: false
+		section("Restrictions") {            
+			input "B_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
+        	input "B_mode", "mode", title: "Only during the following modes...", multiple: true, required: false
 		}
-    	section("Schedule 4..."){
-        	input "timeOnB4", title: "Time to turn on", "time", required: false
-        	input "timeOffB4", title: "Time to turn off", "time", required: false
-		}
-		section("Option") {
-    		input "titleB", title: "Assign a scenario name", "text", required: false
-            input "modeB", "mode", required: false, multiple: true, title: "Run in specific mode(s)", description: "Choose Modes"
-		   	input "daysB", "enum", multiple: true, title: "Run on specific day(s)", description: "Choose Days", required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-		}
+		section("Name your scenario") {
+            input "ScenarioNameB", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
+    	}
     }
 }
 
-def C_Scenario() {
-	dynamicPage(name: "C_Scenario", title: getTitle (titleC, "C")) {
-    	section("Schedule 1..."){
-			input "timeOnC1", title: "Time to turn on", "time", required: false
-        	input "timeOffC1", title: "Time to turn off", "time", required: false
+// Show "pageSetupScenarioC" page
+def pageSetupScenarioC() {
+    dynamicPage(name: "pageSetupScenarioC") {
+		section("Devices included in the scenario") {
+    		input "C_switch","capability.switch", title: "Monitor this light switch...", multiple: false, required: true
+        	input "C_humidity", "capability.relativeHumidityMeasurement",title: "Monitor the following humidity sensor...", multiple: false, required: true
+        	input "C_fans", "capability.switch",title: "Control the following ventilation fans...", multiple: true, required: true
 		}
-    	section("Schedule 2..."){
-			input "timeOnC2", title: "Time to turn on", "time", required: false
-        	input "timeOffC2", title: "Time to turn off", "time", required: false
+		section("Fan settings") {
+        	input "C_humidityDelta", title: "Fan(s) turns on when lights are on and humidy rises", "number", required: false, description: "0-50%"
+        	input "C_fanTime", title: "Turn off ventilation after...", "enum", required: false, options: [[5:"5 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
 		}
-    	section("Schedule 3..."){
-        	input "timeOnC3", title: "Time to turn on", "time", required: false
-        	input "timeOffC3", title: "Time to turn off", "time", required: false
+		section("Restrictions") {            
+			input "C_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
+        	input "C_mode", "mode", title: "Only during the following modes...", multiple: true, required: false
 		}
-    	section("Schedule 4..."){
-        	input "timeOnC4", title: "Time to turn on", "time", required: false
-        	input "timeOffC4", title: "Time to turn off", "time", required: false
-		}
-		section("Option") {
-    		input "titleC", title: "Assign a scenario name", "text", required: false
-            input "modeC", "mode", required: false, multiple: true, title: "Run in specific mode(s)", description: "Choose Modes"
-		   	input "daysC", "enum", multiple: true, title: "Run on specific day(s)", description: "Choose Days", required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-		}
+		section("Name your scenario") {
+            input "ScenarioNameC", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
+    	}
     }
 }
 
-def D_Scenario() {
-	dynamicPage(name: "D_Scenario", title: getTitle (titleD, "D")) {
-    	section("Schedule 1..."){
-			input "timeOnD1", title: "Time to turn on", "time", required: false
-        	input "timeOffD1", title: "Time to turn off", "time", required: false
+// Show "pageSetupScenarioD" page
+def pageSetupScenarioD() {
+    dynamicPage(name: "pageSetupScenarioD") {
+		section("Devices included in the scenario") {
+    		input "D_switch","capability.switch", title: "Monitor this light switch...", multiple: false, required: true
+        	input "D_humidity", "capability.relativeHumidityMeasurement",title: "Monitor the following humidity sensor...", multiple: false, required: true
+        	input "D_fans", "capability.switch",title: "Control the following ventilation fans...", multiple: true, required: true
 		}
-    	section("Schedule 2..."){
-			input "timeOnD2", title: "Time to turn on", "time", required: false
-        	input "timeOffD2", title: "Time to turn off", "time", required: false
+		section("Fan settings") {
+        	input "D_humidityDelta", title: "Fan(s) turns on when lights are on and humidy rises", "number", required: false, description: "0-50%"
+        	input "D_fanTime", title: "Turn off ventilation after...", "enum", required: false, options: [[5:"5 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
 		}
-    	section("Schedule 3..."){
-        	input "timeOnD3", title: "Time to turn on", "time", required: false
-        	input "timeOffD3", title: "Time to turn off", "time", required: false
+		section("Restrictions") {            
+			input "D_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
+        	input "D_mode", "mode", title: "Only during the following modes...", multiple: true, required: false
 		}
-    	section("Schedule 4..."){
-        	input "timeOnD4", title: "Time to turn on", "time", required: false
-        	input "timeOffD4", title: "Time to turn off", "time", required: false
-		}
-        section("Option") {
-    		input "titleD", title: "Assign a scenario name", "text", required: false
-            input "modeD", "mode", required: false, multiple: true, title: "Run in specific mode(s)", description: "Choose Modes"
-		   	input "daysD", "enum", multiple: true, title: "Run on specific day(s)", description: "Choose Days", required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-		}
+		section("Name your scenario") {
+            input "ScenarioNameD", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
+    	}
     }
 }
 
@@ -167,168 +172,264 @@ def pageAbout() {
     }
 }
 
-// Install and initiate
-
 def installed() {
-    log.debug "Installed with settings: ${settings}"
-    init()
+    initialize()
 }
 
 def updated() {
+    state.triggeredA = false
+    state.triggeredB = false
+    state.triggeredC = false
+    state.triggeredD = false
     unschedule()
-    turnOffSwitch() //Turn off all switches if the schedules are changed while in mid-schedule
-    unsubscribe
-    log.debug "Updated with settings: ${settings}"
-    init()
+    unsubscribe()
+    initialize()
 }
 
-def init() {
-	def midnightTime = timeToday("2000-01-01T00:01:00.999-0000", location.timeZone)
-    schedule (midnightTime, midNight)
-	subscribe(location, "mode", locationHandler)
-    startProcess()
-}    
-
-// Common methods
-
-def startProcess () {
-    createDayArray() 
-	state.dayCount=state.data.size()
-    if (state.dayCount){
-		state.counter = 0
-        startDay()
-    }
+def initialize() {
+	
+    if(A_switch) {
+        state.A_runTime = A_fanTime ? A_fanTime as Integer : 98
+        subscribe(A_switch, "switch.on", onEventA)
+    	subscribe(A_switch, "switch.off", offEventA)
+    	if (A_humidityDelta || state.A_runTime == 99) {
+    		subscribe(A_humidity, "humidity", humidityHandlerA)
+		}
+	}
+    if(B_switch) {
+        state.B_runTime = B_fanTime ? B_fanTime as Integer : 98
+        subscribe(B_switch, "switch.on", onEventB)
+    	subscribe(B_switch, "switch.off", offEventB)
+    	if (B_humidityDelta || state.B_runTime == 99) {
+    		subscribe(B_humidity, "humidity", humidityHandlerB)
+		}
+	}
+    if(C_switch) {
+		state.C_runTime = C_fanTime ? C_fanTime as Integer : 98
+        subscribe(C_switch, "switch.on", onEventC)
+    	subscribe(C_switch, "switch.off", offEventC)
+    	if (C_humidityDelta || state.C_runTime == 99) {
+    		subscribe(C_humidity, "humidity", humidityHandlerC)
+		}
+	}
+    if(D_switch) {
+		state.D_runTime = D_fanTime ? D_fanTime as Integer : 98
+        subscribe(D_switch, "switch.on", onEventD)
+    	subscribe(D_switch, "switch.off", offEventD)
+    	if (D_humidityDelta || state.D_runTime == 99) {
+    		subscribe(D_humidity, "humidity", humidityHandlerD)
+		}
+	}
 }
 
-def startDay() {
-	def start = convertEpoch(state.data[state.counter].start)
-	def stop = convertEpoch(state.data[state.counter].stop)
-      
-    runOnce(start, turnOnSwitch, [overwrite: true])
-    runOnce(stop, incDay, [overwrite: true])
-}
-
-def incDay() {
-    turnOffSwitch()
-    if (state.modeChange) {
-    	startProcess()
-    }
-    else {
-    	state.counter = state.counter + 1
-    	if (state.counter < state.dayCount) {
-    		startDay()
-    	}
-    }
-}
-
-def locationHandler(evt) {
-	def result = false
-    state.modeChange = true
-    switches.each {
-    	if (it.currentValue("switch")=="on"){
-           result = true
+//Handlers----------------
+//A Handlers
+def turnOnA(){
+    if ((!A_mode || A_mode.contains(location.mode)) && getDayOk(A_day) && A_switch.currentValue("switch")=="on" && !state.triggeredA) {
+        log.debug "Ventilation fans turned on in ${ScenarioNameA}."
+    	A_fans?.on()
+        state.triggeredA = true
+        if (state.A_runTime < 98) {
+			log.debug "Humidity fans will be turned off in ${state.A_runTime} minutes in ${ScenarioNameA}."
+            runIn (state.A_runTime*60, "turnOffA")
         }
+	}
+}
+
+def turnOffA() {
+	log.debug "Ventilation fans turned off in ${ScenarioNameA}."
+    A_fans?.off()
+    state.triggeredA = false
+}
+
+def humidityHandlerA(evt){
+    def currentHumidityA =evt.value as Integer
+    log.debug "Humidity value is ${currentHumidityA} in ${ScenarioNameA}."
+	if (state.humidityLimitA && currentHumidityA > state.humidityLimitA) {
+        turnOnA()
     }
-	if (!result) {
-    	startProcess()
-    }	
+	if (state.humidityStartA && currentHumidityA <= state.humidityStartA && state.A_runTime == 99){
+    	turnOffA()
+    }      
 }
 
-def midNight(){
-    startProcess()
+def onEventA(evt) {
+    def humidityDelta = A_humidityDelta ? A_humidityDelta as Integer : 0
+    state.humidityStartA = A_humidity.currentValue("humidity")
+    state.humidityLimitA = state.humidityStartA + humidityDelta
+    log.debug "Light turned on in ${ScenarioNameA}. Humidity starting value is ${state.humidityStartA} in ${ScenarioNameA}. Ventilation threshold is ${state.humidityLimitA}"
+    if (!A_humidityDelta) {
+    	turnOnA()
+    }
 }
 
-def turnOnSwitch() {
-    switches.on()
-    log.debug "Home ventilation switches are on."
+def offEventA(evt) {
+	def currentHumidityA = A_humidity.currentValue("humidity")
+    log.debug "Light turned off in ${ScenarioNameA}. Humidity value is ${currentHumidityA} in ${ScenarioNameA}"
+    if (state.A_runTime == 98){
+    	turnOffA()
+    }
 }
-
-def turnOffSwitch() {
-    switches.each {
-    	if (it.currentValue("switch")=="on"){
-			it.off()
+//B Handlers
+def turnOnB(){
+    if ((!B_mode || B_mode.contains(location.mode)) && getDayOk(B_day) && B_switch.currentValue("switch")=="on" && !state.triggeredB ) {
+        log.debug "Ventilation fans turned on in ${ScenarioNameB}."
+    	B_fans?.on()
+        state.triggeredB = true
+        if (state.B_runTime < 98) {
+			log.debug "Humidity fans will be turned off in ${state.B_runTime} minutes in ${ScenarioNameB}."
+            runIn (state.B_runTime*60, "turnOffB")
         }
-    }
-    log.debug "Home ventilation switches are off."
+	}
 }
-    
-def schedDesc(on1, off1, on2, off2, on3, off3, on4, off4, modeList, dayList) {
-	def title = ""
-	def dayListClean = "On "
-    def modeListClean ="Scenario runs in "
-    if (dayList && dayList.size() < 7) {
-    	def dayListSize = dayList.size()
-        for (dayName in dayList) {
-        	dayListClean = "${dayListClean}"+"${dayName}"
-    		dayListSize = dayListSize -1
-            if (dayListSize) {
-            	dayListClean = "${dayListClean}, "
-            }
+
+def turnOffB() {
+	log.debug "Ventilation fans turned off in ${ScenarioNameB}."
+    B_fans?.off()
+    state.triggeredB = false
+}
+
+def humidityHandlerB(evt){
+    def currentHumidityB =evt.value as Integer
+    log.debug "Humidity value is ${currentHumidityB} in ${ScenarioNameB}."
+	if (state.humidityLimitB && currentHumidityB > state.humidityLimitB) {
+        turnOnB()
+    }
+	if (state.humidityStartB && currentHumidityB <= state.humidityStartB && state.B_runTime == 99){
+    	turnOffB()
+    }      
+}
+
+def onEventB(evt) {
+    def humidityDelta = B_humidityDelta ? B_humidityDelta as Integer : 0
+    state.humidityStartB = B_humidity.currentValue("humidity")
+    state.humidityLimitB = state.humidityStartB + humidityDelta
+    log.debug "Light turned on in ${ScenarioNameB}. Humidity starting value is ${state.humidityStartB} in ${ScenarioNameB}. Ventilation threshold is ${state.humidityLimitB}"
+    if (!B_humidityDelta) {
+    	turnOnB()
+    }
+}
+
+def offEventB(evt) {
+	def currentHumidityB = B_humidity.currentValue("humidity")
+    log.debug "Light turned off in ${ScenarioNameB}. Humidity value is ${currentHumidityB} in ${ScenarioNameB}"
+    if (state.B_runTime == 98){
+    	turnOffB()
+    }
+}
+
+//C Handlers
+def turnOnC(){
+    if ((!C_mode || C_mode.contains(location.mode)) && getDayOk(C_day) && C_switch.currentValue("switch")=="on" && !state.triggeredC) {
+        log.debug "Ventilation fans turned on in ${ScenarioNameC}."
+    	C_fans?.on()
+        state.triggeredC = true
+        if (state.C_runTime < 98) {
+			log.debug "Humidity fans will be turned off in ${state.C_runTime} minutes in ${ScenarioNameC}."
+            runIn (state.C_runTime*60, turnOffC)
         }
-	} 
-    else {
-    	dayListClean = "Every day"
+	}
+}
+
+def turnOffC() {
+	log.debug "Ventilation fans turned off in ${ScenarioNameC}."
+    C_fans?.off()
+    state.triggeredC = false
+}
+
+def humidityHandlerC(evt){
+    def currentHumidityC =evt.value as Integer
+    log.debug "Humidity value is ${currentHumidityC} in ${ScenarioNameC}."
+	if (state.humidityLimitC && currentHumidityC > state.humidityLimitC) {
+        turnOnC()
     }
-    if (modeList) {
-    	def modeListSize = modeList.size()
-        def modePrefix ="modes"
-        if (modeListSize == 1) {
-        	modePrefix = "mode"
+	if (state.humidityStartC && currentHumidityC <= state.humidityStartC && state.C_runTime == 99){
+    	turnOffC()
+    }      
+}
+
+def onEventC(evt) {
+    def humidityDelta = C_humidityDelta ? C_humidityDelta as Integer : 0
+    state.humidityStartC = C_humidity.currentValue("humidity")
+    state.humidityLimitC = state.humidityStartC + humidityDelta
+    log.debug "Light turned on in ${ScenarioNameC}. Humidity starting value is ${state.humidityStartC} in ${ScenarioNameC}. Ventilation threshold is ${state.humidityLimitC}"
+    if (!C_humidityDelta) {
+    	turnOnC()
+    }
+}
+
+def offEventC(evt) {
+	def currentHumidityC = C_humidity.currentValue("humidity")
+    log.debug "Light turned off in ${ScenarioNameC}. Humidity value is ${currentHumidityC} in ${ScenarioNameC}"
+    if (state.C_runTime == 98){
+    	turnOffC()
+    }
+}
+
+//D Handlers
+def turnOnD(){
+    if ((!D_mode || D_mode.contains(location.mode)) && getDayOk(D_day) && D_switch.currentValue("switch")=="on" && !state.triggeredD) {
+        log.debug "Ventilation fans turned on in ${ScenarioNameD}."
+    	D_fans?.on()
+        state.triggeredD = true
+        if (state.D_runTime < 98) {
+			log.debug "Humidity fans will be turned off in ${state.D_runTime} minutes in ${ScenarioNameD}."
+            runIn (state.D_runTime*60, "turnOffD")
         }
-        for (modeName in modeList) {
-        	modeListClean = "${modeListClean}"+"'${modeName}'"
-    		modeListSize = modeListSize -1
-            if (modeListSize) {
-            	modeListClean = "${modeListClean}, "
-            }
-            else {
-            	modeListClean = "${modeListClean} ${modePrefix}"
-        	}
-        }
-	} 
-    else {
-    	modeListClean = "${modeListClean}all modes"
-    }
-    if (on1 && off1){
-    	title += "Schedule 1: ${humanReadableTime(on1)} to ${humanReadableTime(off1)}"
-    }
-    if (on2 && off2) {
-    	title += "\nSchedule 2: ${humanReadableTime(on2)} to ${humanReadableTime(off2)}"
-    }
-    if (on3 && off3) {
-    	title += "\nSchedule 3: ${humanReadableTime(on3)} to ${humanReadableTime(off3)}" 
-    }
-    if (on4 && off4) {
-    	title += "\nSchedule 4: ${humanReadableTime(on4)} to ${humanReadableTime(off4)}" 
-    }
-    if (on1 || on2 || on3 || on4) {
-    	title += "\n$modeListClean"
-    	title += "\n$dayListClean" 
-    }
-    
-    if (!on1 && !on2 && !on3 && !on4) {
-    	title="Click to configure scenario"
-    }
-    title
+	}
 }
 
-def greyOut(on1, on2, on3, on4){
-    def result = on1 || on2 || on3 || on4 ? "complete" : ""
+def turnOffD() {
+	log.debug "Ventilation fans turned off in ${ScenarioNameD}."
+    D_fans?.off()
+    state.triggeredD = false
 }
 
-public humanReadableTime(dateTxt) {
-	new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", dateTxt).format("h:mm a", timeZone(dateTxt))
+def humidityHandlerD(evt){
+    def currentHumidityD =evt.value as Integer
+    log.debug "Humidity value is ${currentHumidityD} in ${ScenarioNameD}."
+	if (state.humidityLimitD && currentHumidityD > state.humidityLimitD) {
+        turnOnD()
+    }
+	if (state.humidityStartD && currentHumidityD <= state.humidityStartD && state.D_runTime == 99){
+    	turnOffD()
+    }      
 }
 
-public convertEpoch(epochDate) {
-    new Date(epochDate).format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", location.timeZone)
+def onEventD(evt) {
+    def humidityDelta = D_humidityDelta ? D_humidityDelta as Integer : 0
+    state.humidityStartD = D_humidity.currentValue("humidity")
+    state.humidityLimitD = state.humidityStartD + humidityDelta
+    log.debug "Light turned on in ${ScenarioNameD}. Humidity starting value is ${state.humidityStartD} in ${ScenarioNameD}. Ventilation threshold is ${state.humidityLimitD}"
+    if (!D_humidityDelta) {
+    	turnOnD()
+    }
 }
 
-private getTitle(txt, scenario) {
-    def title = txt ? txt : "Scenario ${scenario}"
+def offEventD(evt) {
+	def currentHumidityD = D_humidity.currentValue("humidity")
+    log.debug "Light turned off in ${ScenarioNameD}. Humidity value is ${currentHumidityD} in ${ScenarioNameD}"
+    if (state.D_runTime == 98){
+    	turnOffD()
+    }
 }
 
-private daysOk(dayList) {
+
+//Common Methods-------------
+
+def greyOut(scenario){
+    def result = scenario ? "complete" : ""
+}
+
+def getTitle(scenario) {
+	def title = scenario ? scenario : "Empty"
+}
+
+def getDesc(scenario) {
+	def desc = scenario ? "Tap to edit scenario" : "Tap to create a scenario"
+}
+
+private getDayOk(dayList) {
 	def result = true
     if (dayList) {
 		def df = new java.text.SimpleDateFormat("EEEE")
@@ -344,63 +445,14 @@ private daysOk(dayList) {
     result
 }
 
-private timeOk(starting, ending) {
-    if (starting && ending) {
-        def currTime = now()
-		def start = timeToday(starting).time
-		def stop = timeToday(ending).time
-        if (start < stop && start >= currTime && stop>=currTime) {
-        	state.data << [start:start, stop:stop]
-        }
-    }
-}
-
-def createDayArray() {
-	state.modeChange = false
-    state.data = []
-    if (modeA && modeA.contains(location.mode)) {
-        if (daysOk(daysA)){
-            timeOk(timeOnA1, timeOffA1)
-			timeOk(timeOnA2, timeOffA2)
-			timeOk(timeOnA3, timeOffA3)
-			timeOk(timeOnA4, timeOffA4)
-        }
-    }
-    if (modeB && modeB.contains(location.mode)) {
-        if (daysOk(daysB)){
-			timeOk(timeOnB1, timeOffB1)
-            timeOk(timeOnB2, timeOffB2)
-            timeOk(timeOnB3, timeOffB3)
-            timeOk(timeOnB4, timeOffB4)
-        }
-    }
-    if (modeC && modeC.contains(location.mode)) {
-        if (daysOk(daysC)){
-            timeOk(timeOnC1, timeOffC1)
-            timeOk(timeOnC2, timeOffC2)
-            timeOk(timeOnC3, timeOffC3)
-            timeOk(timeOnC4, timeOffC4)
-        }
-    }
-    if (modeD && modeD.contains(location.mode)) {
-        if (daysOk(daysD)){
-           timeOk(timeOnD1, timeOffD1)
-           timeOk(timeOnD2, timeOffD2)
-           timeOk(timeOnD3, timeOffD3)
-           timeOk(timeOnD4, timeOffD4)        
-        }
-    }
-    state.data.sort{it.start}
-}
-
 //Version/Copyright/Information/Help
 
 private def textAppName() {
-	def text = "Smart Home Ventilation"
+	def text = "Smart Bathroom Ventilation"
 }	
 
 private def textVersion() {
-    def text = "Version 2.1.2 (05/24/2015)"
+    def text = "Version 1.0.0 (05/25/2015)"
 }
 
 private def textCopyright() {
@@ -409,23 +461,23 @@ private def textCopyright() {
 
 private def textLicense() {
     def text =
-        "This program is free software: you can redistribute it and/or " +
-        "modify it under the terms of the GNU General Public License as " +
-        "published by the Free Software Foundation, either version 3 of " +
-        "the License, or (at your option) any later version.\n\n" +
-        "This program is distributed in the hope that it will be useful, " +
-        "but WITHOUT ANY WARRANTY; without even the implied warranty of " +
-        "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU " +
-        "General Public License for more details.\n\n" +
-        "You should have received a copy of the GNU General Public License " +
-        "along with this program. If not, see <http://www.gnu.org/licenses/>."
+		"Licensed under the Apache License, Version 2.0 (the 'License');"+
+		"you may not use this file except in compliance with the License."+
+		"You may obtain a copy of the License at"+
+		"\n\n"+
+		"    http://www.apache.org/licenses/LICENSE-2.0"+
+		"\n\n"+
+		"Unless required by applicable law or agreed to in writing, software"+
+		"distributed under the License is distributed on an 'AS IS' BASIS,"+
+		"WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied."+
+		"See the License for the specific language governing permissions and"+
+		"limitations under the License."
 }
 
 private def textHelp() {
 	def text =
-    	"Instructions:\nWithin each scenario, choose a start and end time for the ventilation fan. You can have up to 4 different " +
-        "venting scenarios, and 4 schedules within each scenario. Each scenario can be restricted to specific modes or certain days of the week. It is recommended "+
-        "that each scenario does not overlap and run in separate modes (i.e. Home, Out of town, etc). Also note that you should  " +
-        "avoid scheduling the ventilation fan at exactly midnight; the app resets itself at that time. It is suggested to start any new schedule " +
-        "at 12:15 am or later."
+    	"Instructions:\nSelect a light switch to monitor. When the switch is turned on, a humidity reading is taken. You can choose when " +
+        "the ventilation fan comes on; either when the room humidity rises over a certain level or come on with the light switch. "+
+        "The ventilation fans will turn off based on either a timer setting, humidity, or the light switch being turned off. " +
+        "Each scenario can be restricted to specific modes or certain days of the week."
 }
