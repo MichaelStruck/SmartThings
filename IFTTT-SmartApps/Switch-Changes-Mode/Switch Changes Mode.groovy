@@ -5,6 +5,7 @@
  *  Version 1.01 3/8/15
  *  Version 1.02 3/24/15 Code revisions for better portability
  *  Version 1.03 4/9/15 Added the ability to change the name of the app
+ *  Version 1.04 5/29/14 Added an About screen
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -15,7 +16,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Ties a mode to a switch's (virtual or real) on/off state. Perfect for use with IFTTT.
+ *  Ties a mode to a switch (virtual or real) on/off state. Perfect for use with IFTTT.
  *  Simple define a switch to be used, then tie the on/off state of the switch to a specific mode.
  *  Connect the switch to an IFTTT action, and the mode will fire with the switch state change.
  *
@@ -42,7 +43,17 @@ preferences {
 		}
 		section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Switch Changes Mode")
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
 		}
+	}
+}
+
+page(name: "pageAbout", title: "About ${textAppName()}") {
+	section {
+		paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
+	}
+	section("License") {
+		paragraph textLicense()
 	}
 }
 
@@ -80,3 +91,39 @@ def changeMode(newMode) {
 	}
 }
 
+
+//Version/Copyright/Information/Help
+
+private def textAppName() {
+	def text = "Switch Changes Mode"
+}	
+
+private def textVersion() {
+    def text = "Version 1.0.6 (05/29/2015)"
+}
+
+private def textCopyright() {
+    def text = "Copyright © 2015 Michael Struck"
+}
+
+private def textLicense() {
+    def text =
+		"Licensed under the Apache License, Version 2.0 (the 'License'); "+
+		"you may not use this file except in compliance with the License. "+
+		"You may obtain a copy of the License at"+
+		"\n\n"+
+		"    http://www.apache.org/licenses/LICENSE-2.0"+
+		"\n\n"+
+		"Unless required by applicable law or agreed to in writing, software "+
+		"distributed under the License is distributed on an 'AS IS' BASIS, "+
+		"WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. "+
+		"See the License for the specific language governing permissions and "+
+		"limitations under the License."
+}
+
+private def textHelp() {
+	def text =
+    	"Instructions:\nTies a mode to a switch (virtual or real) on/off state. Perfect for use with IFTTT. "+
+		"Simple define a switch to be used, then tie the on/off state of the switch to a specific mode. "+
+		"Connect the switch to an IFTTT action, and the mode will fire with the switch state change." 
+}
