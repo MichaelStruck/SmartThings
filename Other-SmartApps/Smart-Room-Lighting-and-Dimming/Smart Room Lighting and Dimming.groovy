@@ -3,7 +3,7 @@
  *
  *  Version - 1.0 5/4/15
  *  Version - 1.02 5/19/15 Code clean up for timeframe conditional check
- *  Version - 1.03 5/25/15 Added About screen from main menu
+ *  Version - 1.0.3 5/25/15 Added About screen from main menu
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -56,7 +56,6 @@ preferences {
     page name:"pageSetupScenarioB"
     page name:"pageSetupScenarioC"
     page name:"pageSetupScenarioD"
-    page name:"pageAbout"
 }
 
 // Show setup page
@@ -193,16 +192,15 @@ def pageSetupScenarioD() {
     }
 }
 
-def pageAbout() {
-	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
-        section {
-            paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
-        }
-        section("License") {
-            paragraph textLicense()
-        }
-    }
+page(name: "pageAbout", title: "About ${textAppName()}") {
+	section {
+		paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
+	}
+	section("License") {
+		paragraph textLicense()
+	}
 }
+
 
 //----------------------
 def installed() {
@@ -210,7 +208,6 @@ def installed() {
 }
 
 def updated() {
-
     unschedule()
     unsubscribe()
     initialize()
