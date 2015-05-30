@@ -1,6 +1,6 @@
 /**
  *	Smart Home Ventilation
- *	Version 2.1.2 - 5/24/15
+ *	Version 2.1.2 - 5/30/15
  *
  *	Copyright 2015 Michael Struck
  *
@@ -27,10 +27,6 @@ definition(
 
 preferences {
 	page name: "mainPage"
-	page name: "A_Scenario"
-	page name: "B_Scenario"
-    page name: "C_Scenario"
-    page name: "D_Scenario"
 }
 
 def mainPage() {
@@ -51,109 +47,103 @@ def mainPage() {
     }
 }
 //----Scheduling Pages
-def A_Scenario() {
-	dynamicPage(name: "A_Scenario", title: getTitle (titleA, "A")) {
-    	section("Schedule 1..."){
-			input "timeOnA1", title: "Time to turn on", "time", required: false
-        	input "timeOffA1", title: "Time to turn off", "time", required: false
+page(name: "A_Scenario", title: getTitle (titleA, "A")) {
+    	section{
+			input "timeOnA1", title: "Schedule 1 time to turn on", "time", required: false
+        	input "timeOffA1", title: "Schedule 1 time to turn off", "time", required: false
 		}
-    	section("Schedule 2..."){
-			input "timeOnA2", title: "Time to turn on", "time", required: false
-        	input "timeOffA2", title: "Time to turn off", "time", required: false
+    	section{
+			input "timeOnA2", title: "Schedule 2 time to turn on", "time", required: false
+        	input "timeOffA2", title: "Schedule 2 time to turn off", "time", required: false
 		}
-    	section("Schedule 3..."){
-        	input "timeOnA3", title: "Time to turn on", "time", required: false
-        	input "timeOffA3", title: "Time to turn off", "time", required: false
+    	section{
+        	input "timeOnA3", title: "Schedule 3 time to turn on", "time", required: false
+        	input "timeOffA3", title: "Schedule 3 time to turn off", "time", required: false
 		}
-    	section("Schedule 4..."){
-        	input "timeOnA4", title: "Time to turn on", "time", required: false
-        	input "timeOffA4", title: "Time to turn off", "time", required: false
+    	section{
+        	input "timeOnA4", title: "Schedule 4 time to turn on", "time", required: false
+        	input "timeOffA4", title: "Schedule 4 time to turn off", "time", required: false
 		}
-		section("Option") {
+		section ("Options") {
     		input "titleA", title: "Assign a scenario name", "text", required: false
             input "modeA", "mode", required: false, multiple: true, title: "Run in specific mode(s)", description: "Choose Modes"
 		   	input "daysA", "enum", multiple: true, title: "Run on specific day(s)", description: "Choose Days", required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 		}
     }
-}
 
-def B_Scenario() {
-	dynamicPage(name: "B_Scenario", title: getTitle (titleB, "B")) {
-    	section("Schedule 1..."){
-			input "timeOnB1", title: "Time to turn on", "time", required: false
-        	input "timeOffB1", title: "Time to turn off", "time", required: false
+page(name: "B_Scenario", title: getTitle (titleB, "B")) {
+    	section{
+			input "timeOnB1", title: "Schedule 1 time to turn on", "time", required: false
+        	input "timeOffB1", title: "Schedule 1 time to turn off", "time", required: false
 		}
-    	section("Schedule 2..."){
-			input "timeOnB2", title: "Time to turn on", "time", required: false
-        	input "timeOffB2", title: "Time to turn off", "time", required: false
+    	section{
+			input "timeOnB2", title: "Schedule 2 time to turn on", "time", required: false
+        	input "timeOffB2", title: "Schedule 2 time to turn off", "time", required: false
 		}
-    	section("Schedule 3..."){
-        	input "timeOnB3", title: "Time to turn on", "time", required: false
-        	input "timeOffB3", title: "Time to turn off", "time", required: false
+    	section{
+        	input "timeOnB3", title: "Schedule 3 time to turn on", "time", required: false
+        	input "timeOffB3", title: "Schedule 3 time to turn off", "time", required: false
 		}
-    	section("Schedule 4..."){
-        	input "timeOnB4", title: "Time to turn on", "time", required: false
-        	input "timeOffB4", title: "Time to turn off", "time", required: false
+    	section{
+        	input "timeOnB4", title: "Schedule 4 time to turn on", "time", required: false
+        	input "timeOffB4", title: "Schedule 4 time to turn off", "time", required: false
 		}
-		section("Option") {
+		section("Options") {
     		input "titleB", title: "Assign a scenario name", "text", required: false
             input "modeB", "mode", required: false, multiple: true, title: "Run in specific mode(s)", description: "Choose Modes"
 		   	input "daysB", "enum", multiple: true, title: "Run on specific day(s)", description: "Choose Days", required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 		}
     }
-}
 
-def C_Scenario() {
-	dynamicPage(name: "C_Scenario", title: getTitle (titleC, "C")) {
-    	section("Schedule 1..."){
-			input "timeOnC1", title: "Time to turn on", "time", required: false
-        	input "timeOffC1", title: "Time to turn off", "time", required: false
+page(name: "C_Scenario", title: getTitle (titleC, "C")) {
+    	section{
+			input "timeOnC1", title: "Schedule 1 time to turn on", "time", required: false
+        	input "timeOffC1", title: "Schedule 1 time to turn off", "time", required: false
 		}
-    	section("Schedule 2..."){
-			input "timeOnC2", title: "Time to turn on", "time", required: false
-        	input "timeOffC2", title: "Time to turn off", "time", required: false
+    	section{
+			input "timeOnC2", title: "Schedule 2 time to turn on", "time", required: false
+        	input "timeOffC2", title: "Schedule 2 time to turn off", "time", required: false
 		}
-    	section("Schedule 3..."){
-        	input "timeOnC3", title: "Time to turn on", "time", required: false
-        	input "timeOffC3", title: "Time to turn off", "time", required: false
+    	section{
+        	input "timeOnC3", title: "Schedule 3 time to turn on", "time", required: false
+        	input "timeOffC3", title: "Schedule 3 time to turn off", "time", required: false
 		}
-    	section("Schedule 4..."){
-        	input "timeOnC4", title: "Time to turn on", "time", required: false
-        	input "timeOffC4", title: "Time to turn off", "time", required: false
+    	section{
+        	input "timeOnC4", title: "Schedule 4 time to turn on", "time", required: false
+        	input "timeOffC4", title: "Schedule 4 time to turn off", "time", required: false
 		}
-		section("Option") {
+		section("Options") {
     		input "titleC", title: "Assign a scenario name", "text", required: false
             input "modeC", "mode", required: false, multiple: true, title: "Run in specific mode(s)", description: "Choose Modes"
 		   	input "daysC", "enum", multiple: true, title: "Run on specific day(s)", description: "Choose Days", required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 		}
     }
-}
 
-def D_Scenario() {
-	dynamicPage(name: "D_Scenario", title: getTitle (titleD, "D")) {
-    	section("Schedule 1..."){
-			input "timeOnD1", title: "Time to turn on", "time", required: false
-        	input "timeOffD1", title: "Time to turn off", "time", required: false
+
+page(name: "D_Scenario", title: getTitle (titleD, "D")) {
+    	section{
+			input "timeOnD1", title: "Schedule 1 time to turn on", "time", required: false
+        	input "timeOffD1", title: "Schedule 1 time to turn off", "time", required: false
 		}
-    	section("Schedule 2..."){
-			input "timeOnD2", title: "Time to turn on", "time", required: false
-        	input "timeOffD2", title: "Time to turn off", "time", required: false
+    	section{
+			input "timeOnD2", title: "Schedule 2 time to turn on", "time", required: false
+        	input "timeOffD2", title: "Schedule 2 time to turn off", "time", required: false
 		}
-    	section("Schedule 3..."){
-        	input "timeOnD3", title: "Time to turn on", "time", required: false
-        	input "timeOffD3", title: "Time to turn off", "time", required: false
+    	section{
+        	input "timeOnD3", title: "Schedule 3 time to turn on", "time", required: false
+        	input "timeOffD3", title: "Schedule 3 time to turn off", "time", required: false
 		}
-    	section("Schedule 4..."){
-        	input "timeOnD4", title: "Time to turn on", "time", required: false
-        	input "timeOffD4", title: "Time to turn off", "time", required: false
+    	section{
+        	input "timeOnD4", title: "Schedule 4 time to turn on", "time", required: false
+        	input "timeOffD4", title: "Schedule 4 time to turn off", "time", required: false
 		}
-        section("Option") {
+        section("Options") {
     		input "titleD", title: "Assign a scenario name", "text", required: false
             input "modeD", "mode", required: false, multiple: true, title: "Run in specific mode(s)", description: "Choose Modes"
 		   	input "daysD", "enum", multiple: true, title: "Run on specific day(s)", description: "Choose Days", required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 		}
     }
-}
+
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
 	section {
@@ -398,7 +388,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 2.1.2 (05/24/2015)"
+    def text = "Version 2.1.2 (05/30/2015)"
 }
 
 private def textCopyright() {
