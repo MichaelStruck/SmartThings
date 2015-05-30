@@ -36,9 +36,6 @@ definition(
 
 preferences {
 	page(name: "mainPage")
-    page(name: "daySchedule")
-    page(name: "nightSchedule")
-    page name: "pageAbout"
 }
 
 def mainPage() {
@@ -64,34 +61,31 @@ def mainPage() {
     }
 }
 
-def daySchedule() {
-	dynamicPage(name: "daySchedule", title: "Daytime Schedule") {
-		section {
-			input "timeOffDay", title: "Time to turn off", "time"
-        	input "timeOnDay", title: "Time to turn back on", "time"
-		}
+page(name: "daySchedule", title: "Daytime Schedule") {
+	section {
+    	input "timeOffDay", title: "Time to turn off", "time"
+        input "timeOnDay", title: "Time to turn back on", "time"
 	}
 }
 
-def nightSchedule() {
-	dynamicPage(name: "nightSchedule", title: "Daytime Schedule") {
-		section {
-			input "timeOffNight", title: "Time to turn off", "time"
-        	input "timeOnNight", title: "Time to turn back on", "time"
-		}
+
+page(name: "nightSchedule", title: "Daytime Schedule") {
+	section {
+		input "timeOffNight", title: "Time to turn off", "time"
+        input "timeOnNight", title: "Time to turn back on", "time"
 	}
 }
 
-def pageAbout() {
-	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
-        section {
-            paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
-        }
-        section("License") {
-            paragraph textLicense()
-        }
-    }
+
+page(name: "pageAbout", title: "About ${textAppName()}") {
+	section {
+		paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
+	}
+	section("License") {
+		paragraph textLicense()
+	}
 }
+
 
 //---------------------------------------------------
 
@@ -231,16 +225,16 @@ private def textCopyright() {
 
 private def textLicense() {
     def text =
-		"Licensed under the Apache License, Version 2.0 (the 'License'); "+
-		"you may not use this file except in compliance with the License. "+
+		"Licensed under the Apache License, Version 2.0 (the 'License');"+
+		"you may not use this file except in compliance with the License."+
 		"You may obtain a copy of the License at"+
 		"\n\n"+
 		"    http://www.apache.org/licenses/LICENSE-2.0"+
 		"\n\n"+
-		"Unless required by applicable law or agreed to in writing, software "+
-		"distributed under the License is distributed on an 'AS IS' BASIS, "+
-		"WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. "+
-		"See the License for the specific language governing permissions and "+
+		"Unless required by applicable law or agreed to in writing, software"+
+		"distributed under the License is distributed on an 'AS IS' BASIS,"+
+		"WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied."+
+		"See the License for the specific language governing permissions and"+
 		"limitations under the License."
 }
 
