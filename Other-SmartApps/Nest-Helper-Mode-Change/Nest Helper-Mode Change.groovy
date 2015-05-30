@@ -2,7 +2,7 @@
  *  Nest Helper-Mode Change
  *
  *  Copyright 2015 Michael Struck
- *	Version 1.00 3/26/15
+ *  Version 1.00 3/26/15
  *  Version 1.01 - 4/9/15 Added the ability to change the name of the app and removed modes to run in (redundent)
  *  Version 1.0.2 - 5/25/15 Added About screen
  *
