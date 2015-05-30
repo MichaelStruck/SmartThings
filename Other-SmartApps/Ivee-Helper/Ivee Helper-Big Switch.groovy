@@ -28,7 +28,6 @@ definition(
 
 preferences {
 	page name: "getPref"
-    page name: "pageAbout"
 }
 
 def getPref() {
@@ -50,16 +49,14 @@ def getPref() {
     }
 }
 
-def pageAbout() {
-	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
-        section {
-            paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
-        }
-        section("License") {
-            paragraph textLicense()
-        }
-    }
-}
+page(name: "pageAbout", title: "About ${textAppName()}") {
+	section {
+        paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
+	}
+	section("License") {
+		paragraph textLicense()
+	}
+}	
 
 //--------------------------------------
 
