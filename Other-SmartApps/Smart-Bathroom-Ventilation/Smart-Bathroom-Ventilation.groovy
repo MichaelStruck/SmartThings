@@ -54,7 +54,6 @@ preferences {
 	page name:"pageSetupScenarioB"
 	page name:"pageSetupScenarioC"
 	page name:"pageSetupScenarioD"
-    page name:"pageAbout"
 }
 
 // Show setup page
@@ -160,16 +159,13 @@ def pageSetupScenarioD() {
     	}
     }
 }
-
-def pageAbout() {
-	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
-        section {
-            paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
-        }
-        section("License") {
-            paragraph textLicense()
-        }
-    }
+page(name: "pageAbout", title: "About ${textAppName()}") {
+	section {
+		paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
+	}
+	section("License") {
+		paragraph textLicense()
+	}
 }
 
 def installed() {
