@@ -2,9 +2,9 @@
  *  Nest Helper-Mode Change
  *
  *  Copyright 2015 Michael Struck
- *  Version 1.00 3/26/15
- *  Version 1.01 - 4/9/15 Added the ability to change the name of the app and removed modes to run in (redundent)
- *  Version 1.0.2 - 5/25/15 Added About screen
+ *  Version 1.0.0 - 3/26/15
+ *  Version 1.0.1 - 4/9/15 Added the ability to change the name of the app and removed modes to run in (redundent)
+ *  Version 1.0.2 - 5/30/15 Added About screen and code optimizations
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -28,12 +28,10 @@ definition(
 
 preferences {
 	page name:"getPref"
-    page name:"pageAbout"
 }
 
 def getPref() {
     dynamicPage(name: "getPref", install:true, uninstall: true) {
-	
     	section("Choose a Nest Thermostat...") {
     		input "tstat1", "capability.thermostat", title: "Nest", multiple: false
 			}
@@ -50,15 +48,13 @@ def getPref() {
     }
 }
 
-def pageAbout() {
-	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
-        section {
-            paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
-        }
-        section("License") {
-            paragraph textLicense()
-        }
-    }
+page(name: "pageAbout", title: "About ${textAppName()}") {
+	section {
+		paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
+	}
+	section("License") {
+		paragraph textLicense()
+	}
 }
 
 //--------------------------------------
@@ -95,7 +91,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.2 (05/25/2015)"
+    def text = "Version 1.0.2 (05/30/2015)"
 }
 
 private def textCopyright() {
