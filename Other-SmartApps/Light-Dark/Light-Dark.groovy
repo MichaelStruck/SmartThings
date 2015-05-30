@@ -1,13 +1,13 @@
 /**
  *  Light > Dark
- *  Version 1.0.6 5/25/15
+ *  Version 1.06 5/25/15
  *
  *  1.01 Added a verify so they event has to trip trice in a row to do the action.
  *  1.02 Added custom icon
  *  1.03 Revision to interface for better flow
  *  1.04 Added dimmer switches/levels, reorganized interface and added time restrictions options
  *  1.05 Fixed an inconsistent time limitiation code issue
- *  1.06 Added an About screen
+ *  1.0.6 Added an About screen
  *
  *
  *	Using code from SmartThings Light Up The Night App and the Sunrise/Sunset app
@@ -37,7 +37,6 @@ definition(
 
 preferences {
 	page name:"getPref"
-    page name:"pageAbout"
 }
 
 def getPref() {
@@ -68,16 +67,15 @@ def getPref() {
 	}
 }
 
-def pageAbout() {
-	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
-        section {
-            paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
-        }
-        section("License") {
-            paragraph textLicense()
-        }
-    }
+page(name: "pageAbout", title: "About ${textAppName()}") {
+	section {
+		paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
+	}
+	section("License") {
+		paragraph textLicense()
+	}
 }
+
 //------------------------------------------------
 def installed() {
 	log.debug "Installed with settings: ${settings}"
