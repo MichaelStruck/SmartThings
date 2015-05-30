@@ -85,7 +85,7 @@ def pageMain() {
             	href "pageAlarmSummary", title: "Alarm Summary Settings", description: "Tap to configure alarm summary settings", state: "complete"
             }
             input "zipCode", "text", title: "Zip Code", required: false
-            label title:"Assign a name", required:false
+            label title:"Assign a name", required: false
             href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
         }
     }
@@ -94,7 +94,7 @@ def pageMain() {
 page(name: "pageAlarmSummary", title: "Alarm Summary Settings") {
 	section {
        	input "summarySonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: false
-        input "summaryVolume", "number", title: "Set the alarm volume", description: "0-100%", required: false
+        input "summaryVolume", "number", title: "Set the summary volume", description: "0-100%", required: false
         input "summaryDisabled", "bool", title: "Include disabled or unconfigured alarms in summary", defaultValue: "false"
 	}
 }
@@ -279,7 +279,7 @@ page(name: "pageDimmersD", title: "Dimmer Settings") {
 	}
 }
 
-page(name: "pageThermostatsB", title: "Thermostat Settings") {
+page(name: "pageThermostatsD", title: "Thermostat Settings") {
 	section {
        	input "D_thermostats", "capability.thermostat", title: "Thermostats?", multiple: true, required: false
 		input "D_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
