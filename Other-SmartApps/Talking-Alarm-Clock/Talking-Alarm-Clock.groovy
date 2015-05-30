@@ -2,9 +2,10 @@
  *  Talking Alarm Clock
  *
  *  Version - 1.0 5/23/15
- *  Version - 1.1 5/24/15 - A song can now be selected to play after the voice greeting and bug fixes
+ *	Version - 1.1 5/24/15 - A song can now be selected to play after the voice greeting and bug fixes
  *  Version - 1.2 5/27/15 - Added About screen and misc code clean up and GUI revisions
  *  Version - 1.3 5/29/15 - Further code optimizations and addition of alarm summary action
+ *  Version - 1.3.1 5/30/15 - Fixed one small code syntax issue in Scenario D
  *  
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -813,7 +814,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.3.0 (05/29/2015)"
+    def text = "Version 1.3.1 (05/30/2015)"
 }
 
 private def textCopyright() {
