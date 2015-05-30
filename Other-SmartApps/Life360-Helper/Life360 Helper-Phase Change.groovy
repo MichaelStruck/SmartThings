@@ -1,9 +1,9 @@
 /**
  *  Life360 Helper-Phrase Change
  *  Version 1.00 3/20/15
- *	Version 1.01 3/24/15 - Updated with more effecient code
+ *  Version 1.01 3/24/15 - Updated with more effecient code
  *  Version 1.02 4/9/15 - Added ability to change name of app
- *	Version 1.03 5/15/15 - Optimized code, added a switch to limit the trigger to once a day
+ *  Version 1.03 5/15/15 - Optimized code, added a switch to limit the trigger to once a day
  *  Version 1.0.4 5/26/15 - Added About screen
  *
  *  Copyright 2015 Michael Struck
@@ -32,7 +32,6 @@ definition(
 
 preferences {
 	page name: "getPref"
-    page name: "pageAbout"
 }
 
 
@@ -63,8 +62,7 @@ def getPref() {
 	}
 }
 
-def pageAbout() {
-	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
+page(name: "pageAbout", title: "About ${textAppName()}") {
         section {
             paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
         }
@@ -72,7 +70,6 @@ def pageAbout() {
             paragraph textLicense()
         }
     }
-}
 
 //--------------------------------------
 def installed() {
