@@ -1,12 +1,12 @@
 /**
  *  Smart Water Heater
- *  Version 1.3 5/25/2015
+ *  Version 1.3.1 5/31/2015
  *
- *  Version 1.01-Initial release
+ *  Version 1.0.1-Initial release
  *  Version 1.1 added a function to turn water heater back on if someone comes home early
- *  Version 1.11 Revised the interface for better flow
+ *  Version 1.1.1 Revised the interface for better flow
  *  Version 1.2 Revised the interface even more for better flow
- *  Version 1.21 Further interface revision
+ *  Version 1.2.1 Further interface revision
  *  Version 1.3 Added the option to turn off the water heater early if everyone leaves before the scheduled time and code opimization
  *  Version 1.3.1 Added About screen
  * 
@@ -56,7 +56,7 @@ def mainPage() {
         section([mobileOnly:true], "Other Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Smart Water Heater")
             mode title: "Set for specific mode(s)", required: false
-			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
+			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
         }
     }
 }
@@ -78,12 +78,12 @@ page(name: "nightSchedule", title: "Daytime Schedule") {
 
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
-	section {
-		paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
-	}
-	section("License") {
-		paragraph textLicense()
-	}
+        section {
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
+        }
+        section("Instructions") {
+            paragraph textHelp()
+        }
 }
 
 
@@ -216,7 +216,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.3.1 (05/25/2015)"
+    def text = "Version 1.3.1 (05/31/2015)"
 }
 
 private def textCopyright() {
@@ -240,7 +240,7 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-    	"Instructions:\nChoose the day and night schedule in which the water heater power is turned " +
+    	"Choose the day and night schedule in which the water heater power is turned " +
         "on and off. During the day, you have various options to determine whether to run the schedule " +
         "based on the status of various presence sensors."
 }
