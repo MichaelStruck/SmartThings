@@ -4,7 +4,7 @@
  *  Version 1.01 3/24/15 - Updated with more effecient code
  *  Version 1.02 4/9/15 - Added ability to change name of app
  *  Version 1.03 5/15/15 - Optimized code, added a switch to limit the trigger to once a day
- *  Version 1.0.4 5/26/15 - Added About screen
+ *  Version 1.0.4 5/31/15 - Added About screen
  *
  *  Copyright 2015 Michael Struck
  *
@@ -57,19 +57,19 @@ def getPref() {
         }
 		section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Life360 Helper-Phrase Change")
-            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
 		}  
 	}
 }
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
         section {
-            paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
         }
-        section("License") {
-            paragraph textLicense()
+        section("Instructions") {
+            paragraph textHelp()
         }
-    }
+}
 
 //--------------------------------------
 def installed() {
@@ -124,7 +124,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.4 (05/26/2015)"
+    def text = "Version 1.0.4 (05/31/2015)"
 }
 
 private def textCopyright() {
@@ -148,7 +148,7 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-    	"Instructions:\nIn Life360, choose a location you want to monitor. This does NOT need to be the location where the SmartThings " +
+    	"In Life360, choose a location you want to monitor. This does NOT need to be the location where the SmartThings " +
         "hub is located; this could be your work location, or a location on the way home during your commute. Choose this sensor in this app; " +
         "when you are in a certain mode and this sensor shows 'present' you can activate a Hello, Home phrase. This can be used to pre-heat a house "+ 
         "or turn on a specific set of lights. "
