@@ -1,6 +1,6 @@
 /**
  *	Smart Home Ventilation
- *	Version 2.1.2 - 5/30/15
+ *	Version 2.1.2 - 5/31/15
  *
  *	Copyright 2015 Michael Struck
  *
@@ -42,7 +42,7 @@ def mainPage() {
         }
         section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Smart Home Ventilation")
-			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
+			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
         }
     }
 }
@@ -146,14 +146,13 @@ page(name: "D_Scenario", title: getTitle (titleD, "D")) {
 
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
-	section {
-		paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
-	}
-	section("License") {
-		paragraph textLicense()
-	}
+        section {
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
+        }
+        section("Instructions") {
+            paragraph textHelp()
+        }
 }
-
 
 // Install and initiate
 
@@ -388,7 +387,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 2.1.2 (05/30/2015)"
+    def text = "Version 2.1.2 (05/31/2015)"
 }
 
 private def textCopyright() {
@@ -412,7 +411,7 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-    	"Instructions:\nWithin each scenario, choose a start and end time for the ventilation fan. You can have up to 4 different " +
+    	"Within each scenario, choose a start and end time for the ventilation fan. You can have up to 4 different " +
         "venting scenarios, and 4 schedules within each scenario. Each scenario can be restricted to specific modes or certain days of the week. It is recommended "+
         "that each scenario does not overlap and run in separate modes (i.e. Home, Out of town, etc). Also note that you should  " +
         "avoid scheduling the ventilation fan at exactly midnight; the app resets itself at that time. It is suggested to start any new schedule " +
