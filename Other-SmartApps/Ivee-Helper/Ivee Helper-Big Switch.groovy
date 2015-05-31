@@ -2,7 +2,7 @@
  *  Ivee Helper-Big Switch
  *  Version 1.0 3/18/15
  *  Version 1.01 4/9/15 - Added options sub heading to last section of preferences
- *  Version 1.0.2 5/25/15 - Added About screen
+ *  Version 1.0.2 5/31/15 - Added About screen
  *
  *  Copyright 2015 Michael Struck
  *
@@ -44,18 +44,18 @@ def getPref() {
     	section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Ivee Helper-Big Switch")
             mode title: "Set for specific mode(s)", required: false
-            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
 		}
     }
 }
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
-	section {
-        paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
-	}
-	section("License") {
-		paragraph textLicense()
-	}
+        section {
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
+        }
+        section("Instructions") {
+            paragraph textHelp()
+        }
 }	
 
 //--------------------------------------
@@ -94,7 +94,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.2 (05/25/2015)"
+    def text = "Version 1.0.2 (05/31/2015)"
 }
 
 private def textCopyright() {
@@ -118,7 +118,7 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-    	"Instructions:\nChoose a switch that will be considered the 'master switch' to control a  " +
+    	"Choose a switch that will be considered the 'master switch' to control a  " +
         "group of other switches. It is recommended this master switch be a virtual switch called 'All Lights', but it can be " +
         "physical device as well. You will need to associate the master switch with the Ivee Talking Alarm Clock (online at the Ivee web site). "+ 
         "Then, choose various switches you would like to control "+
