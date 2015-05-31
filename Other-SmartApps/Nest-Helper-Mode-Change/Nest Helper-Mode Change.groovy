@@ -4,7 +4,7 @@
  *  Copyright 2015 Michael Struck
  *  Version 1.0.0 - 3/26/15
  *  Version 1.0.1 - 4/9/15 Added the ability to change the name of the app and removed modes to run in (redundent)
- *  Version 1.0.2 - 5/30/15 Added About screen and code optimizations
+ *  Version 1.0.2 - 5/31/15 Added About screen and code optimizations
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -43,18 +43,18 @@ def getPref() {
 		}
 		section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Nest Helper-Mode Change")
-            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
 		}
     }
 }
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
-	section {
-		paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
-	}
-	section("License") {
-		paragraph textLicense()
-	}
+        section {
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
+        }
+        section("Instructions") {
+            paragraph textHelp()
+        }
 }
 
 //--------------------------------------
@@ -91,7 +91,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.2 (05/30/2015)"
+    def text = "Version 1.0.2 (05/31/2015)"
 }
 
 private def textCopyright() {
@@ -115,6 +115,6 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-    	"Instructions:\nChoose a Nest Thermostat that will be linked to various SmartThings modes. " +
+    	"Choose a Nest Thermostat that will be linked to various SmartThings modes. " +
         "When the modes change, the Nest Thermostat will change to Home or Away based on the settings." 
 }
