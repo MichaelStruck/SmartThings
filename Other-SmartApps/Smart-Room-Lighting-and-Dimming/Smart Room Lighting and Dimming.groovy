@@ -3,7 +3,7 @@
  *
  *  Version - 1.0 5/4/15
  *  Version - 1.02 5/19/15 Code clean up for timeframe conditional check
- *  Version - 1.0.3 5/25/15 Added About screen from main menu
+ *  Version - 1.0.4 5/31/15 Added About screen from main menu
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -69,7 +69,7 @@ def pageSetup() {
             }
         section([title:"Options", mobileOnly:true]) {
             label title:"Assign a name", required:false
-            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
         }
     }
 }
@@ -193,13 +193,14 @@ def pageSetupScenarioD() {
 }
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
-	section {
-		paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
-	}
-	section("License") {
-		paragraph textLicense()
-	}
+        section {
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
+        }
+        section("Instructions") {
+            paragraph textHelp()
+        }
 }
+
 
 
 //----------------------
@@ -730,7 +731,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.3 (05/25/2015)"
+    def text = "Version 1.0.3 (05/31/2015)"
 }
 
 private def textCopyright() {
@@ -754,7 +755,7 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-        "Instructions:\nWithin each scenario you can select motion sensors to control a set of lights. " +
+        "Within each scenario you can select motion sensors to control a set of lights. " +
         "Each scenario can control dimmers or switches and can also be restricted " +
         "to modes or between certain times and turned off after motion " +
         "motion stops. Scenarios can also be limited to running once " +
