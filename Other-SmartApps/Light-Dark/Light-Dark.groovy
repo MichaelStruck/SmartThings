@@ -1,12 +1,12 @@
 /**
  *  Light > Dark
- *  Version 1.06 5/25/15
+ *  Version 1.0.6 5/31/15
  *
- *  1.01 Added a verify so they event has to trip trice in a row to do the action.
- *  1.02 Added custom icon
- *  1.03 Revision to interface for better flow
- *  1.04 Added dimmer switches/levels, reorganized interface and added time restrictions options
- *  1.05 Fixed an inconsistent time limitiation code issue
+ *  1.0.1 Added a verify so they event has to trip trice in a row to do the action.
+ *  1.0.2 Added custom icon
+ *  1.0.3 Revision to interface for better flow
+ *  1.0.4 Added dimmer switches/levels, reorganized interface and added time restrictions options
+ *  1.0.5 Fixed an inconsistent time limitiation code issue
  *  1.0.6 Added an About screen
  *
  *
@@ -184,7 +184,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.6 (05/25/2015)"
+    def text = "Version 1.0.6 (05/31/2015)"
 }
 
 private def textCopyright() {
