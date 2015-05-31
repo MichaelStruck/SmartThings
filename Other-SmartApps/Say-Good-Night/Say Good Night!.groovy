@@ -663,6 +663,13 @@ private getWeatherReport(scenario) {
         }
 		def msg = sb.toString()
         msg = msg.replaceAll(/([0-9]+)C/,'$1 degrees')
+        msg = msg.replaceAll(/([0-9]+)F/,'$1 degrees')
+        msg = msg.replaceAll(' SW ',' South West ')
+        msg = msg.replaceAll(' NW ',' North West ')
+        msg = msg.replaceAll(' NE ',' North East ')
+        msg = msg.replaceAll(' SE ',' South East ')
+        msg = msg.replaceAll(' WNW ','West North West')
+        msg = msg.replaceAll(' ENE ','Easy North East')
         compileMsg(msg, scenario)
 	}
 	else {
@@ -737,3 +744,4 @@ private def textHelp() {
         "when the scenario is triggered. Triggers can be restricted to certain times and days of the week or modes. The voice message can be a simple text phrase, "+
         "or can include tomorrow's weather forecast. Variables to use in the voice greeting include %day%, %time% and %date%."
 }
+
