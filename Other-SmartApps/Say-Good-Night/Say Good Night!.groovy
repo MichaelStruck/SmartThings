@@ -1,7 +1,7 @@
-Enter file contents here/**
- *  Day Good Night!
+/**
+ *  Say Good Night!
  *
- *  Version - 1.0.0 5/29/15
+ *  Version - 1.0.0 5/31/15
  *  
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -77,7 +77,7 @@ def pageMain() {
  		section([title:"Options", mobileOnly:true]) {
             input "zipCode", "text", title: "Zip Code", required: false
             label title:"Assign a name", required:false
-            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
         }
     }
 }
@@ -102,6 +102,8 @@ def pageSetupScenarioA() {
 				input "A_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false
 				input "A_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
             }
+            input "A_triggerMode", "mode", title: "Trigger the following mode", required: false
+            input "A_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
             input "A_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
 		}
     	section("Restrictions") {            
@@ -147,6 +149,8 @@ def pageSetupScenarioB() {
 				input "B_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false
 				input "B_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
             }
+            input "B_triggerMode", "mode", title: "Trigger the following mode", required: false
+            input "B_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
             input "B_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
 		}
     	section("Restrictions") {            
@@ -192,6 +196,8 @@ def pageSetupScenarioC() {
 				input "C_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false
 				input "C_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
             }
+            input "C_triggerMode", "mode", title: "Trigger the following mode", required: false
+            input "C_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
             input "C_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
 		}
     	section("Restrictions") {            
@@ -237,6 +243,8 @@ def pageSetupScenarioD() {
 				input "D_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false
 				input "D_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
             }
+            input "D_triggerMode", "mode", title: "Trigger the following mode", required: false
+            input "D_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
             input "D_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
 		}
     	section("Restrictions") {            
@@ -263,12 +271,12 @@ page(name: "timeIntervalInputD", title: "Only during a certain time") {
 }
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
-	section {
-		paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
-	}
-	section("License") {
-		paragraph textLicense()
-	}
+        section {
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
+        }
+        section("Instructions") {
+            paragraph textHelp()
+        }
 }
 
 //--------------------------------------
@@ -321,12 +329,26 @@ def scenario_A(evt) {
 			getWeatherReport(1)
 		}
            
-		if (A_phrase && A_confirmPhrase) {
+		if (A_phrase) {
         	location.helloHome.execute(A_phrase)
-        	getPhraseConfirmation(A_phrase, 1)
+        	if (A_confirmPhrase){
+            	getPhraseConfirmation(A_phrase, 1)
+            }
         }
-
-		if (A_msg) {
+        
+        if (A_triggerMode && location.mode != A_triggerMode) {
+			if (location.modes?.find{it.name == A_triggerMode}) {
+				setLocationMode(A_triggerMode)
+			} else {
+				log.debug "Unable to change to undefined mode '${A_triggerMode}'"
+			}
+		}
+        
+        if (A_confirmMode){
+            	getModeConfirmation(A_triggerMode, 1)
+        }
+        
+        if (A_msg) {
 			getGreeting(A_msg, 1)
 		} 
       
@@ -361,9 +383,23 @@ def scenario_B(evt) {
 			getWeatherReport(2)
 		}
            
-		if (B_phrase && B_confirmPhrase) {
+		if (B_phrase) {
         	location.helloHome.execute(B_phrase)
-        	getPhraseConfirmation(B_phrase, 2)
+        	if (B_confirmPhrase) {
+            	getPhraseConfirmation(B_phrase, 2)
+            }
+        }
+        
+        if (B_triggerMode && location.mode != B_triggerMode) {
+			if (location.modes?.find{it.name == B_triggerMode}) {
+				setLocationMode(B_triggerMode)
+			} else {
+				log.debug "Unable to change to undefined mode '${B_triggerMode}'"
+			}
+		}
+        
+        if (B_confirmMode){
+            	getModeConfirmation(B_triggerMode, 2)
         }
 
 		if (B_msg) {
@@ -396,14 +432,28 @@ def buttonHandler_B(evt){
 def scenario_C(evt) {
 	if ((!C_triggerOnce || (C_triggerOnce && !C_triggered)) && getTimeOk(C_timeStart, C_timeEnd) && getDayOk(C_day) && (!C_mode || C_mode.contains(location.mode))) {
 		state.fullMsgC = ""
-		   
+		
 		if (C_weatherReport) {
 			getWeatherReport(3)
 		}
            
-		if (C_phrase && C_confirmPhrase) {
+		if (C_phrase) {
         	location.helloHome.execute(C_phrase)
-        	getPhraseConfirmation(C_phrase, 3)
+        	if (C_confirmPhrase){
+            	getPhraseConfirmation(C_phrase, 3)
+            }
+        }
+                
+        if (C_triggerMode && location.mode != C_triggerMode) {
+            if (location.modes?.find{it.name == C_triggerMode}) {
+				setLocationMode(C_triggerMode)
+			} else {
+				log.debug "Unable to change to undefined mode '${C_triggerMode}'"
+			}
+		}
+        
+        if (C_confirmMode){
+            	getModeConfirmation(C_triggerMode, 3)
         }
 
 		if (C_msg) {
@@ -441,12 +491,26 @@ def scenario_D(evt) {
 			getWeatherReport(4)
 		}
            
-		if (D_phrase && D_confirmPhrase) {
+		if (D_phrase) {
         	location.helloHome.execute(D_phrase)
-        	getPhraseConfirmation(D_phrase, 4)
+        	if (D_confirmPhrase){
+            	getPhraseConfirmation(D_phrase, 4)
+            }
         }
 
-		if (D_msg) {
+        if (D_triggerMode && location.mode != D_triggerMode) {
+            if (location.modes?.find{it.name == D_triggerMode}) {
+				setLocationMode(D_triggerMode)
+			} else {
+				log.debug "Unable to change to undefined mode '${D_triggerMode}'"
+			}
+		}
+        
+        if (D_confirmMode){
+            	getModeConfirmation(D_triggerMode, 4)
+        }
+		
+        if (D_msg) {
 			getGreeting(D_msg, 4)
 		} 
       
@@ -602,7 +666,7 @@ private getWeatherReport(scenario) {
         compileMsg(msg, scenario)
 	}
 	else {
-		msg = "Please set the location of your hub with the SmartThings mobile app, or enter a zip code to receive weather forecasts."
+		msg = "Please set the location of your hub with the SmartThings mobile app, or enter a zip code to receive weather forecasts. "
 		compileMsg(msg, scenario)
     }
 }
@@ -620,7 +684,12 @@ private getGreeting(msg, scenario) {
 }
 
 private getPhraseConfirmation(phrase, scenario) {
-	def msg="The Smart Things Hello Home phrase, ${phrase}, has been activated."
+	def msg="The Smart Things Hello Home phrase, ${phrase}, has been activated. "
+	compileMsg(msg, scenario)
+}
+
+private getModeConfirmation(mode, scenario) {
+	def msg="The Smart Things mode will be set to, ${mode},. "
 	compileMsg(msg, scenario)
 }
 
@@ -639,7 +708,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.0 (05/29/2015)"
+    def text = "Version 1.0.0 (05/31/2015)"
 }
 
 private def textCopyright() {
@@ -663,8 +732,8 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-    	"Instructions:\nWithin each scenario, choose a Sonos speaker along with a trigger to have the system wish you a good night. " +
-        "Triggers can be switches turning off or the press of a button on a controller. You can also run a Hello, Home phrase when the scenario is triggered. " +
-        "Triggers can be restricted to certain times and days of the week or modes. The voice message can be a simple text phrase, "+
-        "or you can include tomorrow's weather forecast. Variable to use in the voice greeting include %day%, %time% and %date%."
+    	"Within each scenario, choose a Sonos speaker along with a trigger to have the system wish you a good night. " +
+        "Triggers can be certain switches being turning off or the press of a button on a controller. You can also run a Hello, Home phrase or change mode " +
+        "when the scenario is triggered. Triggers can be restricted to certain times and days of the week or modes. The voice message can be a simple text phrase, "+
+        "or can include tomorrow's weather forecast. Variables to use in the voice greeting include %day%, %time% and %date%."
 }
