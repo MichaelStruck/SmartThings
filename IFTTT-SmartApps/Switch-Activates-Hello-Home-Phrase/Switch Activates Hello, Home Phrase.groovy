@@ -4,7 +4,7 @@
  *  Copyright 2015 Michael Struck
  *  Version 1.0.1 3/8/15
  *  Version 1.0.2 4/24/15 added the ability to rename the app and limit it to certain modes
- *  Version 1.0.3 5/29/15 Added an About Screen
+ *  Version 1.0.3 5/31/15 Added an About Screen
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -54,18 +54,18 @@ def getPref() {
 		section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false)
             mode title: "Set for specific mode(s)", required: false
-            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
 		}
     }
 }
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
-	section {
-		paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
-	}
-	section("License") {
-		paragraph textLicense()
-	}
+        section {
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
+        }
+        section("Instructions") {
+            paragraph textHelp()
+        }
 }
 
 def installed() {
@@ -94,7 +94,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.3 (05/29/2015)"
+    def text = "Version 1.0.3 (05/31/2015)"
 }
 
 private def textCopyright() {
@@ -118,7 +118,7 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-    	"Instructions:\nTies a Hello, Home phrase to a switch (virtual or real) on/off state. Perfect for use with IFTTT. "+
+    	"Ties a Hello, Home phrase to a switch (virtual or real) on/off state. Perfect for use with IFTTT. "+
 		"Simple define a switch to be used, then tie the on/off state of the switch to a specific Hello, Home phrases. "+
 		"Connect the switch to an IFTTT action, and the Hello, Home phrase will fire with the switch state change." 
 }
