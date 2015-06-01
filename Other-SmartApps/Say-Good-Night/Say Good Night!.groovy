@@ -356,8 +356,7 @@ def scenario_A(evt) {
     	if (A_volume) {
 			A_sonos.setLevel(A_volume)
 		}
-		
-        A_sonos.playTrack(state.soundA.uri)
+		A_sonos.playTrack(state.soundA.uri)
 		if (A_triggerOnce) {
 			state.A_triggered = true
 			runOnce (getMidnight(), midNightReset)
@@ -411,7 +410,7 @@ def scenario_B(evt) {
 			B_sonos.setLevel(B_volume)
 		}
 		
-        A_sonos.playTrack(state.soundB.uri)
+        B_sonos.playTrack(state.soundB.uri)
 		if (B_triggerOnce) {
 			state.B_triggered = true
 			runOnce (getMidnight(), midNightReset)
@@ -464,8 +463,7 @@ def scenario_C(evt) {
     	if (C_volume) {
 			C_sonos.setLevel(C_volume)
 		}
-		
-        A_sonos.playTrack(state.soundC.uri)
+		C_sonos.playTrack(state.soundC.uri)
 		if (C_triggerOnce) {
 			state.C_triggered = true
 			runOnce (getMidnight(), midNightReset)
@@ -519,7 +517,7 @@ def scenario_D(evt) {
 			D_sonos.setLevel(D_volume)
 		}
 		
-        A_sonos.playTrack(state.soundD.uri)
+        D_sonos.playTrack(state.soundD.uri)
 		if (D_triggerOnce) {
 			state.D_triggered = true
 			runOnce (getMidnight(), midNightReset)
@@ -668,8 +666,8 @@ private getWeatherReport(scenario) {
         msg = msg.replaceAll(' NW ',' North West ')
         msg = msg.replaceAll(' NE ',' North East ')
         msg = msg.replaceAll(' SE ',' South East ')
-        msg = msg.replaceAll(' WNW ','West North West')
-        msg = msg.replaceAll(' ENE ','Easy North East')
+        msg = msg.replaceAll(' WNW ',' West North West ')
+        msg = msg.replaceAll(' ENE ',' East North East ')
         compileMsg(msg, scenario)
 	}
 	else {
