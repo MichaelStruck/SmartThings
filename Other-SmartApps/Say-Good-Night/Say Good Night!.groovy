@@ -1,7 +1,7 @@
 /**
  *  Say Good Night!
  *
- *  Version - 1.0.0 5/31/15
+ *  Version - 1.0.0 6/1/15
  *  
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -95,15 +95,19 @@ def pageSetupScenarioA() {
         }
         section("Other Options") {
         	input "A_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
-        	input "A_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
+        	href "pageWeatherSettingsA", title: "Weather Reporting Settings", description: getWeatherTitle(A_weatherReport, A_includeSunrise, A_includeSunset), state: greyOut1(A_weatherReport, A_includeSunrise, A_includeSunset)
             def phrases = location.helloHome?.getPhrases()*.label
             if (phrases) {
 				phrases.sort()
-				input "A_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false
-				input "A_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+				input "A_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				if (A_phrase) {
+                	input "A_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+                }
             }
-            input "A_triggerMode", "mode", title: "Trigger the following mode", required: false
-            input "A_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
+            input "A_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
+            if (A_triggerMode){
+            	input "A_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
+            }
             input "A_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
 		}
     	section("Restrictions") {            
@@ -129,6 +133,16 @@ page(name: "timeIntervalInputA", title: "Only during a certain time") {
 	}
 }
 
+page(name: "pageWeatherSettingsA", title: "Weather Reporting Settings") {
+	section {
+        input "A_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
+        input "A_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
+        input "A_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
+        input "A_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
+    	input "A_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
+	}
+}
+
 // Show "pageSetupScenarioB" page
 def pageSetupScenarioB() {
     dynamicPage(name: "pageSetupScenarioB") {
@@ -142,15 +156,19 @@ def pageSetupScenarioB() {
         }
         section("Other Options") {
         	input "B_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
-        	input "B_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
+        	href "pageWeatherSettingsB", title: "Weather Reporting Settings", description: getWeatherTitle(B_weatherReport, B_includeSunrise, B_includeSunset), state: greyOut1(B_weatherReport, B_includeSunrise, B_includeSunset)
             def phrases = location.helloHome?.getPhrases()*.label
             if (phrases) {
 				phrases.sort()
-				input "B_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false
-				input "B_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+				input "B_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				if (B_phrase){
+                	input "B_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+                }
             }
-            input "B_triggerMode", "mode", title: "Trigger the following mode", required: false
-            input "B_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
+            input "B_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
+            if (B_triggerMode){
+            	input "B_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
+            }
             input "B_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
 		}
     	section("Restrictions") {            
@@ -176,6 +194,16 @@ page(name: "timeIntervalInputB", title: "Only during a certain time") {
 	}
 }
 
+page(name: "pageWeatherSettingsB", title: "Weather Reporting Settings") {
+	section {
+		input "B_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
+        input "B_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
+        input "B_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
+        input "B_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
+    	input "B_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
+	}
+}
+
 // Show "pageSetupScenarioC" page
 def pageSetupScenarioC() {
     dynamicPage(name: "pageSetupScenarioC") {
@@ -189,15 +217,19 @@ def pageSetupScenarioC() {
         }
         section("Other Options") {
         	input "C_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
-        	input "C_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
+        	href "pageWeatherSettingsC", title: "Weather Reporting Settings", description: getWeatherTitle(C_weatherReport, C_includeSunrise, C_includeSunset), state: greyOut1(C_weatherReport, C_includeSunrise, C_includeSunset)
             def phrases = location.helloHome?.getPhrases()*.label
             if (phrases) {
 				phrases.sort()
-				input "C_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false
-				input "C_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+				input "C_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				if (C_phrase) {
+                	input "C_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+                }
             }
-            input "C_triggerMode", "mode", title: "Trigger the following mode", required: false
-            input "C_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
+            input "C_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
+            if (C_triggerMode){
+            	input "C_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
+            }
             input "C_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
 		}
     	section("Restrictions") {            
@@ -223,6 +255,16 @@ page(name: "timeIntervalInputC", title: "Only during a certain time") {
 	}
 }
 
+page(name: "pageWeatherSettingsC", title: "Weather Reporting Settings") {
+	section {
+		input "C_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
+        input "C_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
+        input "C_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
+        input "C_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
+    	input "C_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
+	}
+}
+
 // Show "pageSetupScenarioD" page
 def pageSetupScenarioD() {
     dynamicPage(name: "pageSetupScenarioD") {
@@ -236,15 +278,19 @@ def pageSetupScenarioD() {
         }
         section("Other Options") {
         	input "D_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
-        	input "D_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
+        	href "pageWeatherSettingsD", title: "Weather Reporting Settings", description: getWeatherTitle(D_weatherReport, D_includeSunrise, D_includeSunset), state: greyOut1(D_weatherReport, D_includeSunrise, D_includeSunset)
             def phrases = location.helloHome?.getPhrases()*.label
             if (phrases) {
 				phrases.sort()
-				input "D_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false
-				input "D_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+				input "D_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				if (D_phrase){
+                	input "D_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+                }
             }
-            input "D_triggerMode", "mode", title: "Trigger the following mode", required: false
-            input "D_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
+            input "D_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
+            if (D_triggerMode){
+            	input "D_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
+            }
             input "D_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
 		}
     	section("Restrictions") {            
@@ -267,6 +313,16 @@ page(name: "timeIntervalInputD", title: "Only during a certain time") {
 	section {
 		input "D_timeStart", "time", title: "Starting", required: false
 		input "D_timeEnd", "time", title: "Ending", required: false
+	}
+}
+
+page(name: "pageWeatherSettingsD", title: "Weather Reporting Settings") {
+	section {
+		input "D_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
+        input "D_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
+        input "D_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
+        input "D_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
+    	input "D_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
 	}
 }
 
@@ -325,10 +381,14 @@ def scenario_A(evt) {
 	if ((!A_triggerOnce || (A_triggerOnce && !A_triggered)) && getTimeOk(A_timeStart, A_timeEnd) && getDayOk(A_day) && (!A_mode || A_mode.contains(location.mode))) {
 		state.fullMsgA = ""
 		   
-		if (A_weatherReport) {
-			getWeatherReport(1)
+		if (A_weatherReport || A_humidity || A_includeTemp) {
+			getWeatherReport(1, A_weatherReport, A_humidity, A_includeTemp)
 		}
-           
+        
+        if (A_includeSunrise || A_includeSunset) {
+        	getSunriseSunset(1, A_includeSunrise, A_includeSunset)
+        }
+                   
 		if (A_phrase) {
         	location.helloHome.execute(A_phrase)
         	if (A_confirmPhrase){
@@ -378,10 +438,14 @@ def scenario_B(evt) {
 	if ((!B_triggerOnce || (B_triggerOnce && !B_triggered)) && getTimeOk(B_timeStart, B_timeEnd) && getDayOk(B_day) && (!B_mode || B_mode.contains(location.mode))) {
 		state.fullMsgB = ""
 		   
-		if (B_weatherReport) {
-			getWeatherReport(2)
+		if (B_weatherReport || B_humidity || B_includeTemp) {
+			getWeatherReport(2, B_weatherReport, B_humidity, B_includeTemp)
 		}
-           
+         
+        if (B_includeSunrise || B_includeSunset) {
+        	getSunriseSunset(2, B_includeSunrise, B_includeSunset)
+        }
+         
 		if (B_phrase) {
         	location.helloHome.execute(B_phrase)
         	if (B_confirmPhrase) {
@@ -432,10 +496,14 @@ def scenario_C(evt) {
 	if ((!C_triggerOnce || (C_triggerOnce && !C_triggered)) && getTimeOk(C_timeStart, C_timeEnd) && getDayOk(C_day) && (!C_mode || C_mode.contains(location.mode))) {
 		state.fullMsgC = ""
 		
-		if (C_weatherReport) {
-			getWeatherReport(3)
+		if (C_weatherReport || C_humidity || C_includeTemp) {
+			getWeatherReport(3, C_weatherReport, C_humidity, C_includeTemp)
 		}
-           
+        
+        if (C_includeSunrise || C_includeSunset) {
+        	getSunriseSunset(3, C_includeSunrise, C_includeSunset)
+        }
+        
 		if (C_phrase) {
         	location.helloHome.execute(C_phrase)
         	if (C_confirmPhrase){
@@ -485,10 +553,14 @@ def scenario_D(evt) {
 	if ((!D_triggerOnce || (D_triggerOnce && !D_triggered)) && getTimeOk(D_timeStart, D_timeEnd) && getDayOk(D_day) && (!D_mode || D_mode.contains(location.mode))) {
 		state.fullMsgD = ""
 		   
-		if (D_weatherReport) {
-			getWeatherReport(4)
+		if (D_weatherReport || D_humidity || D_includeTemp) {
+			getWeatherReport(4, D_weatherReport, D_humidity, D_includeTemp)
 		}
-           
+        
+        if (D_includeSunrise || D_includeSunset) {
+        	getSunriseSunset(4, D_includeSunrise, D_includeSunset)
+        }
+        
 		if (D_phrase) {
         	location.helloHome.execute(D_phrase)
         	if (D_confirmPhrase){
@@ -558,12 +630,20 @@ def greyedOutTime(start, end){
 	def result = start || end ? "complete" : ""
 }
 
+def greyOut1(param1, param2, param3){
+	def result = param1 || param2 || param3 ? "complete" : ""
+}
+
 def greyOut(param1, param2){
 	def result = param1 && param2 ? "complete" : ""
 }
 
 def getTitle(scenario, num) {
 	def title = scenario ? scenario : "Scenario ${num} not configured"
+}
+
+def getWeatherTitle(parm1, parm2, parm3) {
+	def title = param1 || param2 || param3 ? "Tap to edit weather reporting options" : "Tap to setup weather reporting options"
 }
 
 def buttonDesc(button, num){
@@ -640,25 +720,37 @@ private getDayNum(date) {
 	new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", date).format("dd", timeZone(date))
 }
 
-private getWeatherReport(scenario) {
+private getWeatherReport(scenario, weatherReport, humidity, includeTemp) {
 	if (location.timeZone || zipCode) {
-		def weather = getWeatherFeature("forecast", zipCode)
-		def current = getWeatherFeature("conditions", zipCode)
 		def isMetric = location.temperatureScale == "C"
         def sb = new StringBuilder()
-		if (isMetric) {
-        	sb << "The current temperature is ${Math.round(current.current_observation.temp_c)} degrees. "
+        
+        if (includeTemp){
+        	def current = getWeatherFeature("conditions", zipCode)
+        	if (isMetric) {
+        		sb << "The current temperature is ${Math.round(current.current_observation.temp_c)} degrees. "
+        	}
+        	else {
+        		sb << "The current temperature is ${Math.round(current.current_observation.temp_f)} degrees. "
+        	}
         }
-        else {
-           	sb << "The current temperature is ${Math.round(current.current_observation.temp_f)} degrees. "
+        
+        if (humidity) {
+        	sb << "The local relative humidity is ${humidity.currentValue("humidity")}%. "
         }
-		sb << "Tomorrow's forecast is "
-		if (isMetric) {
-        	sb << weather.forecast.txt_forecast.forecastday[2].fcttext_metric 
+        
+        if (weatherReport) {
+           	def weather = getWeatherFeature("forecast", zipCode)
+            
+            sb << "Tomorrow's forecast is "
+			if (isMetric) {
+        		sb << weather.forecast.txt_forecast.forecastday[2].fcttext_metric 
+        	}
+        	else {
+          		sb << weather.forecast.txt_forecast.forecastday[2].fcttext
+        	}
         }
-        else {
-          	sb << weather.forecast.txt_forecast.forecastday[2].fcttext
-        }
+        
 		def msg = sb.toString()
         msg = msg.replaceAll(/([0-9]+)C/,'$1 degrees')
         msg = msg.replaceAll(/([0-9]+)F/,'$1 degrees')
@@ -666,14 +758,38 @@ private getWeatherReport(scenario) {
         msg = msg.replaceAll(' NW ',' North West ')
         msg = msg.replaceAll(' NE ',' North East ')
         msg = msg.replaceAll(' SE ',' South East ')
-        msg = msg.replaceAll(' WNW ',' West North West ')
-        msg = msg.replaceAll(' ENE ',' East North East ')
+        //msg = msg.replaceAll(' WNW ',' West North West ') //add back in if you heard the letters and not West North West
+        //msg = msg.replaceAll(' ENE ',' East North East ')
         compileMsg(msg, scenario)
 	}
 	else {
 		msg = "Please set the location of your hub with the SmartThings mobile app, or enter a zip code to receive weather forecasts. "
 		compileMsg(msg, scenario)
     }
+}
+
+private getSunriseSunset(scenario, includeSunrise, includeSunset){
+	if (location.timeZone || zipCode) {
+    	def tomorrowDate = new Date() + 1
+    	def s = getSunriseAndSunset(zipcode: zipCode, date: tomorrowDate)	
+		def riseTime = hhmm(convertEpoch(s.sunrise.time))
+		def setTime = hhmm(convertEpoch(s.sunset.time))
+   		def msg = ""
+    	if (includeSunrise && includeSunset) {
+			msg = "The sun will rise tomorrow at ${riseTime} and set at ${setTime}. "
+    	}
+    	else if (includeSunrise && !includeSunset) {
+    		msg = "The sun will rise tomorrow at ${riseTime}. "
+    	}
+    	else if (!includeSunrise && includeSunset) {
+    		msg = "The sun will set tomorrow at ${setTime}. "
+    	}
+    	compileMsg(msg, scenario)
+	}
+	else {
+		msg = "Please set the location of your hub with the SmartThings mobile app, or enter a zip code to receive sunset and sunrise information. "
+		compileMsg(msg, scenario)
+	}
 }
 
 private getGreeting(msg, scenario) {
@@ -694,7 +810,7 @@ private getPhraseConfirmation(phrase, scenario) {
 }
 
 private getModeConfirmation(mode, scenario) {
-	def msg="The Smart Things mode will be set to, ${mode},. "
+	def msg="The Smart Things mode will be set to, ${mode}. "
 	compileMsg(msg, scenario)
 }
 
@@ -713,7 +829,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.0 (05/31/2015)"
+    def text = "Version 1.0.0 (06/01/2015)"
 }
 
 private def textCopyright() {
@@ -740,6 +856,6 @@ private def textHelp() {
     	"Within each scenario, choose a Sonos speaker along with a trigger to have the system wish you a good night. " +
         "Triggers can be certain switches being turning off or the press of a button on a controller. You can also run a Hello, Home phrase or change mode " +
         "when the scenario is triggered. Triggers can be restricted to certain times and days of the week or modes. The voice message can be a simple text phrase, "+
-        "or can include tomorrow's weather forecast. Variables to use in the voice greeting include %day%, %time% and %date%."
+        "or can include the current temperature and tomorrow's weather forecast. Variables to use in the voice greeting include %day%, %time% and %date%."
 }
 
