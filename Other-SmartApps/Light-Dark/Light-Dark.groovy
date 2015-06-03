@@ -62,18 +62,18 @@ def getPref() {
 			label(title: "Assign a name", required: false, defaultValue: "Light > Dark")
 		    href "timeIntervalInput", title: "Set for specific times", description: getTimeLabel(timeStart, timeEnd), state: greyedOutTime(timeStart, timeEnd), refreshAfterSelection:true
             mode title: "Set for specific mode(s)", required: false
-            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version and license information"
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
         }
 	}
 }
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
-	section {
-		paragraph "${textVersion()}\n${textCopyright()}\n\n${textHelp()}\n"
-	}
-	section("License") {
-		paragraph textLicense()
-	}
+        section {
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
+        }
+        section("Instructions") {
+            paragraph textHelp()
+        }
 }
 
 //------------------------------------------------
@@ -208,7 +208,7 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-    	"Instructions:\nSimilar to a night light, you can choose what lights or dimmers go on and then, separately, " +
+    	"Similar to a night light, you can choose what lights or dimmers go on and then, separately, " +
         "which lights or dimmers go off based on the lux setting of a light sensor. In addition, when the lux thresholds are " +
         "met, different modes can be set." 
 }
