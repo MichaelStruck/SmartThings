@@ -1,6 +1,6 @@
 /**
  *  Smart Water Heater
- *  Version 1.3.1 5/31/2015
+ *  Version 1.3.1 6/3/2015
  *
  *  Version 1.0.1-Initial release
  *  Version 1.1 added a function to turn water heater back on if someone comes home early
@@ -9,6 +9,7 @@
  *  Version 1.2.1 Further interface revision
  *  Version 1.3 Added the option to turn off the water heater early if everyone leaves before the scheduled time and code opimization
  *  Version 1.3.1 Added About screen
+ *  Version 1.3.2 Added verification of status being off to eliminate redundent commands to the switch and some code optimization 
  * 
  *
  *  Copyright 2015 Michael Struck
@@ -50,7 +51,7 @@ def mainPage() {
             input "exceptionArrive", "bool", title: "Turn on when someone arrives home early", defaultValue: "true"
         	input "weekendRun", "bool", title: "Run daytime schedule during the weekend", defaultValue: "false"
 		}
-    	section("Nighttime Options"){
+    	section("Nighttime Schedule"){
     		href(name: "toNightSchedule", page: "nightSchedule", title: "Schedule", description: nightDescription(), state: "complete")
     	}
         section([mobileOnly:true], "Other Options") {
@@ -69,7 +70,7 @@ page(name: "daySchedule", title: "Daytime Schedule") {
 }
 
 
-page(name: "nightSchedule", title: "Daytime Schedule") {
+page(name: "nightSchedule", title: "Nighttime Schedule") {
 	section {
 		input "timeOffNight", title: "Time to turn off", "time"
         input "timeOnNight", title: "Time to turn back on", "time"
@@ -114,7 +115,7 @@ def init () {
 def turnOffDay() {
 	def runToday = !weekendRun && isWeekend() ? false : true
 
-    if (runToday && everyoneGone()) {
+    if (runToday && everyoneGone() && state.status !="Day off") {
     	state.status="Day off"
         turnOffSwitch()
    	} else {
@@ -123,13 +124,13 @@ def turnOffDay() {
 }
 
 def turnOnDay() {
-    state.status="Day on"
+	state.status="Day on"
     turnOnSwitch()
 }
 
 def turnOnNight() {
-	state.status="Night on"
-    turnOnSwitch()
+   	state.status="Night on"
+	turnOnSwitch()
 }
 
 def turnOffNight() {
@@ -216,7 +217,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.3.1 (05/31/2015)"
+    def text = "Version 1.3.2 (06/03/2015)"
 }
 
 private def textCopyright() {
