@@ -55,7 +55,7 @@ def mainPage() {
     		href(name: "toNightSchedule", page: "nightSchedule", title: "Schedule", description: nightDescription(), state: "complete")
     	}
         section([mobileOnly:true], "Other Options") {
-			label(title: "Assign a name", required: false, defaultValue: "Smart Water Heater")
+			label(title: "Assign a name", required: false)
             mode title: "Set for specific mode(s)", required: false
 			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
         }
