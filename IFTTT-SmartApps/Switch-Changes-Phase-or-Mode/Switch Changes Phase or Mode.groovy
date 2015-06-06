@@ -1,5 +1,5 @@
 /**
- *  Switch Activates Hello, Home Phrase or mode
+ *  Switch Activates Home Phrase or Mode
  *
  *  Copyright 2015 Michael Struck
  *  Version 1.0.0 6/6/15
