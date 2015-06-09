@@ -7,7 +7,7 @@
  *  Version - 1.3.0 5/29/15 - Further code optimizations and addition of alarm summary action
  *  Version - 1.3.1 5/30/15 - Fixed one small code syntax issue in Scenario D
  *  Version - 1.4.0 6/7/15 -  Revised About screen, enhanced the weather forecast voice summary, added a mode change option with alarm, and added secondary alarm options
- *  
+ *  Version - 1.4.1 6/9/15 - Changed the mode change speech to make it clear when the mode change is taking place  
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -59,11 +59,11 @@ preferences {
 	page name:"pageSetupScenarioA"
 	page name:"pageSetupScenarioB"
 	page name:"pageSetupScenarioC"
-    	page name:"pageSetupScenarioD"
-    	page name:"pageWeatherSettingsA" //technically, these 4 pages should not be dynamic, but are here to work around a crash on the Andriod app
-    	page name:"pageWeatherSettingsB"
-	page name:"pageWeatherSettingsC"
-    	page name:"pageWeatherSettingsD"
+    page name:"pageSetupScenarioD"
+    page name:"pageWeatherSettingsA" //technically, these 4 pages should not be dynamic, but are here to work around a crash on the Andriod app
+    page name:"pageWeatherSettingsB"
+    page name:"pageWeatherSettingsC"
+    page name:"pageWeatherSettingsD"
 }
 
 // Show setup page
@@ -1166,7 +1166,7 @@ private getPhraseConfirmation(scenario, phrase) {
 }
 
 private getModeConfirmation(mode, scenario) {
-	def msg="The Smart Things mode will be set to, ${mode}. "
+	def msg="The Smart Things mode is now being set to, ${mode}. "
 	compileMsg(msg, scenario)
 }
 
@@ -1295,7 +1295,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.4.0 (06/05/2015)"
+    def text = "Version 1.4.1 (06/09/2015)"
 }
 
 private def textCopyright() {
