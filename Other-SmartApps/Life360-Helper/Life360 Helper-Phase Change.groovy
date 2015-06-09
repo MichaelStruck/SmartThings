@@ -1,10 +1,10 @@
 /**
  *  Life360 Helper-Phrase Change
- *  Version 1.00 3/20/15
- *  Version 1.01 3/24/15 - Updated with more effecient code
- *  Version 1.02 4/9/15 - Added ability to change name of app
- *  Version 1.03 5/15/15 - Optimized code, added a switch to limit the trigger to once a day
- *  Version 1.0.4 5/31/15 - Added About screen
+ *  Version 1.0.0 3/20/15
+ *  Version 1.0.1 3/24/15 - Updated with more effecient code
+ *  Version 1.0.2 4/9/15 - Added ability to change name of app
+ *  Version 1.0.3 5/15/15 - Optimized code, added a switch to limit the trigger to once a day
+ *  Version 1.0.4 6/9/15 - Added About screen and updated GUI for more consitency between apps
  *
  *  Copyright 2015 Michael Struck
  *
@@ -36,7 +36,7 @@ preferences {
 
 
 def getPref() {
-    dynamicPage(name: "getPref", title: "Choose Presence Sensors and Phrases", install:true, uninstall: true) {
+    dynamicPage(name: "getPref", install:true, uninstall: true) {
     
     	section("Choose the Life360 presence sensors you want to monitor...") {
 			input "people", "capability.presenceSensor", multiple: true, title: "Life360 Presence Sensor" 
@@ -57,7 +57,7 @@ def getPref() {
         }
 		section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Life360 Helper-Phrase Change")
-            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
 		}  
 	}
 }
@@ -124,7 +124,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.4 (05/31/2015)"
+    def text = "Version 1.0.4 (06/09/2015)"
 }
 
 private def textCopyright() {
