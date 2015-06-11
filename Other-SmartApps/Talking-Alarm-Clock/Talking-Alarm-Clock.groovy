@@ -8,7 +8,8 @@
  *  Version - 1.3.1 5/30/15 - Fixed one small code syntax issue in Scenario D
  *  Version - 1.4.0 6/7/15 -  Revised About screen, enhanced the weather forecast voice summary, added a mode change option with alarm, and added secondary alarm options
  *  Version - 1.4.1 6/9/15 - Changed the mode change speech to make it clear when the mode change is taking place  
- * 
+ *  Version - 1.4.2 6/10/15 - To prevent accidental triggering of summary, put in a mode switch restriction
+ *
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -110,6 +111,7 @@ page(name: "pageAlarmSummary", title: "Alarm Summary Settings") {
        	input "summarySonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: false
         input "summaryVolume", "number", title: "Set the summary volume", description: "0-100%", required: false
         input "summaryDisabled", "bool", title: "Include disabled or unconfigured alarms in summary", defaultValue: "false"
+        input "summaryMode", "mode", title: "Speak summary only during the following modes...", multiple: true, required: false
 	}
 }
 //Show "pageSetupScenarioA" page
@@ -927,18 +929,20 @@ def alarm_D() {
 }
 
 def appTouchHandler(evt){
-	state.summaryMsg = "The following is a summary of the alarm settings. "
-	getSummary (A_alarmOn, ScenarioNameA, A_timeStart, 1)
-    getSummary (B_alarmOn, ScenarioNameB, B_timeStart, 2)
-    getSummary (C_alarmOn, ScenarioNameC, C_timeStart, 3)
-    getSummary (D_alarmOn, ScenarioNameD, D_timeStart, 4)
+	if (!summaryMode || summaryMode.contains(location.mode)) {
+    	state.summaryMsg = "The following is a summary of the alarm settings. "
+		getSummary (A_alarmOn, ScenarioNameA, A_timeStart, 1)
+    	getSummary (B_alarmOn, ScenarioNameB, B_timeStart, 2)
+    	getSummary (C_alarmOn, ScenarioNameC, C_timeStart, 3)
+    	getSummary (D_alarmOn, ScenarioNameD, D_timeStart, 4)
 	
-    log.debug "Summary message = ${state.summaryMsg}"
-	def summarySound = textToSpeech(state.summaryMsg, true)
-    if (summaryVolume) {
-    	summarySonos.setLevel(summaryVolume)
+    	log.debug "Summary message = ${state.summaryMsg}"
+		def summarySound = textToSpeech(state.summaryMsg, true)
+    	if (summaryVolume) {
+    		summarySonos.setLevel(summaryVolume)
+		}
+    	summarySonos.playTrack(summarySound.uri)
 	}
-    summarySonos.playTrack(summarySound.uri)
 }
 
 def getSummary (alarmOn, scenarioName, timeStart, num){
@@ -1295,7 +1299,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.4.1 (06/09/2015)"
+    def text = "Version 1.4.3 (06/10/2015)"
 }
 
 private def textCopyright() {
