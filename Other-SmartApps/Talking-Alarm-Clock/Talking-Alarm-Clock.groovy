@@ -9,6 +9,7 @@
  *  Version - 1.4.0 6/7/15 -  Revised About screen, enhanced the weather forecast voice summary, added a mode change option with alarm, and added secondary alarm options
  *  Version - 1.4.1 6/9/15 - Changed the mode change speech to make it clear when the mode change is taking place  
  *  Version - 1.4.2 6/10/15 - To prevent accidental triggering of summary, put in a mode switch restriction
+ *  Version - 1.4.3 6/12/15 - Syntax issues and minor GUI fixes
  *
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -136,7 +137,7 @@ def pageSetupScenarioA() {
         	}
         }
         if (A_alarmType == "1"){
-        	section ("Alarm Sound Options"){
+        	section ("Alarm sound options"){
 				input "A_soundAlarm", "enum", title: "Play this sound...", required:false, multiple: false, options: [[1:"Alien-8 seconds"],[2:"Bell-12 seconds"], [3:"Buzzer-20 seconds"], [4:"Fire-20 seconds"], [5:"Rooster-2 seconds"], [6:"Siren-20 seconds"]]
 				input "A_soundLength", "number", title: "Maximum time to play sound (empty=use sound default)", description: "1-20", required: false        
        		}
@@ -155,9 +156,9 @@ def pageSetupScenarioA() {
         section("Devices to control in this alarm scenario") {
 			input "A_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false, refreshAfterSelection:true
 			href "pageDimmersA", title: "Dimmer Settings", description: dimmerDesc(A_dimmers), state: greyOutOption(A_dimmers), refreshAfterSelection:true
-            href "pageThermostatsA", title: "Thermostat Settings", description: thermostatDesc(A_thermostats), state: greyOutOption(A_thermostats), refreshAfterSelection:true
+            href "pageThermostatsA", title: "Thermostat Settings", description: thermostatDesc(A_thermostats, A_temperatureH, A_temperatureC), state: greyOutOption(A_thermostats), refreshAfterSelection:true
         	if ((A_switches || A_dimmers || A_thermostats) && (A_alarmType == "2" || (A_alarmType == "1" && A_secondAlarm =="1"))){
-            	input "A_confirmSwitches", "bool", title: "Confirm switches/thermostat status in voice message", defaultValue: "false"
+            	input "A_confirmSwitches", "bool", title: "Confirm switches/thermostats status in voice message", defaultValue: "false"
             }
             
         }
@@ -187,23 +188,25 @@ page(name: "pageDimmersA", title: "Dimmer Settings") {
 
 page(name: "pageThermostatsA", title: "Thermostat Settings") {
 	section {
-       	input "A_thermostats", "capability.thermostat", title: "Thermostat to control...", multiple: true, required: false
-		input "A_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
-		input "A_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+       	input "A_thermostats", "capability.thermostat", title: "Thermostats to control...", multiple: true, required: false
+	}
+    section {
+        input "A_temperatureH", "number", title: "Heating setpoint", required: false, description: "Temperature when in heat mode"
+		input "A_temperatureC", "number", title: "Cooling setpoint", required: false, description: "Temperature when in cool mode"
 	}
 }
 
 def pageWeatherSettingsA() {
-dynamicPage(name: "pageWeatherSettingsA", title: "Weather Reporting Settings") {
-	section {
-		input "A_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
-        input "A_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
-        input "A_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
-        input "A_weatherReport", "bool", title: "Speak today's weather forecast", defaultValue: "false"
-        input "A_includeSunrise", "bool", title: "Speak today's sunrise", defaultValue: "false"
-    	input "A_includeSunset", "bool", title: "Speak today's sunset", defaultValue: "false"
+	dynamicPage(name: "pageWeatherSettingsA", title: "Weather Reporting Settings") {
+		section {
+			input "A_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
+        	input "A_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
+        	input "A_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
+        	input "A_weatherReport", "bool", title: "Speak today's weather forecast", defaultValue: "false"
+        	input "A_includeSunrise", "bool", title: "Speak today's sunrise", defaultValue: "false"
+    		input "A_includeSunset", "bool", title: "Speak today's sunset", defaultValue: "false"
+		}
 	}
-}
 }
 
 //Show "pageSetupScenarioB" page
@@ -233,13 +236,12 @@ def pageSetupScenarioB() {
 				input "B_soundLength", "number", title: "Maximum time to play sound (empty=use sound default)", description: "1-20", required: false        
        		}
 		}
-        
-        if (B_alarmType == "2" || (B_alarmType == "1" && B_secondAlarm =="1")) {
+		if (B_alarmType == "2" || (B_alarmType == "1" && B_secondAlarm =="1")){
         	section ("Voice greeting options") {
             	input "B_wakeMsg", "text", title: "Wake voice message", defaultValue: "Good morning! It is %time% on %day%, %date%.", required: false
-				href "pageWeatherSettingsB", title: "Weather Reporting Settings", getWeatherDesc(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp), state: greyOut1(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp)        	}
-        }
-        
+                href "pageWeatherSettingsB", title: "Weather Reporting Settings", description: getWeatherDesc(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp), state: greyOut1(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp)
+        	}
+        }        
        	if (B_alarmType == "3" || (B_alarmType == "1" && B_secondAlarm =="2") || (B_alarmType == "2" && B_secondAlarmMusic)){
         	section ("Music track/internet radio options"){
             	input "B_musicTrack", "enum", title: "Play this track/internet radio station", required:false, multiple: false, options: songOptions(B_sonos, 1)
@@ -248,9 +250,9 @@ def pageSetupScenarioB() {
         section("Devices to control in this alarm scenario") {
 			input "B_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false, refreshAfterSelection:true
 			href "pageDimmersB", title: "Dimmer Settings", description: dimmerDesc(B_dimmers), state: greyOutOption(B_dimmers), refreshAfterSelection:true
-            href "pageThermostatsB", title: "Thermostat Settings", description: thermostatDesc(B_thermostats), state: greyOutOption(B_thermostats), refreshAfterSelection:true
+            href "pageThermostatsB", title: "Thermostat Settings", description: thermostatDesc(B_thermostats, B_temperatureH, B_temperatureC), state: greyOutOption(B_thermostats), refreshAfterSelection:true
         	if ((B_switches || B_dimmers || B_thermostats) && (B_alarmType == "2" || (B_alarmType == "1" && B_secondAlarm =="1"))){
-            	input "B_confirmSwitches", "bool", title: "Confirm switches/thermostat status in voice message", defaultValue: "false"
+            	input "B_confirmSwitches", "bool", title: "Confirm switches/thermostats status in voice message", defaultValue: "false"
             }
         }
         section ("Other actions at alarm time"){
@@ -279,23 +281,25 @@ page(name: "pageDimmersB", title: "Dimmer Settings") {
 
 page(name: "pageThermostatsB", title: "Thermostat Settings") {
 	section {
-       	input "B_thermostats", "capability.thermostat", title: "Thermostat to control...", multiple: true, required: false
-		input "B_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
-		input "B_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+       	input "B_thermostats", "capability.thermostat", title: "Thermostats to control...", multiple: true, required: false
+	}
+    section {
+        input "B_temperatureH", "number", title: "Heating setpoint", required: false, description: "Temperature when in heat mode"
+		input "B_temperatureC", "number", title: "Cooling setpoint", required: false, description: "Temperature when in cool mode"
 	}
 }
 
 def pageWeatherSettingsB() {
-dynamicPage(name: "pageWeatherSettingsB", title: "Weather Reporting Settings") {
-	section {
-        input "B_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
-        input "B_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
-        input "B_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
-        input "B_weatherReport", "bool", title: "Speak today's weather forecast", defaultValue: "false"
-		input "B_includeSunrise", "bool", title: "Speak today's sunrise", defaultValue: "false"
-		input "B_includeSunset", "bool", title: "Speak today's sunset", defaultValue: "false"
+	dynamicPage(name: "pageWeatherSettingsB", title: "Weather Reporting Settings") {
+		section {
+        	input "B_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
+        	input "B_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
+        	input "B_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
+        	input "B_weatherReport", "bool", title: "Speak today's weather forecast", defaultValue: "false"
+			input "B_includeSunrise", "bool", title: "Speak today's sunrise", defaultValue: "false"
+			input "B_includeSunset", "bool", title: "Speak today's sunset", defaultValue: "false"
+		}
 	}
-}
 }
 
 //Show "pageSetupScenarioC" page
@@ -340,9 +344,9 @@ def pageSetupScenarioC() {
         section("Devices to control in this alarm scenario") {
 			input "C_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false, refreshAfterSelection:true
 			href "pageDimmersC", title: "Dimmer Settings", description: dimmerDesc(C_dimmers), state: greyOutOption(C_dimmers), refreshAfterSelection:true
-            href "pageThermostatsC", title: "Thermostat Settings", description: thermostatDesc(C_thermostats), state: greyOutOption(C_thermostats), refreshAfterSelection:true
+            href "pageThermostatsC", title: "Thermostat Settings", description: thermostatDesc(C_thermostats, C_temperatureH, C_temperatureC), state: greyOutOption(C_thermostats), refreshAfterSelection:true
         	if ((C_switches || C_dimmers || C_thermostats) && (C_alarmType == "2" || (C_alarmType == "1" && C_secondAlarm =="1"))){
-            	input "C_confirmSwitches", "bool", title: "Confirm switches/thermostat status in voice message", defaultValue: "false"
+            	input "C_confirmSwitches", "bool", title: "Confirm switches/thermostats status in voice message", defaultValue: "false"
             }
         }
         section ("Other actions at alarm time"){
@@ -372,8 +376,10 @@ page(name: "pageDimmersC", title: "Dimmer Settings") {
 page(name: "pageThermostatsC", title: "Thermostat Settings") {
 	section {
        	input "C_thermostats", "capability.thermostat", title: "Thermostats to control...", multiple: true, required: false
-		input "C_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
-		input "C_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+	}
+    section {
+        input "C_temperatureH", "number", title: "Heating setpoint", required: false, description: "Temperature when in heat mode"
+		input "C_temperatureC", "number", title: "Cooling setpoint", required: false, description: "Temperature when in cool mode"
 	}
 }
 
@@ -432,9 +438,9 @@ def pageSetupScenarioD() {
         section("Devices to control in this alarm scenario") {
 			input "D_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false, refreshAfterSelection:true
 			href "pageDimmersD", title: "Dimmer Settings", description: dimmerDesc(D_dimmers), state: greyOutOption(D_dimmers), refreshAfterSelection:true
-            href "pageThermostatsD", title: "Thermostat Settings", description: thermostatDesc(D_thermostats), state: greyOutOption(D_thermostats), refreshAfterSelection:true
+            href "pageThermostatsD", title: "Thermostat Settings", description: thermostatDesc(D_thermostats, D_temperatureH, D_temperatureC), state: greyOutOption(D_thermostats), refreshAfterSelection:true
         	if ((D_switches || D_dimmers || D_thermostats) && (D_alarmType == "2" || (D_alarmType == "1" && D_secondAlarm =="1"))){
-            	input "D_confirmSwitches", "bool", title: "Confirm switches/thermostat status in voice message", defaultValue: "false"
+            	input "D_confirmSwitches", "bool", title: "Confirm switches/thermostats status in voice message", defaultValue: "false"
             }
         }
         section ("Other actions at alarm time"){
@@ -464,8 +470,10 @@ page(name: "pageDimmersD", title: "Dimmer Settings") {
 page(name: "pageThermostatsD", title: "Thermostat Settings") {
 	section {
        	input "D_thermostats", "capability.thermostat", title: "Thermostats to control...", multiple: true, required: false
-		input "D_temperatureH", "number", title: "Thermostat heating setpoint", required: false, description: "Temperature when in heat mode"
-		input "D_temperatureC", "number", title: "Thermostat cooling setpoint", required: false, description: "Temperature when in cool mode"
+	}
+    section {
+        input "D_temperatureH", "number", title: "Heating setpoint", required: false, description: "Temperature when in heat mode"
+		input "D_temperatureC", "number", title: "Cooling setpoint", required: false, description: "Temperature when in cool mode"
 	}
 }
 
@@ -1028,8 +1036,27 @@ def dimmerDesc(dimmer){
 	def desc = dimmer ? "Tap to edit dimmer settings" : "Tap to set dimmer setting"
 }
 
-def thermostatDesc(dimmer){
-	def desc = dimmer ? "Tap to edit thermostat settings" : "Tap to set thermostat setting"
+def thermostatDesc(thermostat, heating, cooling){
+	def tempText 
+    if (heating || cooling){
+    	if (heating){
+        	tempText = "${heating} heat"
+        }
+        
+        if (cooling){
+        	tempText = "${cooling} cool"
+        }
+    	
+        if (heating && cooling) {
+        	tempText ="${heating} heat / ${cooling} cool"
+        }
+    }
+    else {
+    	tempText="Tap to edit thermostat settings"
+    }
+    
+    def desc = thermostat ? "${tempText}" : "Tap to set thermostat settings"
+	return desc
 }
 
 private getDayOk(dayList) {
@@ -1100,6 +1127,7 @@ private getGreeting(msg, scenario) {
 	msg = msg.replace('%day%', day)
     msg = msg.replace('%date%', "${month} ${dayNum}, ${year}")
     msg = msg.replace('%time%', "${time}")
+    msg = "${msg} "
     compileMsg(msg, scenario)
 }
 
@@ -1155,7 +1183,7 @@ private getOnConfimation(switches, dimmers, thermostats, scenario) {
     	msg = "All switches"	
     }
     if (!switches && !dimmers && thermostats) {
-    	msg = "Thermostats"
+    	msg = "All Thermostats"
     }
     if ((switches || dimmers) && thermostats) {
     	msg = "All switches and thermostats"
@@ -1299,7 +1327,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.4.3 (06/10/2015)"
+    def text = "Version 1.4.3 (06/12/2015)"
 }
 
 private def textCopyright() {
