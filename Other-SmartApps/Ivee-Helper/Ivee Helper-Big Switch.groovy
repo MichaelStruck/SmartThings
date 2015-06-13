@@ -1,8 +1,8 @@
 /**
  *  Ivee Helper-Big Switch
- *  Version 1.0 3/18/15
- *  Version 1.01 4/9/15 - Added options sub heading to last section of preferences
- *  Version 1.0.2 5/31/15 - Added About screen
+ *  Version 1.0.0 3/18/15
+ *  Version 1.0.1 4/9/15 - Added options sub heading to last section of preferences
+ *  Version 1.0.2 6/13/15 - Added About screen and allow for phrase and mode changes tied to master switch
  *
  *  Copyright 2015 Michael Struck
  *
@@ -35,16 +35,31 @@ def getPref() {
 		section("Define a 'Master Switch' which Ivee will use.") {
 			input "master", "capability.switch", multiple: false, title: "Master Switch", required: true
    		}    
-   		section("When Ivee turns on the Master Switch, turn on these lights/switches...") {
-			input "lightsOn", "capability.switch", multiple: true, title: "Lights/Switches", required: false
-    	} 
-    	section("When Ivee turns off the Master Switch, turn off these lights/switches...") {
-			input "lightsOff", "capability.switch", multiple: true, title: "Lights/Switches", required: false
-    	}
+   		section("When Ivee turns on the Master Switch...") {
+			input "lightsOn", "capability.switch", multiple: true, title: "Turn on...", required: false
+    		def phrases = location.helloHome?.getPhrases()*.label
+            if (phrases) {
+				phrases.sort()
+				input "phraseOn", "enum", title: "Trigger the following phrase...", required: false, options: phrases, multiple: false
+			}
+        	input "modeOn", "mode", title: "Trigger the following mode...", required: false
+        
+        } 
+
+        section("When Ivee turns off the Master Switch...") {
+			input "lightsOff", "capability.switch", multiple: true, title: "Turn off...", required: false
+    		def phrases = location.helloHome?.getPhrases()*.label
+            if (phrases) {
+				phrases.sort()
+				input "phraseOff", "enum", title: "Trigger the following phrase...", required: false, options: phrases, multiple: false
+			}
+        	input "modeOff", "mode", title: "Trigger the following mode...", required: false
+        
+        }
     	section([mobileOnly:true], "Options") {
-			label(title: "Assign a name", required: false, defaultValue: "Ivee Helper-Big Switch")
+			label(title: "Assign a name", required: false)
             mode title: "Set for specific mode(s)", required: false
-            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
 		}
     }
 }
@@ -79,11 +94,33 @@ def initialize() {
 }
 
 def onHandler(evt) {
-	lightsOn.on()
+    lightsOn?.on()
+	if (phraseOn) {
+        location.helloHome.execute(phraseOn)
+	}
+	if (modeOn && location.mode != modeOn) {
+		if (location.modes?.find{it.name == modeOn}) {
+			setLocationMode(modeOn)
+		} else {
+			log.debug "Unable to change to undefined mode '${modeOn}'"
+		}
+	}
+	log.debug "Master switch was turned on. Completing on actions."
 }
 
 def offHandler(evt) {
-	lightsOff.off()
+	lightsOff?.off()
+	if (phraseOff) {
+        location.helloHome.execute(phraseOff)
+	}
+	if (modeOff && location.mode != modeOff) {
+		if (location.modes?.find{it.name == modeOff}) {
+			setLocationMode(modeOff)
+		} else {
+			log.debug "Unable to change to undefined mode '${modeOff}'"
+		}
+	}
+	log.debug "Master switch was turned off. Completing off actions."
 }
 
 
@@ -94,7 +131,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.2 (05/31/2015)"
+    def text = "Version 1.0.2 (06/13/2015)"
 }
 
 private def textCopyright() {
@@ -119,9 +156,9 @@ private def textLicense() {
 private def textHelp() {
 	def text =
     	"Choose a switch that will be considered the 'master switch' to control a  " +
-        "group of other switches. It is recommended this master switch be a virtual switch called 'All Lights', but it can be " +
+        "group of other switches, phrase or mode. It is recommended this master switch be a virtual switch called 'All Lights', but it can be " +
         "physical device as well. You will need to associate the master switch with the Ivee Talking Alarm Clock (online at the Ivee web site). "+ 
-        "Then, choose various switches you would like to control "+
-        "with the the on or off states of the master switch. You can then toggle these groups of switches by saying " +
-        "'Hello Ivee, turn <on/off> ALL LIGHTS'."
+        "Then, choose various switches, phrases and mode you would like to control "+
+        "with the the on or off states of the master switch. You can then toggle these selections by saying " +
+        "'Hello Ivee, turn <on/off> <name of master switch>'."
 }
