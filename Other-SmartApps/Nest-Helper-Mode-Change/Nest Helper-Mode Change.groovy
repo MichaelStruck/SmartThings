@@ -5,6 +5,7 @@
  *  Version 1.0.0 - 3/26/15
  *  Version 1.0.1 - 4/9/15 Added the ability to change the name of the app and removed modes to run in (redundent)
  *  Version 1.0.2 - 5/31/15 Added About screen and code optimizations
+ *  Version 1.0.3 - 6/12/15 Changed internal logic for home and away to allow for better interface layout
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -33,17 +34,15 @@ preferences {
 def getPref() {
     dynamicPage(name: "getPref", install:true, uninstall: true) {
     	section("Choose a Nest Thermostat...") {
-    		input "tstat1", "capability.thermostat", title: "Nest", multiple: false
+    		input "tstat1", "capability.thermostat", title: "Nest Thermostat", multiple: false
 			}
-		section("Change to away on Nest when in which mode(s)...") {
-    		input "awayMode", "mode", required: true, multiple: true, title: "Modes?"
-		}
-    	section("Change to home on Nest when in which mode(s)...") {
-    		input "homeMode", "mode", required: true, multiple: true, title: "Modes?"
+		section("Change Nest HOME/AWAY based on SmartThing modes") {
+    		input "awayMode", "mode", required: true, multiple: true, title: "Nest AWAY modes"
+			input "homeMode", "mode", required: false, multiple: true, title: "Nest HOME modes (optional)"
 		}
 		section([mobileOnly:true], "Options") {
-			label(title: "Assign a name", required: false, defaultValue: "Nest Helper-Mode Change")
-            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
+			label(title: "Assign a name", required: false)
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
 		}
     }
 }
@@ -76,12 +75,13 @@ def initialize() {
 
 def locationHandler(evt) {
 	log.debug "locationHandler evt: ${evt.value}"
-    if (homeMode.contains(evt.value)) {
-	    tstat1.present()
-    }
-    else if (awayMode.contains(evt.value)) {
+    if (awayMode.contains(evt.value)) {
     	tstat1.away()
     }
+    else if (!homeMode || homeMode && homeMode.contains(evt.value)) {
+	    tstat1.present()
+    }
+
 }
 
 //Version/Copyright/Information/Help
@@ -91,7 +91,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.2 (05/31/2015)"
+    def text = "Version 1.0.3 (06/12/2015)"
 }
 
 private def textCopyright() {
@@ -116,5 +116,6 @@ private def textLicense() {
 private def textHelp() {
 	def text =
     	"Choose a Nest Thermostat that will be linked to various SmartThings modes. " +
-        "When the modes change, the Nest Thermostat will change to Home or Away based on the settings." 
+        "When the modes change, the Nest Thermostat will change to Home or Away based on the settings. If no HOME settings are specified, "+
+        "then the AWAY mode setting will be the trigger for both events (i.e. In that mode=AWAY, not in that mode=HOME."
 }
