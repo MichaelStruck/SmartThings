@@ -10,6 +10,7 @@
  *  Version - 1.4.1 6/9/15 - Changed the mode change speech to make it clear when the mode change is taking place  
  *  Version - 1.4.2 6/10/15 - To prevent accidental triggering of summary, put in a mode switch restriction
  *  Version - 1.4.3 6/12/15 - Syntax issues and minor GUI fixes
+ *  Version - 1.4.4 6/15/14 - Fixed a bug with Phrase change at alarm time
  *
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -61,11 +62,11 @@ preferences {
 	page name:"pageSetupScenarioA"
 	page name:"pageSetupScenarioB"
 	page name:"pageSetupScenarioC"
-    page name:"pageSetupScenarioD"
-    page name:"pageWeatherSettingsA" //technically, these 4 pages should not be dynamic, but are here to work around a crash on the Andriod app
-    page name:"pageWeatherSettingsB"
-    page name:"pageWeatherSettingsC"
-    page name:"pageWeatherSettingsD"
+	page name:"pageSetupScenarioD"
+	page name:"pageWeatherSettingsA" //technically, these 4 pages should not be dynamic, but are here to work around a crash on the Andriod app
+	page name:"pageWeatherSettingsB"
+	page name:"pageWeatherSettingsC"
+	page name:"pageWeatherSettingsD"
 }
 
 // Show setup page
@@ -160,7 +161,6 @@ def pageSetupScenarioA() {
         	if ((A_switches || A_dimmers || A_thermostats) && (A_alarmType == "2" || (A_alarmType == "1" && A_secondAlarm =="1"))){
             	input "A_confirmSwitches", "bool", title: "Confirm switches/thermostats status in voice message", defaultValue: "false"
             }
-            
         }
 		section ("Other actions at alarm time"){
             def phrases = location.helloHome?.getPhrases()*.label
@@ -384,16 +384,16 @@ page(name: "pageThermostatsC", title: "Thermostat Settings") {
 }
 
 def pageWeatherSettingsC() {
-dynamicPage(name: "pageWeatherSettingsC", title: "Weather Reporting Settings") {
-	section {
-    	input "C_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
-        input "C_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
-        input "C_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
-        input "C_weatherReport", "bool", title: "Speak today's weather forecast", defaultValue: "false"
-        input "C_includeSunrise", "bool", title: "Speak today's sunrise", defaultValue: "false"
-    	input "C_includeSunset", "bool", title: "Speak today's sunset", defaultValue: "false"
+	dynamicPage(name: "pageWeatherSettingsC", title: "Weather Reporting Settings") {
+		section {
+    		input "C_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
+        	input "C_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
+        	input "C_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
+        	input "C_weatherReport", "bool", title: "Speak today's weather forecast", defaultValue: "false"
+        	input "C_includeSunrise", "bool", title: "Speak today's sunrise", defaultValue: "false"
+    		input "C_includeSunset", "bool", title: "Speak today's sunset", defaultValue: "false"
+		}
 	}
-}
 }
 
 //Show "pageSetupScenarioD" page
@@ -478,16 +478,16 @@ page(name: "pageThermostatsD", title: "Thermostat Settings") {
 }
 
 def pageWeatherSettingsD() {
-dynamicPage(name: "pageWeatherSettingsD", title: "Weather Reporting Settings") {
-	section {
-        input "D_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
-		input "D_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
-        input "D_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
-        input "D_weatherReport", "bool", title: "Speak today's weather forecast", defaultValue: "false"
-        input "D_includeSunrise", "bool", title: "Speak today's sunrise", defaultValue: "false"
-    	input "D_includeSunset", "bool", title: "Speak today's sunset", defaultValue: "false"
+	dynamicPage(name: "pageWeatherSettingsD", title: "Weather Reporting Settings") {
+		section {
+        	input "D_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
+			input "D_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
+        	input "D_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
+        	input "D_weatherReport", "bool", title: "Speak today's weather forecast", defaultValue: "false"
+        	input "D_includeSunrise", "bool", title: "Speak today's sunrise", defaultValue: "false"
+    		input "D_includeSunset", "bool", title: "Speak today's sunset", defaultValue: "false"
+		}
 	}
-}
 }
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
@@ -578,7 +578,7 @@ def alarm_A() {
             	}         
        		}
         }
-        if (A_phrase && A_confirmPhrase) {
+        if (A_phrase) {
         	location.helloHome.execute(A_phrase)
         }
         
@@ -673,7 +673,7 @@ def alarm_B() {
             	}         
        		}
         }
-        if (B_phrase && B_confirmPhrase) {
+        if (B_phrase) {
         	location.helloHome.execute(B_phrase)
         }
         
@@ -768,7 +768,7 @@ def alarm_C() {
             	}         
        		}
         }
-        if (C_phrase && C_confirmPhrase) {
+        if (C_phrase) {
         	location.helloHome.execute(C_phrase)
         }
         
@@ -863,7 +863,7 @@ def alarm_D() {
             	}         
        		}
         }
-        if (D_phrase && D_confirmPhrase) {
+        if (D_phrase) {
         	location.helloHome.execute(D_phrase)
         }
         
@@ -1042,12 +1042,10 @@ def thermostatDesc(thermostat, heating, cooling){
     	if (heating){
         	tempText = "${heating} heat"
         }
-        
         if (cooling){
         	tempText = "${cooling} cool"
         }
-    	
-        if (heating && cooling) {
+		if (heating && cooling) {
         	tempText ="${heating} heat / ${cooling} cool"
         }
     }
@@ -1327,7 +1325,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.4.3 (06/12/2015)"
+    def text = "Version 1.4.4 (06/15/2015)"
 }
 
 private def textCopyright() {
