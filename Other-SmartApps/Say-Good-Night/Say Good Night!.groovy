@@ -841,7 +841,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.0 (06/09/2015)"
+    def text = "Version 1.0.0 (06/15/2015)"
 }
 
 private def textCopyright() {
