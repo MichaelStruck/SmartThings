@@ -21,7 +21,7 @@ definition(
     name: "Nest Helper-Mode Change",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Allow the Nest Thermostat to follow a specific set of modes (Home/Away).",
+    description: "Allow the Nest Thermostat to follow a specific set of SmartThings modes.",
     category: "Convenience",
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/Partner/nest-home-app.png",
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Partner/nest-home-app@2x.png",
@@ -34,7 +34,7 @@ preferences {
 def getPref() {
     dynamicPage(name: "getPref", install:true, uninstall: true) {
     	section("Choose a Nest Thermostat...") {
-    		input "tstat1", "capability.thermostat", title: "Nest Thermostat", multiple: false
+    		input "tstat1", "capability.thermostat", title: "Nest Thermostat", multiple: false , required: true
 			}
 		section("Change Nest HOME/AWAY based on SmartThing modes") {
     		input "awayMode", "mode", required: true, multiple: true, title: "Nest AWAY modes"
