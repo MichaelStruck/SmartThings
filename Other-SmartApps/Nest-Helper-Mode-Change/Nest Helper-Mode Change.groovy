@@ -5,7 +5,7 @@
  *  Version 1.0.0 - 3/26/15
  *  Version 1.0.1 - 4/9/15 Added the ability to change the name of the app and removed modes to run in (redundent)
  *  Version 1.0.2 - 5/31/15 Added About screen and code optimizations
- *  Version 1.0.3 - 6/12/15 Changed internal logic for home and away to allow for better interface layout
+ *  Version 1.0.3 - 6/15/15 Changed internal logic for home and away to allow for better interface layout
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -70,18 +70,20 @@ def updated() {
 }
 
 def initialize() {
-	subscribe(location, "mode", locationHandler)
+    subscribe(location, "mode", locationHandler)
 }
 
 def locationHandler(evt) {
-	log.debug "locationHandler evt: ${evt.value}"
-    if (awayMode.contains(evt.value)) {
+    log.debug "Mode set to ${evt.value}"
+    def currentState = tstat1.latestValue('presence')
+    if (currentState =="present" && awayMode && awayMode.contains(evt.value)) {
     	tstat1.away()
+        log.debug "Nest set to AWAY"
     }
-    else if (!homeMode || homeMode && homeMode.contains(evt.value)) {
+    if (currentState =="not present" && (!homeMode || (homeMode && homeMode.contains(evt.value)))) {
 	    tstat1.present()
+        log.debug "Nest set to HOME"
     }
-
 }
 
 //Version/Copyright/Information/Help
@@ -91,7 +93,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.3 (06/12/2015)"
+    def text = "Version 1.0.3 (06/15/2015)"
 }
 
 private def textCopyright() {
