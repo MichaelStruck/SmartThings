@@ -1,7 +1,7 @@
 /**
  *  Say Good Night!
  *
- *  Version - 1.0.0 6/7/15
+ *  Version - 1.0.0 6/15/15
  *  
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -54,9 +54,9 @@ definition(
 preferences {
 	page name: "pageMain"
 	page name: "pageSetupScenarioA"
-	page name: "pageSetupScenarioB"
-	page name: "pageSetupScenarioC"
-	page name: "pageSetupScenarioD"
+    page name: "pageSetupScenarioB"
+    page name: "pageSetupScenarioC"
+    page name: "pageSetupScenarioD"
 }
 
 // Show setup page
@@ -74,7 +74,7 @@ def pageMain() {
         section{
             href "pageSetupScenarioD", title: getTitle(ScenarioNameD, 4), description: getDesc(D_sonos), state: greyOut(ScenarioNameD, D_sonos)
         }
-	section([title:"Options", mobileOnly:true]) {
+ 		section([title:"Options", mobileOnly:true]) {
             input "zipCode", "text", title: "Zip Code", required: false
             label title:"Assign a name", required:false
             href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
@@ -89,7 +89,7 @@ def pageSetupScenarioA() {
         	input "ScenarioNameA", "text", title: "Scenario Name", multiple: false, required: false
 			input "A_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
     	}
-	section("Say 'Good Night' when...") {
+		section("Say 'Good Night' when...") {
 			input "A_switches", "capability.switch",title: "Any of these switches are turned off...", multiple: true, required: false
             href "pageButtonControlA", title: "A button is pressed on a controller...", description: buttonDesc(A_buttonDevice, A_buttonPress), state: greyOut(A_buttonDevice, A_buttonPress)
         }
@@ -109,9 +109,9 @@ def pageSetupScenarioA() {
             }
         }
         section{
-        input "A_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
-        	if (A_triggerMode){
-            		input "A_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
+        	input "A_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
+            if (A_triggerMode){
+            	input "A_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
             }
         }
     	section("Restrictions") {            
@@ -139,41 +139,41 @@ page(name: "timeIntervalInputA", title: "Only during a certain time") {
 
 page(name: "pageWeatherSettingsA", title: "Weather Reporting Settings") {
 	section {
-        	input "A_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
-        	input "A_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
-        	input "A_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
-        	input "A_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
-        	input "A_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
-    		input "A_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
+        input "A_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
+        input "A_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
+        input "A_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
+        input "A_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
+        input "A_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
+    	input "A_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
 	}
 }
 
 // Show "pageSetupScenarioB" page
 def pageSetupScenarioB() {
     dynamicPage(name: "pageSetupScenarioB") {
-	section("Scenario Settings") {
+		section("Scenario Settings") {
         	input "ScenarioNameB", "text", title: "Scenario Name", multiple: false, required: false
 			input "B_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
     	}
-	section("Say 'Good Night' when...") {
-		input "B_switches", "capability.switch",title: "Any of these switches are turned off...", multiple: true, required: false
-        	href "pageButtonControlB", title: "A button is pressed on a controller...", description: buttonDesc(B_buttonDevice, B_buttonPress), state: greyOut(B_buttonDevice, B_buttonPress)
+		section("Say 'Good Night' when...") {
+			input "B_switches", "capability.switch",title: "Any of these switches are turned off...", multiple: true, required: false
+            href "pageButtonControlB", title: "A button is pressed on a controller...", description: buttonDesc(B_buttonDevice, B_buttonPress), state: greyOut(B_buttonDevice, B_buttonPress)
         }
         section("Other Options") {
         	input "B_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
-        	href "pageWeatherSettingsB", title: "Weather Reporting Settings", description: getWeatherDesc(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp), state: greyOut1(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp)
+            href "pageWeatherSettingsB", title: "Weather Reporting Settings", description: getWeatherDesc(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp), state: greyOut1(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp)
         	input "B_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
         }
         section{
             def phrases = location.helloHome?.getPhrases()*.label
             if (phrases) {
-		phrases.sort()
-		input "B_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
-		if (B_phrase){
+				phrases.sort()
+				input "B_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				if (B_phrase){
                 	input "B_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
                 }
             }
-	}
+		}
         section{
             input "B_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
             if (B_triggerMode){
@@ -206,11 +206,11 @@ page(name: "timeIntervalInputB", title: "Only during a certain time") {
 page(name: "pageWeatherSettingsB", title: "Weather Reporting Settings") {
 	section {
 		input "B_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
-        	input "B_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
-        	input "B_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
-        	input "B_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
-        	input "B_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
-    		input "B_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
+        input "B_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
+        input "B_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
+        input "B_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
+        input "B_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
+    	input "B_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
 	}
 }
 
@@ -221,31 +221,31 @@ def pageSetupScenarioC() {
         	input "ScenarioNameC", "text", title: "Scenario Name", multiple: false, required: false
 			input "C_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
     	}
-	section("Say 'Good Night' when...") {
-		input "C_switches", "capability.switch",title: "Any of these switches are turned off...", multiple: true, required: false
-        	href "pageButtonControlC", title: "A button is pressed on a controller...", description: buttonDesc(C_buttonDevice, C_buttonPress), state: greyOut(C_buttonDevice, C_buttonPress)
+		section("Say 'Good Night' when...") {
+			input "C_switches", "capability.switch",title: "Any of these switches are turned off...", multiple: true, required: false
+            href "pageButtonControlC", title: "A button is pressed on a controller...", description: buttonDesc(C_buttonDevice, C_buttonPress), state: greyOut(C_buttonDevice, C_buttonPress)
         }
         section("Other Options") {
         	input "C_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
-        	href "pageWeatherSettingsC", title: "Weather Reporting Settings",description: getWeatherDesc(C_weatherReport, C_includeSunrise, C_includeSunset, C_includeTemp, A_humidity, C_localTemp), state: greyOut1(C_weatherReport, C_includeSunrise, C_includeSunset, C_includeTemp, C_humidity, C_localTemp)
-		input "C_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
+            href "pageWeatherSettingsC", title: "Weather Reporting Settings",description: getWeatherDesc(C_weatherReport, C_includeSunrise, C_includeSunset, C_includeTemp, A_humidity, C_localTemp), state: greyOut1(C_weatherReport, C_includeSunrise, C_includeSunset, C_includeTemp, C_humidity, C_localTemp)
+			input "C_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
         }
-	section{    
+		section{    
         	def phrases = location.helloHome?.getPhrases()*.label
             if (phrases) {
-		phrases.sort()
-		input "C_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
-		if (C_phrase){
+				phrases.sort()
+				input "C_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				if (C_phrase){
                 	input "C_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
                 }
             }
-	}
+		}
         section{
-        	input "C_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
-            	if (C_triggerMode){
-            		input "C_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
-            	}
-	}
+            input "C_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
+            if (C_triggerMode){
+            	input "C_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
+            }
+		}
     	section("Restrictions") {            
         	input name: "C_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
         	href "timeIntervalInputC", title: "Only during a certain time...", description: getTimeLabel(C_timeStart, C_timeEnd), state: greyedOutTime(C_timeStart, C_timeEnd)
@@ -272,11 +272,11 @@ page(name: "timeIntervalInputC", title: "Only during a certain time") {
 page(name: "pageWeatherSettingsC", title: "Weather Reporting Settings") {
 	section {
 		input "C_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
-        	input "C_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
-        	input "C_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
-        	input "C_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
-        	input "C_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
-    		input "C_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
+        input "C_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
+        input "C_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
+        input "C_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
+        input "C_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
+    	input "C_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
 	}
 }
 
@@ -285,11 +285,11 @@ def pageSetupScenarioD() {
     dynamicPage(name: "pageSetupScenarioD") {
 		section("Scenario Settings") {
         	input "ScenarioNameD", "text", title: "Scenario Name", multiple: false, required: false
-		input "D_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
+			input "D_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
     	}
-	section("Say 'Good Night' when...") {
-		input "D_switches", "capability.switch",title: "Any of these switches are turned off...", multiple: true, required: false
-            	href "pageButtonControlD", title: "A button is pressed on a controller...", description: buttonDesc(D_buttonDevice, D_buttonPress), state: greyOut(D_buttonDevice, D_buttonPress)
+		section("Say 'Good Night' when...") {
+			input "D_switches", "capability.switch",title: "Any of these switches are turned off...", multiple: true, required: false
+            href "pageButtonControlD", title: "A button is pressed on a controller...", description: buttonDesc(D_buttonDevice, D_buttonPress), state: greyOut(D_buttonDevice, D_buttonPress)
         }
         section("Other Options") {
         	input "D_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
@@ -297,21 +297,21 @@ def pageSetupScenarioD() {
         	input "D_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
         }
         section{
-        	def phrases = location.helloHome?.getPhrases()*.label
-        	if (phrases) {
-			phrases.sort()
-			input "D_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
-			if (D_phrase){
-                		input "D_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
-                	}
-            	}
-	}
+            def phrases = location.helloHome?.getPhrases()*.label
+            if (phrases) {
+				phrases.sort()
+				input "D_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				if (D_phrase){
+                	input "D_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+                }
+            }
+		}
         section{
-        	input "D_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
-        	if (D_triggerMode){
-            		input "D_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
-            	}
-	}
+            input "D_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
+            if (D_triggerMode){
+            	input "D_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
+            }
+		}
     	section("Restrictions") {            
         	input name: "D_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
         	href "timeIntervalInputD", title: "Only during a certain time...", description: getTimeLabel(D_timeStart, D_timeEnd), state: greyedOutTime(D_timeStart, D_timeEnd)
@@ -323,8 +323,8 @@ def pageSetupScenarioD() {
 
 page(name: "pageButtonControlD", title: "Button Controller Setup") {
 	section {
-    		input "D_buttonDevice", "capability.button", title: "Button Controller", multiple: false, required: false
-        	input "D_buttonPress", "enum", title: "Which button...", options: [1:"1", 2:"2", 3:"3", 4:"4"], multiple: false, required: false
+    	input "D_buttonDevice", "capability.button", title: "Button Controller", multiple: false, required: false
+        input "D_buttonPress", "enum", title: "Which button...", options: [1:"1", 2:"2", 3:"3", 4:"4"], multiple: false, required: false
 	}
 }
 
@@ -338,20 +338,20 @@ page(name: "timeIntervalInputD", title: "Only during a certain time") {
 page(name: "pageWeatherSettingsD", title: "Weather Reporting Settings") {
 	section {
 		input "D_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
-        	input "D_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
-        	input "D_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
-        	input "D_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
-        	input "D_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
-    		input "D_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
+        input "D_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
+        input "D_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
+        input "D_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
+        input "D_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
+    	input "D_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
 	}
 }
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
         section {
-        	paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
+            paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
         }
         section("Instructions") {
-        	paragraph textHelp()
+            paragraph textHelp()
         }
 }
 
@@ -422,25 +422,24 @@ def scenario_A(evt) {
 			} else {
 				log.debug "Unable to change to undefined mode '${A_triggerMode}'"
 			}
-		}
-        
-        if (A_confirmMode){
+			if (A_confirmMode){
             	getModeConfirmation(A_triggerMode, 1)
+        	}
         }
         
         if (A_msg) {
-		getGreeting(A_msg, 1)
-	} 
+			getGreeting(A_msg, 1)
+		} 
       
-	state.soundA = textToSpeech(state.fullMsgA, true)
+		state.soundA = textToSpeech(state.fullMsgA, true)
     	if (A_volume) {
-		A_sonos.setLevel(A_volume)
-	}
-	A_sonos.playTrack(state.soundA.uri)
+			A_sonos.setLevel(A_volume)
+		}
+		A_sonos.playTrack(state.soundA.uri)
         if (A_triggerOnce) {
-		state.A_triggered = true
-		runOnce (getMidnight(), midNightReset)
-	}
+			state.A_triggered = true
+			runOnce (getMidnight(), midNightReset)
+		}
     }
 }
 
@@ -479,13 +478,12 @@ def scenario_B(evt) {
 			} else {
 				log.debug "Unable to change to undefined mode '${B_triggerMode}'"
 			}
-		}
-        
-        if (B_confirmMode){
+			if (B_confirmMode){
             	getModeConfirmation(B_triggerMode, 2)
+        	}
         }
-
-		if (B_msg) {
+        
+        if (B_msg) {
 			getGreeting(B_msg, 2)
 		} 
       
@@ -536,13 +534,12 @@ def scenario_C(evt) {
 			} else {
 				log.debug "Unable to change to undefined mode '${C_triggerMode}'"
 			}
-		}
-        
-        if (C_confirmMode){
+			if (C_confirmMode){
             	getModeConfirmation(C_triggerMode, 3)
+        	}
         }
-		
-		if (C_msg) {
+        
+        if (C_msg) {
 			getGreeting(C_msg, 3)
 		} 
       
@@ -593,12 +590,11 @@ def scenario_D(evt) {
 			} else {
 				log.debug "Unable to change to undefined mode '${D_triggerMode}'"
 			}
-		}
-        
-        if (D_confirmMode){
+			if (D_confirmMode){
             	getModeConfirmation(D_triggerMode, 4)
+        	}
         }
-		
+
         if (D_msg) {
 			getGreeting(D_msg, 4)
 		} 
@@ -826,7 +822,7 @@ private getPhraseConfirmation(phrase, scenario) {
 }
 
 private getModeConfirmation(mode, scenario) {
-	def msg="The Smart Things mode will be set to, ${mode}. "
+	def msg="The Smart Things mode is now being set to, ${mode}. "
 	compileMsg(msg, scenario)
 }
 
@@ -845,7 +841,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.0 (06/07/2015)"
+    def text = "Version 1.0.0 (06/09/2015)"
 }
 
 private def textCopyright() {
