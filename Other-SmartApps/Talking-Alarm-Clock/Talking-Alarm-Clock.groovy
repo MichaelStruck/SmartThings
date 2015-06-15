@@ -10,7 +10,7 @@
  *  Version - 1.4.1 6/9/15 - Changed the mode change speech to make it clear when the mode change is taking place  
  *  Version - 1.4.2 6/10/15 - To prevent accidental triggering of summary, put in a mode switch restriction
  *  Version - 1.4.3 6/12/15 - Syntax issues and minor GUI fixes
- *  Version - 1.4.4 6/15/14 - Fixed a bug with Phrase change at alarm time
+ *  Version - 1.4.4 6/15/15 - Fixed a bug with Phrase change at alarm time
  *
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
