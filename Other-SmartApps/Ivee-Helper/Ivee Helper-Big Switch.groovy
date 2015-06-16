@@ -39,14 +39,8 @@ def mainPage() {
 	dynamicPage(name: "mainPage", install:true, uninstall: true) {
     	section("Ivee Controls"){
        		href "A_getPref", title: getTitle(A_name, 1) , description:"", state: greyOut(A_name, A_master)
-        }
-        section{
        		href "B_getPref", title: getTitle(B_name, 2), description:"", state: greyOut(B_name, B_master)
-        }
-        section{
        		href "C_getPref", title: getTitle(C_name, 3), description:"", state: greyOut(C_name, C_master)
-        }
-        section{
        		href "D_getPref", title: getTitle(D_name, 4), description:"", state: greyOut(D_name, D_master)
         }
         section([mobileOnly:true], "Options") {
