@@ -1,8 +1,8 @@
 /**
  *  Smart Room Lighting and Dimming
  *
- *  Version - 1.0 5/4/15
- *  Version - 1.02 5/19/15 Code clean up for timeframe conditional check
+ *  Version - 1.0.0 5/4/15
+ *  Version - 1.0.2 5/19/15 Code clean up for timeframe conditional check
  *  Version - 1.0.4 5/31/15 Added About screen from main menu
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -62,14 +62,14 @@ preferences {
 def pageSetup() {
 	dynamicPage(name: "pageSetup", install: true, uninstall: true) {
         section("Setup Menu") {
-            href "pageSetupScenarioA", title: getTitle(ScenarioNameA), description: getDesc(ScenarioNameA), state: greyOut(ScenarioNameA)
-            href "pageSetupScenarioB", title: getTitle(ScenarioNameB), description: getDesc(ScenarioNameB), state: greyOut(ScenarioNameB)
-            href "pageSetupScenarioC", title: getTitle(ScenarioNameC), description: getDesc(ScenarioNameC), state: greyOut(ScenarioNameC)
-			href "pageSetupScenarioD", title: getTitle(ScenarioNameD), description: getDesc(ScenarioNameD), state: greyOut(ScenarioNameD)
+            href "pageSetupScenarioA", title: getTitle(ScenarioNameA), description: "", state: greyOut(ScenarioNameA)
+            href "pageSetupScenarioB", title: getTitle(ScenarioNameB), description: "", state: greyOut(ScenarioNameB)
+            href "pageSetupScenarioC", title: getTitle(ScenarioNameC), description: "", state: greyOut(ScenarioNameC)
+			href "pageSetupScenarioD", title: getTitle(ScenarioNameD), description: "", state: greyOut(ScenarioNameD)
             }
         section([title:"Options", mobileOnly:true]) {
             label title:"Assign a name", required:false
-            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
         }
     }
 }
@@ -580,10 +580,6 @@ def greyedOutTime(start, end){
 
 def getTitle(scenario) {
 	def title = scenario ? scenario : "Empty"
-}
-
-def getDesc(scenario) {
-	def desc = scenario ? "Tap to edit scenario" : "Tap to create a scenario"
 }
 
 def getMidnight() {
