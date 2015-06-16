@@ -1,6 +1,6 @@
 /**
  *  Announce Presence
- *  Version 1.0.0 6/9/15
+ *  Version 1.0.0 6/16/15
  *
  *  Copyright 2015 Michael Struck
  *
@@ -28,7 +28,7 @@ definition(
 
 preferences {
 	page name: "mainPage"
-  page name: "A_scenario"
+    page name: "A_scenario"
 	page name: "B_scenario"
 	page name: "C_scenario"
 	page name: "D_scenario"
@@ -38,19 +38,11 @@ preferences {
 def mainPage() {
     dynamicPage(name: "mainPage", install:true, uninstall: true) {
 		section ("Alerting Scenarios") {
-        	href "A_scenario", title: getTitle(A_scenarioName, 1), description: getDesc(A_scenarioName, 1), state: greyedOutState(A_scenarioName, A_sensors, A_friendlyName, A_sonos)
-		}
-		section {
-        	href "B_scenario", title: getTitle(B_scenarioName, 2), description: getDesc(B_scenarioName, 2), state: greyedOutState(B_scenarioName, B_sensors, B_friendlyName, B_sonos)
-		}
-        section {
-        	href "C_scenario", title: getTitle(C_scenarioName, 3), description: getDesc(C_scenarioName, 3), state: greyedOutState(C_scenarioName, C_sensors, C_friendlyName, C_sonos)
-		}
-        section {
-        	href "D_scenario", title: getTitle(D_scenarioName, 4), description: getDesc(D_scenarioName, 4), state: greyedOutState(D_scenarioName, D_sensors, D_friendlyName, D_sonos)
-		}
-        section {
-        	href "E_scenario", title: getTitle(E_scenarioName, 5), description: getDesc(E_scenarioName, 5), state: greyedOutState(E_scenarioName, E_sensors, E_friendlyName, E_sonos)
+        	href "A_scenario", title: getTitle(A_scenarioName, 1), description:"", state: greyedOutState(A_scenarioName, A_sensors, A_friendlyName, A_sonos)
+        	href "B_scenario", title: getTitle(B_scenarioName, 2), description:"", state: greyedOutState(B_scenarioName, B_sensors, B_friendlyName, B_sonos)
+        	href "C_scenario", title: getTitle(C_scenarioName, 3), description:"", state: greyedOutState(C_scenarioName, C_sensors, C_friendlyName, C_sonos)
+        	href "D_scenario", title: getTitle(D_scenarioName, 4), description:"", state: greyedOutState(D_scenarioName, D_sensors, D_friendlyName, D_sonos)
+        	href "E_scenario", title: getTitle(E_scenarioName, 5), description:"", state: greyedOutState(E_scenarioName, E_sensors, E_friendlyName, E_sonos)
 		}
 		section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false)
