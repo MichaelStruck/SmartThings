@@ -1,7 +1,7 @@
 /**
  *  Smart Bathroom Ventilation
  *
- *  Version - 1.0 5/31/15
+ *  Version - 1.0.0 6/16/15
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -50,33 +50,38 @@ definition(
 
 preferences {
 	page name:"pageSetup"
+    page name:"pageSetupScenarioA"
+    page name:"pageSetupScenarioB"
+    page name:"pageSetupScenarioC"
+    page name:"pageSetupScenarioD"
 }
 
 // Show setup page
 def pageSetup() {
 	dynamicPage(name: "pageSetup", install: true, uninstall: true) {
         section("Setup Menu") {
-			href "pageSetupScenarioA", title: getTitle(ScenarioNameA), description: getDesc(ScenarioNameA), state: greyOut(ScenarioNameA)
-			href "pageSetupScenarioB", title: getTitle(ScenarioNameB), description: getDesc(ScenarioNameB), state: greyOut(ScenarioNameB)
-			href "pageSetupScenarioC", title: getTitle(ScenarioNameC), description: getDesc(ScenarioNameC), state: greyOut(ScenarioNameC)
-			href "pageSetupScenarioD", title: getTitle(ScenarioNameD), description: getDesc(ScenarioNameD), state: greyOut(ScenarioNameD)
+			href "pageSetupScenarioA", title: getTitle(ScenarioNameA), description: "", state: greyOut(ScenarioNameA)
+			href "pageSetupScenarioB", title: getTitle(ScenarioNameB), description: "", state: greyOut(ScenarioNameB)
+			href "pageSetupScenarioC", title: getTitle(ScenarioNameC), description: "", state: greyOut(ScenarioNameC)
+			href "pageSetupScenarioD", title: getTitle(ScenarioNameD), description: "", state: greyOut(ScenarioNameD)
         }
         section([title:"Options", mobileOnly:true]) {
             label title:"Assign a name", required:false
-            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
+            href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
         }
     }
 }
 
 // Show "pageSetupScenarioA" page
-page(name: "pageSetupScenarioA") {
+def pageSetupScenarioA() {
+	dynamicPage(name: "pageSetupScenarioA") {
 		section("Devices included in the scenario") {
 			input "A_switch","capability.switch", title: "Monitor this light switch...", multiple: false, required: true
 			input "A_humidity", "capability.relativeHumidityMeasurement",title: "Monitor the following humidity sensor...", multiple: false, required: true
 			input "A_fan", "capability.switch", title: "Control the following ventilation fan...", multiple: false, required: true
 		}
 		section("Fan settings") {
-        	input "A_humidityDelta", title: "Ventilation fan turns on when lights are on and humidy rises", "number", required: false, description: "0-50%"
+        	input "A_humidityDelta", title: "Ventilation fan turns on when lights are on and humidity rises", "number", required: false, description: "0-50%"
         	input "A_fanTime", title: "Turn off ventilation fan after...", "enum", required: false, options: [[5:"5 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
 			input "A_manualFan", title: "If ventilation fan is turned on manually, turn off automatically using settings above", "bool", defaultValue: "false"
         }
@@ -88,16 +93,17 @@ page(name: "pageSetupScenarioA") {
             input "ScenarioNameA", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     	}
     }
-
+}
 // Show "pageSetupScenarioB" page
-page(name: "pageSetupScenarioB") {
+def pageSetupScenarioB() {
+	dynamicPage(name: "pageSetupScenarioB") {
 		section("Devices included in the scenario") {
     		input "B_switch","capability.switch", title: "Monitor this light switch...", multiple: false, required: true
         	input "B_humidity", "capability.relativeHumidityMeasurement",title: "Monitor the following humidity sensor...", multiple: false, required: true
         	input "B_fan", "capability.switch",title: "Control the following ventilation fan...", multiple: false, required: true
 		}
 		section("Fan settings") {
-        	input "B_humidityDelta", title: "Ventilation fan turns on when lights are on and humidy rises", "number", required: false, description: "0-50%"
+        	input "B_humidityDelta", title: "Ventilation fan turns on when lights are on and humidity rises", "number", required: false, description: "0-50%"
         	input "B_fanTime", title: "Turn off ventilation fan after...", "enum", required: false, options: [[5:"5 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
 			input "B_manualFan", title: "If ventilation fan is turned on manually, turn off automatically using settings above", "bool", defaultValue: "false"
         }
@@ -109,17 +115,18 @@ page(name: "pageSetupScenarioB") {
             input "ScenarioNameB", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     	}
     }
-
+}
 
 // Show "pageSetupScenarioC" page
-page(name: "pageSetupScenarioC") {
+def pageSetupScenarioC() {
+	dynamicPage(name: "pageSetupScenarioC") {
 		section("Devices included in the scenario") {
     		input "C_switch","capability.switch", title: "Monitor this light switch...", multiple: false, required: true
         	input "C_humidity", "capability.relativeHumidityMeasurement",title: "Monitor the following humidity sensor...", multiple: false, required: true
         	input "C_fan", "capability.switch",title: "Control the following ventilation fan...", multiple: false, required: true
 		}
 		section("Fan settings") {
-        	input "C_humidityDelta", title: "Ventilation fan turns on when lights are on and humidy rises", "number", required: false, description: "0-50%"
+        	input "C_humidityDelta", title: "Ventilation fan turns on when lights are on and humidity rises", "number", required: false, description: "0-50%"
         	input "C_fanTime", title: "Turn off ventilation fan after...", "enum", required: false, options: [[5:"5 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
 			input "C_manualFan", title: "If ventilation fan is turned on manually, turn off automatically using settings above", "bool", defaultValue: "false"
         }
@@ -131,17 +138,18 @@ page(name: "pageSetupScenarioC") {
             input "ScenarioNameC", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     	}
     }
-
+}
 
 // Show "pageSetupScenarioD" page
-page(name: "pageSetupScenarioD") {
+def pageSetupScenarioD() {
+	dynamicPage(name: "pageSetupScenarioA") {
 		section("Devices included in the scenario") {
     		input "D_switch","capability.switch", title: "Monitor this light switch...", multiple: false, required: true
         	input "D_humidity", "capability.relativeHumidityMeasurement",title: "Monitor the following humidity sensor...", multiple: false, required: true
         	input "D_fan", "capability.switch",title: "Control the following ventilation fan...", multiple: false, required: true
 		}
 		section("Fan settings") {
-        	input "D_humidityDelta", title: "Ventilation fan turns on when lights are on and humidy rises", "number", required: false, description: "0-50%"
+        	input "D_humidityDelta", title: "Ventilation fan turns on when lights are on and humidity rises", "number", required: false, description: "0-50%"
         	input "D_fanTime", title: "Turn off ventilation fan after...", "enum", required: false, options: [[5:"5 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
 			input "D_manualFan", title: "If ventilation fan is turned on manually, turn off automatically using settings above", "bool", defaultValue: "false"
         }
@@ -153,7 +161,7 @@ page(name: "pageSetupScenarioD") {
             input "ScenarioNameD", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     	}
     }
-
+}
 page(name: "pageAbout", title: "About ${textAppName()}") {
         section {
             paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
@@ -430,10 +438,6 @@ def greyOut(scenario){
 
 def getTitle(scenario) {
 	def title = scenario ? scenario : "Empty"
-}
-
-def getDesc(scenario) {
-	def desc = scenario ? "Tap to edit scenario" : "Tap to create a scenario"
 }
 
 private getDayOk(dayList) {
