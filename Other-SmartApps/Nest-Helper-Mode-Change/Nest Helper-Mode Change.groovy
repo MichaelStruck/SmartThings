@@ -76,11 +76,11 @@ def initialize() {
 def locationHandler(evt) {
     log.debug "Mode set to ${evt.value}"
     def currentState = tstat1.latestValue('presence')
-    if (currentState =="present" && awayMode && awayMode.contains(evt.value)) {
+    if (awayMode && awayMode.contains(evt.value)) {
     	tstat1.away()
         log.debug "Nest set to AWAY"
     }
-    if (currentState =="not present" && (!homeMode || (homeMode && homeMode.contains(evt.value)))) {
+    else if (currentState =="not present" && (!homeMode || (homeMode && homeMode.contains(evt.value)))) {
 	    tstat1.present()
         log.debug "Nest set to HOME"
     }
