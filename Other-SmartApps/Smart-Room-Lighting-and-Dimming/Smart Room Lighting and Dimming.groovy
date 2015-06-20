@@ -4,6 +4,7 @@
  *  Version - 1.0.0 5/4/15
  *  Version - 1.0.2 5/19/15 Code clean up for timeframe conditional check
  *  Version - 1.0.4 5/31/15 Added About screen from main menu
+ *  Version - 1.0.5 6/17/15 Code optimization
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -12,30 +13,9 @@
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
- *	The original licensing applies, with the following exceptions:
- *		1.	These modifications may NOT be used without freely distributing all these modifications freely
- *			and without limitation, in source form.	 The distribution may be met with a link to source code
- *			with these modifications.
- *		2.	These modifications may NOT be used, directly or indirectly, for the purpose of any type of
- *			monetary gain.	These modifications may not be used in a larger entity which is being sold,
- *			leased, or anything other than freely given.
- *		3.	To clarify 1 and 2 above, if you use these modifications, it must be a free project, and
- *			available to anyone with "no strings attached."	 (You may require a free registration on
- *			a free website or portal in order to distribute the modifications.)
- *		4.	The above listed exceptions to the original licensing do not apply to the holder of the
- *			copyright of the original work.	 The original copyright holder can use the modifications
- *			to hopefully improve their original work.  In that event, this author transfers all claim
- *			and ownership of the modifications to "SmartThings."
- *
- *
- *	Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- *	in compliance with the License. You may obtain a copy of the License at:
- *
- *		http://www.apache.org/licenses/LICENSE-2.0
- *
- *	Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
- *	on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
- *	for the specific language governing permissions and limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *  for the specific language governing permissions and limitations under the License.
  *
  */
  
@@ -84,7 +64,7 @@ def pageSetupScenarioA() {
 	}
 
 	section("Lighting settings") {
-        href "levelInputA", title: "Dimmer Options", description: getLevelLabel(A_levelDimOn, A_levelDimOff, A_dimmers, A_calcOn), state: greyOut(A_dimmers), refreshAfterSelection: true
+        href "levelInputA", title: "Dimmer Options", description: getLevelLabel(A_levelDimOn, A_levelDimOff, A_dimmers, A_calcOn), state: greyOut(A_dimmers)
         input name: "A_turnOnLux",type: "number",title: "Only run this scenario if lux is below...", multiple: false, required: false
         input name: "A_luxSensors",type: "capability.illuminanceMeasurement",title: "On these lux sensors",multiple: false,required: false
         input name: "A_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
@@ -93,8 +73,8 @@ def pageSetupScenarioA() {
 	section("Restrictions") {            
         input name: "A_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
         input name: "A_switchDisable", type:"bool", title: "Stop triggering if physical switches/dimmers are turned off...", defaultValue:false
-        href "timeIntervalInputA", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state: greyedOutTime(A_timeStart, A_timeEnd), refreshAfterSelection: true
-        input name:  "A_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
+        href "timeIntervalInputA", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state: greyedOutTime(A_timeStart, A_timeEnd)
+        input name:  "A_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         input name: "A_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
 	}
 	section("Name your scenario") {
@@ -114,7 +94,7 @@ def pageSetupScenarioB() {
 	}
 
 	section("Lighting settings") {
-        href "levelInputB", title: "Dimmer Options", description: getLevelLabel(B_levelDimOn, B_levelDimOff, B_dimmers, B_calcOn), state: greyOut(B_dimmers), refreshAfterSelection: true
+        href "levelInputB", title: "Dimmer Options", description: getLevelLabel(B_levelDimOn, B_levelDimOff, B_dimmers, B_calcOn), state: greyOut(B_dimmers)
         input name: "B_turnOnLux",type: "number",title: "Only run this scenario if lux is below...", multiple: false, required: false
         input name: "B_luxSensors",type: "capability.illuminanceMeasurement",title: "On these lux sensors",multiple: false,required: false
         input name: "B_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
@@ -123,7 +103,7 @@ def pageSetupScenarioB() {
 	section("Restrictions") {            
         input name: "B_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
         input name: "B_switchDisable", type:"bool", title: "Stop triggering if physical switches/dimmers are turned off...", defaultValue:false
-        href "timeIntervalInputB", title: "Only during a certain time...", description: getTimeLabel(B_timeStart, B_timeEnd), state: greyedOutTime(B_timeStart, B_timeEnd), refreshAfterSelection:true
+        href "timeIntervalInputB", title: "Only during a certain time...", description: getTimeLabel(B_timeStart, B_timeEnd), state: greyedOutTime(B_timeStart, B_timeEnd)
         input name: "B_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
         input name: "B_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
 	}
@@ -144,7 +124,7 @@ def pageSetupScenarioC() {
 	}
 
 	section("Lighting settings") {
-        href "levelInputC", title: "Dimmer Options", description: getLevelLabel(C_levelDimOn, C_levelDimOff, C_dimmers, C_calcOn), state: greyOut(C_dimmers), refreshAfterSelection: true
+        href "levelInputC", title: "Dimmer Options", description: getLevelLabel(C_levelDimOn, C_levelDimOff, C_dimmers, C_calcOn), state: greyOut(C_dimmers)
         input name: "C_turnOnLux",type: "number", title: "Only run this scenario if lux is below...", multiple: false, required: false
         input name: "C_luxSensors",type: "capability.illuminanceMeasurement",title: "On these lux sensors",multiple: false,required: false
         input name: "C_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
@@ -153,7 +133,7 @@ def pageSetupScenarioC() {
 	section("Restrictions") {            
         input name: "C_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
         input name: "C_switchDisable", type:"bool", title: "Stop triggering if physical switches/dimmers are turned off...", defaultValue:false
-        href "timeIntervalInputC", title: "Only during a certain time...", description: getTimeLabel(C_timeStart, C_timeEnd), state: greyedOutTime(C_timeStart, C_timeEnd), refreshAfterSelection:true
+        href "timeIntervalInputC", title: "Only during a certain time...", description: getTimeLabel(C_timeStart, C_timeEnd), state: greyedOutTime(C_timeStart, C_timeEnd)
         input name: "C_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
         input name: "C_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
 	}
@@ -173,7 +153,7 @@ def pageSetupScenarioD() {
 	}
 
 	section("Lighting settings") {
-		href "levelInputD", title: "Dimmer Options", description: getLevelLabel(D_levelDimOn, D_levelDimOff, D_dimmers, D_calcOn), state: greyOut(D_dimmers), refreshAfterSelection: true
+		href "levelInputD", title: "Dimmer Options", description: getLevelLabel(D_levelDimOn, D_levelDimOff, D_dimmers, D_calcOn), state: greyOut(D_dimmers)
         input name: "D_turnOnLux",type: "number",title: "Only run this scenario if lux is below...", multiple: false, required: false
         input name: "D_luxSensors",type: "capability.illuminanceMeasurement",title: "On these lux sensors",multiple: false,required: false
         input name: "D_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
@@ -182,7 +162,7 @@ def pageSetupScenarioD() {
 	section("Restrictions") {            
         input name: "D_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
         input name: "D_switchDisable", type:"bool", title: "Stop triggering if physical switches/dimmers are turned off...", defaultValue:false
-        href "timeIntervalInputD", title: "Only during a certain time...", description: getTimeLabel(D_timeStart, D_timeEnd), state: greyedOutTime(D_timeStart, D_timeEnd), refreshAfterSelection:true
+        href "timeIntervalInputD", title: "Only during a certain time...", description: getTimeLabel(D_timeStart, D_timeEnd), state: greyedOutTime(D_timeStart, D_timeEnd)
         input name: "D_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
         input name: "D_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
 	}
@@ -727,7 +707,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.3 (05/31/2015)"
+    def text = "Version 1.0.5 (06/17/2015)"
 }
 
 private def textCopyright() {
