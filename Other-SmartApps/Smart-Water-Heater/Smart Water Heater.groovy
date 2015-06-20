@@ -57,7 +57,7 @@ def mainPage() {
         section([mobileOnly:true], "Other Options") {
 			label(title: "Assign a name", required: false)
             mode title: "Set for specific mode(s)", required: false
-			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version,  license and instructions"
+			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
         }
     }
 }
@@ -245,3 +245,4 @@ private def textHelp() {
         "on and off. During the day, you have various options to determine whether to run the schedule " +
         "based on the status of various presence sensors."
 }
+
