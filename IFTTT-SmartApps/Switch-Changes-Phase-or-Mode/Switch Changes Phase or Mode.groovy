@@ -2,7 +2,7 @@
  *  Switch Activates Home Phrase or Mode
  *
  *  Copyright 2015 Michael Struck
- *  Version 1.0.0 6/6/15
+ *  Version 1.0.1 6/20/15
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -82,14 +82,18 @@ def updated() {
 
 def switchHandler(evt) {
 	if (evt.value == "on" && (phrase_on || onMode)) {
-    	location.helloHome.execute(settings.phrase_on)
+    	if (phrase_on){
+        	location.helloHome.execute(settings.phrase_on)
+        }
         if (onMode) {
         	changeMode(onMode)
         }
     } 
     else if (evt.value == "off" && (phrase_off || offMode)) {
-    	location.helloHome.execute(settings.phrase_off)
-    	if (offMode) {
+    	if (phrase_off){
+        	location.helloHome.execute(settings.phrase_off)
+    	}
+        if (offMode) {
         	changeMode(offMode)
         }
     }
@@ -112,7 +116,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.0 (06/06/2015)"
+    def text = "Version 1.0.1 (06/20/2015)"
 }
 
 private def textCopyright() {
