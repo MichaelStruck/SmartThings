@@ -1,31 +1,10 @@
 /**
  *  Say Good Night!
  *
- *  Version - 1.0.0 6/15/15
+ *  Version - 1.0.0 6/17/15
  *  
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
- *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License. You may obtain a copy of the License at:
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *	The original licensing applies, with the following exceptions:
- *		1.	These modifications may NOT be used without freely distributing all these modifications freely
- *			and without limitation, in source form.	 The distribution may be met with a link to source code
- *			with these modifications.
- *		2.	These modifications may NOT be used, directly or indirectly, for the purpose of any type of
- *			monetary gain.	These modifications may not be used in a larger entity which is being sold,
- *			leased, or anything other than freely given.
- *		3.	To clarify 1 and 2 above, if you use these modifications, it must be a free project, and
- *			available to anyone with "no strings attached."	 (You may require a free registration on
- *			a free website or portal in order to distribute the modifications.)
- *		4.	The above listed exceptions to the original licensing do not apply to the holder of the
- *			copyright of the original work.	 The original copyright holder can use the modifications
- *			to hopefully improve their original work.  In that event, this author transfers all claim
- *			and ownership of the modifications to "SmartThings."
- *
  *
  *	Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *	in compliance with the License. You may obtain a copy of the License at:
@@ -63,16 +42,10 @@ preferences {
 def pageMain() {
 	dynamicPage(name: "pageMain", install: true, uninstall: true) {
         section ("Good Night Scenarios") {
-            href "pageSetupScenarioA", title: getTitle(ScenarioNameA, 1), description: getDesc(A_sonos), state: greyOut(ScenarioNameA, A_sonos)
-        }
-        section{
-            href "pageSetupScenarioB", title: getTitle(ScenarioNameB, 2), description: getDesc(B_sonos), state: greyOut(ScenarioNameB, B_sonos)
-        }
-		section{
-            href "pageSetupScenarioC", title: getTitle(ScenarioNameC, 3), description: getDesc(C_sonos), state: greyOut(ScenarioNameC, C_sonos)
-        }
-        section{
-            href "pageSetupScenarioD", title: getTitle(ScenarioNameD, 4), description: getDesc(D_sonos), state: greyOut(ScenarioNameD, D_sonos)
+            href "pageSetupScenarioA", title: getTitle(ScenarioNameA, 1), description: "", state: greyOut(ScenarioNameA, A_sonos)
+            href "pageSetupScenarioB", title: getTitle(ScenarioNameB, 2), description: "", state: greyOut(ScenarioNameB, B_sonos)
+            href "pageSetupScenarioC", title: getTitle(ScenarioNameC, 3), description: "", state: greyOut(ScenarioNameC, C_sonos)
+            href "pageSetupScenarioD", title: getTitle(ScenarioNameD, 4), description: "", state: greyOut(ScenarioNameD, D_sonos)
         }
  		section([title:"Options", mobileOnly:true]) {
             input "zipCode", "text", title: "Zip Code", required: false
@@ -86,7 +59,7 @@ def pageMain() {
 def pageSetupScenarioA() {
     dynamicPage(name: "pageSetupScenarioA") {
 		section("Scenario Settings") {
-        	input "ScenarioNameA", "text", title: "Scenario Name", multiple: false, required: false
+        	input "ScenarioNameA", "text", title: "Scenario Name", required: false
 			input "A_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
     	}
 		section("Say 'Good Night' when...") {
@@ -102,7 +75,7 @@ def pageSetupScenarioA() {
             def phrases = location.helloHome?.getPhrases()*.label
             if (phrases) {
 				phrases.sort()
-				input "A_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				input "A_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, submitOnChange:true
 				if (A_phrase) {
                 	input "A_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
                 }
@@ -152,7 +125,7 @@ page(name: "pageWeatherSettingsA", title: "Weather Reporting Settings") {
 def pageSetupScenarioB() {
     dynamicPage(name: "pageSetupScenarioB") {
 		section("Scenario Settings") {
-        	input "ScenarioNameB", "text", title: "Scenario Name", multiple: false, required: false
+        	input "ScenarioNameB", "text", title: "Scenario Name", required: false
 			input "B_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
     	}
 		section("Say 'Good Night' when...") {
@@ -168,7 +141,7 @@ def pageSetupScenarioB() {
             def phrases = location.helloHome?.getPhrases()*.label
             if (phrases) {
 				phrases.sort()
-				input "B_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				input "B_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, submitOnChange:true
 				if (B_phrase){
                 	input "B_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
                 }
@@ -218,7 +191,7 @@ page(name: "pageWeatherSettingsB", title: "Weather Reporting Settings") {
 def pageSetupScenarioC() {
     dynamicPage(name: "pageSetupScenarioC") {
 		section("Scenario Settings") {
-        	input "ScenarioNameC", "text", title: "Scenario Name", multiple: false, required: false
+        	input "ScenarioNameC", "text", title: "Scenario Name", required: false
 			input "C_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
     	}
 		section("Say 'Good Night' when...") {
@@ -234,7 +207,7 @@ def pageSetupScenarioC() {
         	def phrases = location.helloHome?.getPhrases()*.label
             if (phrases) {
 				phrases.sort()
-				input "C_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				input "C_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, submitOnChange:true
 				if (C_phrase){
                 	input "C_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
                 }
@@ -284,7 +257,7 @@ page(name: "pageWeatherSettingsC", title: "Weather Reporting Settings") {
 def pageSetupScenarioD() {
     dynamicPage(name: "pageSetupScenarioD") {
 		section("Scenario Settings") {
-        	input "ScenarioNameD", "text", title: "Scenario Name", multiple: false, required: false
+        	input "ScenarioNameD", "text", title: "Scenario Name", required: false
 			input "D_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
     	}
 		section("Say 'Good Night' when...") {
@@ -300,7 +273,7 @@ def pageSetupScenarioD() {
             def phrases = location.helloHome?.getPhrases()*.label
             if (phrases) {
 				phrases.sort()
-				input "D_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				input "D_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, submitOnChange:true
 				if (D_phrase){
                 	input "D_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
                 }
@@ -637,10 +610,6 @@ def getMidnight() {
 	def midnightToday = timeToday("2000-01-01T23:59:59.999-0000", location.timeZone)
 }
 
-def getDesc(sonos) {
-	def desc = sonos ? "Tap to edit scenario" : "Tap to setup scenario"
-}
-
 def greyedOutTime(start, end){
 	def result = start || end ? "complete" : ""
 }
@@ -841,7 +810,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.0 (06/15/2015)"
+    def text = "Version 1.0.0 (06/17/2015)"
 }
 
 private def textCopyright() {
