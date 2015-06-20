@@ -11,6 +11,7 @@
  *  Version - 1.4.2 6/10/15 - To prevent accidental triggering of summary, put in a mode switch restriction
  *  Version - 1.4.3 6/12/15 - Syntax issues and minor GUI fixes
  *  Version - 1.4.4 6/15/15 - Fixed a bug with Phrase change at alarm time
+ *  Version - 1.4.5 6/17/15 - Code optimization, implemented the new submitOnChange option and a new license agreement change
  *
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -19,30 +20,9 @@
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
- *	The original licensing applies, with the following exceptions:
- *		1.	These modifications may NOT be used without freely distributing all these modifications freely
- *			and without limitation, in source form.	 The distribution may be met with a link to source code
- *			with these modifications.
- *		2.	These modifications may NOT be used, directly or indirectly, for the purpose of any type of
- *			monetary gain.	These modifications may not be used in a larger entity which is being sold,
- *			leased, or anything other than freely given.
- *		3.	To clarify 1 and 2 above, if you use these modifications, it must be a free project, and
- *			available to anyone with "no strings attached."	 (You may require a free registration on
- *			a free website or portal in order to distribute the modifications.)
- *		4.	The above listed exceptions to the original licensing do not apply to the holder of the
- *			copyright of the original work.	 The original copyright holder can use the modifications
- *			to hopefully improve their original work.  In that event, this author transfers all claim
- *			and ownership of the modifications to "SmartThings."
- *
- *
- *	Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- *	in compliance with the License. You may obtain a copy of the License at:
- *
- *		http://www.apache.org/licenses/LICENSE-2.0
- *
- *	Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
- *	on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
- *	for the specific language governing permissions and limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *  for the specific language governing permissions and limitations under the License.
  *
  */
  
@@ -75,29 +55,29 @@ def pageMain() {
         section ("Alarms") {
             href "pageSetupScenarioA", title: getTitle(ScenarioNameA, 1), description: getDesc(A_timeStart, A_sonos, A_day, A_mode), state: greyOut(ScenarioNameA, A_sonos, A_timeStart, A_alarmOn, A_alarmType)
             if (ScenarioNameA && A_sonos && A_timeStart && A_alarmType){
-            	input "A_alarmOn", "bool", title: "Enable this alarm?", defaultValue: "true", refreshAfterSelection:true
+            	input "A_alarmOn", "bool", title: "Enable this alarm?", defaultValue: "true", submitOnChange:true
             }
         }
         section {
             href "pageSetupScenarioB", title: getTitle(ScenarioNameB, 2), description: getDesc(B_timeStart, B_sonos, B_day, B_mode), state: greyOut(ScenarioNameB, B_sonos, B_timeStart, B_alarmOn, B_alarmType)
             if (ScenarioNameB && B_sonos && B_timeStart  && B_alarmType){
-            	input "B_alarmOn", "bool", title: "Enable this alarm?", defaultValue: "false", refreshAfterSelection:true
+            	input "B_alarmOn", "bool", title: "Enable this alarm?", defaultValue: "false", submitOnChange:true
         	}
         }
         section {
             href "pageSetupScenarioC", title: getTitle(ScenarioNameC, 3), description: getDesc(C_timeStart, C_sonos, C_day, C_mode), state: greyOut(ScenarioNameC, C_sonos, C_timeStart, C_alarmOn, C_alarmType)
             if (ScenarioNameC && C_sonos && C_timeStart && C_alarmType){
-            	input "C_alarmOn", "bool", title: "Enable this alarm?", defaultValue: "false", refreshAfterSelection:true
+            	input "C_alarmOn", "bool", title: "Enable this alarm?", defaultValue: "false", submitOnChange:true
         	}
         }
         section {
             href "pageSetupScenarioD", title: getTitle(ScenarioNameD, 4), description: getDesc(D_timeStart, D_sonos, D_day, D_mode), state: greyOut(ScenarioNameD, D_sonos, D_timeStart, D_alarmOn, D_alarmType)
             if (ScenarioNameD && D_sonos && D_timeStart && D_alarmType){
-            	input "D_alarmOn", "bool", title: "Enable this alarm?", defaultValue: "false", refreshAfterSelection:true
+            	input "D_alarmOn", "bool", title: "Enable this alarm?", defaultValue: "false", submitOnChange:true
             }
         }
         section([title:"Options", mobileOnly:true]) {
-            input "alarmSummary", "bool", title: "Enable Alarm Summary", defaultValue: "false", refreshAfterSelection:true
+            input "alarmSummary", "bool", title: "Enable Alarm Summary", defaultValue: "false", submitOnChange:true
             if (alarmSummary) {
             	href "pageAlarmSummary", title: "Alarm Summary Settings", description: "Tap to configure alarm summary settings", state: "complete"
             }
@@ -121,19 +101,19 @@ def pageSetupScenarioA() {
     dynamicPage(name: "pageSetupScenarioA") {
 		section("Alarm settings") {
         	input "ScenarioNameA", "text", title: "Scenario Name", multiple: false, required: true
-			input "A_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true, refreshAfterSelection:true
+			input "A_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true, submitOnChange:true
             input "A_volume", "number", title: "Alarm volume", description: "0-100%", required: false
         	input "A_timeStart", "time", title: "Time to trigger alarm", required: true
         	input "A_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Alarm on certain days of the week...", multiple: true, required: false
     		input "A_mode", "mode", title: "Alarm only during the following modes...", multiple: true, required: false
-    		input "A_alarmType", "enum", title: "Select a primary alarm type...", multiple: false, required: true, options: [[1:"Alarm sound (up to 20 seconds)"],[2:"Voice Greeting"],[3:"Music track/Internet Radio"]], refreshAfterSelection:true
+    		input "A_alarmType", "enum", title: "Select a primary alarm type...", multiple: false, required: true, options: [[1:"Alarm sound (up to 20 seconds)"],[2:"Voice Greeting"],[3:"Music track/Internet Radio"]], submitOnChange:true
             
             if (A_alarmType != "3") {
             	if (A_alarmType == "1"){
-                	input "A_secondAlarm", "enum", title: "Select a second alarm after the first is completed", multiple: false, required: false, options: [[1:"Voice Greeting"],[2:"Music track/Internet Radio"]], refreshAfterSelection:true
+                	input "A_secondAlarm", "enum", title: "Select a second alarm after the first is completed", multiple: false, required: false, options: [[1:"Voice Greeting"],[2:"Music track/Internet Radio"]], submitOnChange:true
                 }
                 if (A_alarmType == "2"){
-                	input "A_secondAlarmMusic", "bool", title: "Play a track after voice greeting", defaultValue: "false", required: false, refreshAfterSelection:true
+                	input "A_secondAlarmMusic", "bool", title: "Play a track after voice greeting", defaultValue: "false", required: false, submitOnChange:true
                 }
         	}
         }
@@ -155,9 +135,9 @@ def pageSetupScenarioA() {
         	}
       	}
         section("Devices to control in this alarm scenario") {
-			input "A_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false, refreshAfterSelection:true
-			href "pageDimmersA", title: "Dimmer Settings", description: dimmerDesc(A_dimmers), state: greyOutOption(A_dimmers), refreshAfterSelection:true
-            href "pageThermostatsA", title: "Thermostat Settings", description: thermostatDesc(A_thermostats, A_temperatureH, A_temperatureC), state: greyOutOption(A_thermostats), refreshAfterSelection:true
+			input "A_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false, submitOnChange:true
+			href "pageDimmersA", title: "Dimmer Settings", description: dimmerDesc(A_dimmers), state: greyOutOption(A_dimmers), submitOnChange:true
+            href "pageThermostatsA", title: "Thermostat Settings", description: thermostatDesc(A_thermostats, A_temperatureH, A_temperatureC), state: greyOutOption(A_thermostats), submitOnChange:true
         	if ((A_switches || A_dimmers || A_thermostats) && (A_alarmType == "2" || (A_alarmType == "1" && A_secondAlarm =="1"))){
             	input "A_confirmSwitches", "bool", title: "Confirm switches/thermostats status in voice message", defaultValue: "false"
             }
@@ -166,12 +146,12 @@ def pageSetupScenarioA() {
             def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
 				phrases.sort()
-				input "A_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				input "A_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false, submitOnChange:true
 				if (A_phrase  && (A_alarmType == "2" || (A_alarmType == "1" && A_secondAlarm =="1"))){
                 	input "A_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
             	}
             }
-            input "A_triggerMode", "mode", title: "Alarm triggers the following mode", required: false, refreshAfterSelection:true
+            input "A_triggerMode", "mode", title: "Alarm triggers the following mode", required: false, submitOnChange:true
            	if (A_triggerMode  && (A_alarmType == "2" || (A_alarmType == "1" && A_secondAlarm =="1"))){
             	input "A_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
             }
@@ -188,7 +168,7 @@ page(name: "pageDimmersA", title: "Dimmer Settings") {
 
 page(name: "pageThermostatsA", title: "Thermostat Settings") {
 	section {
-       	input "A_thermostats", "capability.thermostat", title: "Thermostats to control...", multiple: true, required: false
+       	input "A_thermostats", "capability.thermostat", title: "Thermostat to control...", multiple: false, required: false
 	}
     section {
         input "A_temperatureH", "number", title: "Heating setpoint", required: false, description: "Temperature when in heat mode"
@@ -214,19 +194,19 @@ def pageSetupScenarioB() {
     dynamicPage(name: "pageSetupScenarioB") {
 		section("Alarm settings") {
         	input "ScenarioNameB", "text", title: "Scenario Name", multiple: false, required: true
-			input "B_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true, refreshAfterSelection:true
+			input "B_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true, submitOnChange:true
             input "B_volume", "number", title: "Alarm volume", description: "0-100%", required: false
         	input "B_timeStart", "time", title: "Time to trigger alarm", required: true
         	input "B_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Alarm on certain days of the week...", multiple: true, required: false
     		input "B_mode", "mode", title: "Alarm only during the following modes...", multiple: true, required: false
-    		input "B_alarmType", "enum", title: "Select a primary alarm type...", multiple: false, required: true, options: [[1:"Alarm sound (up to 20 seconds)"],[2:"Voice Greeting"],[3:"Music track/Internet Radio"]], refreshAfterSelection:true
+    		input "B_alarmType", "enum", title: "Select a primary alarm type...", multiple: false, required: true, options: [[1:"Alarm sound (up to 20 seconds)"],[2:"Voice Greeting"],[3:"Music track/Internet Radio"]], submitOnChange:true
             
             if (B_alarmType != "3") {
             	if (B_alarmType == "1"){
-                	input "B_secondAlarm", "enum", title: "Select a second alarm after the first is completed", multiple: false, required: false, options: [[1:"Voice Greeting"],[2:"Music track/Internet Radio"]], refreshAfterSelection:true
+                	input "B_secondAlarm", "enum", title: "Select a second alarm after the first is completed", multiple: false, required: false, options: [[1:"Voice Greeting"],[2:"Music track/Internet Radio"]], submitOnChange:true
                 }
                 if (B_alarmType == "2"){
-                	input "B_secondAlarmMusic", "bool", title: "Play a track after voice greeting", defaultValue: "false", required: false, refreshAfterSelection:true
+                	input "B_secondAlarmMusic", "bool", title: "Play a track after voice greeting", defaultValue: "false", required: false, submitOnChange:true
                 }
         	}
         }
@@ -248,9 +228,9 @@ def pageSetupScenarioB() {
         	}
       	}
         section("Devices to control in this alarm scenario") {
-			input "B_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false, refreshAfterSelection:true
-			href "pageDimmersB", title: "Dimmer Settings", description: dimmerDesc(B_dimmers), state: greyOutOption(B_dimmers), refreshAfterSelection:true
-            href "pageThermostatsB", title: "Thermostat Settings", description: thermostatDesc(B_thermostats, B_temperatureH, B_temperatureC), state: greyOutOption(B_thermostats), refreshAfterSelection:true
+			input "B_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false, submitOnChange:true
+			href "pageDimmersB", title: "Dimmer Settings", description: dimmerDesc(B_dimmers), state: greyOutOption(B_dimmers), submitOnChange:true
+            href "pageThermostatsB", title: "Thermostat Settings", description: thermostatDesc(B_thermostats, B_temperatureH, B_temperatureC), state: greyOutOption(B_thermostats), submitOnChange:true
         	if ((B_switches || B_dimmers || B_thermostats) && (B_alarmType == "2" || (B_alarmType == "1" && B_secondAlarm =="1"))){
             	input "B_confirmSwitches", "bool", title: "Confirm switches/thermostats status in voice message", defaultValue: "false"
             }
@@ -259,12 +239,12 @@ def pageSetupScenarioB() {
             def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
 				phrases.sort()
-				input "B_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				input "B_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false, submitOnChange:true
 				if (B_phrase  && (B_alarmType == "2" || (B_alarmType == "1" && B_secondAlarm =="1"))){
                 	input "B_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
             	}
             }
-            input "B_triggerMode", "mode", title: "Alarm triggers the following mode", required: false, refreshAfterSelection:true
+            input "B_triggerMode", "mode", title: "Alarm triggers the following mode", required: false, submitOnChange:true
            	if (B_triggerMode  && (B_alarmType == "2" || (B_alarmType == "1" && B_secondAlarm =="1"))){
             	input "B_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
             }
@@ -281,7 +261,7 @@ page(name: "pageDimmersB", title: "Dimmer Settings") {
 
 page(name: "pageThermostatsB", title: "Thermostat Settings") {
 	section {
-       	input "B_thermostats", "capability.thermostat", title: "Thermostats to control...", multiple: true, required: false
+       	input "B_thermostats", "capability.thermostat", title: "Thermostat to control...", multiple: false, required: false
 	}
     section {
         input "B_temperatureH", "number", title: "Heating setpoint", required: false, description: "Temperature when in heat mode"
@@ -307,19 +287,19 @@ def pageSetupScenarioC() {
     dynamicPage(name: "pageSetupScenarioC") {
 		section("Alarm settings") {
         	input "ScenarioNameC", "text", title: "Scenario Name", multiple: false, required: true
-			input "C_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true, refreshAfterSelection:true
+			input "C_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true, submitOnChange:true
             input "C_volume", "number", title: "Alarm volume", description: "0-100%", required: false
         	input "C_timeStart", "time", title: "Time to trigger alarm", required: true
         	input "C_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Alarm on certain days of the week...", multiple: true, required: false
     		input "C_mode", "mode", title: "Alarm only during the following modes...", multiple: true, required: false
-    		input "C_alarmType", "enum", title: "Select a primary alarm type...", multiple: false, required: true, options: [[1:"Alarm sound (up to 20 seconds)"],[2:"Voice Greeting"],[3:"Music track/Internet Radio"]], refreshAfterSelection:true
+    		input "C_alarmType", "enum", title: "Select a primary alarm type...", multiple: false, required: true, options: [[1:"Alarm sound (up to 20 seconds)"],[2:"Voice Greeting"],[3:"Music track/Internet Radio"]], submitOnChange:true
             
             if (C_alarmType != "3") {
             	if (C_alarmType == "1"){
-                	input "C_secondAlarm", "enum", title: "Select a second alarm after the first is completed", multiple: false, required: false, options: [[1:"Voice Greeting"],[2:"Music track/Internet Radio"]], refreshAfterSelection:true
+                	input "C_secondAlarm", "enum", title: "Select a second alarm after the first is completed", multiple: false, required: false, options: [[1:"Voice Greeting"],[2:"Music track/Internet Radio"]], submitOnChange:true
                 }
                 if (C_alarmType == "2"){
-                	input "C_secondAlarmMusic", "bool", title: "Play a track after voice greeting", defaultValue: "false", required: false, refreshAfterSelection:true
+                	input "C_secondAlarmMusic", "bool", title: "Play a track after voice greeting", defaultValue: "false", required: false, submitOnChange:true
                 }
         	}
         }
@@ -342,9 +322,9 @@ def pageSetupScenarioC() {
         	}
       	}
         section("Devices to control in this alarm scenario") {
-			input "C_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false, refreshAfterSelection:true
-			href "pageDimmersC", title: "Dimmer Settings", description: dimmerDesc(C_dimmers), state: greyOutOption(C_dimmers), refreshAfterSelection:true
-            href "pageThermostatsC", title: "Thermostat Settings", description: thermostatDesc(C_thermostats, C_temperatureH, C_temperatureC), state: greyOutOption(C_thermostats), refreshAfterSelection:true
+			input "C_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false, submitOnChange:true
+			href "pageDimmersC", title: "Dimmer Settings", description: dimmerDesc(C_dimmers), state: greyOutOption(C_dimmers), submitOnChange:true
+            href "pageThermostatsC", title: "Thermostat Settings", description: thermostatDesc(C_thermostats, C_temperatureH, C_temperatureC), state: greyOutOption(C_thermostats), submitOnChange:true
         	if ((C_switches || C_dimmers || C_thermostats) && (C_alarmType == "2" || (C_alarmType == "1" && C_secondAlarm =="1"))){
             	input "C_confirmSwitches", "bool", title: "Confirm switches/thermostats status in voice message", defaultValue: "false"
             }
@@ -353,12 +333,12 @@ def pageSetupScenarioC() {
             def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
 				phrases.sort()
-				input "C_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				input "C_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false, submitOnChange:true
 				if (C_phrase  && (C_alarmType == "2" || (C_alarmType == "1" && C_secondAlarm =="1"))){
                 	input "C_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
             	}
             }
-            input "C_triggerMode", "mode", title: "Alarm triggers the following mode", required: false, refreshAfterSelection:true
+            input "C_triggerMode", "mode", title: "Alarm triggers the following mode", required: false, submitOnChange:true
            	if (C_triggerMode  && (C_alarmType == "2" || (C_alarmType == "1" && C_secondAlarm =="1"))){
             	input "C_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
             }
@@ -375,7 +355,7 @@ page(name: "pageDimmersC", title: "Dimmer Settings") {
 
 page(name: "pageThermostatsC", title: "Thermostat Settings") {
 	section {
-       	input "C_thermostats", "capability.thermostat", title: "Thermostats to control...", multiple: true, required: false
+       	input "C_thermostats", "capability.thermostat", title: "Thermostat to control...", multiple: false, required: false
 	}
     section {
         input "C_temperatureH", "number", title: "Heating setpoint", required: false, description: "Temperature when in heat mode"
@@ -401,19 +381,19 @@ def pageSetupScenarioD() {
     dynamicPage(name: "pageSetupScenarioD") {
 		section("Alarm settings") {
         	input "ScenarioNameD", "text", title: "Scenario Name", multiple: false, required: true
-			input "D_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true, refreshAfterSelection:true
+			input "D_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true, submitOnChange:true
             input "D_volume", "number", title: "Alarm volume", description: "0-100%", required: false
         	input "D_timeStart", "time", title: "Time to trigger alarm", required: true
         	input "D_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Alarm on certain days of the week...", multiple: true, required: false
     		input "D_mode", "mode", title: "Alarm only during the following modes...", multiple: true, required: false
-    		input "D_alarmType", "enum", title: "Select a primary alarm type...", multiple: false, required: true, options: [[1:"Alarm sound (up to 20 seconds)"],[2:"Voice Greeting"],[3:"Music track/Internet Radio"]], refreshAfterSelection:true
+    		input "D_alarmType", "enum", title: "Select a primary alarm type...", multiple: false, required: true, options: [[1:"Alarm sound (up to 20 seconds)"],[2:"Voice Greeting"],[3:"Music track/Internet Radio"]], submitOnChange:true
             
             if (D_alarmType != "3") {
             	if (D_alarmType == "1"){
-                	input "D_secondAlarm", "enum", title: "Select a second alarm after the first is completed", multiple: false, required: false, options: [[1:"Voice Greeting"],[2:"Music track/Internet Radio"]], refreshAfterSelection:true
+                	input "D_secondAlarm", "enum", title: "Select a second alarm after the first is completed", multiple: false, required: false, options: [[1:"Voice Greeting"],[2:"Music track/Internet Radio"]], submitOnChange:true
                 }
                 if (D_alarmType == "2"){
-                	input "D_secondAlarmMusic", "bool", title: "Play a track after voice greeting", defaultValue: "false", required: false, refreshAfterSelection:true
+                	input "D_secondAlarmMusic", "bool", title: "Play a track after voice greeting", defaultValue: "false", required: false, submitOnChange:true
                 }
         	}
         }
@@ -436,9 +416,9 @@ def pageSetupScenarioD() {
         	}
       	}
         section("Devices to control in this alarm scenario") {
-			input "D_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false, refreshAfterSelection:true
-			href "pageDimmersD", title: "Dimmer Settings", description: dimmerDesc(D_dimmers), state: greyOutOption(D_dimmers), refreshAfterSelection:true
-            href "pageThermostatsD", title: "Thermostat Settings", description: thermostatDesc(D_thermostats, D_temperatureH, D_temperatureC), state: greyOutOption(D_thermostats), refreshAfterSelection:true
+			input "D_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false, submitOnChange:true
+			href "pageDimmersD", title: "Dimmer Settings", description: dimmerDesc(D_dimmers), state: greyOutOption(D_dimmers), submitOnChange:true
+            href "pageThermostatsD", title: "Thermostat Settings", description: thermostatDesc(D_thermostats, D_temperatureH, D_temperatureC), state: greyOutOption(D_thermostats), submitOnChange:true
         	if ((D_switches || D_dimmers || D_thermostats) && (D_alarmType == "2" || (D_alarmType == "1" && D_secondAlarm =="1"))){
             	input "D_confirmSwitches", "bool", title: "Confirm switches/thermostats status in voice message", defaultValue: "false"
             }
@@ -447,12 +427,12 @@ def pageSetupScenarioD() {
             def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
 				phrases.sort()
-				input "D_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false, refreshAfterSelection:true
+				input "D_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false, submitOnChange:true
 				if (D_phrase  && (D_alarmType == "2" || (D_alarmType == "1" && D_secondAlarm =="1"))){
                 	input "D_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
             	}
             }
-            input "D_triggerMode", "mode", title: "Alarm triggers the following mode", required: false, refreshAfterSelection:true
+            input "D_triggerMode", "mode", title: "Alarm triggers the following mode", required: false, submitOnChange:true
            	if (D_triggerMode  && (D_alarmType == "2" || (D_alarmType == "1" && D_secondAlarm =="1"))){
             	input "D_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
             }
@@ -469,7 +449,7 @@ page(name: "pageDimmersD", title: "Dimmer Settings") {
 
 page(name: "pageThermostatsD", title: "Thermostat Settings") {
 	section {
-       	input "D_thermostats", "capability.thermostat", title: "Thermostats to control...", multiple: true, required: false
+       	input "D_thermostats", "capability.thermostat", title: "Thermostat to control...", multiple: false, required: false
 	}
     section {
         input "D_temperatureH", "number", title: "Heating setpoint", required: false, description: "Temperature when in heat mode"
@@ -1325,7 +1305,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.4.4 (06/15/2015)"
+    def text = "Version 1.4.5 (06/17/2015)"
 }
 
 private def textCopyright() {
@@ -1350,10 +1330,11 @@ private def textLicense() {
 private def textHelp() {
 	def text =
     	"Within each alarm scenario, choose a Sonos speaker, an alarm time and alarm type along with " +
-        "switches, dimmers and thermostats to control when the alarm is triggered. Hello, Home phrases and modes can be triggered at alarm time. "+
+        "switches, dimmers and thermostat to control when the alarm is triggered. Hello, Home phrases and modes can be triggered at alarm time. "+
         "You also have the option of setting up different alarm sounds, tracks and a personalized spoken greeting that can include a weather report. " +
         "Variables that can be used in the voice greeting include %day%, %time% and %date%.\n\n"+
         "From the main SmartApp convenience page, tapping the 'Talking Alarm Clock' icon (if enabled within the app) will "+
         "speak a summary of the alarms enabled or disabled without having to go into the application itself. This " +
         "functionality is optional and can be configured from the main setup page."
 }
+
