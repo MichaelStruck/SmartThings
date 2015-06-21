@@ -1,7 +1,7 @@
 /**
  *  Say Good Night!
  *
- *  Version - 1.0.0 6/17/15
+ *  Version - 1.0.1 6/20/15
  *  
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -36,6 +36,15 @@ preferences {
     page name: "pageSetupScenarioB"
     page name: "pageSetupScenarioC"
     page name: "pageSetupScenarioD"
+    page name: "pageWeatherSettingsA"
+    page name: "pageWeatherSettingsB"
+    page name: "pageWeatherSettingsC"
+    page name: "pageWeatherSettingsD"
+    page name: "pageDoorsWindowsA"  
+    page name: "pageDoorsWindowsB"
+    page name: "pageDoorsWindowsC"
+    page name: "pageDoorsWindowsD"
+    
 }
 
 // Show setup page
@@ -66,10 +75,11 @@ def pageSetupScenarioA() {
 			input "A_switches", "capability.switch",title: "Any of these switches are turned off...", multiple: true, required: false
             href "pageButtonControlA", title: "A button is pressed on a controller...", description: buttonDesc(A_buttonDevice, A_buttonPress), state: greyOut(A_buttonDevice, A_buttonPress)
         }
-        section("Other Options") {
+        section("Voice Reporting Options") {
         	input "A_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
         	href "pageWeatherSettingsA", title: "Weather Reporting Settings", description: getWeatherDesc(A_weatherReport, A_includeSunrise, A_includeSunset, A_includeTemp, A_humidity, A_localTemp), state: greyOut1(A_weatherReport, A_includeSunrise, A_includeSunset, A_includeTemp, A_humidity, A_localTemp)
-        	input "A_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
+        	href "pageDoorsWindowsA", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(A_contactSensors,A_locks),state: greyOut2(A_contactSensors, A_locks)
+            input "A_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
         }
         section{
             def phrases = location.helloHome?.getPhrases()*.label
@@ -82,15 +92,15 @@ def pageSetupScenarioA() {
             }
         }
         section{
-        	input "A_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
+        	input "A_triggerMode", "mode", title: "Trigger the following mode", required: false, submitOnChange:true
             if (A_triggerMode){
             	input "A_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
             }
         }
     	section("Restrictions") {            
-        	input name: "A_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
-        	href "timeIntervalInputA", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state: greyedOutTime(A_timeStart, A_timeEnd)
-        	input name:  "A_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
+        	input "A_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
+        	href "timeIntervalInputA", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state:greyOut2(A_timeStart, A_timeEnd)
+        	input "A_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         	input "A_mode", "mode", title: "Only during certain modes...", multiple: true, required: false
         }
     } 
@@ -110,16 +120,29 @@ page(name: "timeIntervalInputA", title: "Only during a certain time") {
 	}
 }
 
-page(name: "pageWeatherSettingsA", title: "Weather Reporting Settings") {
-	section {
-        input "A_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
-        input "A_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
-        input "A_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
-        input "A_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
-        input "A_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
-    	input "A_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
+def pageWeatherSettingsA() {
+    dynamicPage(name: "pageWeatherSettingsA", title: "Weather Reporting Settings") {
+		section {
+        	input "A_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
+        	input "A_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
+        	input "A_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
+        	input "A_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
+        	input "A_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
+    		input "A_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
+		}
 	}
 }
+
+def pageDoorsWindowsA() {
+    dynamicPage(name: "pageDoorsWindowsA", title: "Doors/Windows Reporting Settings"){
+	section {
+  		input "A_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
+        input "A_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
+       	input "A_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
+   	}
+}
+}
+
 
 // Show "pageSetupScenarioB" page
 def pageSetupScenarioB() {
@@ -132,10 +155,11 @@ def pageSetupScenarioB() {
 			input "B_switches", "capability.switch",title: "Any of these switches are turned off...", multiple: true, required: false
             href "pageButtonControlB", title: "A button is pressed on a controller...", description: buttonDesc(B_buttonDevice, B_buttonPress), state: greyOut(B_buttonDevice, B_buttonPress)
         }
-        section("Other Options") {
+        section("Voice Reporting Options") {
         	input "B_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
-            href "pageWeatherSettingsB", title: "Weather Reporting Settings", description: getWeatherDesc(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp), state: greyOut1(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp)
-        	input "B_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
+        	href "pageWeatherSettingsB", title: "Weather Reporting Settings", description: getWeatherDesc(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp), state: greyOut1(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp)
+        	href "pageDoorsWindowsB", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(B_contactSensors,B_locks),state: greyOut2(B_contactSensors, B_locks)
+            input "B_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
         }
         section{
             def phrases = location.helloHome?.getPhrases()*.label
@@ -148,14 +172,14 @@ def pageSetupScenarioB() {
             }
 		}
         section{
-            input "B_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
+            input "B_triggerMode", "mode", title: "Trigger the following mode", required: false, submitOnChange:true
             if (B_triggerMode){
             	input "B_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
             }
 		}
     	section("Restrictions") {            
         	input name: "B_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
-        	href "timeIntervalInputB", title: "Only during a certain time...", description: getTimeLabel(B_timeStart, B_timeEnd), state: greyedOutTime(B_timeStart, B_timeEnd)
+        	href "timeIntervalInputB", title: "Only during a certain time...", description: getTimeLabel(B_timeStart, B_timeEnd), state:greyOut2(B_timeStart, B_timeEnd)
         	input name:  "B_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         	input "B_mode", "mode", title: "Only during certain modes...", multiple: true, required: false
         }
@@ -176,7 +200,8 @@ page(name: "timeIntervalInputB", title: "Only during a certain time") {
 	}
 }
 
-page(name: "pageWeatherSettingsB", title: "Weather Reporting Settings") {
+def pageWeatherSettingsB() {
+    dynamicPage(name:"pageWeatherSettingsB", title: "Weather Reporting Settings") {
 	section {
 		input "B_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
         input "B_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
@@ -186,7 +211,17 @@ page(name: "pageWeatherSettingsB", title: "Weather Reporting Settings") {
     	input "B_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
 	}
 }
+}
 
+def pageDoorsWindowsB() {
+    dynamicPage(name: "pageDoorsWindowsB", title: "Doors/Windows Reporting Settings"){
+	section {
+  		input "B_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
+        input "B_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
+       	input "B_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
+   	}
+}
+}
 // Show "pageSetupScenarioC" page
 def pageSetupScenarioC() {
     dynamicPage(name: "pageSetupScenarioC") {
@@ -198,10 +233,11 @@ def pageSetupScenarioC() {
 			input "C_switches", "capability.switch",title: "Any of these switches are turned off...", multiple: true, required: false
             href "pageButtonControlC", title: "A button is pressed on a controller...", description: buttonDesc(C_buttonDevice, C_buttonPress), state: greyOut(C_buttonDevice, C_buttonPress)
         }
-        section("Other Options") {
+        section("Voice Reporting Options") {
         	input "C_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
             href "pageWeatherSettingsC", title: "Weather Reporting Settings",description: getWeatherDesc(C_weatherReport, C_includeSunrise, C_includeSunset, C_includeTemp, A_humidity, C_localTemp), state: greyOut1(C_weatherReport, C_includeSunrise, C_includeSunset, C_includeTemp, C_humidity, C_localTemp)
-			input "C_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
+			href "pageDoorsWindowsC", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(C_contactSensors,C_locks),state: greyOut2(C_contactSensors, C_locks)
+            input "C_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
         }
 		section{    
         	def phrases = location.helloHome?.getPhrases()*.label
@@ -214,14 +250,14 @@ def pageSetupScenarioC() {
             }
 		}
         section{
-            input "C_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
+            input "C_triggerMode", "mode", title: "Trigger the following mode", required: false, submitOnChange:true
             if (C_triggerMode){
             	input "C_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
             }
 		}
     	section("Restrictions") {            
         	input name: "C_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
-        	href "timeIntervalInputC", title: "Only during a certain time...", description: getTimeLabel(C_timeStart, C_timeEnd), state: greyedOutTime(C_timeStart, C_timeEnd)
+        	href "timeIntervalInputC", title: "Only during a certain time...", description: getTimeLabel(C_timeStart, C_timeEnd), state: greyOut2(C_timeStart, C_timeEnd)
         	input name:  "C_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         	input "C_mode", "mode", title: "Only during certain modes...", multiple: true, required: false
         }
@@ -242,7 +278,8 @@ page(name: "timeIntervalInputC", title: "Only during a certain time") {
 	}
 }
 
-page(name: "pageWeatherSettingsC", title: "Weather Reporting Settings") {
+def pageWeatherSettingsC() {
+    dynamicPage(name: "pageWeatherSettingsC", title: "Weather Reporting Settings") {
 	section {
 		input "C_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
         input "C_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
@@ -251,6 +288,17 @@ page(name: "pageWeatherSettingsC", title: "Weather Reporting Settings") {
         input "C_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
     	input "C_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
 	}
+}
+}
+
+def pageDoorsWindowsC() {
+    dynamicPage(name: "pageDoorsWindowsC", title: "Doors/Windows Reporting Settings"){
+	section {
+    	input "C_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
+        input "C_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
+       	input "C_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
+   	}
+}
 }
 
 // Show "pageSetupScenarioD" page
@@ -264,10 +312,11 @@ def pageSetupScenarioD() {
 			input "D_switches", "capability.switch",title: "Any of these switches are turned off...", multiple: true, required: false
             href "pageButtonControlD", title: "A button is pressed on a controller...", description: buttonDesc(D_buttonDevice, D_buttonPress), state: greyOut(D_buttonDevice, D_buttonPress)
         }
-        section("Other Options") {
+        section("Voice Reporting Options") {
         	input "D_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
         	href "pageWeatherSettingsD", title: "Weather Reporting Settings", description: getWeatherDesc(D_weatherReport, D_includeSunrise, D_includeSunset, D_includeTemp, D_humidity, D_localTemp), state: greyOut1(D_weatherReport, D_includeSunrise, D_includeSunset, D_includeTemp, D_humidity, D_localTemp)
-        	input "D_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
+        	href "pageDoorsWindowsD", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(D_contactSensors,D_locks),state: greyOut2(D_contactSensors, D_locks)
+            input "D_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
         }
         section{
             def phrases = location.helloHome?.getPhrases()*.label
@@ -280,14 +329,14 @@ def pageSetupScenarioD() {
             }
 		}
         section{
-            input "D_triggerMode", "mode", title: "Trigger the following mode", required: false, refreshAfterSelection:true
+            input "D_triggerMode", "mode", title: "Trigger the following mode", required: false, submitOnChange:true
             if (D_triggerMode){
             	input "D_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
             }
 		}
     	section("Restrictions") {            
         	input name: "D_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
-        	href "timeIntervalInputD", title: "Only during a certain time...", description: getTimeLabel(D_timeStart, D_timeEnd), state: greyedOutTime(D_timeStart, D_timeEnd)
+        	href "timeIntervalInputD", title: "Only during a certain time...", description: getTimeLabel(D_timeStart, D_timeEnd), state:greyOut2(D_timeStart, D_timeEnd)
         	input name:  "D_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         	input "D_mode", "mode", title: "Only during certain modes...", multiple: true, required: false
         }
@@ -308,7 +357,8 @@ page(name: "timeIntervalInputD", title: "Only during a certain time") {
 	}
 }
 
-page(name: "pageWeatherSettingsD", title: "Weather Reporting Settings") {
+def pageWeatherSettingsD() {
+    dynamicPage(name: "pageWeatherSettingsD", title: "Weather Reporting Settings") {
 	section {
 		input "D_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
         input "D_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
@@ -317,6 +367,17 @@ page(name: "pageWeatherSettingsD", title: "Weather Reporting Settings") {
         input "D_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
     	input "D_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
 	}
+}
+}
+
+def pageDoorsWindowsD() {
+    dynamicPage(name: "pageDoorsWindowsD", title: "Doors/Windows Reporting Settings"){
+	section {
+  		input "D_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
+        input "D_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
+       	input "D_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
+   	}
+}
 }
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
@@ -400,6 +461,10 @@ def scenario_A(evt) {
         	}
         }
         
+        if (A_contactSensors || A_locks){
+        	getDoorsConditions(A_reportAll, A_contactSensors, A_locks, 1)
+        }
+        
         if (A_msg) {
 			getGreeting(A_msg, 1)
 		} 
@@ -454,6 +519,10 @@ def scenario_B(evt) {
 			if (B_confirmMode){
             	getModeConfirmation(B_triggerMode, 2)
         	}
+        }
+        
+        if (B_contactSensors || B_locks){
+        	getDoorsConditions(B_reportAll, B_contactSensors, B_locks, 2)
         }
         
         if (B_msg) {
@@ -512,6 +581,10 @@ def scenario_C(evt) {
         	}
         }
         
+        if (C_contactSensors || C_locks){
+        	getDoorsConditions(C_reportAll, C_contactSensors, C_locks, 3)
+        }
+        
         if (C_msg) {
 			getGreeting(C_msg, 3)
 		} 
@@ -567,6 +640,10 @@ def scenario_D(evt) {
             	getModeConfirmation(D_triggerMode, 4)
         	}
         }
+        
+        if (D_contactSensors || D_locks){
+        	getDoorsConditions(D_reportAll, D_contactSensors, D_locks, 4)
+        }
 
         if (D_msg) {
 			getGreeting(D_msg, 4)
@@ -610,16 +687,16 @@ def getMidnight() {
 	def midnightToday = timeToday("2000-01-01T23:59:59.999-0000", location.timeZone)
 }
 
-def greyedOutTime(start, end){
-	def result = start || end ? "complete" : ""
+def greyOut(param1, param2){
+	def result = param1 && param2 ? "complete" : ""
 }
 
 def greyOut1(param1, param2, param3, param4, param5, param6){
 	def result = param1 || param2 || param3 || param4 || param5 || param6 ? "complete" : ""
 }
 
-def greyOut(param1, param2){
-	def result = param1 && param2 ? "complete" : ""
+def greyOut2(param1, param2){
+	def result = param1 || param2 ? "complete" : ""
 }
 
 def getTitle(scenario, num) {
@@ -627,7 +704,11 @@ def getTitle(scenario, num) {
 }
 
 def getWeatherDesc(param1, param2, param3, param4, param5, param6) {
-	def title = param1 || param2 || param3 || param4 || param5 || param6 ? "Tap to edit weather reporting options" : "Tap to setup weather reporting options"
+	def title = param1 || param2 || param3 || param4 || param5 || param6 ? "Tap to edit weather reporting settings" : "Tap to setup weather reporting settings"
+}
+
+def getDoorsDesc(param1, param2) {
+	def title = param1 || param2  ? "Tap to edit door/window reporting settings" : "Tap to setup door/window reporting settings"
 }
 
 def buttonDesc(button, num){
@@ -773,6 +854,42 @@ private getSunriseSunset(scenario, includeSunrise, includeSunset){
 	}
 }
 
+private getDoorsConditions(reportAll, contactSensors, locks, scenario){
+    def msg=""
+    if (reportAll){
+    	if (!contactSensors.latestValue("contact").contains("open") && !locks.latestValue("lock").contains("unlocked")){
+   			msg = "All of the doors and windows are closed and locked. "
+    	}
+        if (!contactSensors.latestValue("contact").contains("open") && locks.latestValue("lock").contains("unlocked")){
+   			msg = "All of the doors and windows are closed. "
+    	}
+        if (contactSensors.latestValue("contact").contains("open") && !locks.latestValue("lock").contains("unlocked")){
+   			msg = "All of the doors are locked. "
+    	}
+    }   
+
+	if (contactSensors.latestValue("contact").contains("open")){
+    	msg = "The following doors or windows are currently open "
+        for (sensor in contactSensors){
+        	if (sensor.latestValue("contact")=="open"){
+				msg = "${msg}, ${sensor}"	
+        	}
+		}
+    	msg = "$msg. "
+    }
+    
+    if (locks.latestValue("lock").contains("unlocked")){
+    	msg = "${msg}The following doors are currently unlocked "
+        for (doorLock in locks){
+        	if (doorLock.latestValue("lock")=="unlocked"){
+        		msg = "${msg}, ${doorLock}"
+			}		
+    	}
+    	msg = "$msg. "
+    }
+ 	compileMsg(msg, scenario) 
+}
+
 private getGreeting(msg, scenario) {
 	def day = getDay()
     def time = parseDate("", now(), "h:mm a")
@@ -810,7 +927,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.0 (06/17/2015)"
+    def text = "Version 1.0.1 (06/20/2015)"
 }
 
 private def textCopyright() {
@@ -837,5 +954,5 @@ private def textHelp() {
     	"Within each scenario, choose a Sonos speaker along with a trigger to have the system wish you a good night. " +
         "Triggers can be certain switches being turning off or the press of a button on a controller. You can also run a Hello, Home phrase or change mode " +
         "when the scenario is triggered. Triggers can be restricted to certain times and days of the week or modes. The voice message can be a simple text phrase, "+
-        "or can include the current temperature and tomorrow's weather forecast. Variables to use in the voice greeting include %day%, %time% and %date%."
+        "or can include the status of doors and locks, the current temperature and tomorrow's weather forecast. Variables to use in the voice greeting include %day%, %time% and %date%."
 }
