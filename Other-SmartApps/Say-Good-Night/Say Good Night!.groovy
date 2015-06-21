@@ -1,7 +1,7 @@
 /**
  *  Say Good Night!
  *
- *  Version - 1.0.1 6/20/15
+ *  Version - 1.0.1 6/21/15
  *  
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -23,7 +23,7 @@ definition(
     name: "Say Good Night!",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Control up to 4 'Good Night' scenarios using Sonos speakers and various triggers.",
+    description: "Control up to 4 'Good Night' scenarios using Sonos speakers and various triggers and actions.",
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Say-Good-Night/SayGoodNight.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Say-Good-Night/SayGoodNight@2x.png",
@@ -33,18 +33,17 @@ definition(
 preferences {
 	page name: "pageMain"
 	page name: "pageSetupScenarioA"
-    page name: "pageSetupScenarioB"
-    page name: "pageSetupScenarioC"
-    page name: "pageSetupScenarioD"
-    page name: "pageWeatherSettingsA"
-    page name: "pageWeatherSettingsB"
-    page name: "pageWeatherSettingsC"
-    page name: "pageWeatherSettingsD"
-    page name: "pageDoorsWindowsA"  
-    page name: "pageDoorsWindowsB"
-    page name: "pageDoorsWindowsC"
-    page name: "pageDoorsWindowsD"
-    
+	page name: "pageSetupScenarioB"
+	page name: "pageSetupScenarioC"
+	page name: "pageSetupScenarioD"
+	page name: "pageWeatherSettingsA"
+	page name: "pageWeatherSettingsB"
+	page name: "pageWeatherSettingsC"
+	page name: "pageWeatherSettingsD"
+	page name: "pageDoorsWindowsA"  
+	page name: "pageDoorsWindowsB"
+	page name: "pageDoorsWindowsC"
+	page name: "pageDoorsWindowsD"   
 }
 
 // Show setup page
@@ -135,14 +134,13 @@ def pageWeatherSettingsA() {
 
 def pageDoorsWindowsA() {
     dynamicPage(name: "pageDoorsWindowsA", title: "Doors/Windows Reporting Settings"){
-	section {
-  		input "A_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
-        input "A_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
-       	input "A_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
-   	}
+		section {
+  			input "A_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
+        	input "A_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
+       		input "A_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
+   		}
+	}
 }
-}
-
 
 // Show "pageSetupScenarioB" page
 def pageSetupScenarioB() {
@@ -215,12 +213,12 @@ def pageWeatherSettingsB() {
 
 def pageDoorsWindowsB() {
     dynamicPage(name: "pageDoorsWindowsB", title: "Doors/Windows Reporting Settings"){
-	section {
-  		input "B_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
-        input "B_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
-       	input "B_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
-   	}
-}
+		section {
+  			input "B_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
+        	input "B_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
+       		input "B_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
+   		}
+	}
 }
 // Show "pageSetupScenarioC" page
 def pageSetupScenarioC() {
@@ -293,12 +291,12 @@ def pageWeatherSettingsC() {
 
 def pageDoorsWindowsC() {
     dynamicPage(name: "pageDoorsWindowsC", title: "Doors/Windows Reporting Settings"){
-	section {
-    	input "C_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
-        input "C_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
-       	input "C_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
-   	}
-}
+		section {
+    		input "C_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
+        	input "C_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
+       		input "C_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
+   		}
+	}
 }
 
 // Show "pageSetupScenarioD" page
@@ -372,12 +370,12 @@ def pageWeatherSettingsD() {
 
 def pageDoorsWindowsD() {
     dynamicPage(name: "pageDoorsWindowsD", title: "Doors/Windows Reporting Settings"){
-	section {
-  		input "D_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
-        input "D_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
-       	input "D_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
-   	}
-}
+		section {
+  			input "D_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
+        	input "D_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
+       		input "D_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
+   		}
+	}
 }
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
@@ -831,8 +829,7 @@ private getSunriseSunset(scenario, includeSunrise, includeSunset){
 	if (location.timeZone || zipCode) {
     	def tomorrowDate = new Date() + 1
     	def s = getSunriseAndSunset(zipcode: zipCode, date: tomorrowDate)	
-        
-           
+             
         def riseTime = parseDate("",s.sunrise.time, "h:mm a")
 		def setTime = parseDate("",s.sunset.time, "h:mm a")
         
@@ -856,36 +853,79 @@ private getSunriseSunset(scenario, includeSunrise, includeSunset){
 
 private getDoorsConditions(reportAll, contactSensors, locks, scenario){
     def msg=""
-    if (reportAll){
-    	if (!contactSensors.latestValue("contact").contains("open") && !locks.latestValue("lock").contains("unlocked")){
-   			msg = "All of the doors and windows are closed and locked. "
-    	}
-        if (!contactSensors.latestValue("contact").contains("open") && locks.latestValue("lock").contains("unlocked")){
-   			msg = "All of the doors and windows are closed. "
-    	}
-        if (contactSensors.latestValue("contact").contains("open") && !locks.latestValue("lock").contains("unlocked")){
-   			msg = "All of the doors are locked. "
-    	}
-    }   
-
-	if (contactSensors.latestValue("contact").contains("open")){
-    	msg = "The following doors or windows are currently open "
+    def unlocked = locks && locks.latestValue("lock").contains("unlocked")
+    def opened = contactSensors && contactSensors.latestValue("contact").contains("open")
+    def countUnlocked = 0
+    def countOpened = 0
+    def newCount =0
+    def listOpened = ""
+    def listUnlocked = ""
+   
+    if (opened){
         for (sensor in contactSensors){
         	if (sensor.latestValue("contact")=="open"){
-				msg = "${msg}, ${sensor}"	
+                countOpened += 1
         	}
 		}
-    	msg = "$msg. "
+    	newCount = countOpened
+        for (sensor in contactSensors){	
+            if (sensor.latestValue("contact")=="open"){
+				listOpened = "${listOpened} ${sensor}"
+                newCount = newCount - 1
+                if (newCount == 1){
+					listOpened = "${listOpened} and the "
+                }
+                else if (newCount > 1) {
+                	listOpened = "${listOpened},"
+                }
+        	}
+    	}
     }
-    
-    if (locks.latestValue("lock").contains("unlocked")){
-    	msg = "${msg}The following doors are currently unlocked "
+    if (unlocked){
         for (doorLock in locks){
         	if (doorLock.latestValue("lock")=="unlocked"){
-        		msg = "${msg}, ${doorLock}"
+                countUnlocked += 1
 			}		
     	}
-    	msg = "$msg. "
+		newCount = countUnlocked
+        for (doorLock in locks){	
+            if (doorLock.latestValue("lock")=="unlocked"){
+				listUnlocked = "${listUnlocked} ${doorLock}"
+                newCount = newCount - 1
+                if (newCount == 1){
+					listUnlocked = "${listUnlocked} and the "
+                }
+        		else if (newCount > 1) {
+            		listUnlocked = "${listUnlocked},"
+                }
+            }
+    	}    
+    }
+    if (reportAll){
+    	if (!opened && !unlocked){
+   			msg = "All of the doors and windows are closed and locked. "
+    	}
+        if (!opened && unlocked){
+   			msg = "All of the doors and windows are closed, but the"
+            msg = countUnlocked > 1 ? "${msg} following are unlocked: ${listUnlocked}. " :"${msg} ${listUnlocked} is unlocked. "
+    	}
+        if (opened && !unlocked){
+   			msg = "All of the doors are locked, but the"
+            msg = countOpened > 1 ? "${msg} following doors or windows are open: ${listOpened}. " : "${msg} ${listUnlocked} is open. "
+    	}
+    }   
+	else {
+		if (opened && !unlocked){
+    		msg = countOpened > 1 ? "The following doors or windows are currently open: ${listOpened}. " : "${listOpened} door or window is open. "
+    	}
+        if (!opened && unlocked){
+    		msg = countUnlocked > 1 ? "The following doors are unlocked: ${listUnlocked}. " : "The ${listUnlocked} door is unlocked. "
+    	}
+	}
+    if (opened && unlocked){
+		def verb = countOpened > 1 ? "following doors or windows are currently open: ${listOpened}" : "${listOpened} door or window is open"
+		def verb1 = countUnlocked > 1 ? "following are unlocked: ${listUnlocked}" : "${listUnlocked} is unlocked"
+		msg = "The ${verb}. Also, the ${verb1}. "
     }
  	compileMsg(msg, scenario) 
 }
@@ -927,7 +967,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.1 (06/20/2015)"
+    def text = "Version 1.0.1 (06/21/2015)"
 }
 
 private def textCopyright() {
