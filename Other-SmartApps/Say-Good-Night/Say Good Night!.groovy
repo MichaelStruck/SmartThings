@@ -33,17 +33,17 @@ definition(
 preferences {
 	page name: "pageMain"
 	page name: "pageSetupScenarioA"
-	page name: "pageSetupScenarioB"
-	page name: "pageSetupScenarioC"
-	page name: "pageSetupScenarioD"
-	page name: "pageWeatherSettingsA"
-	page name: "pageWeatherSettingsB"
-	page name: "pageWeatherSettingsC"
-	page name: "pageWeatherSettingsD"
-	page name: "pageDoorsWindowsA"  
-	page name: "pageDoorsWindowsB"
-	page name: "pageDoorsWindowsC"
-	page name: "pageDoorsWindowsD"   
+    page name: "pageSetupScenarioB"
+    page name: "pageSetupScenarioC"
+    page name: "pageSetupScenarioD"
+    page name: "pageWeatherSettingsA"
+    page name: "pageWeatherSettingsB"
+    page name: "pageWeatherSettingsC"
+    page name: "pageWeatherSettingsD"
+    page name: "pageDoorsWindowsA"  
+    page name: "pageDoorsWindowsB"
+    page name: "pageDoorsWindowsC"
+    page name: "pageDoorsWindowsD"   
 }
 
 // Show setup page
@@ -77,10 +77,10 @@ def pageSetupScenarioA() {
         section("Voice Reporting Options") {
         	input "A_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
         	href "pageWeatherSettingsA", title: "Weather Reporting Settings", description: getWeatherDesc(A_weatherReport, A_includeSunrise, A_includeSunset, A_includeTemp, A_humidity, A_localTemp), state: greyOut1(A_weatherReport, A_includeSunrise, A_includeSunset, A_includeTemp, A_humidity, A_localTemp)
-        	href "pageDoorsWindowsA", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(A_contactSensors,A_locks),state: greyOut2(A_contactSensors, A_locks)
+        	href "pageDoorsWindowsA", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(A_contactSensors, A_doorControls, A_locks),state: greyOut3(A_contactSensors, A_doorControls, A_locks)
             input "A_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
         }
-        section{
+        section("Good Night Actions"){
             def phrases = location.helloHome?.getPhrases()*.label
             if (phrases) {
 				phrases.sort()
@@ -137,6 +137,7 @@ def pageDoorsWindowsA() {
 		section {
   			input "A_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
         	input "A_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
+            input "A_doorControls", "capability.doorControl", title: "Which Door Controls...", multiple: true, required: false
        		input "A_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
    		}
 	}
@@ -156,10 +157,10 @@ def pageSetupScenarioB() {
         section("Voice Reporting Options") {
         	input "B_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
         	href "pageWeatherSettingsB", title: "Weather Reporting Settings", description: getWeatherDesc(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp), state: greyOut1(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp)
-        	href "pageDoorsWindowsB", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(B_contactSensors,B_locks),state: greyOut2(B_contactSensors, B_locks)
+        	href "pageDoorsWindowsB", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(B_contactSensors, B_doorControls, B_locks),state: greyOut3(B_contactSensors, B_doorControls, B_locks)
             input "B_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
         }
-        section{
+        section("Good Night Actions"){
             def phrases = location.helloHome?.getPhrases()*.label
             if (phrases) {
 				phrases.sort()
@@ -216,6 +217,7 @@ def pageDoorsWindowsB() {
 		section {
   			input "B_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
         	input "B_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
+            input "B_doorControls", "capability.doorControl", title: "Which Door Controls...", multiple: true, required: false
        		input "B_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
    		}
 	}
@@ -234,10 +236,10 @@ def pageSetupScenarioC() {
         section("Voice Reporting Options") {
         	input "C_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
             href "pageWeatherSettingsC", title: "Weather Reporting Settings",description: getWeatherDesc(C_weatherReport, C_includeSunrise, C_includeSunset, C_includeTemp, A_humidity, C_localTemp), state: greyOut1(C_weatherReport, C_includeSunrise, C_includeSunset, C_includeTemp, C_humidity, C_localTemp)
-			href "pageDoorsWindowsC", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(C_contactSensors,C_locks),state: greyOut2(C_contactSensors, C_locks)
+			href "pageDoorsWindowsC", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(C_contactSensors, C_doorControls, C_locks),state: greyOut3(C_contactSensors, C_doorControls, C_locks)
             input "C_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
         }
-		section{    
+		section("Good Night Actions"){   
         	def phrases = location.helloHome?.getPhrases()*.label
             if (phrases) {
 				phrases.sort()
@@ -294,6 +296,7 @@ def pageDoorsWindowsC() {
 		section {
     		input "C_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
         	input "C_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
+            input "C_doorControls", "capability.doorControl", title: "Which Door Controls...", multiple: true, required: false
        		input "C_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
    		}
 	}
@@ -313,10 +316,10 @@ def pageSetupScenarioD() {
         section("Voice Reporting Options") {
         	input "D_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
         	href "pageWeatherSettingsD", title: "Weather Reporting Settings", description: getWeatherDesc(D_weatherReport, D_includeSunrise, D_includeSunset, D_includeTemp, D_humidity, D_localTemp), state: greyOut1(D_weatherReport, D_includeSunrise, D_includeSunset, D_includeTemp, D_humidity, D_localTemp)
-        	href "pageDoorsWindowsD", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(D_contactSensors,D_locks),state: greyOut2(D_contactSensors, D_locks)
+        	href "pageDoorsWindowsD", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(D_contactSensors, D_doorControls, D_locks),state: greyOut3(D_contactSensors,D_doorControls, D_locks)
             input "D_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
         }
-        section{
+        section("Good Night Actions"){
             def phrases = location.helloHome?.getPhrases()*.label
             if (phrases) {
 				phrases.sort()
@@ -373,6 +376,7 @@ def pageDoorsWindowsD() {
 		section {
   			input "D_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
         	input "D_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
+            input "D_doorControls", "capability.doorControl", title: "Which Door Controls...", multiple: true, required: false
        		input "D_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
    		}
 	}
@@ -459,8 +463,8 @@ def scenario_A(evt) {
         	}
         }
         
-        if (A_contactSensors || A_locks){
-        	getDoorsConditions(A_reportAll, A_contactSensors, A_locks, 1)
+        if (A_contactSensors || A_locks || A_doorControls){
+        	getDoorsConditions(A_reportAll, A_contactSensors, A_locks, A_doorControls, 1)
         }
         
         if (A_msg) {
@@ -519,8 +523,8 @@ def scenario_B(evt) {
         	}
         }
         
-        if (B_contactSensors || B_locks){
-        	getDoorsConditions(B_reportAll, B_contactSensors, B_locks, 2)
+        if (B_contactSensors || B_locks || B_doorControls){
+        	getDoorsConditions(B_reportAll, B_contactSensors, B_locks, B_doorControls, 2)
         }
         
         if (B_msg) {
@@ -579,8 +583,8 @@ def scenario_C(evt) {
         	}
         }
         
-        if (C_contactSensors || C_locks){
-        	getDoorsConditions(C_reportAll, C_contactSensors, C_locks, 3)
+        if (C_contactSensors || C_locks || C_doorControls){
+        	getDoorsConditions(C_reportAll, C_contactSensors, C_locks, C_doorControls, 3)
         }
         
         if (C_msg) {
@@ -639,8 +643,8 @@ def scenario_D(evt) {
         	}
         }
         
-        if (D_contactSensors || D_locks){
-        	getDoorsConditions(D_reportAll, D_contactSensors, D_locks, 4)
+        if (D_contactSensors || D_locks || D_doorControls){
+        	getDoorsConditions(D_reportAll, D_contactSensors, D_locks, D_doorControls, 4)
         }
 
         if (D_msg) {
@@ -697,6 +701,10 @@ def greyOut2(param1, param2){
 	def result = param1 || param2 ? "complete" : ""
 }
 
+def greyOut3(param1, param2, param3){
+	def result = param1 || param2 || param3 ? "complete" : ""
+}
+
 def getTitle(scenario, num) {
 	def title = scenario ? scenario : "Scenario ${num} not configured"
 }
@@ -705,7 +713,7 @@ def getWeatherDesc(param1, param2, param3, param4, param5, param6) {
 	def title = param1 || param2 || param3 || param4 || param5 || param6 ? "Tap to edit weather reporting settings" : "Tap to setup weather reporting settings"
 }
 
-def getDoorsDesc(param1, param2) {
+def getDoorsDesc(param1, param2, param3) {
 	def title = param1 || param2  ? "Tap to edit door/window reporting settings" : "Tap to setup door/window reporting settings"
 }
 
@@ -851,16 +859,18 @@ private getSunriseSunset(scenario, includeSunrise, includeSunset){
 	}
 }
 
-private getDoorsConditions(reportAll, contactSensors, locks, scenario){
+private getDoorsConditions(reportAll, contactSensors, locks, doorControls, scenario){
     def msg=""
     def unlocked = locks && locks.latestValue("lock").contains("unlocked")
     def opened = contactSensors && contactSensors.latestValue("contact").contains("open")
+    def openedDoor = doorControls && doorControls.latestValue("door").contains("open")
     def countUnlocked = 0
     def countOpened = 0
+    def countOpenedDoor = 0
     def newCount =0
     def listOpened = ""
     def listUnlocked = ""
-   
+    
     if (opened){
         for (sensor in contactSensors){
         	if (sensor.latestValue("contact")=="open"){
@@ -871,6 +881,26 @@ private getDoorsConditions(reportAll, contactSensors, locks, scenario){
         for (sensor in contactSensors){	
             if (sensor.latestValue("contact")=="open"){
 				listOpened = "${listOpened} ${sensor}"
+                newCount = newCount - 1
+                if (newCount == 1 && !openedDoor){
+					listOpened = "${listOpened} and the "
+                }
+                else if (newCount > 1 || openedDoor) {
+                	listOpened = "${listOpened},"
+                }
+        	}
+    	}
+    }
+    if (openedDoor){
+        for (door in doorControls){
+        	if (door.latestValue("door") == "open"){
+                countOpenedDoor += 1
+        	}
+		}
+    	newCount = countOpenedDoor
+        for (door in doorControls){	
+            if (door.latestValue("door") == "open"){
+				listOpened = "${listOpened} ${door}"
                 newCount = newCount - 1
                 if (newCount == 1){
 					listOpened = "${listOpened} and the "
@@ -901,29 +931,30 @@ private getDoorsConditions(reportAll, contactSensors, locks, scenario){
             }
     	}    
     }
+    def totalCount = countOpenedDoor + countOpened
     if (reportAll){
-    	if (!opened && !unlocked){
+    	if (!opened && !unlocked && !openedDoor){
    			msg = "All of the doors and windows are closed and locked. "
     	}
-        if (!opened && unlocked){
+        if (!opened && !openedDoor && unlocked){
    			msg = "All of the doors and windows are closed, but the"
             msg = countUnlocked > 1 ? "${msg} following are unlocked: ${listUnlocked}. " :"${msg} ${listUnlocked} is unlocked. "
     	}
-        if (opened && !unlocked){
+        if ((opened || openedDoor) && !unlocked){
    			msg = "All of the doors are locked, but the"
-            msg = countOpened > 1 ? "${msg} following doors or windows are open: ${listOpened}. " : "${msg} ${listUnlocked} is open. "
+            msg = totalCount > 1 ? "${msg} following doors or windows are open: ${listOpened}. " : "${msg} ${listOpened} is open. "
     	}
     }   
 	else {
-		if (opened && !unlocked){
-    		msg = countOpened > 1 ? "The following doors or windows are currently open: ${listOpened}. " : "${listOpened} door or window is open. "
+		if ((opened || openedDoor) && !unlocked){
+    		msg = totalCount > 1 ? "The following doors or windows are currently open: ${listOpened}. " : "${listOpened} is open. "
     	}
-        if (!opened && unlocked){
-    		msg = countUnlocked > 1 ? "The following doors are unlocked: ${listUnlocked}. " : "The ${listUnlocked} door is unlocked. "
+        if (!opened && !openedDoor && unlocked){
+    		msg = countUnlocked > 1 ? "The following doors are unlocked: ${listUnlocked}. " : "The ${listUnlocked} is unlocked. "
     	}
 	}
-    if (opened && unlocked){
-		def verb = countOpened > 1 ? "following doors or windows are currently open: ${listOpened}" : "${listOpened} door or window is open"
+    if ((opened || openedDoor) && unlocked){
+		def verb = totalCount > 1 ? "following doors or windows are currently open: ${listOpened}" : "${listOpened} is open"
 		def verb1 = countUnlocked > 1 ? "following are unlocked: ${listUnlocked}" : "${listUnlocked} is unlocked"
 		msg = "The ${verb}. Also, the ${verb1}. "
     }
