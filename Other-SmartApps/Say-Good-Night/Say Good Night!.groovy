@@ -97,9 +97,9 @@ def pageSetupScenarioA() {
             }
         }
     	section("Restrictions") {            
-        	input "A_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
+        	input "A_triggerOnce","bool",title: "Trigger only once per day...", defaultValue: false
         	href "timeIntervalInputA", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state:greyOut2(A_timeStart, A_timeEnd)
-        	input "A_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
+        	input "A_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         	input "A_mode", "mode", title: "Only during certain modes...", multiple: true, required: false
         }
     } 
@@ -177,9 +177,9 @@ def pageSetupScenarioB() {
             }
 		}
     	section("Restrictions") {            
-        	input name: "B_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
+        	input "B_triggerOnce", "bool",title: "Trigger only once per day...", defaultValue: false
         	href "timeIntervalInputB", title: "Only during a certain time...", description: getTimeLabel(B_timeStart, B_timeEnd), state:greyOut2(B_timeStart, B_timeEnd)
-        	input name:  "B_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
+        	input "B_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         	input "B_mode", "mode", title: "Only during certain modes...", multiple: true, required: false
         }
     } 
@@ -256,9 +256,9 @@ def pageSetupScenarioC() {
             }
 		}
     	section("Restrictions") {            
-        	input name: "C_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
+        	input "C_triggerOnce", "bool",title: "Trigger only once per day...", defaultValue: false
         	href "timeIntervalInputC", title: "Only during a certain time...", description: getTimeLabel(C_timeStart, C_timeEnd), state: greyOut2(C_timeStart, C_timeEnd)
-        	input name:  "C_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
+        	input "C_day","enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         	input "C_mode", "mode", title: "Only during certain modes...", multiple: true, required: false
         }
     } 
@@ -336,9 +336,9 @@ def pageSetupScenarioD() {
             }
 		}
     	section("Restrictions") {            
-        	input name: "D_triggerOnce",type: "bool",title: "Trigger only once per day...", defaultValue: false
+        	input "D_triggerOnce", "bool",title: "Trigger only once per day...", defaultValue: false
         	href "timeIntervalInputD", title: "Only during a certain time...", description: getTimeLabel(D_timeStart, D_timeEnd), state:greyOut2(D_timeStart, D_timeEnd)
-        	input name:  "D_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
+        	input "D_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         	input "D_mode", "mode", title: "Only during certain modes...", multiple: true, required: false
         }
     } 
