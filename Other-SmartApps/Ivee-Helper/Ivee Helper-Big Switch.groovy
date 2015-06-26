@@ -21,7 +21,7 @@ definition(
     name: "Ivee Helper-Big Switch",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Within each of the 4 scenarios, tie control a group of switches tied a Master Swtich that can take voice commands via the Ivee Talking Alarm Clock.",
+    description: "Within each of the 4 scenarios, tie control of a group of switches to a Master Swtich that can take voice commands via the Ivee Talking Alarm Clock.",
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Ivee-Helper/Ivee.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Ivee-Helper/Ivee@2x.png",
