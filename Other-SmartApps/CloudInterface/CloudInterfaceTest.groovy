@@ -1,4 +1,4 @@
-Enter file contents here/**
+/**
  *  Cloud Interface-Test
  *
  *	Version 1.0 - 6/27/15 Copyright 2015 Michael Struck
