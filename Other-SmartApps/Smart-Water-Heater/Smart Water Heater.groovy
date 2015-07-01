@@ -1,6 +1,6 @@
 /**
  *  Smart Water Heater
- *  Version 1.3.2 6/3/2015
+ *  Version 1.4.0 6/30/2015
  *
  *  Version 1.0.1-Initial release
  *  Version 1.1 added a function to turn water heater back on if someone comes home early
@@ -10,7 +10,7 @@
  *  Version 1.3 Added the option to turn off the water heater early if everyone leaves before the scheduled time and code opimization
  *  Version 1.3.1 Added About screen
  *  Version 1.3.2 Added verification of status being off to eliminate redundent commands to the switch and some code optimization 
- * 
+ *  Version 1.4.0 Added a day-of-week filter instead of simply stating 'weekend' and allowed for multiple water heaters
  *
  *  Copyright 2015 Michael Struck
  *
@@ -28,7 +28,7 @@ definition(
     name: "Smart Water Heater",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Allows for setting up schedules for turning on and off the power to a water heater. ",
+    description: "Allows for setting up schedules for turning on and off the power to the water heaters. ",
     category: "Green Living",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Water-Heater/WHApp.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Water-Heater/WHApp@2x.png",
@@ -41,16 +41,15 @@ preferences {
 
 def mainPage() {
 	dynamicPage(name: "mainPage", title: "", install: true, uninstall: true) {
-    	section("Select water heater switch..."){
-			input "switchWH", title: "Switch", "capability.switch", multiple: false
+    	section("Select water heater switches..."){
+			input "switchWH", title: "Water Heater Switches", "capability.switch", multiple: true
 		}
     	section("Daytime Options"){
         	href(name: "toDaySchedule", page: "daySchedule", title: "Schedule", description: dayDescription(), state: "complete")
-        	input "presence1", "capability.presenceSensor", title: "Remain on if any of these people are home", multiple: true, required: false
-        	input "exceptionLeave", "bool", title: "Turn off when everyone leaves before the scheduled turn off time", defaultValue: "true"
-            input "exceptionArrive", "bool", title: "Turn on when someone arrives home early", defaultValue: "true"
-        	input "weekendRun", "bool", title: "Run daytime schedule during the weekend", defaultValue: "false"
-		}
+        	input "presence1", "capability.presenceSensor", title: "Remain on if any of these people are present", multiple: true, required: false
+        	input "exceptionLeave", "bool", title: "Turn off when everyone leaves before ${hhmm(timeOffDay)}", defaultValue: "true"
+            input "exceptionArrive", "bool", title: "Turn on when anyone arrives before ${hhmm(timeOnDay)} ", defaultValue: "true"
+        }
     	section("Nighttime Schedule"){
     		href(name: "toNightSchedule", page: "nightSchedule", title: "Schedule", description: nightDescription(), state: "complete")
     	}
@@ -66,6 +65,7 @@ page(name: "daySchedule", title: "Daytime Schedule") {
 	section {
     	input "timeOffDay", title: "Time to turn off", "time"
         input "timeOnDay", title: "Time to turn back on", "time"
+        input "dayOff", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Run on certain days of the week...", multiple: true, required: false
 	}
 }
 
@@ -74,6 +74,7 @@ page(name: "nightSchedule", title: "Nighttime Schedule") {
 	section {
 		input "timeOffNight", title: "Time to turn off", "time"
         input "timeOnNight", title: "Time to turn back on", "time"
+        input "nightOff", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Run on certain days of the week...", multiple: true, required: false
 	}
 }
 
@@ -113,13 +114,11 @@ def init () {
 }
 
 def turnOffDay() {
-	def runToday = !weekendRun && isWeekend() ? false : true
-
-    if (runToday && everyoneGone() && state.status !="Day off") {
+    if (getDayOk(dayOff) && everyoneGone() && state.status !="Day off") {
     	state.status="Day off"
         turnOffSwitch()
    	} else {
-		log.debug "It is the weekend or presense is detected so the water heater will remain on."
+		log.debug "Day restriction or presense is detected so the water heater(s) will remain on."
     }    
 }
 
@@ -134,28 +133,33 @@ def turnOnNight() {
 }
 
 def turnOffNight() {
-	state.status="Night off"
-    turnOffSwitch()
+	if (getDayOk(nightOff)) {
+    	state.status="Night off"
+    	turnOffSwitch()
+    }
+    else {
+    	log.debug "Day restriction so the water heater(s) will remain on."
+    }
 }
 
 def turnOffSwitch() {
-    	switchWH.off()
-        log.debug "Water heater turned off."
+    	switchWH?.off()
+        log.debug "Water heater(s) turned off."
 }
     
 def turnOnSwitch() {
-    	switchWH.on()
-        log.debug "Water heater turned on."
+    	switchWH?.on()
+        log.debug "Water heater(s) turned on."
 }
 
 def presenceHandler(evt) {
     if (!everyoneGone() && state.status=="Day off"){
-    	log.debug "Presence detected, turning water heater back on"
+    	log.debug "Presence detected, turning water heater(s) back on"
     	turnOnDay()
     }
 
-	if (everyoneGone() && checkTime()){
-    	log.debug "Everyone has left early, turning water heater off"
+	if (everyoneGone() && checkTime() && getDayOk(dayOff)){
+    	log.debug "Everyone has left early, turning water heater(s) off"
 		turnOffDay()
     }
 }
@@ -165,12 +169,26 @@ private everyoneGone() {
 	result
 }
 
-
 def nightDescription() {
 	def title = ""
     if (timeOffNight) {
     	title += "Turn off at ${hhmm(timeOffNight)} then turn back on at ${hhmm(timeOnNight)}"
     }
+    def dayListSize = nightOff ? nightOff.size() : 7
+    if (nightOff && dayListSize < 7) {
+        	title += " on"
+            for (dayName in nightOff) {
+ 				title += " ${dayName}"
+    			nightListSize = nightListSize -1
+                if (nightListSize) {
+            		title += ", "
+        		}
+        	}
+        }
+        else {
+    		title += "\nevery day"
+    	}
+    
     title
 }
 
@@ -179,8 +197,24 @@ def dayDescription() {
     if (timeOffDay) {
     	title += "Turn off at ${hhmm(timeOffDay)} then turn back on at ${hhmm(timeOnDay)}"
     }
+    def dayListSize = dayOff ? dayOff.size() : 7
+    if (dayOff && dayListSize < 7) {
+        	title += " on"
+            for (dayName in dayOff) {
+ 				title += " ${dayName}"
+    			dayListSize = dayListSize -1
+                if (dayListSize) {
+            		title += ", "
+        		}
+        	}
+        }
+        else {
+    		title += "\nevery day"
+    	}
+    
     title
 }
+//Common Methods
 
 public smartThingsDateFormat() { "yyyy-MM-dd'T'HH:mm:ss.SSSZ" }
 
@@ -188,16 +222,12 @@ public hhmm(dateTxt) {
 	new Date().parse(smartThingsDateFormat(), dateTxt).format("h:mm a", timeZone(dateTxt))
 }
 
-private isWeekend() {
-    def isTheWeekend = dayOfWeek() == 1 || dayOfWeek() == 7 ? true : false
-    isTheWeekend
-}
-
-public dayOfWeek() {
-	def calendar = Calendar.getInstance()
-    calendar.setTimeZone(location.timeZone)
-    def today = calendar.get(Calendar.DAY_OF_WEEK)
-    today
+private getDayOk(dayList) {
+	def result = true
+	if (dayList) {
+		result = dayList.contains(getDay())
+	}
+	result
 }
 
 private checkTime() {
@@ -217,7 +247,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.3.2 (06/03/2015)"
+    def text = "Version 1.4.0 (06/30/2015)"
 }
 
 private def textCopyright() {
@@ -226,23 +256,23 @@ private def textCopyright() {
 
 private def textLicense() {
     def text =
-		"Licensed under the Apache License, Version 2.0 (the 'License');"+
-		"you may not use this file except in compliance with the License."+
+		"Licensed under the Apache License, Version 2.0 (the 'License'); "+
+		"you may not use this file except in compliance with the License. "+
 		"You may obtain a copy of the License at"+
 		"\n\n"+
 		"    http://www.apache.org/licenses/LICENSE-2.0"+
 		"\n\n"+
-		"Unless required by applicable law or agreed to in writing, software"+
-		"distributed under the License is distributed on an 'AS IS' BASIS,"+
-		"WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied."+
-		"See the License for the specific language governing permissions and"+
+		"Unless required by applicable law or agreed to in writing, software "+
+		"distributed under the License is distributed on an 'AS IS' BASIS, "+
+		"WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. "+
+		"See the License for the specific language governing permissions and "+
 		"limitations under the License."
 }
 
 private def textHelp() {
 	def text =
-    	"Choose the day and night schedule in which the water heater power is turned " +
-        "on and off. During the day, you have various options to determine whether to run the schedule " +
-        "based on the status of various presence sensors."
+    	"Choose the day and night schedule in which the water heaters' power is turned " +
+        "on and off. For the daytime schedule, you have various options to determine whether to turn the water heaters or or off " +
+        "based on the status of presence sensors."
 }
 
