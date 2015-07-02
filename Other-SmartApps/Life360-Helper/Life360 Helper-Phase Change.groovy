@@ -4,7 +4,7 @@
  *  Version 1.0.1 3/24/15 - Updated with more effecient code
  *  Version 1.0.2 4/9/15 - Added ability to change name of app
  *  Version 1.0.3 5/15/15 - Optimized code, added a switch to limit the trigger to once a day
- *  Version 1.0.4 6/9/15 - Added About screen and updated GUI for more consitency between apps
+ *  Version 1.0.4 7/1/15 - Added About screen and updated GUI for more consitency between apps
  *
  *  Copyright 2015 Michael Struck
  *
@@ -39,7 +39,7 @@ def getPref() {
     dynamicPage(name: "getPref", install:true, uninstall: true) {
     
     	section("Choose the Life360 presence sensors you want to monitor...") {
-			input "people", "capability.presenceSensor", multiple: true, title: "Life360 Presence Sensor" 
+			input "people", "capability.presenceSensor", multiple: true, title: "Life360 Presence Sensors" 
 		}
 		section("When presence is detected and in one of these modes...") {
 			input "modes", "mode", title: "Mode(s)", required: true, multiple: true
@@ -56,7 +56,7 @@ def getPref() {
         	input "triggerOnce", title: "Trigger only once per day...", "bool", defaultValue: true
         }
 		section([mobileOnly:true], "Options") {
-			label(title: "Assign a name", required: false, defaultValue: "Life360 Helper-Phrase Change")
+			label(title: "Assign a name", required: false)
             href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
 		}  
 	}
@@ -94,10 +94,10 @@ def init(){
 def presence(evt){
     if (everyoneIsPresent() && (!triggerOnce || (triggerOnce && !state.triggered))){
     	if (runMode()) {
-        	location.helloHome.execute(settings.phrase1)
+        	location.helloHome.execute(phrase1)
     	} 
         else {
-    		location.helloHome.execute(settings.phrase2)
+    		location.helloHome.execute(phrase2)
     	}
 	state.triggered = true
     }
@@ -105,12 +105,12 @@ def presence(evt){
 
 private everyoneIsPresent() {
     def result = people.find {it.currentPresence == "not present"} ? false : true
-	result
+    result
 }
 
 private runMode() {
 	def result = modes.contains(location.mode)
-	result
+    result
 }
 
 def midNightReset() {
@@ -124,7 +124,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.4 (06/09/2015)"
+    def text = "Version 1.0.4 (07/01/2015)"
 }
 
 private def textCopyright() {
