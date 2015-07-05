@@ -5,6 +5,7 @@
  *  Version - 1.0.2 5/19/15 Code clean up for timeframe conditional check
  *  Version - 1.0.4 5/31/15 Added About screen from main menu
  *  Version - 1.0.5 6/17/15 Code optimization
+ *  Version - 1.1.0 7/4/15 Added more dynamic interface options and the ability to utilize color controlled lights
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -58,13 +59,19 @@ def pageSetup() {
 def pageSetupScenarioA() {
     dynamicPage(name: "pageSetupScenarioA") {
 	section("Devices included in the scenario") {
-    	input name: "A_motion",type: "capability.motionSensor", title: "Using these motion sensors...", multiple: true, required: false
-        input name: "A_switches", type: "capability.switch",title: "Control the following switches...", multiple: true, required: false
-        input name: "A_dimmers", type: "capability.switchLevel", title: "Dim the following...", multiple: true, required:false
+    	input "A_motion", "capability.motionSensor", title: "Using these motion sensors...", multiple: true, required: false
+        input "A_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false
+        input "A_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required:false, submitOnChange:true
+        input "A_colorControls", "capability.colorControl", title: "Control the following colored lights...",  multiple: true, required: false, submitOnChange:true
 	}
 
 	section("Lighting settings") {
-        href "levelInputA", title: "Dimmer Options", description: getLevelLabel(A_levelDimOn, A_levelDimOff, A_dimmers, A_calcOn), state: greyOut(A_dimmers)
+        if (A_dimmers){
+        	href "levelInputA", title: "Dimmer Options", description: getLevelLabel(A_levelDimOn, A_levelDimOff, A_calcOn), state: "complete"
+        }
+        if (A_colorControls){
+        	href "colorInputA", title: "Color Options", description: getColorLabel(A_levelDimOnColor, A_levelDimOffColor, A_calcOnColor, A_color), state: "complete"
+        }
         input name: "A_turnOnLux",type: "number",title: "Only run this scenario if lux is below...", multiple: false, required: false
         input name: "A_luxSensors",type: "capability.illuminanceMeasurement",title: "On these lux sensors",multiple: false,required: false
         input name: "A_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
@@ -81,20 +88,25 @@ def pageSetupScenarioA() {
             input name:"ScenarioNameA", type: "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     }
     }
-    
 }
 
 // Show "pageSetupScenarioB" page
 def pageSetupScenarioB() {
     dynamicPage(name: "pageSetupScenarioB") {
 	section("Devices included in the scenario") {
-    	input name: "B_motion",type: "capability.motionSensor", title: "Using these motion sensors...", multiple: true, required: false
-        input name: "B_switches", type: "capability.switch",title: "Control the following switches...", multiple: true, required: false
-        input name: "B_dimmers", type: "capability.switchLevel", title: "Dim the following...", multiple: true, required:false
+    	input "B_motion", "capability.motionSensor", title: "Using these motion sensors...", multiple: true, required: false
+        input "B_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false
+        input "B_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required:false, submitOnChange:true
+        input "B_colorControls", "capability.colorControl", title: "Control the following colored lights...",  multiple: true, required: false, submitOnChange:true
 	}
 
 	section("Lighting settings") {
-        href "levelInputB", title: "Dimmer Options", description: getLevelLabel(B_levelDimOn, B_levelDimOff, B_dimmers, B_calcOn), state: greyOut(B_dimmers)
+        if (B_dimmers){
+        	href "levelInputB", title: "Dimmer Options", description: getLevelLabel(B_levelDimOn, B_levelDimOff, B_calcOn), state: "complete"
+        }
+        if (B_colorControls){
+        	href "colorInputB", title: "Color Options", description: getColorLabel(B_levelDimOnColor, B_levelDimOffColor, B_calcOnColor, B_color), state: "complete"
+        }
         input name: "B_turnOnLux",type: "number",title: "Only run this scenario if lux is below...", multiple: false, required: false
         input name: "B_luxSensors",type: "capability.illuminanceMeasurement",title: "On these lux sensors",multiple: false,required: false
         input name: "B_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
@@ -111,20 +123,25 @@ def pageSetupScenarioB() {
             input name:"ScenarioNameB", type: "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     }
     }
-    
 }
 
 // Show "pageSetupScenarioC" page
 def pageSetupScenarioC() {
     dynamicPage(name: "pageSetupScenarioC") {
 	section("Devices included in the scenario") {
-    	input name: "C_motion",type: "capability.motionSensor", title: "Using these motion sensors...", multiple: true, required: false
-        input name: "C_switches", type: "capability.switch",title: "Control the following switches...", multiple: true, required: false
-        input name: "C_dimmers", type: "capability.switchLevel", title: "Dim the following...", multiple: true, required:false
+    	input "C_motion", "capability.motionSensor", title: "Using these motion sensors...", multiple: true, required: false
+        input "C_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false
+        input "C_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required:false, submitOnChange:true
+        input "C_colorControls", "capability.colorControl", title: "Control the following colored lights...",  multiple: true, required: false, submitOnChange:true
 	}
 
 	section("Lighting settings") {
-        href "levelInputC", title: "Dimmer Options", description: getLevelLabel(C_levelDimOn, C_levelDimOff, C_dimmers, C_calcOn), state: greyOut(C_dimmers)
+        if (C_dimmers){
+        	href "levelInputC", title: "Dimmer Options", description: getLevelLabel(C_levelDimOn, C_levelDimOff, C_calcOn), state: "complete"
+        }
+        if (C_colorControls){
+        	href "colorInputC", title: "Color Options", description: getColorLabel(C_levelDimOnColor, C_levelDimOffColor, C_calcOnColor, C_color), state: "complete"
+        }
         input name: "C_turnOnLux",type: "number", title: "Only run this scenario if lux is below...", multiple: false, required: false
         input name: "C_luxSensors",type: "capability.illuminanceMeasurement",title: "On these lux sensors",multiple: false,required: false
         input name: "C_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
@@ -147,13 +164,19 @@ def pageSetupScenarioC() {
 def pageSetupScenarioD() {
     dynamicPage(name: "pageSetupScenarioD") {
 	section("Devices included in the scenario") {
-    	input name: "D_motion",type: "capability.motionSensor", title: "Using these motion sensors...", multiple: true, required: false
-        input name: "D_switches", type: "capability.switch",title: "Control the following switches...", multiple: true, required: false
-        input name: "D_dimmers", type: "capability.switchLevel", title: "Dim the following...", multiple: true, required:false
+    	input "D_motion", "capability.motionSensor", title: "Using these motion sensors...", multiple: true, required: false
+        input "D_switches", "capability.switch",title: "Control the following switches...", multiple: true, required: false
+        input "D_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required:false, submitOnChange:true
+        input "D_colorControls", "capability.colorControl", title: "Control the following colored lights...",  multiple: true, required: false, submitOnChange:true
 	}
 
 	section("Lighting settings") {
-		href "levelInputD", title: "Dimmer Options", description: getLevelLabel(D_levelDimOn, D_levelDimOff, D_dimmers, D_calcOn), state: greyOut(D_dimmers)
+		if (D_dimmers){
+        	href "levelInputD", title: "Dimmer Options", description: getLevelLabel(D_levelDimOn, D_levelDimOff, D_calcOn), state: "complete"
+        }
+        if (D_colorControls){
+        	href "colorInputD", title: "Color Options", description: getColorLabel(D_levelDimOnColor, D_levelDimOffColor, D_calcOnColor, D_color), state: "complete"
+        }
         input name: "D_turnOnLux",type: "number",title: "Only run this scenario if lux is below...", multiple: false, required: false
         input name: "D_luxSensors",type: "capability.illuminanceMeasurement",title: "On these lux sensors",multiple: false,required: false
         input name: "D_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
@@ -180,8 +203,6 @@ page(name: "pageAbout", title: "About ${textAppName()}") {
             paragraph textHelp()
         }
 }
-
-
 
 //----------------------
 def installed() {
@@ -217,21 +238,25 @@ if(D_motion) {
 if(A_switchDisable) {
 	subscribe(A_switches, "switch.off", onPressA)
     subscribe(A_dimmers, "switch.off", onPressA)
+    subscribe(A_colorControls, "switch.off", onPressA)
 }
 
 if(B_switchDisable) {
 	subscribe(B_switches, "switch.off", onPressB)
     subscribe(B_dimmers, "switch.off", onPressB)
+    subscribe(B_colorControls, "switch.off", onPressA)
 }
 
 if(C_switchDisable) {
 	subscribe(C_switches, "switch.off", onPressC)
     subscribe(C_dimmers, "switch.off", onPressC)
+    subscribe(C_colorControls, "switch.off", onPressC)
 }
 
 if(D_switchDisable) {
 	subscribe(D_switches, "switch.off", onPressD)
     subscribe(D_dimmers, "switch.off", onPressD)
+    subscribe(D_colorControls, "switch.off", onPressD)
 }
 }
 
@@ -244,7 +269,9 @@ if ((!A_mode || A_mode.contains(location.mode)) && getTimeOk (A_timeStart, A_tim
         		log.debug("Motion Detected Running '${ScenarioNameA}'")
             
             	def levelSetOn = A_levelDimOn ? A_levelDimOn : 100
+                def levelSetOnColor = A_levelDimOnColor ? A_levelDimOnColor : 100
             	def levelSetOff = A_levelDimOff ? A_levelDimOff : 0
+                def levelSetOffColor = A_levelDimOffColor ? A_levelDimOffColor : 0
 
             	if (A_calcOn && A_luxSensors) {
     				levelSetOn = (levelSetOn * (1-(A_luxSensors.latestValue("illuminance")/A_turnOnLux))) + levelSetOff
@@ -252,7 +279,14 @@ if ((!A_mode || A_mode.contains(location.mode)) && getTimeOk (A_timeStart, A_tim
                			levelSetOn = 100
                		}
     			}
+                if (A_calcOnColor && A_luxSensors) {
+    				levelSetOnColor = (levelSetOnColor * (1-(A_luxSensors.latestValue("illuminance")/A_turnOnLux))) + levelSetOffColor
+                	if (levelSetOnColor > 100) {
+               			levelSetOnColor = 100
+               		}
+    			}
         		A_dimmers?.setLevel(levelSetOn)
+                setColoredLights(A_colorControls, A_color, levelSetOnColor)
         		A_switches?.on()
         		if (A_triggerOnce){
            			state.A_triggered = true
@@ -274,6 +308,8 @@ if ((!A_mode || A_mode.contains(location.mode)) && getTimeOk (A_timeStart, A_tim
         		A_switches?.off()
         		def levelSetOff = A_levelDimOff ? A_levelDimOff : 0
         		A_dimmers?.setLevel(levelSetOff)
+                def levelSetOffColor = A_levelDimOffColor ? A_levelDimOffColor : 0
+                A_colorControls?.setLevel(levelSetOffColor)
         		if (state.A_triggered) {
     				runOnce (getMidnight(), midNightReset)
     			}
@@ -291,6 +327,8 @@ def delayTurnOffA(){
 	A_switches?.off()
 	def levelSetOff = A_levelDimOff ? A_levelDimOff : 0
     A_dimmers?.setLevel(levelSetOff)
+    def levelSetOffColor = A_levelDimOffColor ? A_levelDimOffColor : 0
+    A_colorControls?.setLevel(levelSetOffColor)
 	state.A_timerStart = false
 	if (state.A_triggered) {
     	runOnce (getMidnight(), midNightReset)
@@ -319,7 +357,9 @@ if (!B_luxSensors || (B_luxSensors.latestValue("illuminance") <= B_turnOnLux)){
     if (B_motion.latestValue("motion").contains("active")) {
         	log.debug("Motion Detected Running '${ScenarioNameB}'")
             def levelSetOn = B_levelDimOn ? B_levelDimOn : 100
+			def levelSetOnColor = B_levelDimOnColor ? B_levelDimOnColor : 100
             def levelSetOff = B_levelDimOff ? B_levelDimOff : 0
+            def levelSetOffColor = B_levelDimOffColor ? B_levelDimOffColor : 0
 
             if (B_calcOn && B_luxSensors) {
     			levelSetOn = (levelSetOn * (1-(B_luxSensors.latestValue("illuminance")/B_turnOnLux))) + levelSetOff
@@ -327,7 +367,14 @@ if (!B_luxSensors || (B_luxSensors.latestValue("illuminance") <= B_turnOnLux)){
                		levelSetOn = 100
                	}
     		}
+            if (B_calcOnColor && B_luxSensors) {
+    				levelSetOnColor = (levelSetOnColor * (1-(B_luxSensors.latestValue("illuminance")/B_turnOnLux))) + levelSetOffColor
+                	if (levelSetOnColor > 100) {
+               			levelSetOnColor = 100
+               		}
+    			}
         	B_dimmers?.setLevel(levelSetOn)
+            setColoredLights(B_colorControls, B_color, levelSetOnColor)
         	B_switches?.on()
         	if (B_triggerOnce){
            		state.B_triggered = true
@@ -350,6 +397,8 @@ else {
         	B_switches?.off()
 			def levelSetOff = B_levelDimOff ? B_levelDimOff : 0
     		B_dimmers?.setLevel(levelSetOff)
+            def levelSetOffColor = B_levelDimOffColor ? B_levelDimOffColor : 0
+            B_colorControls?.setLevel(levelSetOffColor)
             if (state.B_triggered) {
     			runOnce (getMidnight(), midNightReset)
     		}
@@ -367,6 +416,8 @@ def delayTurnOffB(){
 	B_switches?.off()
 	def levelSetOff = B_levelDimOff ? B_levelDimOff : 0
     B_dimmers?.setLevel(levelSetOff)
+    def levelSetOffColor = B_levelDimOffColor ? B_levelDimOffColor : 0
+    B_colorControls?.setLevel(levelSetOffColor)
 	state.B_timerStart = false
     if (state.B_triggered) {
     	runOnce (getMidnight(), midNightReset) 
@@ -393,17 +444,26 @@ if ((!C_triggerOnce || (C_triggerOnce && !state.C_triggered)) && (!C_switchDisab
 if ((!C_mode || C_mode.contains(location.mode)) && getTimeOk (C_timeStart, C_timeEnd) && getDayOk(C_day)) {
 if (!C_luxSensors || (C_luxSensors.latestValue("illuminance") <= C_turnOnLux)){
     if (C_motion.latestValue("motion").contains("active")) {
-	       	log.debug("Motion Detected Running '${ScenarioNameB}'")
+	       	log.debug("Motion Detected Running '${ScenarioNameC}'")
             def levelSetOn = C_levelDimOn ? C_levelDimOn : 100
+            def levelSetOnColor = C_levelDimOnColor ? C_levelDimOnColor : 100
             def levelSetOff = C_levelDimOff ? C_levelDimOff : 0
-
+            def levelSetOffColor = C_levelDimOffColor ? C_levelDimOffColor : 0
             if (C_calcOn && C_luxSensors) {
     			levelSetOn = (levelSetOn * (1-(C_luxSensors.latestValue("illuminance")/C_turnOnLux))) + levelSetOff
                 if (levelSetOn > 100) {
                		levelSetOn = 100
                	}
     		}
+            if (C_calcOnColor && C_luxSensors) {
+    			levelSetOnColor = (levelSetOnColor * (1-(C_luxSensors.latestValue("illuminance")/C_turnOnLux))) + levelSetOffColor
+                if (levelSetOnColor > 100) {
+               		levelSetOnColor = 100
+               	}
+			}
+
         	C_dimmers?.setLevel(levelSetOn)
+            setColoredLights(C_colorControls, C_color, levelSetOnColor)
         	C_switches?.on()
         	if (C_triggerOnce){
            		state.C_triggered = true
@@ -415,22 +475,23 @@ if (!C_luxSensors || (C_luxSensors.latestValue("illuminance") <= C_turnOnLux)){
            		unschedule(delayTurnOffC)
        	   		state.C_timerStart = false
         	}	
-}
-else {
-    	if (C_turnOff) {
-		runIn(C_turnOff * 60, "delayTurnOffC")
-        state.C_timerStart = true
+	}
+	else {
+        if (C_turnOff) {
+			runIn(C_turnOff * 60, "delayTurnOffC")
+        	state.C_timerStart = true
         }
         else {
-        C_switches?.off()
-		def levelSetOff = C_levelDimOff ? C_levelDimOff : 0
-    	C_dimmers?.setLevel(levelSetOff)
+            C_switches?.off()
+			def levelSetOff = C_levelDimOff ? C_levelDimOff : 0
+    		C_dimmers?.setLevel(levelSetOff)
+        	def levelSetOffColor = C_levelDimOffColor ? C_levelDimOffColor : 0
+			C_colorControls?.setLevel(levelSetOffColor)
         	if (state.C_triggered) {
     			runOnce (getMidnight(), midNightReset)
     		}
-        }
-	
-}
+		}
+	}
 }
 }
 else{
@@ -440,14 +501,15 @@ log.debug("Motion outside of mode or time/day restriction.  Not running scenario
 }
 
 def delayTurnOffC(){
-	C_switches?.off()
+    C_switches?.off()
 	def levelSetOff = C_levelDimOff ? C_levelDimOff : 0
     C_dimmers?.setLevel(levelSetOff)
+    def levelSetOffColor = C_levelDimOffColor ? C_levelDimOffColor : 0
+    C_colorControls?.setLevel(levelSetOffColor)
 	state.C_timerStart = false
 	if (state.C_triggered) {
     	runOnce (getMidnight(), midNightReset)
     }
-
 }
 
 def onPressC(evt) {
@@ -470,9 +532,11 @@ if ((!D_triggerOnce || (D_triggerOnce && !state.D_triggered)) && (!D_switchDisab
 if ((!D_mode || D_mode.contains(location.mode)) && getTimeOk (D_timeStart, D_timeEnd) && getDayOk(D_day)) {
 if (!D_luxSensors || (D_luxSensors.latestValue("illuminance") <= D_turnOnLux)){
     if (D_motion.latestValue("motion").contains("active")) {
-           	log.debug("Motion Detected Running '${ScenarioNameB}'")
+           	log.debug("Motion Detected Running '${ScenarioNameD}'")
             def levelSetOn = D_levelDimOn ? D_levelDimOn : 100
+            def levelSetOnColor = D_levelDimOnColor ? D_levelDimOnColor : 100
             def levelSetOff = D_levelDimOff ? D_levelDimOff : 0
+            def levelSetOffColor = D_levelDimOffColor ? D_levelDimOffColor : 0
 
 			if (D_calcOn && D_luxSensors) {
     			levelSetOn = (levelSetOn * (1-(D_luxSensors.latestValue("illuminance")/D_turnOnLux))) + levelSetOff
@@ -480,7 +544,14 @@ if (!D_luxSensors || (D_luxSensors.latestValue("illuminance") <= D_turnOnLux)){
                		levelSetOn = 100
                	}
     		}
+            if (D_calcOnColor && D_luxSensors) {
+    			levelSetOnColor = (levelSetOnColor * (1-(D_luxSensors.latestValue("illuminance")/D_turnOnLux))) + levelSetOffColor
+                if (levelSetOnColor > 100) {
+               		levelSetOnColor = 100
+               	}
+    		}
         	D_dimmers?.setLevel(levelSetOn)
+            setColoredLights(D_colorControls, D_color, levelSetOnColor)
         	D_switches?.on()
         	if (D_triggerOnce){
            		state.D_triggered = true
@@ -502,6 +573,8 @@ else {
         D_switches?.off()
 		def levelSetOff = D_levelDimOff ? D_levelDimOff : 0
     	D_dimmers?.setLevel(levelSetOff)
+        def levelSetOffColor = D_levelDimOffColor ? D_levelDimOffColor : 0
+        D_colorControls.setLevel(levelSetOffColor)
         	if (state.D_triggered) {
     			runOnce (getMidnight(), midNightReset)
     		}
@@ -519,11 +592,12 @@ def delayTurnOffD(){
 	D_switches?.off()
 	def levelSetOff = D_levelDimOff ? D_levelDimOff : 0
     D_dimmers?.setLevel(levelSetOff)
+    def levelSetOffColor = D_levelDimOffColor ? D_levelDimOffColor : 0
+    D_colorControls.setLevel(levelSetOffColor)
 	state.D_timerStart = false
 	if (state.D_triggered) {
     	runOnce (getMidnight(), midNightReset)
     }
-
 }
 
 def onPressD(evt) {
@@ -550,8 +624,8 @@ def midNightReset() {
     state.D_triggered = false
 }
 
-def greyOut(parameter){
-    def result = parameter ? "complete" : ""
+def greyOut(param){
+	def result = param ? "complete" : ""
 }
 
 def greyedOutTime(start, end){
@@ -599,28 +673,95 @@ def getTimeLabel(start, end){
 	timeLabel	
 }
 
-def getLevelLabel(on, off, dimmers, calcOn) {
-    def levelLabel = "Choose dimmers above and tap here to set levels"
-    if (dimmers) {
-    	levelLabel="'On' level: "
-        if (!on) {
-        	on= 100
-        }
-        if (!off) {
-        	off = 0
-        }
-        if (calcOn) {
-    		levelLabel = levelLabel + "Between ${off}% and ${on}% based on lux"
-        }
-        else {
-        	if (on) {
-    			levelLabel = levelLabel + "${on}%"
-    		}
-        }
-        levelLabel = levelLabel + "\n'Off' level: ${off}%" 
+def getLevelLabel(on, off, calcOn) {
+	def levelLabel="'On' level: "
+	if (!on) {
+		on= 100
+	}
+	if (!off) {
+		off = 0
     }
+	if (calcOn) {
+		levelLabel = levelLabel + "Between ${off}% and ${on}% based on lux"
+	}
+	else {
+        if (on) {
+    		levelLabel = levelLabel + "${on}%"
+    	}
+	}
+	levelLabel = levelLabel + "\n'Off' level: ${off}%" 
     levelLabel
 }
+
+def getColorLabel(on, off, calcOn, color) {
+    def levelLabel = color ? "Color: ${color}" : "Color: Soft White" 
+    levelLabel += "\n'On' level: "
+	if (!on) {
+		on= 100
+	}
+	if (!off) {
+		off = 0
+    }
+	if (calcOn) {
+		levelLabel = levelLabel + "Between ${off}% and ${on}% based on lux"
+	}
+	else {
+        if (on) {
+    		levelLabel = levelLabel + "${on}%"
+    	}
+	}
+	levelLabel = levelLabel + "\n'Off' level: ${off}%" 
+    
+    levelLabel
+}
+
+private setColoredLights(colorControls, color, lightLevel){
+   	def chooseColor = color ? "${color}" : "Soft White"
+    def hueColor = 0
+	def saturationLevel = 100
+	switch(chooseColor) {
+		case "White":
+			hueColor = 52
+			saturationLevel = 19
+			break;
+		case "Daylight":
+			hueColor = 52
+			saturationLevel = 16
+			break;
+		case "Soft White":
+			hueColor = 23
+			saturationLevel = 56
+			break;
+		case "Warm White":
+			hueColor = 13
+			saturationLevel = 30 
+			break;
+		case "Blue":
+			hueColor = 64
+			break;
+		case "Green":
+			hueColor = 37
+			break;
+		case "Yellow":
+			hueColor = 16
+			break;
+		case "Orange":
+			hueColor = 8
+			break;
+		case "Purple":
+			hueColor = 78
+			break;
+		case "Pink":
+			hueColor = 87
+			break;
+		case "Red":
+			hueColor = 100
+			break;
+	}
+    def newValue = [hue: hueColor as Integer, saturation: saturationLevel as Integer, level: lightLevel as Integer]
+    colorControls?.setColor(newValue)
+}
+
 
 private hhmm(time) {
 	new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", time).format("h:mm a", timeZone(time))
@@ -700,6 +841,62 @@ page(name: "levelInputD", title: "Set dimmers options...") {
         }
 }
 
+page(name: "colorInputA", title: "Set colored light options...") {
+		section {
+			input "A_color", "enum", title: "Choose a color", required: false, multiple:false, options: [
+					["Soft White":"Soft White"],
+					["White":"White - Concentrate"],
+					["Daylight":"Daylight - Energize"],
+					["Warm White":"Warm White - Relax"],
+					"Red","Green","Blue","Yellow","Orange","Purple","Pink"]
+            input "A_levelDimOnColor", "number", title: "On Level", multiple: false, required: false
+        	input "A_levelDimOffColor", "number", title: "Off Level", multiple: false, required: false
+			input "A_calcOnColor", "bool", title: "Calculate 'on' level via lux", defaultValue: false
+        }
+}
+
+page(name: "colorInputB", title: "Set colored light options...") {
+		section {
+			input "B_color", "enum", title: "Choose a color", required: false, multiple:false, options: [
+					["Soft White":"Soft White"],
+					["White":"White - Concentrate"],
+					["Daylight":"Daylight - Energize"],
+					["Warm White":"Warm White - Relax"],
+					"Red","Green","Blue","Yellow","Orange","Purple","Pink"]
+            input "B_levelDimOnColor", "number", title: "On Level", multiple: false, required: false
+        	input "B_levelDimOffColor", "number", title: "Off Level", multiple: false, required: false
+			input "B_calcOnColor", "bool",title: "Calculate 'on' level via lux", defaultValue: false
+        }
+}
+
+page(name: "colorInputC", title: "Set colored light options...") {
+		section {
+			input "C_color", "enum", title: "Choose a color", required: false, multiple:false, options: [
+					["Soft White":"Soft White"],
+					["White":"White - Concentrate"],
+					["Daylight":"Daylight - Energize"],
+					["Warm White":"Warm White - Relax"],
+					"Red","Green","Blue","Yellow","Orange","Purple","Pink"]
+            input "C_levelDimOnColor", "number", title: "On Level", multiple: false, required: false
+        	input "C_levelDimOffColor", "number", title: "Off Level", multiple: false, required: false
+			input "C_calcOnColor", "bool",title: "Calculate 'on' level via lux", defaultValue: false
+        }
+}
+
+page(name: "colorInputD", title: "Set colored light options...") {
+		section {
+			input "D_color", "enum", title: "Choose a color", required: false, multiple:false, options: [
+					["Soft White":"Soft White"],
+					["White":"White - Concentrate"],
+					["Daylight":"Daylight - Energize"],
+					["Warm White":"Warm White - Relax"],
+					"Red","Green","Blue","Yellow","Orange","Purple","Pink"]
+            input "D_levelDimOnColor", "number", title: "On Level", multiple: false, required: false
+        	input "D_levelDimOffColor", "number", title: "Off Level", multiple: false, required: false
+			input "D_calcOnColor", "bool",title: "Calculate 'on' level via lux", defaultValue: false
+        }
+}
+
 //Version/Copyright/Information/Help
 
 private def textAppName() {
@@ -707,7 +904,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.5 (06/17/2015)"
+    def text = "Version 1.1.0 (07/04/2015)"
 }
 
 private def textCopyright() {
@@ -741,3 +938,4 @@ private def textHelp() {
         "based on the current lux value. In other words, as it gets " +
         "darker, the brighter the light level will be when motion is sensed."
 }
+
