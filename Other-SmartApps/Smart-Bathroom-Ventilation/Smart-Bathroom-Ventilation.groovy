@@ -1,10 +1,10 @@
 /**
  *  Smart Bathroom Ventilation
  *
- *  Version - 1.1.0 7/6/15
+ *  Version - 1.1.0 7/7/15
  * 
  *  Version 1.0.0 - Initial release
- *  Version 1.1.0 - Added restrictions for time that fan goes on to allow for future features.
+ *  Version 1.1.0 - Added restrictions for time that fan goes on to allow for future features along with logic fixes
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -60,12 +60,12 @@ def pageSetupScenarioA() {
 		section("Devices included in the scenario") {
 			input "A_switch","capability.switch", title: "Monitor this light switch...", multiple: false, required: true
 			input "A_humidity", "capability.relativeHumidityMeasurement",title: "Monitor the following humidity sensor...", multiple: false, required: true
-			input "A_fan", "capability.switch", title: "Control the following ventilation fan...", multiple: false, required: true
+			input "A_fan", "capability.switch", title: "Control the following ventilation fans...", multiple: true, required: true
 		}
 		section("Fan settings") {
-        	input "A_humidityDelta", title: "Ventilation fan turns on when lights are on and humidity rises", "number", required: false, description: "0-50%"
-        	input "A_fanTime", title: "Turn off ventilation fan after...", "enum", required: false, options: [[5:"5 Minutes"],[10:"10 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
-			input "A_manualFan", title: "If ventilation fan is turned on manually, turn off automatically using settings above", "bool", defaultValue: "false"
+        	input "A_humidityDelta", title: "Ventilation fans turns on when lights are on and humidity rises(%)", "number", required: false, description: "0-50%"
+        	input "A_fanTime", title: "Turn off ventilation fans after...", "enum", required: false, options: [[5:"5 Minutes"],[10:"10 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
+			input "A_manualFan", title: "If any of the ventilation fans are turned on manually, turn them all off automatically using settings above", "bool", defaultValue: "false"
         }
 		section("Restrictions") {            
 			input "A_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
@@ -91,12 +91,12 @@ def pageSetupScenarioB() {
 		section("Devices included in the scenario") {
     		input "B_switch","capability.switch", title: "Monitor this light switch...", multiple: false, required: true
         	input "B_humidity", "capability.relativeHumidityMeasurement",title: "Monitor the following humidity sensor...", multiple: false, required: true
-        	input "B_fan", "capability.switch",title: "Control the following ventilation fan...", multiple: false, required: true
+        	input "B_fan", "capability.switch",title: "Control the following ventilation fans...", multiple: true, required: true
 		}
 		section("Fan settings") {
-        	input "B_humidityDelta", title: "Ventilation fan turns on when lights are on and humidity rises", "number", required: false, description: "0-50%"
-        	input "B_fanTime", title: "Turn off ventilation fan after...", "enum", required: false, options: [[5:"5 Minutes"],[10:"10 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
-			input "B_manualFan", title: "If ventilation fan is turned on manually, turn off automatically using settings above", "bool", defaultValue: "false"
+        	input "B_humidityDelta", title: "Ventilation fans turns on when lights are on and humidity rises(%)", "number", required: false, description: "0-50%"
+        	input "B_fanTime", title: "Turn off ventilation fans after...", "enum", required: false, options: [[5:"5 Minutes"],[10:"10 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
+			input "B_manualFan", title: "If any of the ventilation fans are turned on manually, turn them all off automatically using settings above", "bool", defaultValue: "false"
         }
 		section("Restrictions") {            
 			input "B_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
@@ -122,12 +122,12 @@ def pageSetupScenarioC() {
 		section("Devices included in the scenario") {
     		input "C_switch","capability.switch", title: "Monitor this light switch...", multiple: false, required: true
         	input "C_humidity", "capability.relativeHumidityMeasurement",title: "Monitor the following humidity sensor...", multiple: false, required: true
-        	input "C_fan", "capability.switch",title: "Control the following ventilation fan...", multiple: false, required: true
+        	input "C_fan", "capability.switch",title: "Control the following ventilation fans...", multiple: true, required: true
 		}
 		section("Fan settings") {
-        	input "C_humidityDelta", title: "Ventilation fan turns on when lights are on and humidity rises", "number", required: false, description: "0-50%"
-        	input "C_fanTime", title: "Turn off ventilation fan after...", "enum", required: false, options: [[5:"5 Minutes"],[10:"10 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
-			input "C_manualFan", title: "If ventilation fan is turned on manually, turn off automatically using settings above", "bool", defaultValue: "false"
+        	input "C_humidityDelta", title: "Ventilation fans turns on when lights are on and humidity rises(%)", "number", required: false, description: "0-50%"
+        	input "C_fanTime", title: "Turn off ventilation fans after...", "enum", required: false, options: [[5:"5 Minutes"],[10:"10 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
+			input "C_manualFan", title: "If any of the ventilation fans are turned on manually, turn them all off automatically using settings above", "bool", defaultValue: "false"
         }
 		section("Restrictions") {            
 			input "C_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
@@ -153,12 +153,12 @@ def pageSetupScenarioD() {
 		section("Devices included in the scenario") {
     		input "D_switch","capability.switch", title: "Monitor this light switch...", multiple: false, required: true
         	input "D_humidity", "capability.relativeHumidityMeasurement",title: "Monitor the following humidity sensor...", multiple: false, required: true
-        	input "D_fan", "capability.switch",title: "Control the following ventilation fan...", multiple: false, required: true
+        	input "D_fan", "capability.switch",title: "Control the following ventilation fans...", multiple: true, required: true
 		}
 		section("Fan settings") {
-        	input "D_humidityDelta", title: "Ventilation fan turns on when lights are on and humidity rises", "number", required: false, description: "0-50%"
-        	input "D_fanTime", title: "Turn off ventilation fan after...", "enum", required: false, options: [[5:"5 Minutes"],[10:"10 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
-			input "D_manualFan", title: "If ventilation fan is turned on manually, turn off automatically using settings above", "bool", defaultValue: "false"
+        	input "D_humidityDelta", title: "Ventilation fans turn on when lights are on and humidity rises(%)", "number", required: false, description: "0-50%"
+        	input "D_fanTime", title: "Turn off ventilation fans after...", "enum", required: false, options: [[5:"5 Minutes"],[10:"10 Minutes"],[15:"15 Minutes"],[30:"30 Minutes"],[60:"1 hour"],[98:"Light switch is turned off"],[99:"Humidity drops to or below original value"]]
+			input "D_manualFan", title: "If any of the ventilation fans are turned on manually, turn them all off automatically using settings above", "bool", defaultValue: "false"
         }
 		section("Restrictions") {            
 			input "D_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
@@ -270,7 +270,6 @@ def turnOnA(evt){
 def turnOffA(evt) {
 	log.debug "Ventilation fan turned off in '${ScenarioNameA}'."
     A_fan?.off()
-    state.triggeredA = false
 }
 
 def humidityHandlerA(evt){
@@ -297,14 +296,16 @@ def onEventA(evt) {
 def offEventA(evt) {
 	def currentHumidityA = A_humidity.currentValue("humidity")
     log.debug "Light turned off in ${ScenarioNameA}. Humidity value is ${currentHumidityA} in '${ScenarioNameA}'."
+	state.triggeredA = false
     if (state.A_runTime == 98){
     	turnOffA()
     }
 }
+
 //B Handlers
 def turnOnB(evt){
     if ((!B_mode || B_mode.contains(location.mode)) && getDayOk(B_day) && B_switch.currentValue("switch")=="on" && !state.triggeredB && getTimeOk(B_timeStart,B_timeEnd)) {
-        log.debug "Ventilation fan turned on in ${ScenarioNameB}."
+        log.debug "Ventilation fan turned on in '${ScenarioNameB}'."
     	B_fan?.on()
         state.triggeredB = true
         if (state.B_runTime < 98) {
@@ -317,7 +318,6 @@ def turnOnB(evt){
 def turnOffB(evt) {
 	log.debug "Ventilation fan turned off in '${ScenarioNameB}'."
     B_fan?.off()
-    state.triggeredB = false
 }
 
 def humidityHandlerB(evt){
@@ -344,6 +344,7 @@ def onEventB(evt) {
 def offEventB(evt) {
 	def currentHumidityB = B_humidity.currentValue("humidity")
     log.debug "Light turned off in ${ScenarioNameB}. Humidity value is ${currentHumidityB} in '${ScenarioNameB}'."
+    state.triggeredB = false
     if (state.B_runTime == 98){
     	turnOffB()
     }
@@ -365,7 +366,6 @@ def turnOnC(evt){
 def turnOffC(evt) {
 	log.debug "Ventilation fan turned off in '${ScenarioNameC}'."
     C_fan?.off()
-    state.triggeredC = false
 }
 
 def humidityHandlerC(evt){
@@ -392,6 +392,7 @@ def onEventC(evt) {
 def offEventC(evt) {
 	def currentHumidityC = C_humidity.currentValue("humidity")
     log.debug "Light turned off in ${ScenarioNameC}. Humidity value is ${currentHumidityC} in '${ScenarioNameC}'."
+	state.triggeredC = false
     if (state.C_runTime == 98){
     	turnOffC()
     }
@@ -413,7 +414,6 @@ def turnOnD(evt){
 def turnOffD(evt) {
 	log.debug "Ventilation fan turned off in '${ScenarioNameD}'."
     D_fan?.off()
-    state.triggeredD = false
 }
 
 def humidityHandlerD(evt){
@@ -440,7 +440,8 @@ def onEventD(evt) {
 def offEventD(evt) {
 	def currentHumidityD = D_humidity.currentValue("humidity")
     log.debug "Light turned off in ${ScenarioNameD}. Humidity value is ${currentHumidityD} in '${ScenarioNameD}'."
-    if (state.D_runTime == 98){
+    state.triggeredD = false
+	if (state.D_runTime == 98){
     	turnOffD()
     }
 }
@@ -519,7 +520,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.1.0 (07/06/2015)"
+    def text = "Version 1.1.0 (07/07/2015)"
 }
 
 private def textCopyright() {
@@ -543,9 +544,9 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-    	"Select a light switch to monitor. When the switch is turned on, a humidity reading is taken. You can choose when " +
-        "the ventilation fan comes on; either when the room humidity rises over a certain level or come on with the light switch. "+
-        "The ventilation fan will turn off based on either a timer setting, humidity, or the light switch being turned off. " +
-        "You can also choose to have the ventilation fan turn off automatically based on the setttings if it is turned on manually. "+
+    	"Select a light switch to monitor, a humidity sensor, and fans to control. When the light switch is turned on, a humidity reading is taken. You can choose when " +
+        "the ventilation fans comes on; either when the room humidity rises over a certain level or come on with the light switch. "+
+        "The ventilation fans will turn off based on either a timer setting, humidity, or the light switch being turned off. " +
+        "You can also choose to have the ventilation fans turn off automatically if they are turned on manually. "+
         "Each scenario can be restricted to specific modes, times of day or certain days of the week."
 }
