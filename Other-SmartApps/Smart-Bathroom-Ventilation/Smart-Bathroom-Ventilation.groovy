@@ -1,7 +1,10 @@
 /**
  *  Smart Bathroom Ventilation
  *
- *  Version - 1.0.0 7/3/15
+ *  Version - 1.1.0 7/6/15
+ * 
+ *  Version 1.0.0 - Initial release
+ *  Version 1.1.0 - Added restrictions for time that fan goes on to allow for future features.
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -66,13 +69,22 @@ def pageSetupScenarioA() {
         }
 		section("Restrictions") {            
 			input "A_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
-        	input "A_mode", "mode", title: "Only during the following modes...", multiple: true, required: false
+        	href "timeIntervalInputA", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state: greyedOutTime(A_timeStart, A_timeEnd)
+            input "A_mode", "mode", title: "Only during the following modes...", multiple: true, required: false
 		}
 		section("Name your scenario") {
             input "ScenarioNameA", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     	}
     }
 }
+
+page(name: "timeIntervalInputA", title: "Only during a certain time") {
+		section {
+			input "A_timeStart", "time", title: "Starting", required: false
+			input "A_timeEnd", "time", title: "Ending", required: false
+		}
+} 
+
 // Show "pageSetupScenarioB" page
 def pageSetupScenarioB() {
 	dynamicPage(name: "pageSetupScenarioB") {
@@ -88,12 +100,20 @@ def pageSetupScenarioB() {
         }
 		section("Restrictions") {            
 			input "B_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
-        	input "B_mode", "mode", title: "Only during the following modes...", multiple: true, required: false
+        	href "timeIntervalInputB", title: "Only during a certain time...", description: getTimeLabel(B_timeStart, B_timeEnd), state: greyedOutTime(B_timeStart, B_timeEnd)
+            input "B_mode", "mode", title: "Only during the following modes...", multiple: true, required: false
 		}
 		section("Name your scenario") {
             input "ScenarioNameB", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     	}
     }
+}
+
+page(name: "timeIntervalInputB", title: "Only during a certain time") {
+		section {
+			input "B_timeStart", "time", title: "Starting", required: false
+			input "B_timeEnd", "time", title: "Ending", required: false
+		}
 }
 
 // Show "pageSetupScenarioC" page
@@ -111,12 +131,20 @@ def pageSetupScenarioC() {
         }
 		section("Restrictions") {            
 			input "C_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
-        	input "C_mode", "mode", title: "Only during the following modes...", multiple: true, required: false
+        	href "timeIntervalInputC", title: "Only during a certain time...", description: getTimeLabel(C_timeStart, C_timeEnd), state: greyedOutTime(C_timeStart, C_timeEnd)
+            input "C_mode", "mode", title: "Only during the following modes...", multiple: true, required: false
 		}
 		section("Name your scenario") {
             input "ScenarioNameC", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     	}
     }
+}
+
+page(name: "timeIntervalInputC", title: "Only during a certain time") {
+		section {
+			input "C_timeStart", "time", title: "Starting", required: false
+			input "C_timeEnd", "time", title: "Ending", required: false
+		}
 }
 
 // Show "pageSetupScenarioD" page
@@ -134,13 +162,22 @@ def pageSetupScenarioD() {
         }
 		section("Restrictions") {            
 			input "D_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required:   false
-        	input "D_mode", "mode", title: "Only during the following modes...", multiple: true, required: false
+        	href "timeIntervalInputD", title: "Only during a certain time...", description: getTimeLabel(D_timeStart, D_timeEnd), state: greyedOutTime(D_timeStart, D_timeEnd)
+            input "D_mode", "mode", title: "Only during the following modes...", multiple: true, required: false
 		}
 		section("Name your scenario") {
             input "ScenarioNameD", "text", title: "Scenario Name", multiple: false, required: false, defaultValue: empty
     	}
     }
 }
+
+page(name: "timeIntervalInputD", title: "Only during a certain time") {
+		section {
+			input "D_timeStart", "time", title: "Starting", required: false
+			input "D_timeEnd", "time", title: "Ending", required: false
+		}
+}
+
 page(name: "pageAbout", title: "About ${textAppName()}") {
         section {
             paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
@@ -219,7 +256,7 @@ def initialize() {
 //Handlers----------------
 //A Handlers
 def turnOnA(evt){
-    if ((!A_mode || A_mode.contains(location.mode)) && getDayOk(A_day) && A_switch.currentValue("switch")=="on" && !state.triggeredA) {
+    if ((!A_mode || A_mode.contains(location.mode)) && getDayOk(A_day) && A_switch.currentValue("switch")=="on" && !state.triggeredA && getTimeOk(A_timeStart,A_timeEnd)) {
         log.debug "Ventilation fan turned on in '${ScenarioNameA}'."
     	A_fan?.on()
         state.triggeredA = true
@@ -266,7 +303,7 @@ def offEventA(evt) {
 }
 //B Handlers
 def turnOnB(evt){
-    if ((!B_mode || B_mode.contains(location.mode)) && getDayOk(B_day) && B_switch.currentValue("switch")=="on" && !state.triggeredB ) {
+    if ((!B_mode || B_mode.contains(location.mode)) && getDayOk(B_day) && B_switch.currentValue("switch")=="on" && !state.triggeredB && getTimeOk(B_timeStart,B_timeEnd)) {
         log.debug "Ventilation fan turned on in ${ScenarioNameB}."
     	B_fan?.on()
         state.triggeredB = true
@@ -314,7 +351,7 @@ def offEventB(evt) {
 
 //C Handlers
 def turnOnC(evt){
-    if ((!C_mode || C_mode.contains(location.mode)) && getDayOk(C_day) && C_switch.currentValue("switch")=="on" && !state.triggeredC) {
+    if ((!C_mode || C_mode.contains(location.mode)) && getDayOk(C_day) && C_switch.currentValue("switch")=="on" && !state.triggeredC && getTimeOk(C_timeStart,C_timeEnd)) {
         log.debug "Ventilation fan turned on in '${ScenarioNameC}'."
     	C_fan?.on()
         state.triggeredC = true
@@ -362,7 +399,7 @@ def offEventC(evt) {
 
 //D Handlers
 def turnOnD(evt){
-    if ((!D_mode || D_mode.contains(location.mode)) && getDayOk(D_day) && D_switch.currentValue("switch")=="on" && !state.triggeredD) {
+    if ((!D_mode || D_mode.contains(location.mode)) && getDayOk(D_day) && D_switch.currentValue("switch")=="on" && !state.triggeredD && getTimeOk(D_timeStart, D_timeEnd)) {
         log.debug "Ventilation fan turned on in '${ScenarioNameD}'."
     	D_fan?.on()
         state.triggeredD = true
@@ -419,6 +456,29 @@ def getTitle(scenario) {
 	def title = scenario ? scenario : "Empty"
 }
 
+def getTimeLabel(start, end){
+	def timeLabel = "Tap to set"
+	
+    if(start && end){
+    	timeLabel = "Between" + " " + hhmm(start) + " "  + "and" + " " +  hhmm(end)
+    }
+    else if (start) {
+		timeLabel = "Start at" + " " + hhmm(start)
+    }
+    else if(end){
+    timeLabel = "End at" + hhmm(end)
+    }
+	timeLabel	
+}
+
+def greyedOutTime(start, end){
+	def result = start || end ? "complete" : ""
+}
+
+private hhmm(time) {
+	new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", time).format("h:mm a", timeZone(time))
+}
+
 private getDayOk(dayList) {
 	def result = true
     if (dayList) {
@@ -435,6 +495,23 @@ private getDayOk(dayList) {
     result
 }
 
+private getTimeOk(startTime, endTime) {
+	def result = true
+	if (startTime && endTime) {
+		def currTime = now()
+		def start = timeToday(startTime).time
+		def stop = timeToday(endTime).time
+		result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start
+	}
+	else if (startTime){
+    	result = currTime >= start
+    }
+    else if (endTime){
+    	result = currTime <= stop
+    }
+    result
+}
+
 //Version/Copyright/Information/Help
 
 private def textAppName() {
@@ -442,7 +519,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.0 (07/03/2015)"
+    def text = "Version 1.1.0 (07/06/2015)"
 }
 
 private def textCopyright() {
@@ -470,5 +547,5 @@ private def textHelp() {
         "the ventilation fan comes on; either when the room humidity rises over a certain level or come on with the light switch. "+
         "The ventilation fan will turn off based on either a timer setting, humidity, or the light switch being turned off. " +
         "You can also choose to have the ventilation fan turn off automatically based on the setttings if it is turned on manually. "+
-        "Each scenario can be restricted to specific modes or certain days of the week."
+        "Each scenario can be restricted to specific modes, times of day or certain days of the week."
 }
