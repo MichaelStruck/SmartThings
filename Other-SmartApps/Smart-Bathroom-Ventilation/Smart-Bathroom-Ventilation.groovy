@@ -643,7 +643,7 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-    	"Select a light switch to monitor, a humidity sensor, and fans to control. When the light switch is turned on, a humidity reading is taken. You can choose when " +
+    	"Select a light switch to monitor, a humidity sensor (optional), and fans to control. You can choose when " +
         "the ventilation fans comes on; either when the room humidity rises over a certain level or come on after a user definable time after the light switch. "+
         "The ventilation fans will turn off based on either a timer setting, humidity, or the light switch being turned off. " +
         "You can also choose to have the ventilation fans turn off automatically if they are turned on manually. "+
