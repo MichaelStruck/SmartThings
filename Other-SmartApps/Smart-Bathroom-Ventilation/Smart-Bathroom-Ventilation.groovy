@@ -358,7 +358,7 @@ def turnOnB(evt){
     if ((!B_mode || B_mode.contains(location.mode)) && getDayOk(B_day) && B_switch.currentValue("switch")=="on" && !state.triggeredB && getTimeOk(B_timeStart,B_timeEnd)) {
         log.debug "Ventilation turned on in '${ScenarioNameB}'."
     	B_fan?.on()
-        state.triggeredA = true
+        state.triggeredB = true
         if (state.B_runTime < 98) {
 			log.debug "Ventilation will be turned off in ${state.B_runTime} minutes in '${ScenarioNameB}'."
             unschedule (turnOnB)
@@ -518,7 +518,7 @@ def onEventD(evt) {
     if (D_humidity){
     	state.humidityStartD = D_humidity.currentValue("humidity")
     	state.humidityLimitD = state.humidityStartA + humidityDelta
-        text = "Humidity starting value is ${state.humidityStartD} in '${ScenarioNameD}'. Ventilation threshold is ${state.humidityLimitd}."
+        text = "Humidity starting value is ${state.humidityStartD} in '${ScenarioNameD}'. Ventilation threshold is ${state.humidityLimitD}."
     }
     log.debug "Light turned on in ${ScenarioNameD}. ${text}" 
     if ((!D_humidityDelta || D_humidityDelta == 0) && (D_timeOn != "null" && D_timeOn == 0)) {
@@ -644,7 +644,7 @@ private def textLicense() {
 private def textHelp() {
 	def text =
     	"Select a light switch to monitor, a humidity sensor (optional), and fans to control. You can choose when " +
-        "the ventilation fans comes on; either when the room humidity rises over a certain level or come on after a user definable time after the light switch. "+
+        "the ventilation fans comes on; either when the room humidity rises over a certain level or after a user definable time after the light switch is turned on. "+
         "The ventilation fans will turn off based on either a timer setting, humidity, or the light switch being turned off. " +
         "You can also choose to have the ventilation fans turn off automatically if they are turned on manually. "+
         "Each scenario can be restricted to specific modes, times of day or certain days of the week."
