@@ -1,7 +1,7 @@
 /**
  *  Say Good Night!
  *
- *  Version - 1.0.1 6/21/15
+ *  Version - 1.0.2 6/26/15
  *  
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -23,7 +23,7 @@ definition(
     name: "Say Good Night!",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Control up to 4 'Good Night' scenarios using Sonos speakers and various triggers and actions.",
+    description: "Control up to 5 'Good Night' scenarios using Sonos speakers and various triggers and actions.",
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Say-Good-Night/SayGoodNight.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Say-Good-Night/SayGoodNight@2x.png",
@@ -36,14 +36,17 @@ preferences {
     page name: "pageSetupScenarioB"
     page name: "pageSetupScenarioC"
     page name: "pageSetupScenarioD"
+    page name: "pageSetupScenarioE"
     page name: "pageWeatherSettingsA"
     page name: "pageWeatherSettingsB"
     page name: "pageWeatherSettingsC"
     page name: "pageWeatherSettingsD"
+    page name: "pageWeatherSettingsE"
     page name: "pageDoorsWindowsA"  
     page name: "pageDoorsWindowsB"
     page name: "pageDoorsWindowsC"
-    page name: "pageDoorsWindowsD"   
+    page name: "pageDoorsWindowsD"
+    page name: "pageDoorsWindowsE"
 }
 
 // Show setup page
@@ -54,6 +57,7 @@ def pageMain() {
             href "pageSetupScenarioB", title: getTitle(ScenarioNameB, 2), description: "", state: greyOut(ScenarioNameB, B_sonos)
             href "pageSetupScenarioC", title: getTitle(ScenarioNameC, 3), description: "", state: greyOut(ScenarioNameC, C_sonos)
             href "pageSetupScenarioD", title: getTitle(ScenarioNameD, 4), description: "", state: greyOut(ScenarioNameD, D_sonos)
+            href "pageSetupScenarioE", title: getTitle(ScenarioNameE, 5), description: "", state: greyOut(ScenarioNameE, E_sonos)
         }
  		section([title:"Options", mobileOnly:true]) {
             input "zipCode", "text", title: "Zip Code", required: false
@@ -79,6 +83,7 @@ def pageSetupScenarioA() {
         	href "pageWeatherSettingsA", title: "Weather Reporting Settings", description: getWeatherDesc(A_weatherReport, A_includeSunrise, A_includeSunset, A_includeTemp, A_humidity, A_localTemp), state: greyOut1(A_weatherReport, A_includeSunrise, A_includeSunset, A_includeTemp, A_humidity, A_localTemp)
         	href "pageDoorsWindowsA", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(A_contactSensors, A_doorControls, A_locks),state: greyOut3(A_contactSensors, A_doorControls, A_locks)
             input "A_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
+            input "A_msgFirst", "bool", title: "Play good night message before other voice messages", defaultValue: "false"
         }
         section("Good Night Actions"){
             def phrases = location.helloHome?.getPhrases()*.label
@@ -135,7 +140,7 @@ def pageWeatherSettingsA() {
 def pageDoorsWindowsA() {
     dynamicPage(name: "pageDoorsWindowsA", title: "Doors/Windows Reporting Settings"){
 		section {
-  			input "A_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
+  			input "A_reportAll", "bool", title: "Report status even when closed and locked", defaultValue: "false"
         	input "A_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
             input "A_doorControls", "capability.doorControl", title: "Which Door Controls...", multiple: true, required: false
        		input "A_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
@@ -159,6 +164,7 @@ def pageSetupScenarioB() {
         	href "pageWeatherSettingsB", title: "Weather Reporting Settings", description: getWeatherDesc(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp), state: greyOut1(B_weatherReport, B_includeSunrise, B_includeSunset, B_includeTemp, B_humidity, B_localTemp)
         	href "pageDoorsWindowsB", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(B_contactSensors, B_doorControls, B_locks),state: greyOut3(B_contactSensors, B_doorControls, B_locks)
             input "B_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
+            input "B_msgFirst", "bool", title: "Play good night message before other voice messages", defaultValue: "false"
         }
         section("Good Night Actions"){
             def phrases = location.helloHome?.getPhrases()*.label
@@ -215,7 +221,7 @@ def pageWeatherSettingsB() {
 def pageDoorsWindowsB() {
     dynamicPage(name: "pageDoorsWindowsB", title: "Doors/Windows Reporting Settings"){
 		section {
-  			input "B_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
+  			input "B_reportAll", "bool", title: "Report status even when closed and locked", defaultValue: "false"
         	input "B_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
             input "B_doorControls", "capability.doorControl", title: "Which Door Controls...", multiple: true, required: false
        		input "B_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
@@ -238,6 +244,7 @@ def pageSetupScenarioC() {
             href "pageWeatherSettingsC", title: "Weather Reporting Settings",description: getWeatherDesc(C_weatherReport, C_includeSunrise, C_includeSunset, C_includeTemp, A_humidity, C_localTemp), state: greyOut1(C_weatherReport, C_includeSunrise, C_includeSunset, C_includeTemp, C_humidity, C_localTemp)
 			href "pageDoorsWindowsC", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(C_contactSensors, C_doorControls, C_locks),state: greyOut3(C_contactSensors, C_doorControls, C_locks)
             input "C_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
+            input "C_msgFirst", "bool", title: "Play good night message before other voice messages", defaultValue: "false"
         }
 		section("Good Night Actions"){   
         	def phrases = location.helloHome?.getPhrases()*.label
@@ -294,7 +301,7 @@ def pageWeatherSettingsC() {
 def pageDoorsWindowsC() {
     dynamicPage(name: "pageDoorsWindowsC", title: "Doors/Windows Reporting Settings"){
 		section {
-    		input "C_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
+    		input "C_reportAll", "bool", title: "Report status even when closed and locked", defaultValue: "false"
         	input "C_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
             input "C_doorControls", "capability.doorControl", title: "Which Door Controls...", multiple: true, required: false
        		input "C_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
@@ -318,6 +325,7 @@ def pageSetupScenarioD() {
         	href "pageWeatherSettingsD", title: "Weather Reporting Settings", description: getWeatherDesc(D_weatherReport, D_includeSunrise, D_includeSunset, D_includeTemp, D_humidity, D_localTemp), state: greyOut1(D_weatherReport, D_includeSunrise, D_includeSunset, D_includeTemp, D_humidity, D_localTemp)
         	href "pageDoorsWindowsD", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(D_contactSensors, D_doorControls, D_locks),state: greyOut3(D_contactSensors,D_doorControls, D_locks)
             input "D_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
+            input "D_msgFirst", "bool", title: "Play good night message before other voice messages", defaultValue: "false"
         }
         section("Good Night Actions"){
             def phrases = location.helloHome?.getPhrases()*.label
@@ -374,7 +382,7 @@ def pageWeatherSettingsD() {
 def pageDoorsWindowsD() {
     dynamicPage(name: "pageDoorsWindowsD", title: "Doors/Windows Reporting Settings"){
 		section {
-  			input "D_reportAll", "bool", title: "Report status even when items are closed and locked", defaultValue: "false"
+  			input "D_reportAll", "bool", title: "Report status even when closed and locked", defaultValue: "false"
         	input "D_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
             input "D_doorControls", "capability.doorControl", title: "Which Door Controls...", multiple: true, required: false
        		input "D_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
@@ -382,6 +390,86 @@ def pageDoorsWindowsD() {
 	}
 }
 
+// Show "pageSetupScenarioE" page
+def pageSetupScenarioE() {
+    dynamicPage(name: "pageSetupScenarioE") {
+		section("Scenario Settings") {
+        	input "ScenarioNameE", "text", title: "Scenario Name", required: false
+			input "E_sonos", "capability.musicPlayer", title: "Choose a Sonos speaker", required: true
+    	}
+		section("Say 'Good Night' when...") {
+			input "E_switches", "capability.switch",title: "Any of these switches are turned off...", multiple: true, required: false
+            href "pageButtonControlE", title: "A button is pressed on a controller...", description: buttonDesc(E_buttonDevice, E_buttonPress), state: greyOut(E_buttonDevice, E_buttonPress)
+        }
+        section("Voice Reporting Options") {
+        	input "E_volume", "number", title: "Set the alarm volume", description: "0-100%", required: false
+        	href "pageWeatherSettingsE", title: "Weather Reporting Settings", description: getWeatherDesc(E_weatherReport, E_includeSunrise, E_includeSunset, E_includeTemp, E_humidity, E_localTemp), state: greyOut1(E_weatherReport, E_includeSunrise, E_includeSunset, E_includeTemp, E_humidity, E_localTemp)
+        	href "pageDoorsWindowsE", title: "Doors/Windows Reporting Settings", description: getDoorsDesc(E_contactSensors, E_doorControls, E_locks),state: greyOut3(E_contactSensors,E_doorControls, E_locks)
+            input "E_msg", "text", title: "Good night message", defaultValue: "Good Night!", required: false
+            input "E_msgFirst", "bool", title: "Play good night message before other voice messages", defaultValue: "false"
+        }
+        section("Good Night Actions"){
+            def phrases = location.helloHome?.getPhrases()*.label
+            if (phrases) {
+				phrases.sort()
+				input "E_phrase", "enum", title: "Trigger the following phrase", required: false, options: phrases, multiple: false, submitOnChange:true
+				if (E_phrase){
+                	input "E_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+                }
+            }
+		}
+        section{
+            input "E_triggerMode", "mode", title: "Trigger the following mode", required: false, submitOnChange:true
+            if (E_triggerMode){
+            	input "E_confirmMode", "bool", title: "Confirm mode in voice message", defaultValue: "false"
+            }
+		}
+    	section("Restrictions") {            
+        	input "E_triggerOnce", "bool",title: "Trigger only once per day...", defaultValue: false
+        	href "timeIntervalInputD", title: "Only during a certain time...", description: getTimeLabel(E_timeStart, E_timeEnd), state:greyOut2(E_timeStart, E_timeEnd)
+        	input "E_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
+        	input "E_mode", "mode", title: "Only during certain modes...", multiple: true, required: false
+        }
+    } 
+}
+
+page(name: "pageButtonControlE", title: "Button Controller Setup") {
+	section {
+    	input "E_buttonDevice", "capability.button", title: "Button Controller", multiple: false, required: false
+        input "E_buttonPress", "enum", title: "Which button...", options: [1:"1", 2:"2", 3:"3", 4:"4"], multiple: false, required: false
+	}
+}
+
+page(name: "timeIntervalInputE", title: "Only during a certain time") {
+	section {
+		input "E_timeStart", "time", title: "Starting", required: false
+		input "E_timeEnd", "time", title: "Ending", required: false
+	}
+}
+
+def pageWeatherSettingsE() {
+    dynamicPage(name: "pageWeatherSettingsE", title: "Weather Reporting Settings") {
+	section {
+		input "E_includeTemp", "bool", title: "Speak current temperature (from local forecast)", defaultValue: "false"
+        input "E_localTemp", "capability.temperatureMeasurement", title: "Speak local temperature (from device)", required: false, multiple: false
+        input "E_humidity", "capability.relativeHumidityMeasurement", title: "Speak local humidity (from device)", required: false, multiple: false
+        input "E_weatherReport", "bool", title: "Speak tomorrow's weather forecast", defaultValue: "false"
+        input "E_includeSunrise", "bool", title: "Speak tomorrow's sunrise", defaultValue: "false"
+    	input "E_includeSunset", "bool", title: "Speak tomorrow's sunset", defaultValue: "false"
+	}
+}
+}
+
+def pageDoorsWindowsE() {
+    dynamicPage(name: "pageDoorsWindowsD", title: "Doors/Windows Reporting Settings"){
+		section {
+  			input "E_reportAll", "bool", title: "Report status even when closed and locked", defaultValue: "false"
+        	input "E_contactSensors", "capability.contactSensor", title: "Which Doors/Windows...", multiple: true, required: false
+            input "E_doorControls", "capability.doorControl", title: "Which Door Controls...", multiple: true, required: false
+       		input "E_locks", "capability.lock", title: "Which Locks...", multiple: true, required: false
+   		}
+	}
+}
 page(name: "pageAbout", title: "About ${textAppName()}") {
         section {
             paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
@@ -417,6 +505,9 @@ def initialize() {
 	if (D_switches) {
     	subscribe (D_switches, "switch.off", scenario_D)
     }
+    if (E_switches) {
+    	subscribe (E_switches, "switch.off", scenario_E)
+    }
     if (A_buttonDevice && A_buttonPress){
     	subscribe(A_buttonDevice, "button.pushed", buttonHandler_A)
     }
@@ -428,7 +519,10 @@ def initialize() {
     }
 	if (D_buttonDevice && D_buttonPress){
     	subscribe(D_buttonDevice, "button.pushed", buttonHandler_D)
-    } 
+    }
+    if (E_buttonDevice && E_buttonPress){
+    	subscribe(E_buttonDevice, "button.pushed", buttonHandler_E)
+    }
 }
 
 //--------------------------------------
@@ -436,7 +530,11 @@ def initialize() {
 def scenario_A(evt) {
 	if ((!A_triggerOnce || (A_triggerOnce && !A_triggered)) && getTimeOk(A_timeStart, A_timeEnd) && getDayOk(A_day) && (!A_mode || A_mode.contains(location.mode))) {
 		state.fullMsgA = ""
-		   
+		
+        if (A_msg && A_msgFirst) {
+			getGreeting(A_msg, 1)
+		}
+        
 		if (A_weatherReport || A_humidity || A_includeTemp || A_localTemp) {
 			getWeatherReport(1, A_weatherReport, A_humidity, A_includeTemp, A_localTemp)
 		}
@@ -451,10 +549,9 @@ def scenario_A(evt) {
             	getPhraseConfirmation(A_phrase, 1)
             }
         }
-        
         if (A_triggerMode && location.mode != A_triggerMode) {
-			if (location.modes?.find{it.name == A_triggerMode}) {
-				setLocationMode(A_triggerMode)
+            if (location.modes?.find{it.name == A_triggerMode}) {
+                setLocationMode(A_triggerMode)
 			} else {
 				log.debug "Unable to change to undefined mode '${A_triggerMode}'"
 			}
@@ -467,7 +564,7 @@ def scenario_A(evt) {
         	getDoorsConditions(A_reportAll, A_contactSensors, A_locks, A_doorControls, 1)
         }
         
-        if (A_msg) {
+        if (A_msg && !A_msgFirst) {
 			getGreeting(A_msg, 1)
 		} 
       
@@ -496,7 +593,11 @@ def buttonHandler_A(evt){
 def scenario_B(evt) {
 	if ((!B_triggerOnce || (B_triggerOnce && !B_triggered)) && getTimeOk(B_timeStart, B_timeEnd) && getDayOk(B_day) && (!B_mode || B_mode.contains(location.mode))) {
 		state.fullMsgB = ""
-		   
+		
+        if (B_msg && B_msgFirst) {
+			getGreeting(B_msg, 2)
+		}
+        
 		if (B_weatherReport || B_humidity || B_includeTemp || B_localTemp) {
 			getWeatherReport(2, B_weatherReport, B_humidity, B_includeTemp, B_localTemp)
 		}
@@ -514,7 +615,7 @@ def scenario_B(evt) {
         
         if (B_triggerMode && location.mode != B_triggerMode) {
 			if (location.modes?.find{it.name == B_triggerMode}) {
-				setLocationMode(B_triggerMode)
+                setLocationMode(B_triggerMode)
 			} else {
 				log.debug "Unable to change to undefined mode '${B_triggerMode}'"
 			}
@@ -527,10 +628,9 @@ def scenario_B(evt) {
         	getDoorsConditions(B_reportAll, B_contactSensors, B_locks, B_doorControls, 2)
         }
         
-        if (B_msg) {
+        if (B_msg && !B_msgFirst) {
 			getGreeting(B_msg, 2)
 		} 
-      
 		state.soundB = textToSpeech(state.fullMsgB, true)
     	if (B_volume) {
 			B_sonos.setLevel(B_volume)
@@ -557,7 +657,12 @@ def buttonHandler_B(evt){
 def scenario_C(evt) {
 	if ((!C_triggerOnce || (C_triggerOnce && !C_triggered)) && getTimeOk(C_timeStart, C_timeEnd) && getDayOk(C_day) && (!C_mode || C_mode.contains(location.mode))) {
 		state.fullMsgC = ""
-		if (C_weatherReport || C_humidity || C_includeTemp || C_localTemp) {
+		
+        if (C_msg && C_msgFirst) {
+			getGreeting(C_msg, 3)
+		}
+        
+        if (C_weatherReport || C_humidity || C_includeTemp || C_localTemp) {
 			getWeatherReport(3, C_weatherReport, C_humidity, C_includeTemp, C_localTemp)
 		}
         
@@ -587,11 +692,10 @@ def scenario_C(evt) {
         	getDoorsConditions(C_reportAll, C_contactSensors, C_locks, C_doorControls, 3)
         }
         
-        if (C_msg) {
+        if (C_msg && !C_msgFirst) {
 			getGreeting(C_msg, 3)
 		} 
-      
-		state.soundC = textToSpeech(state.fullMsgC, true)
+        state.soundC = textToSpeech(state.fullMsgC, true)
     	if (C_volume) {
 			C_sonos.setLevel(C_volume)
 		}
@@ -616,7 +720,11 @@ def buttonHandler_C(evt){
 def scenario_D(evt) {
 	if ((!D_triggerOnce || (D_triggerOnce && !D_triggered)) && getTimeOk(D_timeStart, D_timeEnd) && getDayOk(D_day) && (!D_mode || D_mode.contains(location.mode))) {
 		state.fullMsgD = ""
-		   
+		
+        if (D_msg && D_msgFirst) {
+			getGreeting(D_msg, 4)
+		}
+        
 		if (D_weatherReport || D_humidity || D_includeTemp || D_localTemp) {
 			getWeatherReport(4, D_weatherReport, D_humidity, D_includeTemp, D_localTemp)
 		}
@@ -647,7 +755,7 @@ def scenario_D(evt) {
         	getDoorsConditions(D_reportAll, D_contactSensors, D_locks, D_doorControls, 4)
         }
 
-        if (D_msg) {
+        if (D_msg && !D_msgFirst) {
 			getGreeting(D_msg, 4)
 		} 
       
@@ -674,6 +782,71 @@ def buttonHandler_D(evt){
     }
 }
 
+def scenario_E(evt) {
+	if ((!E_triggerOnce || (E_triggerOnce && !E_triggered)) && getTimeOk(E_timeStart, E_timeEnd) && getDayOk(E_day) && (!E_mode || E_mode.contains(location.mode))) {
+		state.fullMsgE = ""
+		
+        if (E_msg && E_msgFirst) {
+			getGreeting(E_msg, 5)
+		}
+        
+		if (E_weatherReport || E_humidity || E_includeTemp || E_localTemp) {
+			getWeatherReport(5, E_weatherReport, E_humidity, E_includeTemp, E_localTemp)
+		}
+        
+        if (E_includeSunrise || E_includeSunset) {
+        	getSunriseSunset(5, E_includeSunrise, E_includeSunset)
+        }
+        
+		if (E_phrase) {
+        	location.helloHome.execute(E_phrase)
+        	if (E_confirmPhrase){
+            	getPhraseConfirmation(E_phrase, 5)
+            }
+        }
+
+        if (E_triggerMode && location.mode != E_triggerMode) {
+            if (location.modes?.find{it.name == E_triggerMode}) {
+				setLocationMode(E_triggerMode)
+			} else {
+				log.debug "Unable to change to undefined mode '${E_triggerMode}'"
+			}
+			if (E_confirmMode){
+            	getModeConfirmation(E_triggerMode, 5)
+        	}
+        }
+        
+        if (E_contactSensors || E_locks || E_doorControls){
+        	getDoorsConditions(E_reportAll, E_contactSensors, E_locks, E_doorControls, 5)
+        }
+
+        if (E_msg && !E_msgFirst) {
+			getGreeting(E_msg, 5)
+		} 
+
+		state.soundE = textToSpeech(state.fullMsgE, true)
+    	if (E_volume) {
+			E_sonos.setLevel(E_volume)
+		}
+		
+        E_sonos.playTrack(state.soundE.uri)
+		if (E_triggerOnce) {
+			state.E_triggered = true
+			runOnce (getMidnight(), midNightReset)
+		}
+    }
+}
+
+def buttonHandler_E(evt){
+    def data = new JsonSlurper().parseText(evt.data)
+    def button = data.buttonNumber
+	def remoteButton = E_buttonPress as Integer
+   
+	if (button == remoteButton) {
+        scenario_E()
+    }
+}
+
 //--------------------------------------
 
 def midNightReset() {
@@ -681,6 +854,7 @@ def midNightReset() {
     state.B_triggered = false
     state.C_triggered = false
     state.D_triggered = false
+    state.E_triggered = false
 }
 
 //--------------------------------------
@@ -989,6 +1163,7 @@ private compileMsg(msg, scenario) {
 	if (scenario == 2) {state.fullMsgB = state.fullMsgB + "${msg} "}
 	if (scenario == 3) {state.fullMsgC = state.fullMsgC + "${msg} "}
 	if (scenario == 4) {state.fullMsgD = state.fullMsgD + "${msg} "}
+    if (scenario == 5) {state.fullMsgE = state.fullMsgE + "${msg} "}
 }
 
 //Version/Copyright/Information/Help
@@ -998,7 +1173,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.1 (06/21/2015)"
+    def text = "Version 1.0.2 (06/26/2015)"
 }
 
 private def textCopyright() {
