@@ -136,7 +136,10 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-    	"Ties a Hello, Home phrase or mode to a switch's (virtual or real) on/off state. Perfect for use with Alexa. "+
-	"Simple define a switch to be used, then tie the on/off state of the switch to a specific Hello, Home phrases or mode. "+
-	"Discover the switch using Alexa, and the Hello, Home phrase or mode will fire with the switch state change." 
+		"Ties a Hello, Home phrase or mode to a switch's on/off state. The switches choosen can be virtual on/off swithes, "+
+        "virtual momentary tiles, or physical switches. Perfect for use with Alexa. "+
+		"Simple define which switch is to be used, then tie the on/off state of the switch to a specific Hello, Home phrases or mode. "+
+		"Discover the switch using Alexa, and the Hello, Home phrase or mode will fire with the switch state change. Please note that if you "+
+        "are using a momentary switch you should only define the on action."
 }
+
