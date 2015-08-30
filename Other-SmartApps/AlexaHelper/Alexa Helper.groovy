@@ -1,8 +1,8 @@
 /**
- *  Switch Activates Home Phrase or Mode
+ *  Alexa Helper
  *
  *  Copyright 2015 Michael Struck
- *  Version 1.0.1 6/20/15
+ *  Version 1.0.0 8/30/15
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -20,14 +20,14 @@
  *
  */
 definition(
-    name: "Switch Activates Home Phrase or Mode",
+    name: "Alexa Helper",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Ties a Hello, Home phrase or mode to a switch's state. Perfect for use with IFTTT.",
+    description: "Ties a Hello, Home phrase or mode to a switch's state to be controlled by Alexa (Amazon Echo).",
     category: "Convenience",
-    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/IFTTT-SmartApps/App1.png",
-    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/IFTTT-SmartApps/App1@2x.png",
-    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/IFTTT-SmartApps/App1@2x.png")
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AlexaHelper/Alexa.png",
+    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AlexaHelper/Alexa@2x.png",
+    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AlexaHelper/Alexa@2x.png")
 
 
 preferences {
@@ -116,7 +116,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.1 (06/20/2015)"
+    def text = "Version 1.0.0 (08/30/2015)"
 }
 
 private def textCopyright() {
@@ -140,7 +140,7 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-    	"Ties a Hello, Home phrase or mode to a switch's (virtual or real) on/off state. Perfect for use with IFTTT. "+
+    	"Ties a Hello, Home phrase or mode to a switch's (virtual or real) on/off state. Perfect for use with Alexa. "+
 		"Simple define a switch to be used, then tie the on/off state of the switch to a specific Hello, Home phrases or mode. "+
-		"Connect the switch to an IFTTT action, and the Hello, Home phrase or mode will fire with the switch state change." 
+		"Discover the switch using Alexa, and the Hello, Home phrase or mode will fire with the switch state change." 
 }
