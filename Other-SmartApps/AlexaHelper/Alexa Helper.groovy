@@ -1,4 +1,4 @@
-Enter file contents/**
+/**
  *  Switch Activates Home Phrase or Mode
  *
  *  Copyright 2015 Michael Struck
