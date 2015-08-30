@@ -112,7 +112,7 @@ def changeMode(newMode) {
 //Version/Copyright/Information/Help
 
 private def textAppName() {
-	def text = "Switch Activates Home Phrase or Mode"
+	def text = "Alexa Helper"
 }	
 
 private def textVersion() {
@@ -141,6 +141,6 @@ private def textLicense() {
 private def textHelp() {
 	def text =
     	"Ties a Hello, Home phrase or mode to a switch's (virtual or real) on/off state. Perfect for use with Alexa. "+
-		"Simple define a switch to be used, then tie the on/off state of the switch to a specific Hello, Home phrases or mode. "+
-		"Discover the switch using Alexa, and the Hello, Home phrase or mode will fire with the switch state change." 
+	"Simple define a switch to be used, then tie the on/off state of the switch to a specific Hello, Home phrases or mode. "+
+	"Discover the switch using Alexa, and the Hello, Home phrase or mode will fire with the switch state change." 
 }
