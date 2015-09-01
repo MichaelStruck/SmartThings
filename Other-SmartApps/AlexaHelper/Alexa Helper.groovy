@@ -5,7 +5,7 @@
  *  Version 1.0.0 9/1/15
  * 
  *  Version 1.0.0 - Initial release
- *	Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
+ *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
