@@ -595,7 +595,7 @@ private def textHelp() {
 	def text =
 		"Ties Hello, Home phrases or modes to switches' on/off state. The switches can be virtual on/off swithes, "+
 		"virtual momentary tiles, or physical switches. Perfect for use with Alexa.\n\n"+
-		"To use, first create a momentary button tiles or virtual switchs from the IDE and discover the new device so it can be seen by Alexa. "+
-		"Then, within one of the six scnearios, simple define which switch is to be use and tie the on/off state of the switch to a specific Hello, Home phrases or mode. "+
+		"To use, first create momentary button tiles or virtual switchs from the IDE and discover the new devices so it can be seen by Alexa. "+
+		"Then, within one of the six scnearios, simple define which switch is to be used and tie the on/off state of the switch to a specific Hello, Home phrases or mode. "+
 		"TThe Hello, Home phrase or mode will fire with the switch state changes. Please note that if you are using a momentary switch you should only define the 'on' action."
 }
