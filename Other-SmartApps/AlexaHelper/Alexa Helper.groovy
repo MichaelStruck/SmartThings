@@ -2,7 +2,7 @@
  *  Alexa Helper
  *
  *  Copyright 2015 Michael Struck
- *  Version 1.0.0 9/1/15
+ *  Version 2.0.0 9/1/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
