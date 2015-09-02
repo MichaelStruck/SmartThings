@@ -2,7 +2,7 @@
  *  Alexa Helper
  *
  *  Copyright 2015 Michael Struck
- *  Version 2.0.0 9/1/15
+ *  Version 2.0.0 9/2/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
@@ -569,7 +569,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 2.0.0 (09/01/2015)"
+    def text = "Version 2.0.0 (09/02/2015)"
 }
 
 private def textCopyright() {
@@ -593,9 +593,9 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-		"Ties Hello, Home phrases or modes to switches' on/off state. The switches can be virtual on/off swithes, "+
-		"virtual momentary tiles, or physical switches. Perfect for use with Alexa.\n\n"+
-		"To use, first create momentary button tiles or virtual switchs from the IDE and discover the new devices so it can be seen by Alexa. "+
-		"Then, within one of the six scnearios, simple define which switch is to be used and tie the on/off state of the switch to a specific Hello, Home phrases or mode. "+
-		"TThe Hello, Home phrase or mode will fire with the switch state changes. Please note that if you are using a momentary switch you should only define the 'on' action."
+		"Ties SmartThings Hello, Home phrases or modes to switches' on/off state. "+
+		"Perfect for use with Alexa.\n\nTo use, create momentary button tiles or virtual switches from the IDE. "+
+		"You may also use any physical switches within SmartThings. Discover the switches so they can be seen by Alexa. "+
+		"Then, within one of the six scnearios, define which switch is to be used and tie the on/off state of the switch to a specific Hello, Home phrases or mode. "+
+		"The Hello, Home phrase or mode will fire with the switch state changes. Please note that if you are using a momentary switch you should only define the 'on' action."
 }
