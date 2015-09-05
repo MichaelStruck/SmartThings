@@ -596,6 +596,6 @@ private def textHelp() {
 		"Ties SmartThings Hello, Home phrases or modes to the on/off state of various switches. "+
 		"Perfect for use with Alexa.\n\nTo use, create momentary button tiles or virtual switches from the IDE. "+
 		"You may also use any physical switches within SmartThings. Discover the switches so they can be seen by Alexa. "+
-		"Then, within one of the six scnearios, define which switch is to be used and tie the on/off state of the switch to a specific Hello, Home phrases or mode. "+
+		"Then, within one of the six scenarios, define which switch is to be used and tie the on/off state of the switch to a specific Hello, Home phrases or mode. "+
 		"The Hello, Home phrase or mode will fire with the switch state changes. Please note that if you are using a momentary switch you should only define the 'on' action."
 }
