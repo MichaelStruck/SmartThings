@@ -2,7 +2,7 @@
  *  Alexa Helper
  *
  *  Copyright 2015 Michael Struck
- *  Version 2.0.0 9/2/15
+ *  Version 2.0.0 9/5/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
@@ -569,7 +569,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 2.0.0 (09/02/2015)"
+    def text = "Version 2.0.0 (09/05/2015)"
 }
 
 private def textCopyright() {
@@ -593,7 +593,7 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-		"Ties SmartThings Hello, Home phrases or modes to switches' on/off state. "+
+		"Ties SmartThings Hello, Home phrases or modes to the on/off state of various switches. "+
 		"Perfect for use with Alexa.\n\nTo use, create momentary button tiles or virtual switches from the IDE. "+
 		"You may also use any physical switches within SmartThings. Discover the switches so they can be seen by Alexa. "+
 		"Then, within one of the six scnearios, define which switch is to be used and tie the on/off state of the switch to a specific Hello, Home phrases or mode. "+
