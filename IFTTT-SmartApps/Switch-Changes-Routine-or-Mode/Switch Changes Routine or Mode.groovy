@@ -1,8 +1,8 @@
 /**
- *  Switch Activates Home Phrase or Mode
+ *  Switch Activates Routine or Mode
  *
  *  Copyright 2015 Michael Struck
- *  Version 1.0.1 6/20/15
+ *  Version 1.0.2 9/13/15
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -20,10 +20,10 @@
  *
  */
 definition(
-    name: "Switch Activates Home Phrase or Mode",
+    name: "Switch Activates Routine or Mode",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Ties a Hello, Home phrase or mode to a switch's state. Perfect for use with IFTTT.",
+    description: "Ties a routine or mode to a switch's state. Perfect for use with IFTTT.",
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/IFTTT-SmartApps/App1.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/IFTTT-SmartApps/App1@2x.png",
@@ -43,7 +43,7 @@ def getPref() {
     	def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
         		phrases.sort()
-				section("Perform which phrase when...") {
+				section("Perform which routine when...") {
 					input "phrase_on", "enum", title: "Switch is on", options: phrases, required: false
 					input "phrase_off", "enum", title: "Switch is off", options: phrases, required: false
 				}
@@ -116,7 +116,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.1 (06/20/2015)"
+    def text = "Version 1.0.2 (09/13/2015)"
 }
 
 private def textCopyright() {
@@ -140,7 +140,7 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-    	"Ties a Hello, Home phrase or mode to a switch's (virtual or real) on/off state. Perfect for use with IFTTT. "+
-		"Simple define a switch to be used, then tie the on/off state of the switch to a specific Hello, Home phrases or mode. "+
-		"Connect the switch to an IFTTT action, and the Hello, Home phrase or mode will fire with the switch state change." 
+    	"Ties a routine or mode to a switch's (virtual or real) on/off state. Perfect for use with IFTTT. "+
+		"Simple define a switch to be used, then tie the on/off state of the switch to a specific routine or mode. "+
+		"Connect the switch to an IFTTT action, and the routine or mode will fire with the switch state change." 
 }
