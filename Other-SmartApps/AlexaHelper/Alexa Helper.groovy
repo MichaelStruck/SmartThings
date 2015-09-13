@@ -2,10 +2,11 @@
  *  Alexa Helper
  *
  *  Copyright 2015 Michael Struck
- *  Version 2.0.0 9/5/15
+ *  Version 2.0.1 9/13/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
+ *  Version 2.0.1 - Changed syntax to reflect SmartThings Routines (instead of Hello, Home Phrases)
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -24,7 +25,7 @@ definition(
     name: "Alexa Helper",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Allows for Hello, Home phrases or modes to be tied to various switch's state controlled by Alexa (Amazon Echo).",
+    description: "Allows for routines or modes to be tied to various switch's state controlled by Alexa (Amazon Echo).",
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AlexaHelper/Alexa.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AlexaHelper/Alexa@2x.png",
@@ -71,7 +72,7 @@ def pageSetupScenarioA() {
         def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
         		phrases.sort()
-				section("Perform which phrase when...") {
+				section("Perform which routine when...") {
 					input "A_onPhrase", "enum", title: "Switch is on", options: phrases, required: false
 					if (!A_momentary) {
                     	input "A_offPhrase", "enum", title: "Switch is off", options: phrases, required: false
@@ -112,7 +113,7 @@ def pageSetupScenarioB() {
         def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
         		phrases.sort()
-				section("Perform which phrase when...") {
+				section("Perform which routine when...") {
 					input "B_onPhrase", "enum", title: "Switch is on", options: phrases, required: false
 					if (!B_momentary) {
                     	input "B_offPhrase", "enum", title: "Switch is off", options: phrases, required: false
@@ -153,7 +154,7 @@ def pageSetupScenarioC() {
         def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
         		phrases.sort()
-				section("Perform which phrase when...") {
+				section("Perform which routine when...") {
 					input "C_onPhrase", "enum", title: "Switch is on", options: phrases, required: false
 					if (!C_momentary) {
                     	input "C_offPhrase", "enum", title: "Switch is off", options: phrases, required: false
@@ -195,7 +196,7 @@ def pageSetupScenarioD() {
         def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
         		phrases.sort()
-				section("Perform which phrase when...") {
+				section("Perform which routine when...") {
 					input "D_onPhrase", "enum", title: "Switch is on", options: phrases, required: false
 					if (!D_momentary) {
                     	input "D_offPhrase", "enum", title: "Switch is off", options: phrases, required: false
@@ -237,7 +238,7 @@ def pageSetupScenarioE() {
         def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
         		phrases.sort()
-				section("Perform which phrase when...") {
+				section("Perform which routine when...") {
 					input "E_onPhrase", "enum", title: "Switch is on", options: phrases, required: false
 					if (!E_momentary) {
                     	input "E_offPhrase", "enum", title: "Switch is off", options: phrases, required: false
@@ -279,7 +280,7 @@ def pageSetupScenarioF() {
         def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
         		phrases.sort()
-				section("Perform which phrase when...") {
+				section("Perform which routine when...") {
 					input "F_onPhrase", "enum", title: "Switch is on", options: phrases, required: false
 					if (!F_momentary) {
                     	input "F_offPhrase", "enum", title: "Switch is off", options: phrases, required: false
@@ -569,7 +570,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 2.0.0 (09/05/2015)"
+    def text = "Version 2.0.1 (09/13/2015)"
 }
 
 private def textCopyright() {
@@ -593,9 +594,9 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-		"Ties SmartThings Hello, Home phrases or modes to the on/off state of various switches. "+
+		"Ties SmartThings routines or modes to the on/off state of various switches. "+
 		"Perfect for use with Alexa.\n\nTo use, create momentary button tiles or virtual switches from the IDE. "+
 		"You may also use any physical switches within SmartThings. Discover the switches so they can be seen by Alexa. "+
-		"Then, within one of the six scenarios, define which switch is to be used and tie the on/off state of the switch to a specific Hello, Home phrases or mode. "+
-		"The Hello, Home phrase or mode will fire with the switch state changes. Please note that if you are using a momentary switch you should only define the 'on' action."
+		"Then, within one of the six scenarios, define which switch is to be used and tie the on/off state of the switch to a specific routine or mode. "+
+		"The routine or mode will fire with the switch state changes. Please note that if you are using a momentary switch you should only define the 'on' action."
 }
