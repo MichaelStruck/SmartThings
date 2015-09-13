@@ -13,9 +13,9 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Ties a Hello, Home phrase to a switch's (virtual or real) on/off state. Perfect for use with IFTTT.
- *  Simple define a switch to be used, then tie the on/off state of the switch to a specific Hello, Home phrases.
- *  Connect the switch to an IFTTT action, and the Hello, Home phrase will fire with the switch state change.
+ *  Ties a routine to a switch's (virtual or real) on/off state. Perfect for use with IFTTT.
+ *  Simple define a switch to be used, then tie the on/off state of the switch to a specific routine.
+ *  Connect the switch to an IFTTT action, and the routine will fire with the switch state change.
  *
  *
  */
