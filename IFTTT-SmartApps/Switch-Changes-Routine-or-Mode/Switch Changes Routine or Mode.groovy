@@ -2,7 +2,7 @@
  *  Switch Activates Routine or Mode
  *
  *  Copyright 2015 Michael Struck
- *  Version 1.0.2 9/13/15
+ *  Version 1.0.2 9/15/15
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -112,11 +112,11 @@ def changeMode(newMode) {
 //Version/Copyright/Information/Help
 
 private def textAppName() {
-	def text = "Switch Activates Home Phrase or Mode"
+	def text = "Switch Activates Routine or Mode"
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.2 (09/13/2015)"
+    def text = "Version 1.0.2 (09/15/2015)"
 }
 
 private def textCopyright() {
