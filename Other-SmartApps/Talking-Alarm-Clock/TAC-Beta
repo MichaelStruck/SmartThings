@@ -12,7 +12,7 @@
  *  Version - 1.4.3 6/12/15 - Syntax issues and minor GUI fixes
  *  Version - 1.4.4 6/15/15 - Fixed a bug with Phrase change at alarm time
  *  Version - 1.4.5 6/17/15 - Code optimization, implemented the new submitOnChange option and a new license agreement change
- *  Version - 1.5.0 7/26/14 - Added the ability to use a remote control to enable/disable alarm scenarios and utilize presence sensors to determine if alarm should trigger
+ *  Version - 1.5.0 10/1/15 - Added the ability to use a remote control to enable/disable alarm scenarios and utilize presence sensors to determine if alarm should trigger
  *
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -30,7 +30,7 @@
 import groovy.json.JsonSlurper
  
 definition(
-    name: "Talking Alarm Clock_beta",
+    name: "Talking Alarm Clock",
     namespace: "MichaelStruck",
     author: "Michael Struck",
     description: "Control up to 4 waking schedules using a Sonos speaker as an alarm.",
@@ -56,21 +56,37 @@ preferences {
 def pageMain() {
 	dynamicPage(name: "pageMain", install: true, uninstall: true) {
         //For first time installers- All are enabled until otherwise disabled. Also to align alarm statuses should the user change from manual to remote enabling of the alarms.
-		if (useButtonController){ 
+		if (useButtonController && A_buttonDevice){ 
         	state.A_AlarmStatus = state.A_AlarmStatus == null || state.A_AlarmStatus == true ? true : false
-        	state.B_AlarmStatus = state.B_AlarmStatus == null || state.B_AlarmStatus == true ? true : false
-        	state.C_AlarmStatus = state.C_AlarmStatus == null || state.C_AlarmStatus == true ? true : false
-        	state.D_AlarmStatus = state.D_AlarmStatus == null || state.D_AlarmStatus == true ? true : false
-		}
+        }
         else {
         	state.A_AlarmStatus = A_alarmOn == null || A_alarmOn ? true : false
-        	state.B_AlarmStatus = B_alarmOn == null || B_alarmOn ? true : false
-            state.C_AlarmStatus = C_alarmOn == null || C_alarmOn ? true : false
-            state.D_AlarmStatus = D_alarmOn == null || D_alarmOn ? true : false
         }
+        
+        if (useButtonController && B_buttonDevice){ 
+        	state.B_AlarmStatus = state.B_AlarmStatus == null || state.B_AlarmStatus == true ? true : false
+        }
+        else {
+        	state.B_AlarmStatus = B_alarmOn == null || B_alarmOn ? true : false
+        }
+        
+        if (useButtonController && C_buttonDevice){ 
+        	state.C_AlarmStatus = state.C_AlarmStatus == null || state.C_AlarmStatus == true ? true : false
+        }
+        else {
+        	state.C_AlarmStatus = C_alarmOn == null || C_alarmOn ? true : false
+        }
+        
+        if (useButtonController && D_buttonDevice){ 
+        	state.D_AlarmStatus = state.D_AlarmStatus == null || state.D_AlarmStatus == true ? true : false
+        }
+        else {
+        	state.D_AlarmStatus = D_alarmOn == null || D_alarmOn ? true : false
+        }
+ 
         section ("Alarms") {
             href "pageSetupScenarioA", title: getTitle(ScenarioNameA, 1), description: getDesc(A_timeStart, A_sonos, A_day, A_mode), state: greyOut(ScenarioNameA, A_sonos, A_timeStart, state.A_AlarmStatus, A_alarmType)
-            if (useButtonController){
+            if (useButtonController && A_buttonDevice){
             	if (ScenarioNameA && A_sonos && A_timeStart && A_alarmType && state.A_AlarmStatus){
             		paragraph "Alarm is enabled; use remote button to disable"
             	}
@@ -86,7 +102,7 @@ def pageMain() {
         }
         section {
             href "pageSetupScenarioB", title: getTitle(ScenarioNameB, 2), description: getDesc(B_timeStart, B_sonos, B_day, B_mode), state: greyOut(ScenarioNameB, B_sonos, B_timeStart, state.B_AlarmStatus, B_alarmType)
-            if (useButtonController){
+            if (useButtonController && B_buttonDevice){
             	if (ScenarioNameB && B_sonos && B_timeStart && B_alarmType && state.B_AlarmStatus){
             		paragraph "Alarm is enabled; use remote button to disable"
             	} 
@@ -95,14 +111,14 @@ def pageMain() {
             	}
 			}
             else {
-            	if (ScenarioNameB && B_sonos && B_timeStart && B_alarmType) {
+                if (ScenarioNameB && B_sonos && B_timeStart && B_alarmType) {
                 	input "B_alarmOn", "bool", title: "Enable this alarm?", defaultValue: true, submitOnChange:true
                 }
             }
         }
         section {
             href "pageSetupScenarioC", title: getTitle(ScenarioNameC, 3), description: getDesc(C_timeStart, C_sonos, C_day, C_mode), state: greyOut(ScenarioNameC, C_sonos, C_timeStart, state.C_AlarmStatus, C_alarmType)
-            if (useButtonController){
+            if (useButtonController && C_buttonDevice){
             	if (ScenarioNameC && C_sonos && C_timeStart && C_alarmType && state.C_AlarmStatus){
             		paragraph "Alarm is enabled; use remote button to disable"
             	}
@@ -118,7 +134,7 @@ def pageMain() {
         }
         section {
             href "pageSetupScenarioD", title: getTitle(ScenarioNameD, 4), description: getDesc(D_timeStart, D_sonos, D_day, D_mode), state: greyOut(ScenarioNameD, D_sonos, D_timeStart, state.D_AlarmStatus, D_alarmType)
-            if (useButtonController){
+            if (useButtonController && D_buttonDevice){
             	if (ScenarioNameD && D_sonos && D_timeStart && D_alarmType && state.D_AlarmStatus){
             		paragraph "Alarm is enabled; use remote button to disable"
             	}
@@ -205,9 +221,9 @@ def pageSetupScenarioA() {
             def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
 				phrases.sort()
-				input "A_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false, submitOnChange:true
+				input "A_phrase", "enum", title: "Alarm triggers the following routine", required: false, options: phrases, multiple: false, submitOnChange:true
 				if (A_phrase  && (A_alarmType == "2" || (A_alarmType == "1" && A_secondAlarm =="1"))){
-                	input "A_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+                	input "A_confirmPhrase", "bool", title: "Confirm routine in voice message", defaultValue: "false"
             	}
             }
             input "A_triggerMode", "mode", title: "Alarm triggers the following mode", required: false, submitOnChange:true
@@ -243,7 +259,7 @@ page(name: "pageButtonControlA", title: "Button Controller Setup") {
 page(name: "pageDimmersA", title: "Dimmer Settings") {
 	section {
        	input "A_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false	
-		input "A_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
+		input "A_level", "enum", options: [[5:"5%"],[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
 	}
 }
 
@@ -321,9 +337,9 @@ def pageSetupScenarioB() {
             def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
 				phrases.sort()
-				input "B_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false, submitOnChange:true
+				input "B_phrase", "enum", title: "Alarm triggers the following routine", required: false, options: phrases, multiple: false, submitOnChange:true
 				if (B_phrase  && (B_alarmType == "2" || (B_alarmType == "1" && B_secondAlarm =="1"))){
-                	input "B_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+                	input "B_confirmPhrase", "bool", title: "Confirm routine in voice message", defaultValue: "false"
             	}
             }
             input "B_triggerMode", "mode", title: "Alarm triggers the following mode", required: false, submitOnChange:true
@@ -359,7 +375,7 @@ page(name: "pageButtonControlB", title: "Button Controller Setup") {
 page(name: "pageDimmersB", title: "Dimmer Settings") {
 	section {
        	input "B_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false	
-		input "B_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
+		input "B_level", "enum", options: [[5:"5%"],[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
 	}
 }
 
@@ -438,9 +454,9 @@ def pageSetupScenarioC() {
             def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
 				phrases.sort()
-				input "C_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false, submitOnChange:true
+				input "C_phrase", "enum", title: "Alarm triggers the following routine", required: false, options: phrases, multiple: false, submitOnChange:true
 				if (C_phrase  && (C_alarmType == "2" || (C_alarmType == "1" && C_secondAlarm =="1"))){
-                	input "C_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+                	input "C_confirmPhrase", "bool", title: "Confirm routine in voice message", defaultValue: "false"
             	}
             }
             input "C_triggerMode", "mode", title: "Alarm triggers the following mode", required: false, submitOnChange:true
@@ -476,7 +492,7 @@ page(name: "pageButtonControlC", title: "Button Controller Setup") {
 page(name: "pageDimmersC", title: "Dimmer Settings") {
 	section {
        	input "C_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false	
-		input "C_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
+		input "C_level", "enum", options: [[5:"5%"],[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
 	}
 }
 
@@ -555,9 +571,9 @@ def pageSetupScenarioD() {
             def phrases = location.helloHome?.getPhrases()*.label
 			if (phrases) {
 				phrases.sort()
-				input "D_phrase", "enum", title: "Alarm triggers the following phrase", required: false, options: phrases, multiple: false, submitOnChange:true
+				input "D_phrase", "enum", title: "Alarm triggers the following routine", required: false, options: phrases, multiple: false, submitOnChange:true
 				if (D_phrase  && (D_alarmType == "2" || (D_alarmType == "1" && D_secondAlarm =="1"))){
-                	input "D_confirmPhrase", "bool", title: "Confirm Hello, Home phrase in voice message", defaultValue: "false"
+                	input "D_confirmPhrase", "bool", title: "Confirm routine in voice message", defaultValue: "false"
             	}
             }
             input "D_triggerMode", "mode", title: "Alarm triggers the following mode", required: false, submitOnChange:true
@@ -593,7 +609,7 @@ page(name: "pageButtonControlD", title: "Button Controller Setup") {
 page(name: "pageDimmersD", title: "Dimmer Settings") {
 	section {
        	input "D_dimmers", "capability.switchLevel", title: "Dim the following...", multiple: true, required: false	
-		input "D_level", "enum", options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
+		input "D_level", "enum", options: [[5:"5%"],[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
 	}
 }
 
@@ -1230,13 +1246,14 @@ def appTouchHandler(evt){
 }
 
 def getSummary (alarmOn, scenarioName, timeStart, num){
-    if (alarmOn && scenarioName) {
+
+    if (alarmOn && scenarioName && timeStart) {
         state.summaryMsg = "${state.summaryMsg} Alarm ${num}, ${scenarioName}, set for ${parseDate(timeStart,"", "h:mm a" )}, is enabled. "
     }
-    else if (summaryDisabled && !alarmOn && scenarioName) {
+    else if (summaryDisabled && !alarmOn && scenarioName && timeStart) {
         state.summaryMsg = "${state.summaryMsg} Alarm ${num}, ${scenarioName}, set for ${parseDate(timeStart,"", "h:mm a")}, is disabled. "
     }
-    else if (summaryDisabled && !scenarioName) {
+    else if (summaryDisabled && (!scenarioName || !timeStart)) {
         state.summaryMsg = "${state.summaryMsg} Alarm ${num} is not configured. "
     }
 }
@@ -1245,7 +1262,7 @@ def getSummary (alarmOn, scenarioName, timeStart, num){
 
 def getDesc(timeStart, sonos, day, mode) {
 	def desc = "Tap to set alarm"
-	if (timeStart) {
+	if (timeStart && sonos) {
     	desc = "Alarm set to " + parseDate(timeStart,"", "h:mm a") +" on ${sonos}"
 		
         def dayListSize = day ? day.size() : 7
@@ -1613,7 +1630,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.5.0 (07/26/2015)"
+    def text = "Version 1.5.0 (10/01/2015)"
 }
 
 private def textCopyright() {
@@ -1638,7 +1655,7 @@ private def textLicense() {
 private def textHelp() {
 	def text =
     	"Within each alarm scenario, choose a Sonos speaker, an alarm time and alarm type along with " +
-        "switches, dimmers and thermostat to control when the alarm is triggered. Hello, Home phrases and modes can be triggered at alarm time. "+
+        "switches, dimmers and thermostat to control when the alarm is triggered. Routines and modes can be triggered at alarm time. "+
         "You also have the option of setting up different alarm sounds, tracks and a personalized spoken greeting that can include a weather report. " +
         "Variables that can be used in the voice greeting include %day%, %time% and %date%.\n\n"+
         "On the main setup screen you can turn on the ability for "+
