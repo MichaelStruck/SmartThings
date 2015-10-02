@@ -2,11 +2,12 @@
  *  Alexa Helper
  *
  *  Copyright 2015 Michael Struck
- *  Version 2.0.1 9/13/15
+ *  Version 2.1.0 9/28/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
  *  Version 2.0.1 - Changed syntax to reflect SmartThings Routines (instead of Hello, Home Phrases)
+ *  Version 2.1.0 - Added timers to the first 4 slots to allow for delayed triggering of routines or modes
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -22,7 +23,7 @@
  */
  
 definition(
-    name: "Alexa Helper",
+    name: "Alexa Helper-beta",
     namespace: "MichaelStruck",
     author: "Michael Struck",
     description: "Allows for routines or modes to be tied to various switch's state controlled by Alexa (Amazon Echo).",
@@ -32,7 +33,7 @@ definition(
     iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AlexaHelper/Alexa@2x.png")
 
 preferences {
-	page name:"pageSetup"
+    page name:"pageSetup"
     page name:"pageSetupScenarioA"
     page name:"pageSetupScenarioB"
     page name:"pageSetupScenarioC"
@@ -85,6 +86,9 @@ def pageSetupScenarioA() {
             	input "A_offMode", "mode", title: "Switch is off", required: false
             }
 		}
+        section("Delay to trigger routine/mode (optional)"){
+        	input "A_delay", "number", title: "Delay in minutes", defaultValue: 0, required: false
+        }
         section("Restrictions") {            
 			input "A_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         	href "timeIntervalInputA", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state: greyedOutTime(A_timeStart, A_timeEnd)
@@ -126,6 +130,9 @@ def pageSetupScenarioB() {
             	input "B_offMode", "mode", title: "Switch is off", required: false
             }
 		}
+        section("Delay to trigger routine/mode (optional)"){
+        	input "B_delay", "number", title: "Delay in minutes", defaultValue: 0, required: false
+        }
         section("Restrictions") {            
 			input "B_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         	href "timeIntervalInputB", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state: greyedOutTime(A_timeStart, A_timeEnd)
@@ -167,6 +174,9 @@ def pageSetupScenarioC() {
             	input "C_offMode", "mode", title: "Switch is off", required: false
             }
 		}
+        section("Delay to trigger routine/mode (optional)"){
+        	input "C_delay", "number", title: "Delay in minutes", defaultValue: 0, required: false
+        }
         section("Restrictions") {            
 			input "C_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         	href "timeIntervalInputC", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state: greyedOutTime(A_timeStart, A_timeEnd)
@@ -209,7 +219,10 @@ def pageSetupScenarioD() {
             	input "D_offMode", "mode", title: "Switch is off", required: false
             }
 		}
-section("Restrictions") {            
+        section("Delay to trigger routine/mode (optional)"){
+        	input "D_delay", "number", title: "Delay in minutes", defaultValue: 0, required: false
+        }
+		section("Restrictions") {            
 			input "D_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         	href "timeIntervalInputD", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state: greyedOutTime(A_timeStart, A_timeEnd)
             input "D_mode", "mode", title: "Only during the following modes...", multiple: true, required: false
@@ -354,21 +367,39 @@ def A_switchHandler(evt) {
 	if ((!A_mode || A_mode.contains(location.mode)) && getDayOk(A_day) && getTimeOk(A_timeStart,A_timeEnd)) {    
     	log.debug "Running ${A_ScenarioName}"
         if (evt.value == "on" && (A_onPhrase || A_onMode)) {
-        	if (A_onPhrase){
-        		location.helloHome.execute(A_onPhrase)
-        	}
-        	if (A_onMode) {
-        		changeMode(A_onMode)
-        	}
+        	if (!A_delay || A_delay == 0) {
+            	A_on()
+            }
+            else {
+            	runIn(A_delay*60, A_on, [overwrite: true])
+            }
     	} 
     	else if (evt.value == "off" && !A_momentary && (A_offPhrase || A_offMode)) {
-        	if (A_offPhrase){
-        		location.helloHome.execute(A_offPhrase)
-    		}
-        	if (A_offMode) {
-        		changeMode(A_offMode)
-        	}
+        	if (!A_delay || A_delay == 0) {
+            		A_off()
+            }
+            else {
+            	runIn(A_delay*60, A_off, [overwrite: true])
+            }
     	}
+	}
+}
+
+def A_on(){
+	if (A_onPhrase){
+		location.helloHome.execute(A_onPhrase)
+	}
+	if (A_onMode) {
+		changeMode(A_onMode)
+	}
+}
+
+def A_off(){
+	if (A_offPhrase){
+		location.helloHome.execute(A_offPhrase)
+	}
+	if (A_offMode) {
+		changeMode(A_offMode)
 	}
 }
 
@@ -377,21 +408,39 @@ def B_switchHandler(evt) {
     if ((!B_mode || B_mode.contains(location.mode)) && getDayOk(B_day) && getTimeOk(B_timeStart,B_timeEnd)) { 
     	log.debug "Running ${B_ScenarioName}"
         if (evt.value == "on" && (B_onPhrase || B_onMode)) {
-    		if (B_onPhrase){
-        		location.helloHome.execute(B_onPhrase)
-        	}
-        	if (B_onMode) {
-        		changeMode(B_onMode)
-        	}
+    		if (!B_delay || B_delay == 0) {
+            	B_on()
+            }
+            else {
+            	runIn(B_delay*60, B_on, [overwrite: true])
+            }
     	} 
     	else if (evt.value == "off" && !B_momentary && (B_offPhrase || B_offMode)) {
-        	if (B_offPhrase){
-        		location.helloHome.execute(B_offPhrase)
-    		}
-        	if (B_offMode) {
-        		changeMode(B_offMode)
-        	}
+        	if (!B_delay || B_delay == 0) {
+            	B_off()
+            }
+            else {
+            	runIn(B_delay*60, B_off, [overwrite: true])
+            }
     	}
+	}
+}
+
+def B_on(){
+	if (B_onPhrase){
+		location.helloHome.execute(B_onPhrase)
+	}
+	if (B_onMode) {
+		changeMode(B_onMode)
+	}
+}
+
+def B_off(){
+	if (B_offPhrase){
+		location.helloHome.execute(B_offPhrase)
+	}
+	if (B_offMode) {
+		changeMode(B_offMode)
 	}
 }
 
@@ -400,21 +449,39 @@ def C_switchHandler(evt) {
     if ((!C_mode || C_mode.contains(location.mode)) && getDayOk(C_day) && getTimeOk(C_timeStart,C_timeEnd)) { 
     	log.debug "Running ${C_ScenarioName}"
         if (evt.value == "on" && (C_onPhrase || C_onMode)) {
-    		if (C_onPhrase){
-        		location.helloHome.execute(C_onPhrase)
-        	}
-        	if (C_onMode) {
-        		changeMode(C_onMode)
-        	}
+    		if (!C_delay || C_delay == 0) {
+            	C_on()
+            }
+            else {
+            	runIn(C_delay*60, C_on, [overwrite: true])
+            }
     	} 
     	else if (evt.value == "off" && !C_momentary && (C_offPhrase || C_offMode)) {
-        	if (C_offPhrase){
-        		location.helloHome.execute(C_offPhrase)
-    		}
-        	if (C_offMode) {
-        		changeMode(C_offMode)
-        	}
+        	if (!C_delay || C_delay == 0) {
+            	C_off()
+            }
+            else {
+            	runIn(C_delay*60, C_off, [overwrite: true])
+            }
    		}
+	}
+}
+
+def C_on(){
+	if (C_onPhrase){
+		location.helloHome.execute(C_onPhrase)
+	}
+	if (C_onMode) {
+		changeMode(C_onMode)
+	}
+}
+
+def C_off(){
+	if (C_offPhrase){
+		location.helloHome.execute(C_offPhrase)
+	}
+	if (C_offMode) {
+		changeMode(C_offMode)
 	}
 }
 
@@ -423,21 +490,39 @@ def D_switchHandler(evt) {
     if ((!D_mode || D_mode.contains(location.mode)) && getDayOk(D_day) && getTimeOk(D_timeStart,D_timeEnd)) { 
         log.debug "Running ${D_ScenarioName}"
         if (evt.value == "on" && (D_onPhrase || D_onMode)) {
-    		if (D_onPhrase){
-        		location.helloHome.execute(D_onPhrase)
-        	}
-        	if (D_onMode) {
-        		changeMode(D_onMode)
-        	}
+    		if (!D_delay || D_delay == 0) {
+            	D_on()
+            }
+            else {
+            	runIn(D_delay*60, D_on, [overwrite: true])
+            }
     	} 
     	else if (evt.value == "off" && !D_momentary && (D_offPhrase || D_offMode)) {
-        	if (D_offPhrase){
-        		location.helloHome.execute(D_offPhrase)
-    		}
-        	if (D_offMode) {
-        		changeMode(D_offMode)
-        	}
+        	if (!D_delay || D_delay == 0) {
+            	D_off()
+            }
+            else {
+            	runIn(D_delay*60, D_off, [overwrite: true])
+            }
     	}
+	}
+}
+
+def D_on(){
+	if (D_onPhrase){
+		location.helloHome.execute(A_onPhrase)
+	}
+	if (D_onMode) {
+		changeMode(A_onMode)
+	}
+}
+
+def D_off(){
+	if (D_offPhrase){
+		location.helloHome.execute(D_offPhrase)
+	}
+	if (D_offMode) {
+		changeMode(D_offMode)
 	}
 }
 
@@ -570,7 +655,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 2.0.1 (09/13/2015)"
+    def text = "Version 2.1.0 (09/28/2015)"
 }
 
 private def textCopyright() {
@@ -595,8 +680,10 @@ private def textLicense() {
 private def textHelp() {
 	def text =
 		"Ties SmartThings routines or modes to the on/off state of various switches. "+
-		"Perfect for use with Alexa.\n\nTo use, create momentary button tiles or virtual switches from the IDE. "+
-		"You may also use any physical switches within SmartThings. Discover the switches so they can be seen by Alexa. "+
-		"Then, within one of the six scenarios, define which switch is to be used and tie the on/off state of the switch to a specific routine or mode. "+
-		"The routine or mode will fire with the switch state changes. Please note that if you are using a momentary switch you should only define the 'on' action."
+		"Perfect for use with Alexa.\n\nTo use, first create the required momentary button tiles or virtual switches from the SmartThings IDE. "+
+		"You may also use any physical switches already associated with SmartThings. Include these switches within the Echo/SmartThings app, then discover the switches on the Echo. "+
+		"Finally, within one of the six scenarios of this app, define switch to be used and tie the on/off state of that switch to a specific routine or mode. "+
+		"The routine or mode will fire with the switch state changes, except in cases where you have a delay specified. This time delay is optional and only available in the first four scenarios."+
+        "\n\nPlease note that if you are using a momentary switch you should only define the 'on' action within each scenario." 
+
 }
