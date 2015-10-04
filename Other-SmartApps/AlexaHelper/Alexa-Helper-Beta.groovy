@@ -2,13 +2,13 @@
  *  Alexa Helper
  *
  *  Copyright 2015 Michael Struck
- *  Version 2.2.0 10/4/15
+ *  Version 2.2.1 10/4/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
  *  Version 2.0.1 - Changed syntax to reflect SmartThings Routines (instead of Hello, Home Phrases)
  *  Version 2.1.0 - Added timers to the first 4 slots to allow for delayed triggering of routines or modes
- *  Version 2.2.0 - Allow for on/off control of switches and changed the UI slightly to allow for other controls
+ *  Version 2.2.1 - Allow for on/off control of switches and changed the UI slightly to allow for other controls
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -80,8 +80,9 @@ def pageSetupScenarioA() {
             	input "A_onPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             }
         	input "A_onMode", "mode", title: "Change to this mode", required: false
-            input "A_onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: true
-        }
+            input "A_onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: false
+        	input "A_delayOn", "number", title: "Delay in minutes", defaultValue: 0, required: false
+       }
         
         if (!A_momentary) {
         	section ("When switch is off..."){
@@ -89,11 +90,9 @@ def pageSetupScenarioA() {
             		input "A_offPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             	}
         		input "A_offMode", "mode", title: "Change to this mode", required: false
-                input "A_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: true
+                input "A_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: false
+                input "A_delayOff", "number", title: "Delay in minutes", defaultValue: 0, required: false
         	}
-        }
-        section("Delay to trigger routine/mode/switches (optional)"){
-        	input "A_delay", "number", title: "Delay in minutes", defaultValue: 0, required: false
         }
         section("Restrictions") {            
 			input "A_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
@@ -129,7 +128,8 @@ def pageSetupScenarioB() {
             	input "B_onPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             }
         	input "B_onMode", "mode", title: "Change to this mode", required: false
-            input "B_onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: true
+            input "B_onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: false
+            input "B_delayOn", "number", title: "Delay in minutes", defaultValue: 0, required: false
         }
         
         if (!B_momentary) {
@@ -138,11 +138,9 @@ def pageSetupScenarioB() {
             		input "B_offPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             	}
         		input "B_offMode", "mode", title: "Change to this mode", required: false
-                input "B_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: true
+                input "B_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: false
+                input "B_delayOff", "number", title: "Delay in minutes", defaultValue: 0, required: false
         	}
-        }
-        section("Delay to trigger routine/mode/switches (optional)"){
-        	input "B_delay", "number", title: "Delay in minutes", defaultValue: 0, required: false
         }
         section("Restrictions") {            
 			input "B_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
@@ -178,7 +176,8 @@ def pageSetupScenarioC() {
             	input "C_onPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             }
         	input "C_onMode", "mode", title: "Change to this mode", required: false
-            input "C_onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: true
+            input "C_onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: false
+            input "C_delayOn", "number", title: "Delay in minutes", defaultValue: 0, required: false
         }
         
         if (!C_momentary) {
@@ -187,11 +186,9 @@ def pageSetupScenarioC() {
             		input "C_offPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             	}
         		input "C_offMode", "mode", title: "Change to this mode", required: false
-                input "C_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: true
+                input "C_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: false
+                input "C_delayOff", "number", title: "Delay in minutes", defaultValue: 0, required: false
         	}
-        }
-        section("Delay to trigger routine/mode/switches (optional)"){
-        	input "C_delay", "number", title: "Delay in minutes", defaultValue: 0, required: false
         }
         section("Restrictions") {            
 			input "C_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
@@ -228,7 +225,8 @@ def pageSetupScenarioD() {
             	input "D_onPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             }
         	input "D_onMode", "mode", title: "Change to this mode", required: false
-            input "D_onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: true
+            input "D_onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: false
+            input "D_delayOn", "number", title: "Delay in minutes", defaultValue: 0, required: false
         }
         
         if (!D_momentary) {
@@ -237,11 +235,9 @@ def pageSetupScenarioD() {
             		input "D_offPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             	}
         		input "D_offMode", "mode", title: "Change to this mode", required: false
-                input "D_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: true
+                input "D_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: false
+                input "D_delayOff", "number", title: "Delay in minutes", defaultValue: 0, required: false
         	}
-        }
-        section("Delay to trigger routine/mode/switches (optional)"){
-        	input "D_delay", "number", title: "Delay in minutes", defaultValue: 0, required: false
         }
 		section("Restrictions") {            
 			input "D_day", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
@@ -278,7 +274,7 @@ def pageSetupScenarioE() {
             	input "E_onPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             }
         	input "E_onMode", "mode", title: "Change to this mode", required: false
-            input "A_onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: true
+            input "A_onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: false
         }
         
         if (!E_momentary) {
@@ -287,7 +283,7 @@ def pageSetupScenarioE() {
             		input "E_offPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             	}
         		input "E_offMode", "mode", title: "Change to this mode", required: false
-                input "E_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: true
+                input "E_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: false
         	}
         }
         section("Restrictions") {            
@@ -325,7 +321,7 @@ def pageSetupScenarioF() {
             	input "F_onPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             }
         	input "F_onMode", "mode", title: "Change to this mode", required: false
-            input "F_onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: true
+            input "F_onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: false
         }
         
         if (!F_momentary) {
@@ -334,7 +330,7 @@ def pageSetupScenarioF() {
             		input "F_offPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             	}
         		input "F_offMode", "mode", title: "Change to this mode", required: false
-                input "F_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: true
+                input "F_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: false
         	}
         }
         section("Restrictions") {            
@@ -398,20 +394,20 @@ def A_switchHandler(evt) {
 	if ((!A_mode || A_mode.contains(location.mode)) && getDayOk(A_day) && getTimeOk(A_timeStart,A_timeEnd)) {    
     	log.debug "Running ${A_ScenarioName}"
         if (evt.value == "on" && (A_onPhrase || A_onMode || A_onSwitches)) {
-        	if (!A_delay || A_delay == 0) {
+        	if (!A_delayOn || A_delayOn == 0) {
             	A_on()
             }
             else {
             	unschedule 
-                runIn(A_delay*60, A_on, [overwrite: true])
+                runIn(A_delayOn*60, A_on, [overwrite: true])
             }
     	} 
     	else if (evt.value == "off" && !A_momentary && (A_offPhrase || A_offMode || A_offSwitches)) {
-        	if (!A_delay || A_delay == 0) {
+        	if (!A_delayOff || A_delayOff == 0) {
             		A_off()
             }
             else {
-            	runIn(A_delay*60, A_off, [overwrite: true])
+            	runIn(A_delayOff*60, A_off, [overwrite: true])
             }
     	}
 	}
@@ -446,19 +442,19 @@ def B_switchHandler(evt) {
     if ((!B_mode || B_mode.contains(location.mode)) && getDayOk(B_day) && getTimeOk(B_timeStart,B_timeEnd)) { 
     	log.debug "Running ${B_ScenarioName}"
         if (evt.value == "on" && (B_onPhrase || B_onMode || B_onSwitches)) {
-    		if (!B_delay || B_delay == 0) {
+    		if (!B_delayOn || B_delayOn == 0) {
             	B_on()
             }
             else {
-            	runIn(B_delay*60, B_on, [overwrite: true])
+            	runIn(B_delayOn*60, B_on, [overwrite: true])
             }
     	} 
     	else if (evt.value == "off" && !B_momentary && (B_offPhrase || B_offMode || B_offSwitches)) {
-        	if (!B_delay || B_delay == 0) {
+        	if (!B_delayOff || B_delayOff == 0) {
             	B_off()
             }
             else {
-            	runIn(B_delay*60, B_off, [overwrite: true])
+            	runIn(B_delayOff*60, B_off, [overwrite: true])
             }
     	}
 	}
@@ -493,19 +489,19 @@ def C_switchHandler(evt) {
     if ((!C_mode || C_mode.contains(location.mode)) && getDayOk(C_day) && getTimeOk(C_timeStart,C_timeEnd)) { 
     	log.debug "Running ${C_ScenarioName}"
         if (evt.value == "on" && (C_onPhrase || C_onMode || C_onSwitches)) {
-    		if (!C_delay || C_delay == 0) {
+    		if (!C_delayOn || C_delayOn == 0) {
             	C_on()
             }
             else {
-            	runIn(C_delay*60, C_on, [overwrite: true])
+            	runIn(C_delayOn*60, C_on, [overwrite: true])
             }
     	} 
     	else if (evt.value == "off" && !C_momentary && (C_offPhrase || C_offMode || C_offSwitches)) {
-        	if (!C_delay || C_delay == 0) {
+        	if (!C_delayOff || C_delayOff == 0) {
             	C_off()
             }
             else {
-            	runIn(C_delay*60, C_off, [overwrite: true])
+            	runIn(C_delayOff*60, C_off, [overwrite: true])
             }
    		}
 	}
@@ -541,19 +537,19 @@ def D_switchHandler(evt) {
     if ((!D_mode || D_mode.contains(location.mode)) && getDayOk(D_day) && getTimeOk(D_timeStart,D_timeEnd)) { 
         log.debug "Running ${D_ScenarioName}"
         if (evt.value == "on" && (D_onPhrase || D_onMode || D_onSwitches)) {
-    		if (!D_delay || D_delay == 0) {
+    		if (!D_delayOn || D_delayOn == 0) {
             	D_on()
             }
             else {
-            	runIn(D_delay*60, D_on, [overwrite: true])
+            	runIn(D_delayOn*60, D_on, [overwrite: true])
             }
     	} 
     	else if (evt.value == "off" && !D_momentary && (D_offPhrase || D_offMode || D_offSwitches)) {
-        	if (!D_delay || D_delay == 0) {
+        	if (!D_delayOff || D_delayOff == 0) {
             	D_off()
             }
             else {
-            	runIn(D_delay*60, D_off, [overwrite: true])
+            	runIn(D_delayOff*60, D_off, [overwrite: true])
             }
     	}
 	}
@@ -724,7 +720,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 2.2.0 (10/04/2015)"
+    def text = "Version 2.2.1 (10/04/2015)"
 }
 
 private def textCopyright() {
