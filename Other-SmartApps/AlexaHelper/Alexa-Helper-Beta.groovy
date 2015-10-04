@@ -274,7 +274,7 @@ def pageSetupScenarioE() {
             	input "E_onPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             }
         	input "E_onMode", "mode", title: "Change to this mode", required: false
-            input "A_onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: false
+            input "E_onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: false
         }
         
         if (!E_momentary) {
