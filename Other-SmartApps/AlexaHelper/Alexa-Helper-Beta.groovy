@@ -141,7 +141,7 @@ def pageSetupScenarioB() {
                 input "B_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: true
         	}
         }
-        section("Delay to trigger routine/mode (optional)"){
+        section("Delay to trigger routine/mode/switches (optional)"){
         	input "B_delay", "number", title: "Delay in minutes", defaultValue: 0, required: false
         }
         section("Restrictions") {            
@@ -190,7 +190,7 @@ def pageSetupScenarioC() {
                 input "C_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: true
         	}
         }
-        section("Delay to trigger routine/mode (optional)"){
+        section("Delay to trigger routine/mode/switches (optional)"){
         	input "C_delay", "number", title: "Delay in minutes", defaultValue: 0, required: false
         }
         section("Restrictions") {            
@@ -240,7 +240,7 @@ def pageSetupScenarioD() {
                 input "D_offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: true
         	}
         }
-        section("Delay to trigger routine/mode (optional)"){
+        section("Delay to trigger routine/mode/switches (optional)"){
         	input "D_delay", "number", title: "Delay in minutes", defaultValue: 0, required: false
         }
 		section("Restrictions") {            
@@ -402,7 +402,8 @@ def A_switchHandler(evt) {
             	A_on()
             }
             else {
-            	runIn(A_delay*60, A_on, [overwrite: true])
+            	unschedule 
+                runIn(A_delay*60, A_on, [overwrite: true])
             }
     	} 
     	else if (evt.value == "off" && !A_momentary && (A_offPhrase || A_offMode || A_offSwitches)) {
