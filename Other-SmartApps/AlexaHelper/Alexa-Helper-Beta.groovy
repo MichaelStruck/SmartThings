@@ -8,7 +8,7 @@
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
  *  Version 2.0.1 - Changed syntax to reflect SmartThings Routines (instead of Hello, Home Phrases)
  *  Version 2.1.0 - Added timers to the first 4 slots to allow for delayed triggering of routines or modes
- *  Version 2.2.1 - Allow for on/off control of switches and changed the UI slightly to allow for other controls
+ *  Version 2.2.1 - Allow for on/off control of switches and changed the UI slightly to allow for other controls in the future
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
