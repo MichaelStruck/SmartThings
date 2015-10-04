@@ -364,6 +364,7 @@ def installed() {
 
 def updated() {
     log.debug "Updated with settings: ${settings}"
+    unschedule()
     unsubscribe()
     initialize()
 }
