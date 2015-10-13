@@ -2,7 +2,7 @@
  *  Alexa Helper
  *
  *  Copyright 2015 Michael Struck
- *  Version 2.2.1 10/4/15
+ *  Version 2.2.2 10/13/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
@@ -722,7 +722,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 2.2.1 (10/04/2015)"
+    def text = "Version 2.2.2 (10/13/2015)"
 }
 
 private def textCopyright() {
