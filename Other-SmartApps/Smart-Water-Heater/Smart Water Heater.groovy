@@ -1,6 +1,6 @@
 /**
  *  Smart Water Heater
- *  Version 1.4.0 6/30/2015
+ *  Version 1.5.0 7/27/2015
  *
  *  Version 1.0.1-Initial release
  *  Version 1.1 added a function to turn water heater back on if someone comes home early
@@ -11,6 +11,7 @@
  *  Version 1.3.1 Added About screen
  *  Version 1.3.2 Added verification of status being off to eliminate redundent commands to the switch and some code optimization 
  *  Version 1.4.0 Added a day-of-week filter instead of simply stating 'weekend' and allowed for multiple water heaters
+ *  Version 1.5.0 Fixed various GUI issues and bugs that affect first time installers 
  *
  *  Copyright 2015 Michael Struck
  *
@@ -46,9 +47,13 @@ def mainPage() {
 		}
     	section("Daytime Options"){
         	href(name: "toDaySchedule", page: "daySchedule", title: "Schedule", description: dayDescription(), state: "complete")
-        	input "presence1", "capability.presenceSensor", title: "Remain on if any of these people are present", multiple: true, required: false
-        	input "exceptionLeave", "bool", title: "Turn off when everyone leaves before ${hhmm(timeOffDay)}", defaultValue: "true"
-            input "exceptionArrive", "bool", title: "Turn on when anyone arrives before ${hhmm(timeOnDay)} ", defaultValue: "true"
+        	if (timeOffDay && timeOnDay){
+            	input "presence1", "capability.presenceSensor", title: "Remain on if any of these people are present", multiple: true, required: false, submitOnChange:true
+                if (presence1){
+                	input "exceptionLeave", "bool", title: "Turn off when everyone leaves before ${hhmm(timeOffDay)}", defaultValue: "true"
+            		input "exceptionArrive", "bool", title: "Turn on when anyone arrives before ${hhmm(timeOnDay)} ", defaultValue: "true"
+                }
+			}
         }
     	section("Nighttime Schedule"){
     		href(name: "toNightSchedule", page: "nightSchedule", title: "Schedule", description: nightDescription(), state: "complete")
@@ -72,8 +77,8 @@ page(name: "daySchedule", title: "Daytime Schedule") {
 
 page(name: "nightSchedule", title: "Nighttime Schedule") {
 	section {
-		input "timeOffNight", title: "Time to turn off", "time"
-        input "timeOnNight", title: "Time to turn back on", "time"
+		input "timeOffNight", title: "Time to turn off", "time", required: false
+        input "timeOnNight", title: "Time to turn back on", "time", required: false
         input "nightOff", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Run on certain days of the week...", multiple: true, required: false
 	}
 }
@@ -104,13 +109,17 @@ def updated() {
 }
 
 def init () {
-	if (exceptionArrive || exceptionLeave){
-    	subscribe(presence1, "presence", presenceHandler)
+    if (timeOffDay && timeOnDay){
+    	schedule(timeOffDay, "turnOffDay")
+		schedule(timeOnDay, "turnOnDay")
+        if (presence1 && (exceptionArrive || exceptionLeave)){
+    		subscribe(presence1, "presence", presenceHandler)
+    	}
     }
-    schedule(timeOffDay, "turnOffDay")
-	schedule(timeOnDay, "turnOnDay")
-    schedule(timeOffNight, "turnOffNight")
-	schedule(timeOnNight, "turnOnNight")
+    if (timeOffNight && timeOnNight){
+    	schedule(timeOffNight, "turnOffNight")
+		schedule(timeOnNight, "turnOnNight")
+	}
 }
 
 def turnOffDay() {
@@ -170,12 +179,11 @@ private everyoneGone() {
 }
 
 def nightDescription() {
-	def title = ""
+	def title = "Tap to set night schedule (optional)"
     if (timeOffNight) {
-    	title += "Turn off at ${hhmm(timeOffNight)} then turn back on at ${hhmm(timeOnNight)}"
-    }
-    def dayListSize = nightOff ? nightOff.size() : 7
-    if (nightOff && dayListSize < 7) {
+    	title = "Turn off at ${hhmm(timeOffNight)} then turn back on at ${hhmm(timeOnNight)}"
+    	def dayListSize = nightOff ? nightOff.size() : 7
+    	if (nightOff && dayListSize < 7) {
         	title += " on"
             for (dayName in nightOff) {
  				title += " ${dayName}"
@@ -188,17 +196,16 @@ def nightDescription() {
         else {
     		title += "\nevery day"
     	}
-    
+    }
     title
 }
 
 def dayDescription() {
-	def title = ""
-    if (timeOffDay) {
-    	title += "Turn off at ${hhmm(timeOffDay)} then turn back on at ${hhmm(timeOnDay)}"
-    }
-    def dayListSize = dayOff ? dayOff.size() : 7
-    if (dayOff && dayListSize < 7) {
+	def title = "Tap to set day schedule (required)"
+	if (timeOffDay) {
+    	title = "Turn off at ${hhmm(timeOffDay)} then turn back on at ${hhmm(timeOnDay)}"
+    	def dayListSize = dayOff ? dayOff.size() : 7
+    	if (dayOff && dayListSize < 7) {
         	title += " on"
             for (dayName in dayOff) {
  				title += " ${dayName}"
@@ -211,7 +218,7 @@ def dayDescription() {
         else {
     		title += "\nevery day"
     	}
-    
+	}
     title
 }
 //Common Methods
@@ -228,6 +235,17 @@ private getDayOk(dayList) {
 		result = dayList.contains(getDay())
 	}
 	result
+}
+
+private getDay(){
+	def df = new java.text.SimpleDateFormat("EEEE")
+	if (location.timeZone) {
+		df.setTimeZone(location.timeZone)
+	}
+	else {
+		df.setTimeZone(TimeZone.getTimeZone("America/New_York"))
+	}
+	def day = df.format(new Date())
 }
 
 private checkTime() {
@@ -247,7 +265,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.4.0 (06/30/2015)"
+    def text = "Version 1.5.0 (07/27/2015)"
 }
 
 private def textCopyright() {
@@ -275,4 +293,5 @@ private def textHelp() {
         "on and off. For the daytime schedule, you have various options to determine whether to turn the water heaters or or off " +
         "based on the status of presence sensors."
 }
+
 
