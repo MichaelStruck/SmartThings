@@ -25,7 +25,7 @@
  */
  
 definition(
-    name: "Alexa Helper",
+    name: "Alexa Helper-Original",
     namespace: "MichaelStruck",
     author: "Michael Struck",
     description: "Allows for routines or modes to be tied to various switch's state controlled by Alexa (Amazon Echo).",
