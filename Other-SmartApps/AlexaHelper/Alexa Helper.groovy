@@ -39,7 +39,7 @@ definition(
 preferences {
     page(name: "mainPage", title: "Alexa Helper Scenarios", install: true, uninstall: true,submitOnChange: true) {
             section {
-                    app(name: "childScenarios", appName: "Alexa Helper - Scenarios", namespace: "MichaelStruck", title: "Create New Alexa Scenario...", multiple: true)
+                    app(name: "childScenarios", appName: "Alexa Helper-Scenario", namespace: "MichaelStruck", title: "Create New Alexa Scenario...", multiple: true)
             }
             section([title:"Options", mobileOnly:true]) {
             	label title:"Assign a name", required:false
