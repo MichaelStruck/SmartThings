@@ -2,7 +2,7 @@
  *  Alexa Helper-Parent
  *
  *  Copyright 2015 Michael Struck
- *  Version 3.0.0 11/17/15
+ *  Version 3.1.0 11/27/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
@@ -11,6 +11,7 @@
  *  Version 2.2.1 - Allow for on/off control of switches and changed the UI slightly to allow for other controls in the future
  *  Version 2.2.2 - Fixed an issue with slot 4
  *  Version 3.0.0 - Allow for parent/child 'slots'
+ *  Version 3.1.0 - Added ability to control as thermostat
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -32,14 +33,22 @@ definition(
     author: "Michael Struck",
     description: "Allows for routines or modes to be tied to various switch's state controlled by Alexa (Amazon Echo).",
     category: "My Apps",
-	iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AlexaHelper/Alexa.png",
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AlexaHelper/Alexa.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AlexaHelper/Alexa@2x.png",
     iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AlexaHelper/Alexa@2x.png")
 
 preferences {
-    page(name: "mainPage", title: "Alexa Helper Scenarios", install: true, uninstall: true,submitOnChange: true) {
+    page name:"mainPage"
+}
+
+//Show main page
+def mainPage() {
+    dynamicPage(name: "mainPage", title: "Alexa Helper Scenarios", install: true, uninstall: true) {
             section {
-                    app(name: "childScenarios", appName: "Alexa Helper-Scenario", namespace: "MichaelStruck", title: "Create New Alexa Scenario...", multiple: true)
+            	app(name: "childScenarios", appName: "Alexa Helper-Scenario", namespace: "MichaelStruck", title: "Create New Alexa Scenario...", multiple: true)
+            }
+            section ("Thermostat") {
+            	href "tstatControl", title: "Thermostat Controls", description: getDesc(vDimmer, tstat), state: greyOut(vDimmer, tstat)
             }
             section([title:"Options", mobileOnly:true]) {
             	label title:"Assign a name", required:false
@@ -48,13 +57,22 @@ preferences {
     }
 }
 
+page(name: "tstatControl", title: "Thermostat Controls"){
+   	section {
+    	input "vDimmer", "capability.switchLevel", title: "Alexa Dimmer Switch", multiple: false, required:false
+		input "tstat", "capability.thermostat", title: "Thermostat To Control", multiple: false , required: false
+    	input "upLimit", "number", title: "Thermostat Upper Limit", required: false
+    	input "lowLimit", "number", title: "Thermostat Lower Limit", required: false
+	}
+}
+
 page(name: "pageAbout", title: "About ${textAppName()}") {
-        section {
-            paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
-        }
-        section("Instructions") {
-            paragraph textHelp()
-        }
+	section {
+    	paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
+    }
+    section("Instructions") {
+        paragraph textHelp()
+    }
 }
 
 def installed() {
@@ -70,6 +88,38 @@ def initialize() {
     childApps.each {child ->
             log.info "Installed Scenario: ${child.label}"
     }
+	if (vDimmer && tstat) {
+    	subscribe (vDimmer, "level", "thermoHandler")
+	}
+}
+//Thermostat Handler
+def thermoHandler(evt){
+    // Get settings between limits
+    def tstatLevel = vDimmer.currentValue("level")
+    if (upLimit && vDimmer.currentValue("level") > upLimit){
+    	tstatLevel = upLimit
+    }
+    if (lowLimit && vDimmer.currentValue("level") < lowLimit){
+    	tstatLevel = lowLimit
+    }
+	log.debug tstatLevel
+	//Turn thermostat to proper level depending on mode
+    if (tstat.currentValue("thermostatMode") == "heat") {
+        tstat.setHeatingSetpoint(tstatLevel)	
+    }
+    if (tstat.currentValue("thermostatMode") == "cool") {
+        tstat.setCoolingSetpoint(tstatLevel)	
+    }
+}
+
+//Common Methods
+
+def getDesc(param1,param2){
+    def result = param1 && param2 ? "Tap to edit theromstat controls" : "Tap to setup theromstat controls"
+}
+
+def greyOut(param1,param2){
+    def result = param1 && param2 ? "complete" : ""
 }
 
 //Version/Copyright/Information/Help
@@ -79,7 +129,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 3.0.0 (11/17/2015)"
+    def text = "Version 3.1.0 (11/27/2015)"
 }
 
 private def textCopyright() {
@@ -103,10 +153,13 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-		"Ties SmartThings routines, modes or switches to the on/off state of a specifc switch. "+
-		"Perfect for use with Alexa.\n\nTo use, first create the required momentary button tiles or virtual switches from the SmartThings IDE. "+
+		"Ties SmartThings routines, modes or switches to the on/off state of a specifc switch. You may also control a thermostat using a dimmer control. "+
+		"Perfect for use with Alexa.\n\nTo use, first create the required momentary button tiles or virtual switches/dimmers from the SmartThings IDE. "+
 		"You may also use any physical switches already associated with SmartThings. Include these switches within the Echo/SmartThings app, then discover the switches on the Echo. "+
-		"Finally, add a scenario and choose the discovered switch to be monitored and tie the on/off state of that switch to a specific routine, mode or on/off state of other switches. "+
+		"For on/off or momentary buttons, add a scenario and choose the discovered switch to be monitored and tie the on/off state of that switch to a specific routine, mode or on/off state of other switches. "+
 		"The routine, mode or switches will fire with the switch state change, except in cases where you have a delay specified. This time delay is optional. "+
-        "\n\nPlease note that if you are using a momentary switch you should only define the 'on' action within each scenario." 
+		 "\n\nPlease note that if you are using a momentary switch you should only define the 'on' action within each scenario.\n\n" +
+		"To control a thermostat, tap the thermostat controls and choose a dimmer switch (usually a virtual dimmer) and the thermostat you wish to control. "+
+        	"You can also limit the range the thermostat will reach (for example, even if you accidently set the dimmer to 100, the value sent to the "+
+        	"thermostat could be limited to 72)."
 }
