@@ -2,10 +2,11 @@
  *  Alexa Helper-Child
  *
  *  Copyright 2015 Michael Struck
- *  Version 1.1.0 11/27/15
+ *  Version 1.1.1 11/29/15
  * 
  *  Version 1.0.0 - Initial release of child app
  *  Version 1.1.0 - Added framework to show version number of child app and copyright
+ *  Version 1.1.1 - Code optimization
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -154,14 +155,6 @@ def turnOff(){
 
 //Common Methods-------------
 
-def greyOut(scenario){
-    def result = scenario ? "complete" : ""
-}
-
-def getTitle(scenario) {
-	def title = scenario ? scenario : "Empty"
-}
-
 def changeMode(newMode) {
 	if (location.mode != newMode) {
 		if (location.modes?.find{it.name == newMode}) {
@@ -233,7 +226,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.1.0 (11/27/2015)"
+    def text = "Version 1.1.1 (11/29/2015)"
 }
 
 private def textCopyright() {
