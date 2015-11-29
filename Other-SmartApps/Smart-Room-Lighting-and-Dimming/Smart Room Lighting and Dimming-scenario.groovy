@@ -1,8 +1,9 @@
 /**
  *  Smart Room Lighting and Dimming-Scenario
  *
- *  Version 1.0.0 - Initial release of child app
- * 
+ *  Version 1.0.0 (11/24/15) - Initial release of child app
+ *  Version 1.0.1 (11/29/15) - Code opimization
+ *
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -70,6 +71,9 @@ def pageSetup() {
         	input name:  "A_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         	input name: "A_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
 		}
+        section("About ${textAppName()}") { 
+			paragraph "${textVersion()}\n${textCopyright()}"
+    	}
     }
 }
 
@@ -242,16 +246,8 @@ def midNightReset() {
 	state.A_triggered = false
 }
 
-def greyOut(param){
-	def result = param ? "complete" : ""
-}
-
 def greyedOutTime(start, end){
 	def result = start || end ? "complete" : ""
-}
-
-def getTitle(scenario) {
-	def title = scenario ? scenario : "Empty"
 }
 
 def getMidnight() {
@@ -401,4 +397,14 @@ private getDayOk(dayList) {
     result
 }
 
+private def textAppName() {
+	def text = "Smart Room Lighting and Dimming-Scenario"
+}	
 
+private def textVersion() {
+    def text = "Version 1.0.1 (11/28/2015)"
+}
+
+private def textCopyright() {
+    def text = "Copyright © 2015 Michael Struck"
+}
