@@ -12,7 +12,14 @@
  *  Version - 2.5.1 Tim Slagle - Fixed Time Logic
  *  Version - 2.6 Michael Struck - Added the additional restriction of running triggers once per day and misc cleanup of code
  *  Version - 2.7 Michael Struck - Added feature that turns off triggering if the physical switch is pressed.
- *  Version - 2.8 Michael Struck - Fixed an issue with dimmers not stopping light action
+ *  Version - 2.81 Michael Struck - Fixed an issue with dimmers not stopping light action
+ *  Version - 2.9 Michael Struck - Fixed issue where button presses outside of the time restrictions prevent the triggers from firing and code optimization 
+ *  Version - 2.9.1 Tim Slagle - Further enhanced time interval logic.  
+ *  Version - 2.9.2 Brandon Gordon - Added support for acceleration sensors.
+ *  Version - 2.9.3 Brandon Gordon - Added mode change subscriptions.
+ *  Version - 2.9.4 Michael Struck - Code Optimization when triggers are tripped
+ *  Version - 3.0.0 Michael Struck - Added presence sensors to the triggers to allow for smart outdoor lighting when people arrive and the option to disable mode change subscriptions (from 2.9.3)
+ *  Version - 3.0.1 Michael Struck - Fixed code syntax
  *
  *  Copyright 2015 Tim Slagle & Michael Struck
  *
@@ -55,7 +62,7 @@ definition(
     name: "Lighting Director",
     namespace: "tslagle13",
     author: "Tim Slagle & Michael Struck",
-    description: "Control up to 4 sets (scenarios) of lights based on motion, door contacts and lux levels.",
+    description: "Control up to 4 sets (scenarios) of lights based on various inputs.",
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Lighting-Director/LightingDirector.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Lighting-Director/LightingDirector@2x.png",
@@ -74,7 +81,6 @@ def pageSetup() {
 
     def pageProperties = [
         name:       "pageSetup",
-        title:      "Status",
         nextPage:   null,
         install:    true,
         uninstall:  true
@@ -119,6 +125,21 @@ def pageSetupScenarioA() {
         required:   false
     ]
     
+    def inputPresenceA = [
+        name:       "A_presence",
+        type:       "capability.presenceSensor",
+        title:      "Or using these presence sensors...",
+        multiple:   true,
+        required:   false
+    ]
+    
+	def inputAccelerationA = [
+		name:       "A_acceleration",
+		type:       "capability.accelerationSensor",
+		title:      "Or using these acceleration sensors...",
+		multiple:   true,
+		required:   false
+	]
     def inputContactA = [
         name:       "A_contact",
         type:       "capability.contactSensor",
@@ -138,6 +159,13 @@ def pageSetupScenarioA() {
     	name:       "A_switchDisable",
         type:       "bool",
         title:      "Stop triggering if physical switches/dimmers are turned off...",
+        defaultValue:false
+    ]
+    
+    def inputUseModeA = [
+    	name:       "A_useMode",
+        type:       "bool",
+        title:      "Allow mode changes to trigger event...",
         defaultValue:false
     ]
     
@@ -209,14 +237,8 @@ def pageSetupScenarioA() {
         defaultValue: empty
     ]
     
-    def pageName = ""
-    if (settings.ScenarioNameA) {
-        	pageName = settings.ScenarioNameA
-   		}
     def pageProperties = [
         name:       "pageSetupScenarioA",
-        title:      "${pageName}",
-        nextPage:   "pageSetup"
     ]
 
     return dynamicPage(pageProperties) {
@@ -226,6 +248,8 @@ section("Name your scenario") {
 
 section("Devices included in the scenario") {
             input inputMotionA
+			input inputAccelerationA
+            input inputPresenceA
             input inputContactA
             input inputLockA
             input inputLightsA
@@ -245,6 +269,7 @@ section("Scenario restrictions") {
             href "timeIntervalInputA", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state: greyedOutTime(A_timeStart, A_timeEnd), refreshAfterSelection:true
             input inputDayA
             input inputModeA
+            input inputUseModeA
             }
 
 section("Help") {
@@ -295,6 +320,21 @@ def pageSetupScenarioB() {
         required:   false
     ]
     
+    def inputPresenceB = [
+        name:       "B_presence",
+        type:       "capability.presenceSensor",
+        title:      "Or using these presence sensors...",
+        multiple:   true,
+        required:   false
+    ]
+    
+	def inputAccelerationB = [
+		name:       "B_acceleration",
+		type:       "capability.accelerationSensor",
+		title:      "Or using these acceleration sensors...",
+		multiple:   true,
+		required:   false
+	]
     def inputContactB = [
         name:       "B_contact",
         type:       "capability.contactSensor",
@@ -307,6 +347,13 @@ def pageSetupScenarioB() {
     	name:       "B_triggerOnce",
         type:       "bool",
         title:      "Trigger only once per day...",
+        defaultValue:false
+    ]
+    
+    def inputUseModeB = [
+    	name:       "B_useMode",
+        type:       "bool",
+        title:      "Allow mode changes to trigger event...",
         defaultValue:false
     ]
     
@@ -368,14 +415,8 @@ def pageSetupScenarioB() {
         defaultValue: empty
     ]
     
-    def pageName = ""
-    if (settings.ScenarioNameB) {
-        	pageName = settings.ScenarioNameB
-   		}
     def pageProperties = [
         name:       "pageSetupScenarioB",
-        title:      "${pageName}",
-        nextPage:   "pageSetup"
     ]
 
     return dynamicPage(pageProperties) {
@@ -385,6 +426,8 @@ section("Name your scenario") {
 
 section("Devices included in the scenario") {
             input inputMotionB
+			input inputAccelerationB
+            input inputPresenceB
 			input inputContactB
             input inputLockB
             input inputLightsB
@@ -404,6 +447,7 @@ section("Scenario restrictions") {
             href "timeIntervalInputB", title: "Only during a certain time...", description: getTimeLabel(B_timeStart, B_timeEnd), state: greyedOutTime(B_timeStart, B_timeEnd), refreshAfterSelection:true
             input inputDayB
             input inputModeB
+            input inputUseModeB
             }
 
 section("Help") {
@@ -437,6 +481,21 @@ def pageSetupScenarioC() {
         required:   false
     ]
     
+    def inputPresenceC = [
+        name:       "C_presence",
+        type:       "capability.presenceSensor",
+        title:      "Or using these presence sensors...",
+        multiple:   true,
+        required:   false
+    ]
+    
+	def inputAccelerationC = [
+		name:       "C_acceleration",
+		type:       "capability.accelerationSensor",
+		title:      "Or using these acceleration sensors...",
+		multiple:   true,
+		required:   false
+	]
     def inputContactC = [
         name:       "C_contact",
         type:       "capability.contactSensor",
@@ -449,6 +508,13 @@ def pageSetupScenarioC() {
     	name:       "C_triggerOnce",
         type:       "bool",
         title:      "Trigger only once per day...",
+        defaultValue:false
+    ]
+    
+    def inputUseModeC = [
+    	name:       "C_useMode",
+        type:       "bool",
+        title:      "Allow mode changes to trigger event...",
         defaultValue:false
     ]
     
@@ -526,14 +592,8 @@ def pageSetupScenarioC() {
         required:   false
     ]
     
-    def pageName = ""
-    if (settings.ScenarioNameC) {
-        	pageName = settings.ScenarioNameC
-   		}
     def pageProperties = [
         name:       "pageSetupScenarioC",
-        title:      "${pageName}",
-        nextPage:   "pageSetup"
     ]
 
     return dynamicPage(pageProperties) {
@@ -543,6 +603,8 @@ def pageSetupScenarioC() {
 
 section("Devices included in the scenario") {
             input inputMotionC
+			input inputAccelerationC
+            input inputPresenceC
             input inputContactC
             input inputLockC
             input inputLightsC
@@ -562,6 +624,7 @@ section("Scenario restrictions") {
             href "timeIntervalInputC", title: "Only during a certain time...", description: getTimeLabel(C_timeStart, C_timeEnd), state: greyedOutTime(C_timeStart, C_timeEnd), refreshAfterSelection:true
             input inputDayC
             input inputModeC
+            input inputUseModeC
             }
 
 section("Help") {
@@ -595,6 +658,21 @@ def pageSetupScenarioD() {
         required:   false
     ]
     
+    def inputPresenceD = [
+        name:       "D_presence",
+        type:       "capability.presenceSensor",
+        title:      "Or using these presence sensors...",
+        multiple:   true,
+        required:   false
+    ]
+    
+	def inputAccelerationD = [
+		name:       "D_acceleration",
+		type:       "capability.accelerationSensor",
+		title:      "Or using these acceleration sensors...",
+		multiple:   true,
+		required:   false
+	]
     def inputContactD = [
         name:       "D_contact",
         type:       "capability.contactSensor",
@@ -623,6 +701,13 @@ def pageSetupScenarioD() {
     	name:       "D_triggerOnce",
         type:       "bool",
         title:      "Trigger only once per day...",
+        defaultValue:false
+    ]
+    
+    def inputUseModeD = [
+    	name:       "D_useMode",
+        type:       "bool",
+        title:      "Allow mode changes to trigger event...",
         defaultValue:false
     ]
     
@@ -684,15 +769,9 @@ def pageSetupScenarioD() {
         multiple:   false,
         required:   false
     ]
-    
-    def pageName = ""
-    if (settings.ScenarioNameD) {
-        	pageName = settings.ScenarioNameD
-   		}
+
     def pageProperties = [
         name:       "pageSetupScenarioD",
-        title:      "${pageName}",
-        nextPage:   "pageSetup"
     ]
 
     return dynamicPage(pageProperties) {
@@ -702,6 +781,8 @@ def pageSetupScenarioD() {
 
 section("Devices included in the scenario") {
             input inputMotionD
+			input inputAccelerationD
+            input inputPresenceD
           	input inputContactD
             input inputLockD
             input inputLightsD
@@ -721,6 +802,7 @@ section("Scenario restrictions") {
             href "timeIntervalInputD", title: "Only during a certain time", description: getTimeLabel(D_timeStart, D_timeEnd), state: greyedOutTime(D_timeStart, D_timeEnd), refreshAfterSelection:true
             input inputDayD
             input inputModeD
+            input inputUseModeD
             }
 
 section("Help") {
@@ -734,7 +816,6 @@ def installed() {
 }
 
 def updated() {
-
     unschedule()
     unsubscribe()
     initialize()
@@ -746,6 +827,14 @@ midNightReset()
 
 if(A_motion) {
 	subscribe(settings.A_motion, "motion", onEventA)
+}
+
+if(A_presence){
+	subscribe(settings.A_presence, "presence", onEventA)
+}
+
+if(A_acceleration) {
+	subscribe(settings.A_acceleration, "acceleration", onEventA)
 }
 
 if(A_contact) {
@@ -761,8 +850,20 @@ if(A_switchDisable) {
     subscribe(A_dimmers, "switch.off", onPressA)
 }
 
+if(A_mode && A_useMode) {
+    subscribe(location, onEventA)
+}
+
 if(B_motion) {
 	subscribe(settings.B_motion, "motion", onEventB)
+}
+
+if(B_presence){
+	subscribe(settings.B_presence, "presence", onEventB)
+}
+
+if(B_acceleration) {
+	subscribe(settings.B_acceleration, "acceleration", onEventB)
 }
 
 if(B_contact) {
@@ -778,8 +879,20 @@ if(B_switchDisable) {
     subscribe(B_dimmers, "switch.off", onPressB)
 }
 
+if(B_mode && B_useMode) {
+    subscribe(location, onEventB)
+}
+
 if(C_motion) {
 	subscribe(settings.C_motion, "motion", onEventC)
+}
+
+if(C_presence){
+	subscribe(settings.C_presence, "presence", onEventC)
+}
+
+if(C_acceleration) {
+	subscribe(settings.C_acceleration, "acceleration", onEventC)
 }
 
 if(C_contact) {
@@ -795,8 +908,20 @@ if(C_switchDisable) {
     subscribe(C_dimmers, "switch.off", onPressC)
 }
 
+if(C_mode && C_useMode) {
+    subscribe(location, onEventC)
+}
+
 if(D_motion) {
 	subscribe(settings.D_motion, "motion", onEventD)
+}
+
+if(D_presence){
+	subscribe(settings.D_presence, "presence", onEventD)
+}
+
+if(D_acceleration) {
+	subscribe(settings.D_acceleration, "acceleration", onEventD)
 }
 
 if(D_contact) {
@@ -811,17 +936,22 @@ if(D_switchDisable) {
 	subscribe(D_switches, "switch.off", onPressD)
     subscribe(D_dimmers, "switch.off", onPressD)
 }
+
+if(D_mode && D_useMode) {
+    subscribe(location, onEventD)
+}
+
 }
 
 def onEventA(evt) {
 
+if ((!A_triggerOnce || (A_triggerOnce && !state.A_triggered)) && (!A_switchDisable || (A_switchDisable && !state.A_triggered))) {
 if ((!A_mode || A_mode.contains(location.mode)) && getTimeOk (A_timeStart, A_timeEnd) && getDayOk(A_day)) {
 if ((!A_luxSensors) || (A_luxSensors.latestValue("illuminance") <= A_turnOnLux)){
 def A_levelOn = A_level as Integer
 
-if (getInputOk(A_motion, A_contact, A_lock)) {
-         if ((!A_triggerOnce || (A_triggerOnce && !state.A_triggered)) && (!A_switchDisable || (A_switchDisable && !state.A_triggered))) {
-        	log.debug("Motion, Door Open or Unlock Detected Running '${ScenarioNameA}'")
+if (getInputOk(A_motion, A_contact, A_lock, A_acceleration) || evt.value == "present") {
+        	log.debug("Presence, Motion, Door Open or Unlock Detected Running '${ScenarioNameA}'")
             settings.A_dimmers?.setLevel(A_levelOn)
             settings.A_switches?.on()
             if (A_triggerOnce){
@@ -834,26 +964,25 @@ if (getInputOk(A_motion, A_contact, A_lock)) {
             	unschedule(delayTurnOffA)
             	state.A_timerStart = false
         	}
-        }
 }
 else {
     	if (settings.A_turnOff) {
-		runIn(A_turnOff * 60, "delayTurnOffA")
-        state.A_timerStart = true
+			runIn(A_turnOff * 60, "delayTurnOffA")
+        	state.A_timerStart = true
         }
         else {
-        settings.A_switches?.off()
-		settings.A_dimmers?.setLevel(0)
+        	settings.A_switches?.off()
+			settings.A_dimmers?.setLevel(0)
         	if (state.A_triggered) {
     			runOnce (getMidnight(), midNightReset)
     		}
         }
-	
 }
 }
 }
 else{
-log.debug("Motion, Contact or Unlock detected outside of mode or time/date/trigger restriction.  Not running scenario.")
+log.debug("Presence, Motion, Contact or Unlock detected outside of mode or time/day restriction.  Not running scenario.")
+}
 }
 }
 
@@ -868,6 +997,9 @@ def delayTurnOffA(){
 }
 
 def onPressA(evt) {
+if ((!A_mode || A_mode.contains(location.mode)) && getTimeOk (A_timeStart, A_timeEnd) && getDayOk(A_day)) {
+if ((!A_luxSensors) || (A_luxSensors.latestValue("illuminance") <= A_turnOnLux)){
+if ((!A_triggerOnce || (A_triggerOnce && !state.A_triggered)) && (!A_switchDisable || (A_switchDisable && !state.A_triggered))) {    
     if (evt.physical){
     	state.A_triggered = true
         unschedule(delayTurnOffA)
@@ -875,16 +1007,17 @@ def onPressA(evt) {
         log.debug "Physical switch in '${ScenarioNameA}' pressed. Triggers for this scenario disabled."
 	}
 }
+}}}
 
 def onEventB(evt) {
 
+if ((!B_triggerOnce || (B_triggerOnce && !state.B_triggered)) && (!B_switchDisable || (B_switchDisable && !state.B_triggered))) {
 if ((!B_mode ||B_mode.contains(location.mode)) && getTimeOk (B_timeStart, B_timeEnd) && getDayOk(B_day)) {
 if ((!B_luxSensors) || (B_luxSensors.latestValue("illuminance") <= B_turnOnLux)) {
 def B_levelOn = B_level as Integer
 
-if (getInputOk(B_motion, B_contact, B_lock)) {
-		if ((!B_triggerOnce || (B_triggerOnce && !state.B_triggered)) && (!B_switchDisable || (B_switchDisable && !state.B_triggered))) {
-        	log.debug("Motion, Door Open or Unlock Detected Running '${ScenarioNameB}'")
+if (getInputOk(B_motion, B_contact, B_lock, B_acceleration) || evt.value == "present") {
+        	log.debug("Presence, Motion, Door Open or Unlock Detected Running '${ScenarioNameB}'")
 			settings.B_dimmers?.setLevel(B_levelOn)
             settings.B_switches?.on()
             if (B_triggerOnce){
@@ -897,7 +1030,6 @@ if (getInputOk(B_motion, B_contact, B_lock)) {
             	unschedule(delayTurnOffB)
             	state.B_timerStart = false
         	}
-        }
 }
 else {
     	if (settings.B_turnOff) {
@@ -917,7 +1049,8 @@ else {
 }
 }
 else{
-log.debug("Motion, Contact or Unlock detected outside of mode or time/date/trigger restriction.  Not running scenario.")
+log.debug("Presence, Motion, Contact or Unlock detected outside of mode or time/day restriction.  Not running scenario.")
+}
 }
 }
 
@@ -931,23 +1064,27 @@ def delayTurnOffB(){
 }
 
 def onPressB(evt) {
-    if (evt.physical){
+if ((!B_mode ||B_mode.contains(location.mode)) && getTimeOk (B_timeStart, B_timeEnd) && getDayOk(B_day)) {
+if ((!B_luxSensors) || (B_luxSensors.latestValue("illuminance") <= B_turnOnLux)) {
+if ((!B_triggerOnce || (B_triggerOnce && !state.B_triggered)) && (!B_switchDisable || (B_switchDisable && !state.B_triggered))) {
+	if (evt.physical){
     	state.B_triggered = true
         unschedule(delayTurnOffB)
         runOnce (getMidnight(), midNightReset)
         log.debug "Physical switch in '${ScenarioNameB}' pressed. Triggers for this scenario disabled."
 	}
 }
+}}}
 
 def onEventC(evt) {
 
+if ((!C_triggerOnce || (C_triggerOnce && !state.C_triggered)) && (!C_switchDisable || (C_switchDisable && !state.C_triggered))) {
 if ((!C_mode || C_mode.contains(location.mode)) && getTimeOk (C_timeStart, C_timeEnd) && getDayOk(C_day) && !state.C_triggered){
 if ((!C_luxSensors) || (C_luxSensors.latestValue("illuminance") <= C_turnOnLux)){
 def C_levelOn = settings.C_level as Integer
 
-if (getInputOk(C_motion, C_contact, C_lock)) {
-        if ((!C_triggerOnce || (C_triggerOnce && !state.C_triggered)) && (!C_switchDisable || (C_switchDisable && !state.C_triggered))) {
-        	log.debug("Motion, Door Open or Unlock Detected Running '${ScenarioNameC}'")
+if (getInputOk(C_motion, C_contact, C_lock, C_acceleration) || evt.value == "present") {
+           	log.debug("Presence, Motion, Door Open or Unlock Detected Running '${ScenarioNameC}'")
             settings.C_dimmers?.setLevel(C_levelOn)
             settings.C_switches?.on()
             if (C_triggerOnce){
@@ -960,7 +1097,6 @@ if (getInputOk(C_motion, C_contact, C_lock)) {
             	unschedule(delayTurnOffC)
             	state.C_timerStart = false
         	}
-        }
 }
 else {
     	if (settings.C_turnOff) {
@@ -979,7 +1115,8 @@ else {
 }
 }
 else{
-log.debug("Motion, Contact or Unlock detected outside of mode or time/date/trigger restriction.  Not running scenario.")
+log.debug("Presence, Motion, Contact or Unlock detected outside of mode or time/day restriction.  Not running scenario.")
+}
 }
 }
 
@@ -994,6 +1131,9 @@ def delayTurnOffC(){
 }
 
 def onPressC(evt) {
+if ((!C_mode || C_mode.contains(location.mode)) && getTimeOk (C_timeStart, C_timeEnd) && getDayOk(C_day) && !state.C_triggered){
+if ((!C_luxSensors) || (C_luxSensors.latestValue("illuminance") <= C_turnOnLux)){
+if ((!C_triggerOnce || (C_triggerOnce && !state.C_triggered)) && (!C_switchDisable || (C_switchDisable && !state.C_triggered))) {
 	if (evt.physical){
     	state.C_triggered = true
         unschedule(delayTurnOffC)
@@ -1001,16 +1141,17 @@ def onPressC(evt) {
         log.debug "Physical switch in '${ScenarioNameC}' pressed. Triggers for this scenario disabled."
 	}
 }
+}}}
 
 def onEventD(evt) {
 
+if ((!D_triggerOnce || (D_triggerOnce && !state.D_triggered)) && (!D_switchDisable || (D_switchDisable && !state.D_triggered))) {
 if ((!D_mode || D_mode.contains(location.mode)) && getTimeOk (D_timeStart, D_timeEnd) && getDayOk(D_day) && !state.D_triggered){
 if ((!D_luxSensors) || (D_luxSensors.latestValue("illuminance") <= D_turnOnLux)){
 def D_levelOn = D_level as Integer
 
-if (getInputOk(D_motion, D_contact, D_lock)) {
-         if ((!D_triggerOnce || (D_triggerOnce && !state.D_triggered)) && (!D_switchDisable || (D_switchDisable && !state.D_triggered))) {
-        	log.debug("Motion, Door Open or Unlock Detected Running '${ScenarioNameD}'")
+if (getInputOk(D_motion, D_contact, D_lock, D_acceleration) || evt.value == "present") {
+           	log.debug("Presence, Motion, Door Open or Unlock Detected Running '${ScenarioNameD}'")
             settings.D_dimmers?.setLevel(D_levelOn)
             settings.D_switches?.on()
             if (D_triggerOnce){
@@ -1023,7 +1164,6 @@ if (getInputOk(D_motion, D_contact, D_lock)) {
             	unschedule(delayTurnOffD)
             	state.D_timerStart = false
         	}
-        }
 }
 else {
     	if (settings.D_turnOff) {
@@ -1041,7 +1181,8 @@ else {
 }
 }
 else{
-log.debug("Motion, Contact or Unlock detected outside of mode or time/date/trigger restriction.  Not running scenario.")
+log.debug("Presence, Motion, Contact or Unlock detected outside of mode or time/day restriction.  Not running scenario.")
+}
 }
 }
 
@@ -1056,6 +1197,9 @@ def delayTurnOffD(){
 }
 
 def onPressD(evt) {
+if ((!D_mode || D_mode.contains(location.mode)) && getTimeOk (D_timeStart, D_timeEnd) && getDayOk(D_day) && !state.D_triggered){
+if ((!D_luxSensors) || (D_luxSensors.latestValue("illuminance") <= D_turnOnLux)){
+if ((!D_triggerOnce || (D_triggerOnce && !state.D_triggered)) && (!D_switchDisable || (D_switchDisable && !state.D_triggered))) {
 	if (evt.physical){
     	state.D_triggered = true
         unschedule(delayTurnOffD)
@@ -1063,6 +1207,7 @@ def onPressD(evt) {
         log.debug "Physical switch in '${ScenarioNameD}' pressed. Triggers for this scenario disabled."
 	}
 }
+}}}
 
 //Common Methods
 
@@ -1075,11 +1220,11 @@ def midNightReset() {
 
 private def helpText() {
 	def text =
-    	"Select motion sensors, contact sensors or locks to control a set of lights. " +
+		"Select locks, presence, motion, acceleration or contact sensors to control a set of lights. " +
         "Each scenario can control dimmers and switches but can also be " +
         "restricted to modes or between certain times and turned off after " +
-        "motion stops, doors close or lock. Scenarios can also be limited to  " +
-        "running once or to stop running if the physical switches are pressed."
+        "motion stops, doors close or lock. Scenarios can also be limited to " +
+        "running once or to stop running if the physical switches are turned off."
 	text
 }
 
@@ -1120,9 +1265,10 @@ def getMidnight() {
 	midnightToday
 }
 
-private getInputOk(motion, contact, lock) {
+private getInputOk(motion, contact, lock, acceleration) {
 
 def motionDetected = false
+def accelerationDetected = false
 def contactDetected = false
 def unlockDetected = false
 def result = false
@@ -1130,6 +1276,12 @@ def result = false
 if (motion) {
 	if (motion.latestValue("motion").contains("active")) {
 		motionDetected = true
+	}
+}
+
+if (acceleration) {
+	if (acceleration.latestValue("acceleration").contains("active")) {
+		accelerationDetected = true
 	}
 }
 
@@ -1145,19 +1297,28 @@ if (lock) {
 	}
 }
 
-result = motionDetected || contactDetected || unlockDetected 
+result = motionDetected || contactDetected || unlockDetected || accelerationDetected
 result
 
 }
 
-private getTimeOk(startTime, endTime) {
+private getTimeOk(starting, ending) {
 	def result = true
-	if (startTime && endTime) {
+	if (starting && ending) {
 		def currTime = now()
-		def start = timeToday(startTime).time
-		def stop = timeToday(endTime).time
-		result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start || currTime <= stop
+		def start = timeToday(starting).time
+		def stop = timeToday(ending).time
+		result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start
 	}
+    
+    else if (starting){
+    	result = currTime >= start
+    }
+    else if (ending){
+    	result = currTime <= stop
+    }
+    
+	log.trace "timeOk = $result"
 	result
 }
 
@@ -1225,3 +1386,4 @@ page(name: "timeIntervalInputD", title: "Only during a certain time", refreshAft
 			input "D_timeEnd", "time", title: "Ending", required: false, refreshAfterSelection:true
 		}
         }          
+
