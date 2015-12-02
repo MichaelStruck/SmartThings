@@ -52,7 +52,7 @@ def pageSetup() {
         		href "levelInputA", title: "Dimmer Options", description: getLevelLabel(A_levelDimOn, A_levelDimOff, A_calcOn), state: "complete"
         	}
         	if (A_colorControls){
-        		href "colorInputA", title: "Color Options", description: getColorLabel(A_levelDimOnColor, A_levelDimOffColor, A_calcOnColor, A_color), state: "complete"
+        		href "colorInputA", title: "Color Options", description: getColorLabel(A_levelDimOnColor, A_levelDimOffColor, A_calcOnColor, A_colorOn, A_colorOff), state: "complete"
         	}
         	input name: "A_turnOnLux",type: "number",title: "Only run this scenario if lux is below...", multiple: false, required: false
         	input name: "A_luxSensors",type: "capability.illuminanceMeasurement",title: "On these lux sensors",multiple: false,required: false, submitOnChange:true
@@ -316,9 +316,17 @@ def getLevelLabel(on, off, calcOn) {
     levelLabel
 }
 
-def getColorLabel(on, off, calcOn, color) {
-    def levelLabel = color ? "Color: ${color}" : "Color: Soft White" 
-    levelLabel += "\n'On' level: "
+def getColorLabel(on, off, calcOn, colorOn, colorOff) {
+    def colorVarOn=colorOn
+    def colorVarOff=colorOff
+    if (!colorVarOn) {
+    	colorVarOn="Soft White"
+    }
+    if (!colorVarOff) {
+    	colorVarOff=colorVarOn
+    } 
+     	
+    def levelLabel = "\n'On': ${colorVarOn}, Level: "
 	if (!on) {
 		on= 100
 	}
@@ -333,7 +341,7 @@ def getColorLabel(on, off, calcOn, color) {
     		levelLabel = levelLabel + "${on}%"
     	}
 	}
-	levelLabel = levelLabel + "\n'Off' level: ${off}%" 
+	levelLabel = levelLabel + "\n'Off': ${colorVarOn}, Level: ${off}%" 
     
     levelLabel
 }
