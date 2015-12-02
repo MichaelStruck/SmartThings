@@ -317,8 +317,8 @@ def getLevelLabel(on, off, calcOn) {
 }
 
 def getColorLabel(on, off, calcOn, colorOn, colorOff) {
-    def colorVarOn=colorOn
-    def colorVarOff=colorOff
+    def colorVarOn = colorOn
+    def colorVarOff = colorOff
     if (!colorVarOn) {
     	colorVarOn="Soft White"
     }
@@ -341,7 +341,7 @@ def getColorLabel(on, off, calcOn, colorOn, colorOff) {
     		levelLabel = levelLabel + "${on}%"
     	}
 	}
-	levelLabel = levelLabel + "\n'Off': ${colorVarOn}, Level: ${off}%" 
+	levelLabel = levelLabel + "\n'Off': ${colorVarOff}, Level: ${off}%" 
     
     levelLabel
 }
