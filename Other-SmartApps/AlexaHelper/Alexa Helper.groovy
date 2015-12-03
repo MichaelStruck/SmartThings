@@ -12,6 +12,7 @@
  *  Version 2.2.2 - Fixed an issue with slot 4
  *  Version 3.0.0 - Allow for parent/child 'slots'
  *  Version 3.1.0 - Added ability to control as thermostat
+ *  Version 3.1.1 - Refined thermostat controls and GUI (thanks to @SDBOBRESCU "Bobby")
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -48,7 +49,7 @@ def mainPage() {
             	app(name: "childScenarios", appName: "Alexa Helper-Scenario", namespace: "MichaelStruck", title: "Create New Alexa Scenario...", multiple: true)
             }
             section ("Thermostat") {
-            	href "tstatControl", title: "Thermostat Controls", description: getDesc(vDimmer, tstat), state: greyOut(vDimmer, tstat)
+            	href "tstatControl", title: "Thermostat Controls", description: getDesc(), state: greyOut(vDimmer, tstat)
             }
             section([title:"Options", mobileOnly:true]) {
             	label title:"Assign a name", required:false
@@ -63,6 +64,7 @@ page(name: "tstatControl", title: "Thermostat Controls"){
 		input "tstat", "capability.thermostat", title: "Thermostat To Control", multiple: false , required: false
     	input "upLimit", "number", title: "Thermostat Upper Limit", required: false
     	input "lowLimit", "number", title: "Thermostat Lower Limit", required: false
+        input "autoControl", "bool", title: "Control when thermostat in 'Auto' mode", defaultValue: false
 	}
 }
 
@@ -102,20 +104,38 @@ def thermoHandler(evt){
     if (lowLimit && vDimmer.currentValue("level") < lowLimit){
     	tstatLevel = lowLimit
     }
-	log.debug tstatLevel
 	//Turn thermostat to proper level depending on mode
-    if (tstat.currentValue("thermostatMode") == "heat") {
+    def tstatMode=tstat.currentValue("thermostatMode")
+    if (tstatMode == "heat") {
         tstat.setHeatingSetpoint(tstatLevel)	
     }
-    if (tstat.currentValue("thermostatMode") == "cool") {
+    if (tstatMode == "cool") {
         tstat.setCoolingSetpoint(tstatLevel)	
     }
+    if (tstatMode == "auto" && autoControl){
+    	tstat.setHeatingSetpoint(tstatLevel)
+        tstat.setCoolingSetpoint(tstatLevel)
+    }
+    log.debug "Thermostat set to ${tstatLevel}"
 }
 
 //Common Methods
 
-def getDesc(param1,param2){
-    def result = param1 && param2 ? "Tap to edit theromstat controls" : "Tap to setup theromstat controls"
+def getDesc(){
+    def result = "Tap to setup theromstat controls"
+    if (vDimmer && tstat) {
+		result = "${vDimmer} controls ${tstat}"
+        if (upLimit) {
+           	result += "\nLimits: Not greater than ${upLimit}"
+		}
+		if (lowLimit) {
+        	result += " and no lower than ${lowLimit}"
+        }
+        if (autoControl){
+        	result += "\nControl when thermostat in 'Auto' mode"
+        }    
+	}
+    result
 }
 
 def greyOut(param1,param2){
@@ -129,7 +149,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 3.1.0 (11/27/2015)"
+    def text = "Version 3.1.1 (12/02/2015)"
 }
 
 private def textCopyright() {
@@ -158,8 +178,8 @@ private def textHelp() {
 		"You may also use any physical switches already associated with SmartThings. Include these switches within the Echo/SmartThings app, then discover the switches on the Echo. "+
 		"For on/off or momentary buttons, add a scenario and choose the discovered switch to be monitored and tie the on/off state of that switch to a specific routine, mode or on/off state of other switches. "+
 		"The routine, mode or switches will fire with the switch state change, except in cases where you have a delay specified. This time delay is optional. "+
-		 "\n\nPlease note that if you are using a momentary switch you should only define the 'on' action within each scenario.\n\n" +
+		"\n\nPlease note that if you are using a momentary switch you should only define the 'on' action within each scenario.\n\n" +
 		"To control a thermostat, tap the thermostat controls and choose a dimmer switch (usually a virtual dimmer) and the thermostat you wish to control. "+
-        	"You can also limit the range the thermostat will reach (for example, even if you accidently set the dimmer to 100, the value sent to the "+
-        	"thermostat could be limited to 72)."
+		"You can also limit the range the thermostat will reach (for example, even if you accidently set the dimmer to 100, the value sent to the "+
+		"thermostat could be limited to 72)."
 }
