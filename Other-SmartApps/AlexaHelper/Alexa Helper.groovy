@@ -2,7 +2,7 @@
  *  Alexa Helper-Parent
  *
  *  Copyright 2015 Michael Struck
- *  Version 3.1.1 12/2/15
+ *  Version 3.2.0 12/5/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
@@ -11,8 +11,9 @@
  *  Version 2.2.1 - Allow for on/off control of switches and changed the UI slightly to allow for other controls in the future
  *  Version 2.2.2 - Fixed an issue with slot 4
  *  Version 3.0.0 - Allow for parent/child 'slots'
- *  Version 3.1.0 - Added ability to control as thermostat
+ *  Version 3.1.0 - Added ability to control a thermostat
  *  Version 3.1.1 - Refined thermostat controls and GUI (thanks to @SDBOBRESCU "Bobby")
+ *  Version 3.2.0 - Added ability to a connected speaker
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -49,7 +50,10 @@ def mainPage() {
             	app(name: "childScenarios", appName: "Alexa Helper-Scenario", namespace: "MichaelStruck", title: "Create New Alexa Scenario...", multiple: true)
             }
             section ("Thermostat") {
-            	href "tstatControl", title: "Thermostat Controls", description: getDesc(), state: greyOut(vDimmer, tstat)
+            	href "tstatControl", title: "Thermostat Controls", description: getDescTstat(), state: greyOut(vDimmerTstat, tstat)
+            }
+            section ("Speaker") {
+            	href "speakerControl", title: "Speaker Controls", description: getDescSpeaker(), state: greyOut(vDimmerSpeaker, speaker)
             }
             section([title:"Options", mobileOnly:true]) {
             	label title:"Assign a name", required:false
@@ -60,12 +64,24 @@ def mainPage() {
 
 page(name: "tstatControl", title: "Thermostat Controls"){
    	section {
-    	input "vDimmer", "capability.switchLevel", title: "Alexa Dimmer Switch", multiple: false, required:false
+    	input "vDimmerTstat", "capability.switchLevel", title: "Alexa Dimmer Switch", multiple: false, required:false
 		input "tstat", "capability.thermostat", title: "Thermostat To Control", multiple: false , required: false
-    	input "upLimit", "number", title: "Thermostat Upper Limit", required: false
-    	input "lowLimit", "number", title: "Thermostat Lower Limit", required: false
-        input "autoControl", "bool", title: "Control when thermostat in 'Auto' mode", defaultValue: false
+    	input "upLimitTstat", "number", title: "Thermostat Upper Limit", required: false
+    	input "lowLimitTstat", "number", title: "Thermostat Lower Limit", required: false
+        input "autoControlTstat", "bool", title: "Control when thermostat in 'Auto' mode", defaultValue: false
 	}
+}
+
+page (name: "speakerControl", title: "Speaker Controls"){
+   	section {
+    	input "vDimmerSpeaker", "capability.switchLevel", title: "Alexa Dimmer Switch", multiple: false, required:false
+		input "speaker", "capability.musicPlayer", title: "Connected Speaker To Control", multiple: false , required: false
+    	input "speakerInitial", "number", title: "Volume when speaker turned on", required: false
+        input "upLimitSpeaker", "number", title: "Volume Upper Limit", required: false
+    	input "lowLimitSpeaker", "number", title: "Volume  Lower Limit", required: false
+       	input "nextSwitch", "capability.switch", title: "Next Track Switch", multiple: false, required: false
+       	input "prevSwitch", "capability.switch", title: "Previous Track Switch", multiple: false, required: false
+    }
 }
 
 page(name: "pageAbout", title: "About ${textAppName()}") {
@@ -90,19 +106,30 @@ def initialize() {
     childApps.each {child ->
             log.info "Installed Scenario: ${child.label}"
     }
-	if (vDimmer && tstat) {
-    	subscribe (vDimmer, "level", "thermoHandler")
+	if (vDimmerTstat && tstat) {
+    	subscribe (vDimmerTstat, "level", "thermoHandler")
+	}
+    if (vDimmerSpeaker && speaker) {
+    	subscribe (vDimmerSpeaker, "level", "speakerVolHandler")
+        subscribe (vDimmerSpeaker, "switch", "speakerOnHandler")
+        if (nextSwitch) {
+        	subscribe (nextSwitch, "switch", "controlNextHandler")
+        }
+        if (prevSwitch) {
+        	subscribe (prevSwitch, "switch", "controlPrevHandler")
+        } 
 	}
 }
+
 //Thermostat Handler
 def thermoHandler(evt){
     // Get settings between limits
-    def tstatLevel = vDimmer.currentValue("level")
-    if (upLimit && vDimmer.currentValue("level") > upLimit){
-    	tstatLevel = upLimit
+    def tstatLevel = vDimmerTstat.currentValue("level")
+    if (upLimitTstat && vDimmerTstat.currentValue("level") > upLimitTstat){
+    	tstatLevel = upLimitTstat
     }
-    if (lowLimit && vDimmer.currentValue("level") < lowLimit){
-    	tstatLevel = lowLimit
+    if (lowLimitTstat && vDimmerTstat.currentValue("level") < lowLimitTstat){
+    	tstatLevel = lowLimitTstat
     }
 	//Turn thermostat to proper level depending on mode
     def tstatMode=tstat.currentValue("thermostatMode")
@@ -112,28 +139,88 @@ def thermoHandler(evt){
     if (tstatMode == "cool") {
         tstat.setCoolingSetpoint(tstatLevel)	
     }
-    if (tstatMode == "auto" && autoControl){
+    if (tstatMode == "auto" && autoControlTstat){
     	tstat.setHeatingSetpoint(tstatLevel)
         tstat.setCoolingSetpoint(tstatLevel)
     }
     log.debug "Thermostat set to ${tstatLevel}"
 }
 
+//Speaker Volume Handler
+def speakerVolHandler(evt){
+    def speakerLevel = vDimmerSpeaker.currentValue("level")
+    if (speakerLevel == 0) {
+    	vDimmerSpeaker.off()	
+    }
+    else {
+        // Get settings between limits
+        if (upLimitSpeaker && vDimmerSpeaker.currentValue("level") > upLimitSpeaker){
+    		speakerLevel = upLimitSpeaker
+    	}
+    	if (lowLimitSpeaker && vDimmerSpeaker.currentValue("level") < lowLimitSpeaker){
+    		speakerLevel = lowLimitSpeaker
+    	}
+		//Turn speaker to proper volume
+    	speaker.setLevel(speakerLevel)
+	}
+}
+
+def speakerOnHandler(evt){
+	if (evt.value == "on"){
+    	if (speakerInitial){
+        	def speakerLevel = speakerInitial
+    		vDimmerSpeaker.setLevel (speakerInitial)
+        }
+    	speaker.play()
+    }
+    else {
+    	speaker.stop()
+    }
+}
+
+def controlNextHandler(evt){
+    speaker.nextTrack()
+}
+
+def controlPrevHandler(evt){
+	speaker.previousTrack()
+}
+
 //Common Methods
 
-def getDesc(){
+def getDescTstat(){
     def result = "Tap to setup theromstat controls"
-    if (vDimmer && tstat) {
-		result = "${vDimmer} controls ${tstat}"
-        if (upLimit) {
-           	result += "\nLimits: Not greater than ${upLimit}"
+    if (vDimmerTstat && tstat) {
+		result = "${vDimmerTstat} controls ${tstat}"
+        if (upLimitTstat) {
+           	result += "\nLimits: Not greater than ${upLimitTstat}"
 		}
-		if (lowLimit) {
-        	result += " and no lower than ${lowLimit}"
+		if (lowLimitTstat) {
+        	result += " and no lower than ${lowLimitTstat}"
         }
-        if (autoControl){
+        if (autoControlTstat){
         	result += "\nControl when thermostat in 'Auto' mode"
         }    
+	}
+    result
+}
+
+def getDescSpeaker(){
+    def result = "Tap to setup speaker controls"
+    if (vDimmerSpeaker && speaker) {
+		result = "${vDimmerSpeaker} controls ${speaker}"
+        if (upLimitSpeaker) {
+           	result += "\nVolume Limits: Not greater than ${upLimitSpeaker}"
+		}
+		if (lowLimitSpeaker) {
+        	result += " and no lower than ${lowLimitSpeaker}"
+        }
+        if (nextSwitch){
+        	result += "\nNext Track Switch: ${nextSwitch}"
+        }
+        if (prevSwitch){
+        	result += "\nPrevious Track Switch: ${prevSwitch}"
+        }
 	}
     result
 }
@@ -149,7 +236,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 3.1.1 (12/02/2015)"
+    def text = "Version 3.2.0 (12/05/2015)"
 }
 
 private def textCopyright() {
@@ -181,5 +268,7 @@ private def textHelp() {
 		"\n\nPlease note that if you are using a momentary switch you should only define the 'on' action within each scenario.\n\n" +
 		"To control a thermostat, tap the thermostat controls and choose a dimmer switch (usually a virtual dimmer) and the thermostat you wish to control. "+
 		"You can also limit the range the thermostat will reach (for example, even if you accidently set the dimmer to 100, the value sent to the "+
-		"thermostat could be limited to 72)."
+		"thermostat could be limited to 72)."+
+        	"\nTo control a connected speaker, tap the speaker controls and choose a dimmer switch (usually a virtual dimmer) and speaker you wish to control. "+
+		"You can set the initial volume upon turning on the speaker, along with volume limites. Finally. you can utilize other virtual switches to choose next/previous tracks."
 }
