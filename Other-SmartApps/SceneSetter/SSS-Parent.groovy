@@ -21,7 +21,7 @@ definition(
     singleInstance: true,
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Control multiple rooms (scenarios) of light/dimmers based on button pushes.",
+    description: "Control multiple scenes, which can control multiple colored bulbs",
     category: "My Apps",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Lighting-Director/LightingDirector.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Lighting-Director/LightingDirector@2x.png",
