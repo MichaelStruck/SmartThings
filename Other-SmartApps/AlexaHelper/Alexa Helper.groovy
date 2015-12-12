@@ -2,7 +2,7 @@
  *  Alexa Helper-Parent
  *
  *  Copyright 2015 Michael Struck
- *  Version 3.2.0 12/5/15
+ *  Version 3.3.0 12/12/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
@@ -14,6 +14,7 @@
  *  Version 3.1.0 - Added ability to control a thermostat
  *  Version 3.1.1 - Refined thermostat controls and GUI (thanks to @SDBOBRESCU "Bobby")
  *  Version 3.2.0 - Added ability to a connected speaker
+ *  Version 3.3.0 - Added ability to change modes on a thermostat
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -66,20 +67,33 @@ page(name: "tstatControl", title: "Thermostat Controls"){
    	section {
     	input "vDimmerTstat", "capability.switchLevel", title: "Alexa Dimmer Switch", multiple: false, required:false
 		input "tstat", "capability.thermostat", title: "Thermostat To Control", multiple: false , required: false
-    	input "upLimitTstat", "number", title: "Thermostat Upper Limit", required: false
+	}
+    section ("Thermostat Temperature Settings") {
+        input "upLimitTstat", "number", title: "Thermostat Upper Limit", required: false
     	input "lowLimitTstat", "number", title: "Thermostat Lower Limit", required: false
         input "autoControlTstat", "bool", title: "Control when thermostat in 'Auto' mode", defaultValue: false
+     }
+     section ("Thermostat Mode Settings") {
+        input "heatingSwitch", "capability.switch", title: "Heating Mode Switch", multiple: false, required: false
+        input "coolingSwitch", "capability.switch", title: "Cooling Mode Switch", multiple: false, required: false
+        input "autoSwitch", "capability.switch", title: "Auto Mode Switch", multiple: false, required: false
+        input "heatingSetpoint", "number", title: "Heating setpoint", required: false
+        input "coolingSetpoint", "number", title: "Cooling setpoint", required: false
 	}
 }
 
 page (name: "speakerControl", title: "Speaker Controls"){
    	section {
-    	input "vDimmerSpeaker", "capability.switchLevel", title: "Alexa Dimmer Switch", multiple: false, required:false
+        input "vDimmerSpeaker", "capability.switchLevel", title: "Alexa Dimmer Switch", multiple: false, required:false
 		input "speaker", "capability.musicPlayer", title: "Connected Speaker To Control", multiple: false , required: false
-    	input "speakerInitial", "number", title: "Volume when speaker turned on", required: false
+	}
+    section ("Speaker Volume Controls") {        
+        input "speakerInitial", "number", title: "Volume when speaker turned on", required: false
         input "upLimitSpeaker", "number", title: "Volume Upper Limit", required: false
     	input "lowLimitSpeaker", "number", title: "Volume  Lower Limit", required: false
-       	input "nextSwitch", "capability.switch", title: "Next Track Switch", multiple: false, required: false
+	}
+	section ("Speaker Track Controls") {    
+        input "nextSwitch", "capability.switch", title: "Next Track Switch", multiple: false, required: false
        	input "prevSwitch", "capability.switch", title: "Previous Track Switch", multiple: false, required: false
     }
 }
@@ -108,6 +122,15 @@ def initialize() {
     }
 	if (vDimmerTstat && tstat) {
     	subscribe (vDimmerTstat, "level", "thermoHandler")
+        if (heatingSwitch) {
+        	subscribe (heatingSwitch, "switch", "heatHandler")
+        }
+        if (coolingSwitch) {
+        	subscribe (coolingSwitch, "switch", "coolHandler")
+        }
+        if (autoSwitch) {
+        	subscribe (autoSwitch, "switch", "autoHandler")
+        }
 	}
     if (vDimmerSpeaker && speaker) {
     	subscribe (vDimmerSpeaker, "level", "speakerVolHandler")
@@ -165,6 +188,7 @@ def speakerVolHandler(evt){
 	}
 }
 
+//Speaker on/off
 def speakerOnHandler(evt){
 	if (evt.value == "on"){
     	if (speakerInitial){
@@ -186,6 +210,31 @@ def controlPrevHandler(evt){
 	speaker.previousTrack()
 }
 
+//Thermostat mode change
+def heatHandler(evt){
+	tstat.heat()
+    if (heatingSetpoint){
+    	tstat.setHeatingSetpoint(heatingSetpoint)
+    }
+}
+
+def coolHandler(evt){
+	tstat.cool()
+    if (coolingSetpoint){
+    	tstat.setCoolingSetpoint(coolingSetpoint)
+    }
+}
+
+def autoHandler(evt){
+	tstat.auto()
+    if (heatingSetpoint){
+        tstat.setHeatingSetpoint(heatingSetpoint)
+    }
+    if (coolingSetpoint){
+    	tstat.setCoolingSetpoint(coolingSetpoint)
+    }
+}
+
 //Common Methods
 
 def getDescTstat(){
@@ -200,7 +249,28 @@ def getDescTstat(){
         }
         if (autoControlTstat){
         	result += "\nControl when thermostat in 'Auto' mode"
-        }    
+        }
+        if (heatingSwitch){
+        	result +="\nHeating Switch: ${heatingSwitch}"
+            if (heatingSetpoint){
+            	result +=" set to ${heatingSetpoint}"
+            }
+        }
+        if (coolingSwitch){
+        	result +="\nCooling Switch: ${coolingSwitch}"
+            if (coolingSetpoint){
+            	result +=" set to ${coolingSetpoint}"
+            }
+        }
+        if (autoSwitch){
+        	result +="\nAuto Switch: ${autoSwitch}"
+            if (heatingSetpoint){
+            	result +=" Heat Setting: ${heatingSetpoint}"
+            }
+            if (coolingSetpoint){
+            	result +=" Cool Setting: ${coolingSetpoint}"
+            }
+        }
 	}
     result
 }
@@ -236,7 +306,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 3.2.0 (12/05/2015)"
+    def text = "Version 3.3.0 (12/12/2015)"
 }
 
 private def textCopyright() {
@@ -268,7 +338,7 @@ private def textHelp() {
 		"\n\nPlease note that if you are using a momentary switch you should only define the 'on' action within each scenario.\n\n" +
 		"To control a thermostat, tap the thermostat controls and choose a dimmer switch (usually a virtual dimmer) and the thermostat you wish to control. "+
 		"You can also limit the range the thermostat will reach (for example, even if you accidently set the dimmer to 100, the value sent to the "+
-		"thermostat could be limited to 72)."+
+		"thermostat could be limited to 72). You can also add momentary switches to activate the thermostat from heating, cooling, or auto modes."+
         	"\nTo control a connected speaker, tap the speaker controls and choose a dimmer switch (usually a virtual dimmer) and speaker you wish to control. "+
 		"You can set the initial volume upon turning on the speaker, along with volume limites. Finally. you can utilize other virtual switches to choose next/previous tracks."
 }
