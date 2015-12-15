@@ -1,7 +1,7 @@
 /**
  *  Sebastian's Scene Setter-Parent
  *
- *  Version - 1.0.0 12/10/15
+ *  Version - 1.0.1 12/15/15
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -30,7 +30,10 @@ definition(
 preferences {
     page(name: "mainPage", title: "Scenes", install: true, uninstall: true,submitOnChange: true) {
             section {
-                    app(name: "childScenes", appName: "Sebastian's Scene Setter-Scene", namespace: "MichaelStruck", title: "Create New Scene...", multiple: true)
+            	app(name: "childScenes", appName: "Sebastian's Scene Setter-Scene", namespace: "MichaelStruck", title: "Create New Scene...", multiple: false)
+            }
+            section {
+                app(name: "childScenes", appName: "Sebastian's Scene Setter-Scene", namespace: "MichaelStruck", title: "Create New Scene...", multiple: true)
             }
             section([title:"Options", mobileOnly:true]) {
             	label title:"Assign a name", required:false
@@ -71,7 +74,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.0 (12/10/2015)"
+    def text = "Version 1.0.1 (12/15/2015)"
 }
 
 private def textCopyright() {
