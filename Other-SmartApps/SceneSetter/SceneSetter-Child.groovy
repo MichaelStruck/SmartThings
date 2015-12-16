@@ -1,7 +1,7 @@
 /**
  *  Sebastian's Scene Settter-Child
  *
- *  Version 1.1.0 (12/12/15) - Initial release of child app
+ *  Version 1.1.1 (12/12/15) - Initial release of child app
  * 
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -45,7 +45,7 @@ def pageSetup() {
             input "A_level", "num", title: "Set the level", required: false
         }
         section ("Colored Lights OFF Settings"){	
-            input "A_switchesOFF", "capability.colorControl", title: "Turn OFF the following switches with above switch", multiple: true, required: false
+            input "A_switchesOff", "capability.switch", title: "Turn OFF the following switches with above switch", multiple: true, required: false
         }
  	    section("Restrictions") {            
 			input name: "A_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
@@ -77,7 +77,7 @@ def A_colorHandler(evt) {
     	def saturationLevel = A_sat as int
         def newValue = [hue: hueLevel, saturation: saturationLevel, level: dimLevel as Integer]
         A_switches?.setColor(newValue)
-        A_switchesOFF?.off()
+        A_switchesOff?.off()
 }
 
 //Version/Copyright
@@ -87,7 +87,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.1.0 (12/12/2015)"
+    def text = "Version 1.1.1 (12/12/2015)"
 }
 
 private def textCopyright() {
