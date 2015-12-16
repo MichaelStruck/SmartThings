@@ -1,6 +1,6 @@
 /**
  *  Light > Dark
- *  Version 1.0.6 5/31/15
+ *  Version 1.0.8 11/26/15
  *
  *  1.0.1 Added a verify so they event has to trip trice in a row to do the action.
  *  1.0.2 Added custom icon
@@ -8,6 +8,8 @@
  *  1.0.4 Added dimmer switches/levels, reorganized interface and added time restrictions options
  *  1.0.5 Fixed an inconsistent time limitiation code issue
  *  1.0.6 Added an About screen
+ *  1.0.7 Code optimization
+ *  1.0.8 Code fix to compensate for ST syntax change
  *
  *
  *	Using code from SmartThings Light Up The Night App and the Sunrise/Sunset app
@@ -36,14 +38,14 @@ definition(
     )
 
 preferences {
-	page name:"getPref"
+	page name: "getPref"
 }
 
 def getPref() {
     dynamicPage(name: "getPref", install:true, uninstall: true) {
-    	section("Monitor the luminosity and set brightness thresholds...") {
+        section("Monitor the luminosity and set brightness thresholds...") {
 			input "lightSensor", "capability.illuminanceMeasurement", title: "Light Sensor"
-			input "luxOn", "number", title: "Lower lux threshold (default=100)", required: false, description:100
+			input "luxOn", "number", title: "Lower lux threshold (default=100)", required: false, defaultValue: 100
             input "luxOff", "number", title: "Upper lux threshold", required: false
         }
 		section("Turn on lights/set mode when brightness below lower lux threshold...") {
@@ -60,7 +62,7 @@ def getPref() {
         }
         section([mobileOnly:true], "Options") {
 			label(title: "Assign a name", required: false, defaultValue: "Light > Dark")
-		    href "timeIntervalInput", title: "Set for specific times", description: getTimeLabel(timeStart, timeEnd), state: greyedOutTime(timeStart, timeEnd), refreshAfterSelection:true
+		    href "timeIntervalInput", title: "Set for specific times", description: getTimeLabel(timeStart, timeEnd), state: greyedOutTime(timeStart, timeEnd)
             mode title: "Set for specific mode(s)", required: false
             href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
         }
@@ -97,6 +99,7 @@ def init(){
     
     subscribe(lightSensor, "illuminance", illuminanceHandler)
 }
+
 //Handlers
 def illuminanceHandler(evt) {
   
@@ -184,7 +187,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.6 (05/31/2015)"
+    def text = "Version 1.0.8 (11/26/2015)"
 }
 
 private def textCopyright() {
