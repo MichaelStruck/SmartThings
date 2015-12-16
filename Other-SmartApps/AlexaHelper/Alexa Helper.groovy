@@ -2,7 +2,7 @@
  *  Alexa Helper-Parent
  *
  *  Copyright 2015 Michael Struck
- *  Version 3.3.0 12/12/15
+ *  Version 3.3.1 12/15/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
@@ -15,6 +15,7 @@
  *  Version 3.1.1 - Refined thermostat controls and GUI (thanks to @SDBOBRESCU "Bobby")
  *  Version 3.2.0 - Added ability to a connected speaker
  *  Version 3.3.0 - Added ability to change modes on a thermostat
+ *  Version 3.3.1 - Fixed a small GUI misspelling
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -238,7 +239,7 @@ def autoHandler(evt){
 //Common Methods
 
 def getDescTstat(){
-    def result = "Tap to setup theromstat controls"
+    def result = "Tap to setup thermostat controls"
     if (vDimmerTstat && tstat) {
 		result = "${vDimmerTstat} controls ${tstat}"
         if (upLimitTstat) {
@@ -306,7 +307,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 3.3.0 (12/12/2015)"
+    def text = "Version 3.3.1 (12/15/2015)"
 }
 
 private def textCopyright() {
