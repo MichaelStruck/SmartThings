@@ -1,7 +1,7 @@
 /**
  *  Sebastian's Scene Settter-Child
  *
- *  Version 1.0.0 (12/12/15) - Initial release of child app
+ *  Version 1.1.0 (12/12/15) - Initial release of child app
  * 
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -33,16 +33,19 @@ preferences {
 def pageSetup() {
 	dynamicPage(name: "pageSetup", install: true, uninstall: true) {
 		section("Name your scenario") {
-			label title:"Scenario Name", required: true
+			label title:"Scene Name", required: true
     	}
     	section {
-        	input "A_vSwitch", "capability.switch",title: "Monitor this switch", multiple: true, required: false
+        	input "A_vSwitch", "capability.switch",title: "Monitor this switch (momentary)", multiple: true, required: false
         }
-        section ("Colored Light Settings"){	
-            input "A_switches", "capability.colorControl",title: "Toggle the following switches with above switch", multiple: true, required: false
+        section ("Colored Lights ON Settings"){	
+            input "A_switches", "capability.colorControl",title: "Turn ON the following switches with above switch", multiple: true, required: false
         	input "A_hue", "num", title: "Set the hue", required: false
             input "A_sat", "num", title: "Set the saturartion", required: false
             input "A_level", "num", title: "Set the level", required: false
+        }
+        section ("Colored Lights OFF Settings"){	
+            input "A_switchesOFF", "capability.colorControl", title: "Turn OFF the following switches with above switch", multiple: true, required: false
         }
  	    section("Restrictions") {            
 			input name: "A_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
@@ -69,17 +72,12 @@ def initialize() {
 }
 // A Events
 def A_colorHandler(evt) {
-	if (evt.value == "on"){
         def dimLevel = A_level as int
     	def hueLevel = A_hue as int
     	def saturationLevel = A_sat as int
         def newValue = [hue: hueLevel, saturation: saturationLevel, level: dimLevel as Integer]
         A_switches?.setColor(newValue)
-    }
-    if (evt.value =="off"){
-    	A_switches?.off()
-    }
-
+        A_switchesOFF?.off()
 }
 
 //Version/Copyright
@@ -89,7 +87,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.0 (12/12/2015)"
+    def text = "Version 1.1.0 (12/12/2015)"
 }
 
 private def textCopyright() {
