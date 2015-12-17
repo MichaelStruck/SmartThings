@@ -44,7 +44,7 @@ def pageSetup() {
             input "A_sat", "num", title: "Set the saturartion", required: false
             input "A_level", "num", title: "Set the level", required: false
         }
-        section ("Colored Lights OFF Settings"){	
+        section ("Lights OFF Settings"){	
             input "A_switchesOff", "capability.switch", title: "Turn OFF the following switches with above switch", multiple: true, required: false
         }
  	    section("Restrictions") {            
