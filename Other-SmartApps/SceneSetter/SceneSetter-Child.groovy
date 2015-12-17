@@ -44,11 +44,9 @@ def pageSetup() {
             input "A_sat", "num", title: "Set the saturartion", required: false
             input "A_level", "num", title: "Set the level", required: false
         }
-        section ("Regular lights On Settings"){	
+        section ("Other lights"){	
             input "A_switchesOn", "capability.switch", title: "Turn on the following switches with above switch", multiple: true, required: false
-        }
-        section ("Lights OFF Settings"){	
-            input "A_switchesOff", "capability.switch", title: "Turn OFF the following switches with above switch", multiple: true, required: false
+           input "A_switchesOff", "capability.switch", title: "Turn OFF the following switches with above switch", multiple: true, required: false
         }
  	    section("Restrictions") {            
 			input name: "A_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
