@@ -72,9 +72,10 @@ def initialize() {
 }
 // A Events
 def A_colorHandler(evt) {
-        def dimLevel = A_level as int
-    	def hueLevel = A_hue as int
-    	def saturationLevel = A_sat as int
+        
+        def dimLevel = A_level ? A_level as int : 0
+    	def hueLevel = A_hue ? A_hue as int : 0
+    	def saturationLevel = A_sat ? A_sat as int: 0
         def newValue = [hue: hueLevel, saturation: saturationLevel, level: dimLevel as Integer]
         A_switches?.setColor(newValue)
         A_switchesOff?.off()
