@@ -4,6 +4,7 @@
  *  Version 1.0.0 (11/24/15) - Initial release of child app
  *  Version 1.0.1 (11/29/15) - Code opimization
  *  Version 1.0.2 (12/2/15) - Added option to have the colored lights dim to a separate color than the lit state
+ *  Version 1.1.0 (12/17/15) - Added sunset/sunrise to option for time restrictions
  *
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -54,9 +55,14 @@ def pageSetup() {
         	if (A_colorControls){
         		href "colorInputA", title: "Color Options", description: getColorLabel(A_levelDimOnColor, A_levelDimOffColor, A_calcOnColor, A_colorOn, A_colorOff), state: "complete"
         	}
-        	input name: "A_turnOnLux",type: "number",title: "Only run this scenario if lux is below...", multiple: false, required: false
-        	input name: "A_luxSensors",type: "capability.illuminanceMeasurement",title: "On these lux sensors",multiple: false,required: false, submitOnChange:true
-        	input name: "A_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
+        	input "A_useSun", "bool", title: "Run scenario based on sunset/sunrise", defaultValue: false, submitOnChange:true
+            if (!A_useSun) {
+            	input name: "A_turnOnLux",type: "number", title: "Only run this scenario if lux is below...", multiple: false, required: false, submitOnChange:true
+        	}
+            if (A_calcOn || (!A_useSun && A_turnOnLux)) {
+                input name: "A_luxSensors",type: "capability.illuminanceMeasurement",title: "Lux sensors",multiple: false,required: false, submitOnChange:true
+        	}
+            input name: "A_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
         	if (A_luxSensors && A_levelDimOff > 0 && A_turnOnLux){
         		input name: "A_turnOffLux", type: "bool", title: "Turn off dimmers when lux above threshold", defaultValue: false
         	}
@@ -69,7 +75,7 @@ def pageSetup() {
         	}
             input name: "A_switchDisable", type:"bool", title: "Stop triggering if physical switches/dimmers are turned off...", defaultValue:false
         	href "timeIntervalInputA", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state: greyedOutTime(A_timeStart, A_timeEnd)
-        	input name:  "A_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
+            input name:  "A_day", type: "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only on certain days of the week...",  multiple: true, required: false
         	input name: "A_mode", type: "mode", title: "Only during the following modes...", multiple: true, required: false
 		}
         section("About ${textAppName()}") { 
@@ -80,7 +86,7 @@ def pageSetup() {
 
 page(name: "timeIntervalInputA", title: "Only during a certain time") {
 		section {
-			input "A_timeStart", "time", title: "Starting", required: false
+            input "A_timeStart", "time", title: "Starting", required: false
 			input "A_timeEnd", "time", title: "Ending", required: false
 		}
 }  
@@ -127,7 +133,13 @@ def updated() {
 def initialize() {
 
 	midNightReset()
-
+	state.sunSet = true
+    if (A_useSun){
+    	state.sunSet = false
+        subscribe(location, "sunset", sunsetHandler)
+        subscribe(location, "sunrise", sunriseHandler)
+    }
+    
 	if(A_motion) {
 		subscribe(A_motion, "motion", onEventA)
 	}
@@ -145,11 +157,11 @@ def initialize() {
 
 def onEventA(evt) {
 if ((!A_triggerOnce || (A_triggerOnce && !state.A_triggered)) && (!A_switchDisable || (A_switchDisable && !state.A_triggered))) {  	
-if ((!A_mode || A_mode.contains(location.mode)) && getTimeOk (A_timeStart, A_timeEnd) && getDayOk(A_day)) {
+if ((!A_mode || A_mode.contains(location.mode)) && getTimeOk (A_timeStart, A_timeEnd) && getDayOk(A_day) && state.sunSet) {
 	if (!A_luxSensors || (A_luxSensors.latestValue("illuminance") <= A_turnOnLux)){
     	if (A_motion.latestValue("motion").contains("active")) {
         	
-        		log.debug("Motion Detected Running '${ScenarioNameA}'")
+        		log.debug("Motion Detected")
             
             	def levelSetOn = A_levelDimOn ? A_levelDimOn : 100
                 def levelSetOnColor = A_levelDimOnColor ? A_levelDimOnColor : 100
@@ -178,7 +190,7 @@ if ((!A_mode || A_mode.contains(location.mode)) && getTimeOk (A_timeStart, A_tim
             		}
 				}
 				if (state.A_timerStart){
-           			unschedule(delayTurnOffA)
+           			unschedule()
        	   			state.A_timerStart = false
         		}	
 		}
@@ -211,7 +223,8 @@ else{
 }
 
 def delayTurnOffA(){
-	if (A_triggerOnce && A_triggerOnceOff){
+	log.debug "Lights set to off level"
+    if (A_triggerOnce && A_triggerOnceOff){
 		state.A_triggered = true
     }
     A_switches?.off()
@@ -219,7 +232,12 @@ def delayTurnOffA(){
     A_dimmers?.setLevel(levelSetOff)
     def levelSetOffColor = A_levelDimOffColor ? A_levelDimOffColor : 0
     def offColor = A_colorOff ? A_colorOff : A_colorOn
-    setColoredLights(A_colorControls, offColor, levelSetOffColor) 
+    if (A_colorControls && !levelSetOffColor){
+   		A_colorControls?.off()
+   	}
+    else {    
+    	setColoredLights(A_colorControls, offColor, levelSetOffColor)
+    }
 	state.A_timerStart = false
 	if (state.A_triggered) {
     	runOnce (getMidnight(), midNightReset)
@@ -248,7 +266,16 @@ def onPressA(evt) {
 		}
 	}
 }
+//Sunrise/Sunset handlers
 
+def sunriseHandler(evt){
+	state.sunSet = false
+}
+
+def sunsetHandler(evt){
+	state.sunSet = true
+
+}
 //Common Methods
 
 def midNightReset() {
@@ -419,7 +446,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.2 (12/02/2015)"
+    def text = "Version 1.1.0 (12/17/2015)"
 }
 
 private def textCopyright() {
