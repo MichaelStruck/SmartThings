@@ -2,7 +2,7 @@
  *  Alexa Helper-Parent
  *
  *  Copyright 2015 Michael Struck
- *  Version 3.3.1 12/15/15
+ *  Version 3.3.2 12/20/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
@@ -16,6 +16,7 @@
  *  Version 3.2.0 - Added ability to a connected speaker
  *  Version 3.3.0 - Added ability to change modes on a thermostat
  *  Version 3.3.1 - Fixed a small GUI misspelling
+ *  Version 3.3.2 - Added option for triggering URLs when Alexa switch trips
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -307,7 +308,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 3.3.1 (12/15/2015)"
+    def text = "Version 3.3.2 (12/20/2015)"
 }
 
 private def textCopyright() {
@@ -335,11 +336,11 @@ private def textHelp() {
 		"Perfect for use with Alexa.\n\nTo use, first create the required momentary button tiles or virtual switches/dimmers from the SmartThings IDE. "+
 		"You may also use any physical switches already associated with SmartThings. Include these switches within the Echo/SmartThings app, then discover the switches on the Echo. "+
 		"For on/off or momentary buttons, add a scenario and choose the discovered switch to be monitored and tie the on/off state of that switch to a specific routine, mode or on/off state of other switches. "+
-		"The routine, mode or switches will fire with the switch state change, except in cases where you have a delay specified. This time delay is optional. "+
+		"(including triggering a URL command.) The routine, mode, url or switches will fire with the switch state change, except in cases where you have a delay specified. This time delay is optional. "+
 		"\n\nPlease note that if you are using a momentary switch you should only define the 'on' action within each scenario.\n\n" +
 		"To control a thermostat, tap the thermostat controls and choose a dimmer switch (usually a virtual dimmer) and the thermostat you wish to control. "+
 		"You can also limit the range the thermostat will reach (for example, even if you accidently set the dimmer to 100, the value sent to the "+
 		"thermostat could be limited to 72). You can also add momentary switches to activate the thermostat from heating, cooling, or auto modes."+
-        	"\nTo control a connected speaker, tap the speaker controls and choose a dimmer switch (usually a virtual dimmer) and speaker you wish to control. "+
+		"\nTo control a connected speaker, tap the speaker controls and choose a dimmer switch (usually a virtual dimmer) and speaker you wish to control. "+
 		"You can set the initial volume upon turning on the speaker, along with volume limites. Finally. you can utilize other virtual switches to choose next/previous tracks."
 }
