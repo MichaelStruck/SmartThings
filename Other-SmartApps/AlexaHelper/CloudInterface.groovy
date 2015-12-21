@@ -32,21 +32,24 @@ definition(
 preferences {
     page name:"mainPage"
     page name:"showURLs"
+    page name:"pageReset"
+    page name:"pageAbout"
 }
 
 //Show main page
 def mainPage() {
     dynamicPage(name: "mainPage", title:"", install: true, uninstall: true) {
-		section("Allow external control of these devices...") {
-	    		input "switches", "capability.switch", title: "Switches", multiple: true, required: false
-        	}
-        section("URLs"){
-        		href "showURLs", title: "Show URLs", description: "Tap to show URLs to control switches"
-        	}
+		section("External control") {
+        	input "switches", "capability.switch", title: "Choose Switches", multiple: true, required: false, submitOnChange:true
+			if (switches){
+            	href "showURLs", title: "Show URLs", description: "Tap to show URLs to control switches"
+			}
+        }
         section([title:"Options", mobileOnly:true]) {
-            		label title:"Assign a name", required:false
-            		href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
-        	}
+			href "pageSecurity", title: "Security Options", description: "Tap to show security options"
+            label title:"Assign a name", required:false
+			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
+        }
 	}
 }
 
@@ -59,21 +62,39 @@ def showURLs(){
         	switches.each{
         		swName= "${it.label}"
         		section ("Turn on ${swName}") {
-				paragraph "", title: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=on&access_token=${state.accessToken}"
-			}
+					paragraph "", title: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=on&access_token=${state.accessToken}"
+				}
         		section ("Turn off ${swName}") {
-				paragraph "", title: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=off&access_token=${state.accessToken}"
-			}	
+					paragraph "", title: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=off&access_token=${state.accessToken}"
+				}	
        		}
 	}
 }
-page(name: "pageAbout", title: "About ${textAppName()}") {
-	section {
-    	paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
-    }
-    section("Instructions") {
-        paragraph textHelp()
-    }
+def pageAbout(){
+	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
+		section {
+    		def showToken = state.accessToken ? state.accessToken : "Not set. Save app or choose security options"
+            paragraph "${textVersion()}\n${textCopyright()}\n\nAccess Token:\n${showToken}\n\n${textLicense()}\n"
+    	}
+    	section("Instructions") {
+        	paragraph textHelp()
+    	}
+	}
+}
+
+page(name: "pageSecurity", title: "Security Options"){
+	section{
+    	href "pageReset", title: "Reset Access token", description: "Tap to revoke access token. All current URLs in use will need to be re-generated"
+	}
+}
+
+def pageReset(){
+	dynamicPage(name: "pageReset", title: "Access token has been reset"){
+		createAccessToken()
+    	section{
+    		paragraph "New access token:\n${state.accessToken}\n\nClick 'Done' above to return to the previous menu"
+    	}
+	}
 }
 
 def installed() {
@@ -88,7 +109,7 @@ def updated() {
 
 def initialize() {
 	if (!state.accessToken) {
-    		createAccessToken()
+		createAccessToken()
 	}
 }
 
@@ -138,7 +159,7 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-		"To be used with Alexa Helper 3.4.0+, this app allows you to define switches (typically virtual) to be controlled via a single url."+
-        	"This is useful when using your Alexa with two different SmartThings locations/accounts. Now you can command Alexa at "+
-        	"one location and have actions happen at another location also controlled by a SmartThings hub."
+		"To be used with Alexa Helper 3.3.2+ (with Alexa Helper-Scenario version 1.2.0+), this app allows you to define switches (typically virtual) to be controlled via a single url."+
+		"This is useful when using your Alexa with two different SmartThings locations/accounts. Now you can command Alexa at "+
+		"one location and have actions happen at another location also controlled by a SmartThings hub."
 }
