@@ -1,7 +1,7 @@
 /**
  *  Alexa Helper-Cloud Interface
  *
- *  Version 1.0.0 - 12/24/15 Copyright 2015 Michael Struck
+ *  Version 1.0.0 - 12/21/15 Copyright 2015 Michael Struck
  *  
  *  Version 1.0.0 - Initial release
  *
@@ -55,29 +55,53 @@ def mainPage() {
 
 def showURLs(){
 	dynamicPage(name: "showURLs", title:"Copy the desired URLs to Alexa Helper") {
-		if (!state.accessToken) {
-			createAccessToken()
+		def msg = ""
+        if (!state.accessToken) {
+				try {
+					createAccessToken()
+					log.debug "Creating new Access Token"
+				} catch (e) {
+					msg = "Could not create URLs. Access Token not defined. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
+					log.error msg
+				}
 		}
-        def swName=""
-        switches.each{
-        	swName= "${it.label}"
-        	section ("Turn ON ${swName}") {
-				paragraph "", title: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=on&access_token=${state.accessToken}"
-			}
-        		section ("Turn OFF ${swName}") {
-				paragraph "", title: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=off&access_token=${state.accessToken}"
-			}	
-       	}
+        if (state.accessToken != null) {
+        	def swName=""
+        	switches.each{
+        		swName= "${it.label}"
+        		section ("Turn ON ${swName}") {
+					paragraph "", title: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=on&access_token=${state.accessToken}"
+				}
+        			section ("Turn OFF ${swName}") {
+					paragraph "", title: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=off&access_token=${state.accessToken}"
+				}	
+       		}
+		}
+        else {
+        	section ("Error in creation of URLs"){
+            	paragraph "${msg}"
+            }
+        }
 	}
 }
 
 def pageAbout(){
 	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
-		section {
-        	if (!state.accessToken) {
-	    		createAccessToken()
+        section {
+        	def msg = ""
+            if (!state.accessToken) {
+				try {
+					createAccessToken()
+					log.debug "Creating new Access Token" 
+				} catch (e) {
+					msg = "Could not create Access Token. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
+					log.error msg
+				}
 			}
-    		paragraph "${textVersion()}\n${textCopyright()}\n\nAccess Token:\n${state.accessToken}\n\n${textLicense()}\n"
+            if (state.accessToken != null) {
+            	msg = state.accessToken
+            }
+            paragraph "${textVersion()}\n${textCopyright()}\n\nAccess Token:\n${msg}\n\n${textLicense()}"
     	}
     	section("Instructions") {
         	paragraph textHelp()
@@ -92,11 +116,23 @@ page(name: "pageSecurity", title: "Security Options"){
 }
 
 def pageReset(){
-	dynamicPage(name: "pageReset", title: "Access token has been reset"){
-		createAccessToken()
-    	section{
-    		paragraph "New access token:\n${state.accessToken}\n\nClick 'Done' above to return to the previous menu"
-    	}
+	dynamicPage(name: "pageReset", title: "Access Token Reset"){
+        section{
+			def msg = ""
+            if (!state.accessToken){
+            	try {
+					createAccessToken()
+					log.debug "Creating new Access Token"
+				} catch (e) {
+					msg = "Could not reset Access Token. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
+					log.error msg
+				}
+            }
+            if (state.accessToken != null){
+            	msg = "New access token:\n${state.accessToken}\n\nClick 'Done' above to return to the previous menu."
+            }
+	    	paragraph "${msg}"
+		}
 	}
 }
 
@@ -112,7 +148,7 @@ def updated() {
 
 def initialize() {
 	if (!state.accessToken) {
-		createAccessToken()
+		log.error "Access token not defined. Ensure OAuth is enabled in the SmartThings IDE and generate the Access Token in the help or URL pages within the app."
 	}
 }
 
@@ -138,7 +174,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.0 (12/20/2015)"
+    def text = "Version 1.0.0 (12/21/2015)"
 }
 
 private def textCopyright() {
