@@ -56,25 +56,28 @@ def mainPage() {
 def showURLs(){
 	dynamicPage(name: "showURLs", title:"Copy the desired URLs to Alexa Helper") {
 		if (!state.accessToken) {
-	    		createAccessToken()
+			createAccessToken()
 		}
-        	def swName=""
-        	switches.each{
-        		swName= "${it.label}"
-        		section ("Turn on ${swName}") {
-					paragraph "", title: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=on&access_token=${state.accessToken}"
-				}
-        		section ("Turn off ${swName}") {
-					paragraph "", title: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=off&access_token=${state.accessToken}"
-				}	
-       		}
+        def swName=""
+        switches.each{
+        	swName= "${it.label}"
+        	section ("Turn ON ${swName}") {
+				paragraph "", title: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=on&access_token=${state.accessToken}"
+			}
+        		section ("Turn OFF ${swName}") {
+				paragraph "", title: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=off&access_token=${state.accessToken}"
+			}	
+       	}
 	}
 }
+
 def pageAbout(){
 	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
 		section {
-    		def showToken = state.accessToken ? state.accessToken : "Not set. Save app or choose security options"
-            paragraph "${textVersion()}\n${textCopyright()}\n\nAccess Token:\n${showToken}\n\n${textLicense()}\n"
+        	if (!state.accessToken) {
+	    		createAccessToken()
+			}
+    		paragraph "${textVersion()}\n${textCopyright()}\n\nAccess Token:\n${state.accessToken}\n\n${textLicense()}\n"
     	}
     	section("Instructions") {
         	paragraph textHelp()
@@ -120,7 +123,7 @@ mappings {
 void writeData() {
 	log.debug "Command received with params $params"
 	def command = params.c  	//The action you want to take i.e. on/off 
-    	def label = params.l		//The name given to the device by you
+	def label = params.l		//The name given to the device by you
     
 	if (switches){
 		def device = switches?.find{it.label == label}
