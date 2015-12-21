@@ -336,7 +336,7 @@ private def textHelp() {
 		"Perfect for use with Alexa.\n\nTo use, first create the required momentary button tiles or virtual switches/dimmers from the SmartThings IDE. "+
 		"You may also use any physical switches already associated with SmartThings. Include these switches within the Echo/SmartThings app, then discover the switches on the Echo. "+
 		"For on/off or momentary buttons, add a scenario and choose the discovered switch to be monitored and tie the on/off state of that switch to a specific routine, mode or on/off state of other switches. "+
-		"(including triggering a URL command.) The routine, mode, url or switches will fire with the switch state change, except in cases where you have a delay specified. This time delay is optional. "+
+		"(including triggering a URL command.) The routine, mode, URL or switches will fire with the switch state change, except in cases where you have a delay specified. This time delay is optional. "+
 		"\n\nPlease note that if you are using a momentary switch you should only define the 'on' action within each scenario.\n\n" +
 		"To control a thermostat, tap the thermostat controls and choose a dimmer switch (usually a virtual dimmer) and the thermostat you wish to control. "+
 		"You can also limit the range the thermostat will reach (for example, even if you accidently set the dimmer to 100, the value sent to the "+
