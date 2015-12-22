@@ -1,7 +1,7 @@
 /**
  *  Alexa Helper-Cloud Interface
  *
- *  Version 1.0.0 - 12/21/15 Copyright 2015 Michael Struck
+ *  Version 1.0.0 - 12/22/15 Copyright 2015 Michael Struck
  *  
  *  Version 1.0.0 - Initial release
  *
@@ -156,8 +156,8 @@ mappings {
       path("/w") {action: [GET: "writeData"]}
 }
 
-void writeData() {
-	log.debug "Command received with params $params"
+def writeData() {
+    log.debug "Command received with params $params"
 	def command = params.c  	//The action you want to take i.e. on/off 
 	def label = params.l		//The name given to the device by you
     
@@ -174,7 +174,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.0 (12/21/2015)"
+    def text = "Version 1.0.0 (12/22/2015)"
 }
 
 private def textCopyright() {
@@ -202,3 +202,5 @@ private def textHelp() {
 		"This is useful when using your Alexa with two different SmartThings locations/accounts. Now you can command Alexa at "+
 		"one location and have actions happen at another location also controlled by a SmartThings hub."
 }
+
+
