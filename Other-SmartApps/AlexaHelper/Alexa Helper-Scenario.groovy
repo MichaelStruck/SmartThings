@@ -2,11 +2,12 @@
  *  Alexa Helper-Child
  *
  *  Copyright 2015 Michael Struck
- *  Version 1.1.1 11/29/15
+ *  Version 1.2.0 12/22/15
  * 
  *  Version 1.0.0 - Initial release of child app
  *  Version 1.1.0 - Added framework to show version number of child app and copyright
  *  Version 1.1.1 - Code optimization
+ *  Version 1.2.0 - Added the ability to add a HTTP request on specific actions
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -56,6 +57,7 @@ def pageSetup() {
             }
         	input "onMode", "mode", title: "Change to this mode", required: false
             input "onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: false
+            input "onHTTP", "text", title:"Run this HTTP request...", required: false
         	input "delayOn", "number", title: "Delay in minutes", defaultValue: 0, required: false
        }
         
@@ -66,6 +68,7 @@ def pageSetup() {
             	}
         		input "offMode", "mode", title: "Change to this mode", required: false
                 input "offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: false
+                input "offHTTP", "text", title:"Run this HTTP request...", required: false
                 input "delayOff", "number", title: "Delay in minutes", defaultValue: 0, required: false
         	}
         }
@@ -109,7 +112,7 @@ def initialize() {
 def switchHandler(evt) {
     if ((!runMode || runMode.contains(location.mode)) && getDayOk(runDay) && getTimeOk(timeStart,timeEnd)) {    
         log.debug "Alexa Helper scenario triggered"
-        if (evt.value == "on" && (onPhrase || onMode || onSwitches)) {
+        if (evt.value == "on" && (onPhrase || onMode || onSwitches || onHTTP)) {
         	if (!delayOn || delayOn == 0) {
             	turnOn()
             }
@@ -118,7 +121,7 @@ def switchHandler(evt) {
                 runIn(delayOn*60, turnOn, [overwrite: true])
             }
     	} 
-    	else if (evt.value == "off" && !momentary && (offPhrase || offMode || offSwitches)) {
+    	else if (evt.value == "off" && !momentary && (offPhrase || offMode || offSwitches || offHTTP)) {
         	if (!delayOff || delayOff == 0) {
             	turnOff()
             }
@@ -139,6 +142,10 @@ def turnOn(){
     if (onSwitches){
     	onSwitches?.on()
     }
+	if (onHTTP){
+    	log.debug "Attempting to run: ${onHTTP}"
+        httpGet("${onHTTP}")   
+    }
 }
 
 def turnOff(){
@@ -150,6 +157,10 @@ def turnOff(){
 	}
     if (offSwitches){
     	offSwitches?.off()
+    }
+    if (offHTTP){
+    	log.debug "Attempting to run: ${offHTTP}"
+        httpGet("${offHTTP}")
     }
 }
 
@@ -226,7 +237,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.1.1 (11/29/2015)"
+    def text = "Version 1.2.0 (12/22/2015)"
 }
 
 private def textCopyright() {
