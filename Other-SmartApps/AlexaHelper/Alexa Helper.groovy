@@ -2,7 +2,7 @@
  *  Alexa Helper-Parent
  *
  *  Copyright 2015 Michael Struck
- *  Version 3.3.2 12/22/15
+ *  Version 3.3.3 12/23/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
@@ -17,6 +17,7 @@
  *  Version 3.3.0 - Added ability to change modes on a thermostat
  *  Version 3.3.1 - Fixed a small GUI misspelling
  *  Version 3.3.2 - Added option for triggering URLs when Alexa switch trips
+ *  Version 3.3.3 - Added version number for child apps within main parent app
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -44,6 +45,7 @@ definition(
 
 preferences {
     page name:"mainPage"
+    page name:"pageAbout"
 }
 
 //Show main page
@@ -100,13 +102,15 @@ page (name: "speakerControl", title: "Speaker Controls"){
     }
 }
 
-page(name: "pageAbout", title: "About ${textAppName()}") {
-	section {
-    	paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
-    }
-    section("Instructions") {
-        paragraph textHelp()
-    }
+def pageAbout(){
+	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
+		section {
+    		paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
+    	}
+    	section("Instructions") {
+        	paragraph textHelp()
+    	}
+	}
 }
 
 def installed() {
@@ -308,7 +312,15 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 3.3.2 (12/22/2015)"
+    def version = "Parent App Version: 3.3.3 (12/23/2015)"
+    def childCount = childApps.size()
+    def childVersion = "No scenarios installed"
+    if (childCount){
+    	childApps.each {child ->
+        	childVersion=child.textVersion()       
+    	}
+	} 
+    return "${version}\n${childVersion}"
 }
 
 private def textCopyright() {
