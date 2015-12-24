@@ -2,12 +2,13 @@
  *  Alexa Helper-Child
  *
  *  Copyright 2015 Michael Struck
- *  Version 1.2.0 12/22/15
+ *  Version 1.2.1 12/23/15
  * 
  *  Version 1.0.0 - Initial release of child app
  *  Version 1.1.0 - Added framework to show version number of child app and copyright
  *  Version 1.1.1 - Code optimization
  *  Version 1.2.0 - Added the ability to add a HTTP request on specific actions
+ *  Version 1.2.1 - Added child app version information into main app
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -77,9 +78,6 @@ def pageSetup() {
         	href "timeIntervalInput", title: "Only during a certain time...", description: getTimeLabel(timeStart, timeEnd), state: greyedOutTime(timeStart, timeEnd)
             input "runMode", "mode", title: "Only during the following modes...", multiple: true, required: false
 		}
-       	section("About ${textAppName()}") { 
-			paragraph "${textVersion()}\n${textCopyright()}"
-    	}
     }
 }
 
@@ -231,15 +229,7 @@ private getTimeOk(startTime, endTime) {
     }
     result
 }
-
-private def textAppName() {
-	def text = "Alexa Helper-Scenario"
-}	
-
+//Version
 private def textVersion() {
-    def text = "Version 1.2.0 (12/22/2015)"
-}
-
-private def textCopyright() {
-    def text = "Copyright © 2015 Michael Struck"
+    def text = "Child App Version: 1.2.1 (12/23/2015)"
 }
