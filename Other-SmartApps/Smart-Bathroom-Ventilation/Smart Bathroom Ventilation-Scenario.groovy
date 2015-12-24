@@ -1,7 +1,7 @@
 /**
  *  Smart Bathroom Ventilation-Scenario
  *
- *  Version 1.0.0 (11/24/15) - Initial release of child app
+ *  Version 1.0.0 (11/27/15) - Initial release of child app
  * 
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -167,14 +167,6 @@ def offEventA(evt) {
 }
 
 //Common Methods-------------
-
-def greyOut(scenario){
-    def result = scenario ? "complete" : ""
-}
-
-def getTitle(scenario) {
-	def title = scenario ? scenario : "Empty"
-}
 
 def getTimeLabel(start, end){
 	def timeLabel = "Tap to set"
