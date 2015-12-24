@@ -1,9 +1,10 @@
 /**
  *  Alexa Helper-Cloud Interface
  *
- *  Version 1.0.0 - 12/22/15 Copyright 2015 Michael Struck
+ *  Version 1.0.1 - 12/23/15 Copyright 2015 Michael Struck
  *  
  *  Version 1.0.0 - Initial release
+ *  Version 1.0.1 - Fixed code syntax
  *
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -21,7 +22,7 @@ definition(
     name: "Alexa Helper-Cloud Interface",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Allows for HTTP single line cloud interfacing to control SmartThings devices.",
+    description: "Allows for URL cloud interfacing to control SmartThings devices.",
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AlexaHelper/CloudInterface.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AlexaHelper/CloudInterface@2x.png",
@@ -174,7 +175,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.0 (12/22/2015)"
+    def text = "Version 1.0.1 (12/23/2015)"
 }
 
 private def textCopyright() {
@@ -198,9 +199,9 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-		"To be used with Alexa Helper 3.3.2+ (with Alexa Helper-Scenario version 1.2.0+), this app allows you to define switches (typically virtual) to be controlled via a single url."+
-		"This is useful when using your Alexa with two different SmartThings locations/accounts. Now you can command Alexa at "+
-		"one location and have actions happen at another location also controlled by a SmartThings hub."
+		"To be used with Alexa Helper 3.3.2+ (with Alexa Helper-Scenario version 1.2.0+), "+
+		"this app allows you to define switches (typically virtual) to be controlled via a single URL."+
+		"This is useful when using your Alexa with two different SmartThings locations/accounts. "+
+		"Now you can command Alexa at one location and have actions happen at another location also "+
+		"controlled by a SmartThings hub."
 }
-
-
