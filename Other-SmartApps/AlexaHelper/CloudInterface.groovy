@@ -1,10 +1,11 @@
 /**
  *  Alexa Helper-Cloud Interface
  *
- *  Version 1.0.1 - 12/23/15 Copyright 2015 Michael Struck
+ *  Version 1.0.2 - 12/26/15 Copyright 2015 Michael Struck
  *  
  *  Version 1.0.0 - Initial release
  *  Version 1.0.1 - Fixed code syntax
+ *  Version 1.0.2 - Fixed additional syntax items and moved the remove button to the help screen
  *
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -39,7 +40,7 @@ preferences {
 
 //Show main page
 def mainPage() {
-    dynamicPage(name: "mainPage", title:"", install: true, uninstall: true) {
+    dynamicPage(name: "mainPage", title:"", install: true, uninstall: false) {
 		section("External control") {
         	input "switches", "capability.switch", title: "Choose Switches", multiple: true, required: false, submitOnChange:true
 			if (switches){
@@ -49,7 +50,7 @@ def mainPage() {
         section([title:"Options", mobileOnly:true]) {
 			href "pageSecurity", title: "Security Options", description: "Tap to show security options"
             label title:"Assign a name", required:false
-			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
+			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license, instructions or remove the application"
         }
 	}
 }
@@ -87,7 +88,7 @@ def showURLs(){
 }
 
 def pageAbout(){
-	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
+	dynamicPage(name: "pageAbout", title: "About ${textAppName()}",uninstall: true ) {
         section {
         	def msg = ""
             if (!state.accessToken) {
@@ -107,12 +108,14 @@ def pageAbout(){
     	section("Instructions") {
         	paragraph textHelp()
     	}
+        section("Tap button below to remove the application"){
+        }
 	}
 }
 
 page(name: "pageSecurity", title: "Security Options"){
 	section{
-    	href "pageReset", title: "Reset Access token", description: "Tap to revoke access token. All current URLs in use will need to be re-generated"
+    	href "pageReset", title: "Reset Access Token", description: "Tap to revoke access token. All current URLs in use will need to be re-generated"
 	}
 }
 
@@ -175,7 +178,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.1 (12/23/2015)"
+    def text = "Version 1.0.2 (12/26/2015)"
 }
 
 private def textCopyright() {
