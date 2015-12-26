@@ -2,7 +2,7 @@
  *  Alexa Helper-Parent
  *
  *  Copyright 2015 Michael Struck
- *  Version 3.3.3 12/23/15
+ *  Version 3.3.4 12/26/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
@@ -18,6 +18,7 @@
  *  Version 3.3.1 - Fixed a small GUI misspelling
  *  Version 3.3.2 - Added option for triggering URLs when Alexa switch trips
  *  Version 3.3.3 - Added version number for child apps within main parent app
+ *  Version 3.3.4 - Updated instructions, moved the remove button, fixed code variables and GUI options
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -37,7 +38,7 @@ definition(
     singleInstance: true,
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Allows for routines or modes to be tied to various switch's state controlled by Alexa (Amazon Echo).",
+    description: "Allows for various SmartThings functions to be tied to switches controlled by Amazon Echo('Alexa').",
     category: "My Apps",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AlexaHelper/Alexa.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AlexaHelper/Alexa@2x.png",
@@ -50,21 +51,21 @@ preferences {
 
 //Show main page
 def mainPage() {
-    dynamicPage(name: "mainPage", title: "Alexa Helper Scenarios", install: true, uninstall: true) {
-            section {
-            	app(name: "childScenarios", appName: "Alexa Helper-Scenario", namespace: "MichaelStruck", title: "Create New Alexa Scenario...", multiple: true)
-            }
-            section ("Thermostat") {
-            	href "tstatControl", title: "Thermostat Controls", description: getDescTstat(), state: greyOut(vDimmerTstat, tstat)
-            }
-            section ("Speaker") {
-            	href "speakerControl", title: "Speaker Controls", description: getDescSpeaker(), state: greyOut(vDimmerSpeaker, speaker)
-            }
-            section([title:"Options", mobileOnly:true]) {
-            	label title:"Assign a name", required:false
-            	href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
-        	}
-    }
+	dynamicPage(name: "mainPage", title: "Alexa Helper Scenarios", install: true, uninstall: false) {
+		section {
+			app(name: "childScenarios", appName: "Alexa Helper-Scenario", namespace: "MichaelStruck", title: "Create New Alexa Scenario...", multiple: true)
+		}
+		section ("Thermostat") {
+			href "tstatControl", title: "Thermostat Controls", description: getDescTstat(), state: greyOut(vDimmerTstat, tstat)
+		}
+		section ("Speaker") {
+			href "speakerControl", title: "Speaker Controls", description: getDescSpeaker(), state: greyOut(vDimmerSpeaker, speaker)
+		}
+		section([title:"Options", mobileOnly:true]) {
+			label title:"Assign a name", required:false
+			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license, instructions or to remove the application"
+		}
+	}
 }
 
 page(name: "tstatControl", title: "Thermostat Controls"){
@@ -103,13 +104,15 @@ page (name: "speakerControl", title: "Speaker Controls"){
 }
 
 def pageAbout(){
-	dynamicPage(name: "pageAbout", title: "About ${textAppName()}") {
+	dynamicPage(name: "pageAbout", title: "About ${textAppName()}", uninstall: true) {
 		section {
     		paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
     	}
     	section("Instructions") {
         	paragraph textHelp()
     	}
+        section("Tap button below to remove all scenarios and application"){
+        }
 	}
 }
 
@@ -124,7 +127,7 @@ def updated() {
 
 def initialize() {
     childApps.each {child ->
-            log.info "Installed Scenario: ${child.label}"
+		log.info "Installed Scenario: ${child.label}"
     }
 	if (vDimmerTstat && tstat) {
     	subscribe (vDimmerTstat, "level", "thermoHandler")
@@ -153,7 +156,7 @@ def initialize() {
 //Thermostat Handler
 def thermoHandler(evt){
     // Get settings between limits
-    def tstatLevel = vDimmerTstat.currentValue("level")
+    def tstatLevel = vDimmerTstat.currentValue("level") as int
     if (upLimitTstat && vDimmerTstat.currentValue("level") > upLimitTstat){
     	tstatLevel = upLimitTstat
     }
@@ -177,7 +180,7 @@ def thermoHandler(evt){
 
 //Speaker Volume Handler
 def speakerVolHandler(evt){
-    def speakerLevel = vDimmerSpeaker.currentValue("level")
+    def speakerLevel = vDimmerSpeaker.currentValue("level") as int
     if (speakerLevel == 0) {
     	vDimmerSpeaker.off()	
     }
@@ -198,7 +201,7 @@ def speakerVolHandler(evt){
 def speakerOnHandler(evt){
 	if (evt.value == "on"){
     	if (speakerInitial){
-        	def speakerLevel = speakerInitial
+        	def speakerLevel = speakerInitial as int
     		vDimmerSpeaker.setLevel (speakerInitial)
         }
     	speaker.play()
@@ -247,36 +250,17 @@ def getDescTstat(){
     def result = "Tap to setup thermostat controls"
     if (vDimmerTstat && tstat) {
 		result = "${vDimmerTstat} controls ${tstat}"
-        if (upLimitTstat) {
-           	result += "\nLimits: Not greater than ${upLimitTstat}"
-		}
-		if (lowLimitTstat) {
-        	result += " and no lower than ${lowLimitTstat}"
-        }
-        if (autoControlTstat){
-        	result += "\nControl when thermostat in 'Auto' mode"
-        }
-        if (heatingSwitch){
-        	result +="\nHeating Switch: ${heatingSwitch}"
-            if (heatingSetpoint){
-            	result +=" set to ${heatingSetpoint}"
-            }
-        }
-        if (coolingSwitch){
-        	result +="\nCooling Switch: ${coolingSwitch}"
-            if (coolingSetpoint){
-            	result +=" set to ${coolingSetpoint}"
-            }
-        }
-        if (autoSwitch){
-        	result +="\nAuto Switch: ${autoSwitch}"
-            if (heatingSetpoint){
-            	result +=" Heat Setting: ${heatingSetpoint}"
-            }
-            if (coolingSetpoint){
-            	result +=" Cool Setting: ${coolingSetpoint}"
-            }
-        }
+        result += upLimitTstat ? "\nLimits: No greater than ${upLimitTstat}" : ""
+        result += upLimitTstat && lowLimitTstat ? " and no lower than ${lowLimitTstat}" : ""
+        result += !upLimitTstat && lowLimitTstat ? "\nLimits: No lower than ${lowLimitTstat}" : ""
+        result += autoControlTstat ? "\nControl when thermostat in 'Auto' mode" : ""
+		result += heatingSwitch ? "\nHeating Switch: ${heatingSwitch}" : ""
+        result += heatingSwitch && heatingSetpoint ? " set to ${heatingSetpoint}" : ""
+        result += coolingSwitch ? "\nCooling Switch: ${coolingSwitch}" : ""
+        result += coolingSwitch && coolingSetpoint ? " set to ${coolingSetpoint}" : ""
+        result += autoSwitch ? "\nAuto Switch: ${autoSwitch}" : ""
+		result += autoSwitch && heatingSetpoint ? " Heat Setting: ${heatingSetpoint}" : ""
+        result += autoSwitch && coolingSetpoint ? " Cool Setting: ${coolingSetpoint}" : ""
 	}
     result
 }
@@ -285,18 +269,11 @@ def getDescSpeaker(){
     def result = "Tap to setup speaker controls"
     if (vDimmerSpeaker && speaker) {
 		result = "${vDimmerSpeaker} controls ${speaker}"
-        if (upLimitSpeaker) {
-           	result += "\nVolume Limits: Not greater than ${upLimitSpeaker}"
-		}
-		if (lowLimitSpeaker) {
-        	result += " and no lower than ${lowLimitSpeaker}"
-        }
-        if (nextSwitch){
-        	result += "\nNext Track Switch: ${nextSwitch}"
-        }
-        if (prevSwitch){
-        	result += "\nPrevious Track Switch: ${prevSwitch}"
-        }
+        result += upLimitSpeaker ? "\nVolume Limits: No greater than ${upLimitSpeaker}" : ""
+        result += lowLimitSpeaker && upLimitSpeaker ? " and no lower than ${lowLimitSpeaker}" : ""
+        result += lowLimitSpeaker && !upLimitSpeaker ? "\nVolume Limits: No lower than ${lowLimitSpeaker}" : ""
+        result += nextSwitch ? "\nNext Track Switch: ${nextSwitch}" : ""
+        result += prevSwitch ? "\nPrevious Track Switch: ${prevSwitch}" : ""
 	}
     result
 }
@@ -312,7 +289,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def version = "Parent App Version: 3.3.3 (12/23/2015)"
+    def version = "Parent App Version: 3.3.4 (12/25/2015)"
     def childCount = childApps.size()
     def childVersion = "No scenarios installed"
     if (childCount){
@@ -344,11 +321,12 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-		"Ties SmartThings routines, modes or switches to the on/off state of a specifc switch. You may also control a thermostat using a dimmer control. "+
-		"Perfect for use with Alexa.\n\nTo use, first create the required momentary button tiles or virtual switches/dimmers from the SmartThings IDE. "+
+		"Ties various SmartThings functions to the on/off state of a specifc switch. You may also control a thermostat or the volume of a wireless speaker using a dimmer control. "+
+		"Perfect for use with the Amazon Echo ('Alexa').\n\nTo use, first create the required momentary button tiles or virtual switches/dimmers from the SmartThings IDE. "+
 		"You may also use any physical switches already associated with SmartThings. Include these switches within the Echo/SmartThings app, then discover the switches on the Echo. "+
-		"For on/off or momentary buttons, add a scenario and choose the discovered switch to be monitored and tie the on/off state of that switch to a specific routine, mode, URL or on/off state of other switches. "+
-		"The routine, mode, URL or switches will fire with the switch state change, except in cases where you have a delay specified. This time delay is optional. "+
+		"For on/off or momentary buttons, add a scenario and choose the discovered switch to be monitored and tie the on/off state of that switch to a specific routine, mode, URL, Smart Home Monitor "+
+        	"security state or the on/off state of other switches. The chosen functions or switches will fire when the main switch changes, except in cases where you have a delay specified. "+ 
+        	"This time delay is optional. "+
 		"\n\nPlease note that if you are using a momentary switch you should only define the 'on' action within each scenario.\n\n" +
 		"To control a thermostat, tap the thermostat controls and choose a dimmer switch (usually a virtual dimmer) and the thermostat you wish to control. "+
 		"You can also limit the range the thermostat will reach (for example, even if you accidently set the dimmer to 100, the value sent to the "+
