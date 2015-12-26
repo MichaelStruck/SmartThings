@@ -2,13 +2,14 @@
  *  Alexa Helper-Child
  *
  *  Copyright 2015 Michael Struck
- *  Version 1.2.1 12/23/15
+ *  Version 1.3.0 12/26/15
  * 
  *  Version 1.0.0 - Initial release of child app
  *  Version 1.1.0 - Added framework to show version number of child app and copyright
  *  Version 1.1.1 - Code optimization
  *  Version 1.2.0 - Added the ability to add a HTTP request on specific actions
  *  Version 1.2.1 - Added child app version information into main app
+ *  Version 1.3.0 - Added ability to change the Smart Home Monitor status and added a section for the remove button
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -57,9 +58,10 @@ def pageSetup() {
             	input "onPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             }
         	input "onMode", "mode", title: "Change to this mode", required: false
+            input "onSHM", "enum",title: "Change Smart Home Monitor to...", options: ["away":"Arm(Away)", "stay":"Arm(Stay)", "off":"Disarm"], required: false
             input "onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: false
             input "onHTTP", "text", title:"Run this HTTP request...", required: false
-        	input "delayOn", "number", title: "Delay in minutes", defaultValue: 0, required: false
+            input "delayOn", "number", title: "Delay in minutes", defaultValue: 0, required: false
        }
         
         if (!momentary) {
@@ -68,6 +70,7 @@ def pageSetup() {
             		input "offPhrase", "enum", title: "Perform this routine", options: phrases, required: false
             	}
         		input "offMode", "mode", title: "Change to this mode", required: false
+                input "offSHM", "enum",title: "Change Smart Home Monitor to...", options: ["away":"Arm(Away)", "stay":"Arm(Stay)", "off":"Disarm"], required: false
                 input "offSwitches", "capability.switch", title: "Turn off these switches...", multiple: true, required: false
                 input "offHTTP", "text", title:"Run this HTTP request...", required: false
                 input "delayOff", "number", title: "Delay in minutes", defaultValue: 0, required: false
@@ -78,6 +81,8 @@ def pageSetup() {
         	href "timeIntervalInput", title: "Only during a certain time...", description: getTimeLabel(timeStart, timeEnd), state: greyedOutTime(timeStart, timeEnd)
             input "runMode", "mode", title: "Only during the following modes...", multiple: true, required: false
 		}
+        section("Tap the button below to remove this scenario only"){
+        }
     }
 }
 
@@ -110,7 +115,7 @@ def initialize() {
 def switchHandler(evt) {
     if ((!runMode || runMode.contains(location.mode)) && getDayOk(runDay) && getTimeOk(timeStart,timeEnd)) {    
         log.debug "Alexa Helper scenario triggered"
-        if (evt.value == "on" && (onPhrase || onMode || onSwitches || onHTTP)) {
+        if (evt.value == "on" && (onPhrase || onMode || onSwitches || onHTTP || onSHM)) {
         	if (!delayOn || delayOn == 0) {
             	turnOn()
             }
@@ -119,7 +124,7 @@ def switchHandler(evt) {
                 runIn(delayOn*60, turnOn, [overwrite: true])
             }
     	} 
-    	else if (evt.value == "off" && !momentary && (offPhrase || offMode || offSwitches || offHTTP)) {
+    	else if (evt.value == "off" && !momentary && (offPhrase || offMode || offSwitches || offHTTP || offSHM)) {
         	if (!delayOff || delayOff == 0) {
             	turnOff()
             }
@@ -144,6 +149,10 @@ def turnOn(){
     	log.debug "Attempting to run: ${onHTTP}"
         httpGet("${onHTTP}")   
     }
+    if (onSHM){
+    	log.debug "Setting Smart Home Monitor to ${onSHM}"
+        sendLocationEvent(name: "alarmSystemStatus", value: "${onSHM}")
+    }
 }
 
 def turnOff(){
@@ -159,6 +168,10 @@ def turnOff(){
     if (offHTTP){
     	log.debug "Attempting to run: ${offHTTP}"
         httpGet("${offHTTP}")
+    }
+    if (offSHM){
+    	log.debug "Setting Smart Home Monitor to ${offSHM}"
+        sendLocationEvent(name: "alarmSystemStatus", value: "${offSHM}")
     }
 }
 
@@ -231,5 +244,6 @@ private getTimeOk(startTime, endTime) {
 }
 //Version
 private def textVersion() {
-    def text = "Child App Version: 1.2.1 (12/23/2015)"
+    def text = "Child App Version: 1.3.0 (12/24/2015)"
 }
+
