@@ -289,7 +289,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def version = "Parent App Version: 3.3.4 (12/25/2015)"
+    def version = "Parent App Version: 3.3.4 (12/26/2015)"
     def childCount = childApps.size()
     def childVersion = "No scenarios installed"
     if (childCount){
