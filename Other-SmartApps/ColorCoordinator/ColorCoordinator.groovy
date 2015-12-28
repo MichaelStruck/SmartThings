@@ -84,18 +84,26 @@ def onOffHandler(evt){
 }
 
 def colorHandler(evt) {
-   	def dimLevel = master.currentValue("level")
+   	log.debug "Changing Slave units H,S,L"
+    def dimLevel = master.currentValue("level")
     def hueLevel = master.currentValue("hue")
     def saturationLevel = master.currentValue("saturation")
 	def newValue = [hue: hueLevel, saturation: saturationLevel, level: dimLevel as Integer]
     slaves?.setColor(newValue)
-    def tempLevel = master.currentValue("colorTemperature")
-    slaves?.setColorTemperature(tempLevel)
+    try {
+    	log.debug "Changing Slave color temp"
+        def tempLevel = master.currentValue("colorTemperature")
+    	slaves?.setColorTemperature(tempLevel)
+    }
+    catch (e){
+    	log.debug "Color temp for master --"
+    }
 }
 
 def tempHandler(evt){
     if (evt.value != "--") {
-    	def tempLevel = master.currentValue("colorTemperature")
+    	log.debug "Changing Slave color temp based on Master change"
+        def tempLevel = master.currentValue("colorTemperature")
     	slaves?.setColorTemperature(tempLevel)
     }
 }
