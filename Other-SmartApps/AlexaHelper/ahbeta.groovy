@@ -47,6 +47,7 @@ definition(
 
 preferences {
     page name:"mainPage"
+    page name:"pageTstatControl"
     page name:"pageAbout"
 }
 
@@ -57,7 +58,7 @@ def mainPage() {
 			app(name: "childScenarios", appName: "Alexa Helper-Scenario", namespace: "MichaelStruck", title: "Create New Alexa Scenario...", multiple: true)
 		}
 		section ("Thermostat") {
-			href "tstatControl", title: "Thermostat Controls", description: getDescTstat(), state: greyOut(vDimmerTstat, tstat)
+			href "pageTstatControl", title: "Thermostat Controls", description: getDescTstat(), state: greyOut(vDimmerTstat, tstat)
 		}
 		section ("Speaker") {
 			href "speakerControl", title: "Speaker Controls", description: getDescSpeaker(), state: greyOut(vDimmerSpeaker, speaker)
@@ -69,23 +70,31 @@ def mainPage() {
 	}
 }
 
-page(name: "tstatControl", title: "Thermostat Controls"){
-   	section {
-    	input "vDimmerTstat", "capability.switchLevel", title: "Alexa Dimmer Switch", multiple: false, required:false
-		input "tstat", "capability.thermostat", title: "Thermostat To Control", multiple: false , required: false
-	}
-    section ("Thermostat Temperature Settings") {
-        input "upLimitTstat", "number", title: "Thermostat Upper Limit", required: false
-    	input "lowLimitTstat", "number", title: "Thermostat Lower Limit", required: false
-        input "autoControlTstat", "bool", title: "Control when thermostat in 'Auto' mode", defaultValue: false
-     }
-     section ("Thermostat Mode Settings") {
-        input "heatingSwitch", "capability.switch", title: "Heating Mode Switch", multiple: false, required: false
-        input "coolingSwitch", "capability.switch", title: "Cooling Mode Switch", multiple: false, required: false
-        input "autoSwitch", "capability.switch", title: "Auto Mode Switch", multiple: false, required: false
-        input "tstatOnMode", "enum", title: "If thermostat is off and turned on or a value set, set to this mode", options:["heat":"Heating Mode","cool":"Cool Mode","auto":"Auto Mode"], required: false
-        input "heatingSetpoint", "number", title: "Heating setpoint", required: false
-        input "coolingSetpoint", "number", title: "Cooling setpoint", required: false
+def pageTstatControl(){
+	dynamicPage(name: "pageTstatControl", title: "Thermostat Controls"){
+   		section {
+    		input "vDimmerTstat", "capability.switchLevel", title: "Alexa Dimmer Switch", multiple: false, required:false
+			input "tstat", "capability.thermostat", title: "Thermostat To Control", multiple: false , required: false
+		}
+    	section ("Thermostat Temperature Settings") {
+        	input "upLimitTstat", "number", title: "Thermostat Upper Limit", required: false
+    		input "lowLimitTstat", "number", title: "Thermostat Lower Limit", required: false
+        	input "autoControlTstat", "bool", title: "Control when thermostat in 'Auto' mode", defaultValue: false
+        	input "tstatOnOffControl", "bool", title: "Turn on/off thermostat with on/off state of Alexa Dimmer Switch", defaultValue: false, submitOnChange:true
+            if (tstatOnOffControl){
+            	input "syncTstat", "bool", title: "Sync the Alexa Dimmer Switch with the thermostat upon closing this SmartApp", defaultValue: false
+        	}
+     	}
+     	section ("Thermostat Mode Settings") {
+        	input "heatingSwitch", "capability.switch", title: "Heating Mode Switch", multiple: false, required: false
+        	input "coolingSwitch", "capability.switch", title: "Cooling Mode Switch", multiple: false, required: false
+        	input "autoSwitch", "capability.switch", title: "Auto Mode Switch", multiple: false, required: false
+        	if (tstatOnOffControl){
+        		input "tstatOnMode", "enum", title: "If thermostat is off and Alexa Dimmer Switch turned on, set to this mode", options:["heat":"Heating Mode","cool":"Cool Mode","auto":"Auto Mode"], required: false
+        	}
+        	input "heatingSetpoint", "number", title: "Heating setpoint when turned on or mode change", required: false
+        	input "coolingSetpoint", "number", title: "Cooling setpoint when turned on or mode change", required: false
+		}
 	}
 }
 
@@ -131,9 +140,27 @@ def initialize() {
     childApps.each {child ->
 		log.info "Installed Scenario: ${child.label}"
     }
-	if (vDimmerTstat && tstat) {
+	//Sync vDimmer with Thermostat
+    if (vDimmerTstat && tstat && tstatOnOffControl && syncTstat){
+        log.debug "Syncing Alexa Dimmer Switch with thermostat"
+        def tstatMode=tstat.currentValue("thermostatMode")
+        if (tstatMode != "off"){
+            if (tstatMode == "heat"){
+            	vDimmerTstat.setLevel(tstat.currentValue("heatingSetpoint"))
+            }
+            if (tstatMode == "cool" || tstatMode == "auto"){
+            	vDimmerTstat.setLevel(tstat.currentValue("coolingSetpoint"))
+            }
+        }
+    	subscribe (vDimmerTstat, "switch", "thermoOnOffHandler")
+    }
+    //subscribe to switch if on/off control is allowed.
+    if (vDimmerTstat && tstat && tstatOnOffControl){
+    	subscribe (vDimmerTstat, "switch", "thermoOnOffHandler")
+    }   
+    //Set up subscriptions to various switches
+    if (vDimmerTstat && tstat) {
     	subscribe (vDimmerTstat, "level", "thermoHandler")
-        subscribe (vDimmerTstat, "switch", "thermoOnOffHandler")
         if (heatingSwitch) {
         	subscribe (heatingSwitch, "switch", "heatHandler")
         }
@@ -153,10 +180,58 @@ def initialize() {
         if (prevSwitch) {
         	subscribe (prevSwitch, "switch", "controlPrevHandler")
         } 
-	}
+	}  
 }
 
-//Thermostat Handler
+//Thermostat mode change when turned on
+def thermoOnOffHandler(evt){
+	if (evt.value == "off"){
+    	tstat.off()
+    }
+    if (evt.value == "on"){
+    	if (tstatOnMode){
+        	def tstatDimmerLevel = vDimmerTstat.currentValue("level") as int
+            if (tstatOnMode == "heat" && heatingSetpoint) {
+        		tstatDimmerLevel = heatingSetpoint
+    		}
+    		if (tstatOnMode == "cool" && coolingSetpoint) {
+        		tstatDimmerLevel = coolingSetpoint	
+    		}
+    		if (tstatMode == "auto" && coolingSetpoint){
+    			tstatDimmerLevel = coolingSetpoint	
+    		}
+        	vDimmerTstat.setLevel(tstatDimmerLevel)	
+        }   
+    thermoHandler()
+    }
+}
+
+//Thermostat mode changes
+def heatHandler(evt){
+	tstat.heat()
+    if (heatingSetpoint){
+    	tstat.setHeatingSetpoint(heatingSetpoint)
+    }
+}
+
+def coolHandler(evt){
+	tstat.cool()
+    if (coolingSetpoint){
+    	tstat.setCoolingSetpoint(coolingSetpoint)
+    }
+}
+
+def autoHandler(evt){
+	tstat.auto()
+    if (heatingSetpoint){
+        tstat.setHeatingSetpoint(heatingSetpoint)
+    }
+    if (coolingSetpoint){
+    	tstat.setCoolingSetpoint(coolingSetpoint)
+    }
+}
+
+//Thermostat Temp Handler
 def thermoHandler(evt){
     // Get settings between limits
     def tstatLevel = vDimmerTstat.currentValue("level") as int
@@ -168,8 +243,9 @@ def thermoHandler(evt){
     }
 	//Turn thermostat to proper level depending on mode
     def tstatMode=tstat.currentValue("thermostatMode")
-    if (tstatMode == "off" && tstatOnMode) {
+    if (tstatMode == "off" && tstatOnOffControl && tstatOnMode) {
     	tstat."$tstatOnMode"()
+        tstatMode = "${tstatOnMode}"
     }
     if (tstatMode == "heat") {
         tstat.setHeatingSetpoint(tstatLevel)	
@@ -225,48 +301,12 @@ def controlPrevHandler(evt){
 	speaker.previousTrack()
 }
 
-//Thermostat mode change when turned on and thermostat off when off
-def thermoOnOffHandler(evt){
-	if (evt.value == "off"){
-    	tstat.off()
-    }
-    if (evt.value == "on"){
-    	if (tstatOnMode){
-        	thermoHandler()
-        }   
-    }
-}
-
-def heatHandler(evt){
-	tstat.heat()
-    if (heatingSetpoint){
-    	tstat.setHeatingSetpoint(heatingSetpoint)
-    }
-}
-
-def coolHandler(evt){
-	tstat.cool()
-    if (coolingSetpoint){
-    	tstat.setCoolingSetpoint(coolingSetpoint)
-    }
-}
-
-def autoHandler(evt){
-	tstat.auto()
-    if (heatingSetpoint){
-        tstat.setHeatingSetpoint(heatingSetpoint)
-    }
-    if (coolingSetpoint){
-    	tstat.setCoolingSetpoint(coolingSetpoint)
-    }
-}
-
 //Common Methods
 
 def getDescTstat(){
     def result = "Tap to setup thermostat controls"
     if (vDimmerTstat && tstat) {
-		result = "${vDimmerTstat} controls ${tstat}"
+		result = "${vDimmerTstat} dimmer switch controls ${tstat}"
         result += upLimitTstat ? "\nLimits: No greater than ${upLimitTstat}" : ""
         result += upLimitTstat && lowLimitTstat ? " and no lower than ${lowLimitTstat}" : ""
         result += !upLimitTstat && lowLimitTstat ? "\nLimits: No lower than ${lowLimitTstat}" : ""
@@ -346,8 +386,8 @@ private def textHelp() {
 		"This time delay is optional. "+
 		"\n\nPlease note that if you are using a momentary switch you should only define the 'on' action within each scenario.\n\n" +
 		"To control a thermostat, tap the thermostat controls and choose a dimmer switch (usually a virtual dimmer) and the thermostat you wish to control. "+
-		"You can also limit the range the thermostat will reach (for example, even if you accidently set the dimmer to 100, the value sent to the "+
-		"thermostat could be limited to 72). You can also add momentary switches to activate the thermostat from heating, cooling, or auto modes."+
+		"You can also control the on/off of the thermostat with the state of the dimmer switch, limit the range the thermostat will reach (for example, even if you accidently set the dimmer to 100, the value sent to the "+
+		"thermostat could be limited to 72) or set the initial value of the thermostat when you change modes or turn the dimmer on. Momentary switches can be used to activate the thermostat from heating, cooling, or auto modes."+
 		"\nTo control a connected speaker, tap the speaker controls and choose a dimmer switch (usually a virtual dimmer) and speaker you wish to control. "+
 		"You can set the initial volume upon turning on the speaker, along with volume limites. Finally. you can utilize other virtual switches to choose next/previous tracks."
 }
