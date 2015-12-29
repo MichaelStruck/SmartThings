@@ -2,7 +2,7 @@
  *  Alexa Helper-Parent
  *
  *  Copyright 2015 Michael Struck
- *  Version 3.4.0 12/27/15
+ *  Version 3.4.0 12/29/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
@@ -80,18 +80,12 @@ def pageTstatControl(){
         	input "upLimitTstat", "number", title: "Thermostat Upper Limit", required: false
     		input "lowLimitTstat", "number", title: "Thermostat Lower Limit", required: false
         	input "autoControlTstat", "bool", title: "Control when thermostat in 'Auto' mode", defaultValue: false
-        	input "tstatOnOffControl", "bool", title: "Turn on/off thermostat with on/off state of Alexa Dimmer Switch", defaultValue: false, submitOnChange:true
-            if (tstatOnOffControl){
-            	input "syncTstat", "bool", title: "Sync the Alexa Dimmer Switch with the thermostat upon closing this SmartApp", defaultValue: false
-        	}
-     	}
+        }
      	section ("Thermostat Mode Settings") {
         	input "heatingSwitch", "capability.switch", title: "Heating Mode Switch", multiple: false, required: false
         	input "coolingSwitch", "capability.switch", title: "Cooling Mode Switch", multiple: false, required: false
         	input "autoSwitch", "capability.switch", title: "Auto Mode Switch", multiple: false, required: false
-        	if (tstatOnOffControl){
-        		input "tstatOnMode", "enum", title: "If thermostat is off and Alexa Dimmer Switch turned on, set to this mode", options:["heat":"Heating Mode","cool":"Cool Mode","auto":"Auto Mode"], required: false
-        	}
+        	input "offSwitch", "capability.switch", title: "Thermostat Off Switch (requires normally on momentary switch)", multiple: false, required: false
         	input "heatingSetpoint", "number", title: "Heating setpoint when turned on or mode change", required: false
         	input "coolingSetpoint", "number", title: "Cooling setpoint when turned on or mode change", required: false
 		}
@@ -140,23 +134,9 @@ def initialize() {
     childApps.each {child ->
 		log.info "Installed Scenario: ${child.label}"
     }
-	//Sync vDimmer with Thermostat
-    if (vDimmerTstat && tstat && tstatOnOffControl && syncTstat){
-        log.debug "Syncing Alexa Dimmer Switch with thermostat"
-        def tstatMode=tstat.currentValue("thermostatMode")
-        if (tstatMode != "off"){
-            if (tstatMode == "heat"){
-            	vDimmerTstat.setLevel(tstat.currentValue("heatingSetpoint"))
-            }
-            if (tstatMode == "cool" || tstatMode == "auto"){
-            	vDimmerTstat.setLevel(tstat.currentValue("coolingSetpoint"))
-            }
-        }
-    	subscribe (vDimmerTstat, "switch", "thermoOnOffHandler")
-    }
-    //subscribe to switch if on/off control is allowed.
-    if (vDimmerTstat && tstat && tstatOnOffControl){
-    	subscribe (vDimmerTstat, "switch", "thermoOnOffHandler")
+    //subscribe to off switch if present
+    if (vDimmerTstat && tstat && offSwitch){
+    	subscribe (offSwitch, "switch", "thermoOffHandler")
     }   
     //Set up subscriptions to various switches
     if (vDimmerTstat && tstat) {
@@ -184,25 +164,9 @@ def initialize() {
 }
 
 //Thermostat mode change when turned on
-def thermoOnOffHandler(evt){
+def thermoOffHandler(evt){
 	if (evt.value == "off"){
     	tstat.off()
-    }
-    if (evt.value == "on"){
-    	if (tstatOnMode){
-        	def tstatDimmerLevel = vDimmerTstat.currentValue("level") as int
-            if (tstatOnMode == "heat" && heatingSetpoint) {
-        		tstatDimmerLevel = heatingSetpoint
-    		}
-    		if (tstatOnMode == "cool" && coolingSetpoint) {
-        		tstatDimmerLevel = coolingSetpoint	
-    		}
-    		if (tstatMode == "auto" && coolingSetpoint){
-    			tstatDimmerLevel = coolingSetpoint	
-    		}
-        	vDimmerTstat.setLevel(tstatDimmerLevel)	
-        }   
-    thermoHandler()
     }
 }
 
@@ -243,10 +207,6 @@ def thermoHandler(evt){
     }
 	//Turn thermostat to proper level depending on mode
     def tstatMode=tstat.currentValue("thermostatMode")
-    if (tstatMode == "off" && tstatOnOffControl && tstatOnMode) {
-    	tstat."$tstatOnMode"()
-        tstatMode = "${tstatOnMode}"
-    }
     if (tstatMode == "heat") {
         tstat.setHeatingSetpoint(tstatLevel)	
     }
@@ -346,7 +306,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def version = "Parent App Version: 3.4.0 (12/27/2015)"
+    def version = "Parent App Version: 3.4.0 (12/29/2015)"
     def childCount = childApps.size()
     def childVersion = "No scenarios installed"
     if (childCount){
