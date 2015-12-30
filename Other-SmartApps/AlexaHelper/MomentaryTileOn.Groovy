@@ -1,5 +1,5 @@
 /**
- *  Alexa Helper-Virtual Dimmer
+ *  Momentary Button Tile-Normally On
  *
  *  Copyright 2015 Michael Struck
  *  Version 1.0.0 12/29/15
