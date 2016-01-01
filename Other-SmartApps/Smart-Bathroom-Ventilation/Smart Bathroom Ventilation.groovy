@@ -1,12 +1,13 @@
 /**
  *  Smart Bathroom Ventilation-Parent
  *
- *  Version - 2.0.0 11/27/15
+ *  Version - 2.0.1 12/29/15
  * 
  *  Version 1.0.0 - Initial release
  *  Version 1.1.0 - Added restrictions for time that fan goes on to allow for future features along with logic fixes
  *  Version 1.2.0 - Added the option of starting the fans based on time (to eliminate the time of polling and for those without a humidity sensor)
  *  Version 2.0.0 - Modified to allow more scenarios via parent/child app structure
+ *  Version 2.0.1 - Allow ability to see child app version in parent app and moved the remove button
  *
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -33,25 +34,34 @@ definition(
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Bathroom-Ventilation/BathVent@2x.png",
     iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Bathroom-Ventilation/BathVent@2x.png"
     )
-    
+
 preferences {
-    page(name: "mainPage", title: "Ventilation Scenarios", install: true, uninstall: true,submitOnChange: true) {
-            section {
-                    app(name: "childScenarios", appName: "Smart Bathroom Ventilation-Scenario", namespace: "MichaelStruck", title: "Create New Scenario...", multiple: true)
-            }
-            section([title:"Options", mobileOnly:true]) {
-            	label title:"Assign a name", required:false
-            	href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
-        	}
-    }
+    page name:"mainPage"
+    page name:"pageAbout"
 }
 
-page(name: "pageAbout", title: "About ${textAppName()}") {
-    section {
-		paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
-    }
-	section("Instructions") {
+def mainPage(){
+    dynamicPage(name: "mainPage", title: "Ventilation Scenarios", install: true, uninstall: false, submitOnChange: true) {
+		section {
+        	app(name: "childScenarios", appName: "Smart Bathroom Ventilation-Scenario", namespace: "MichaelStruck", title: "Create New Scenario...", multiple: true)
+		}
+		section([title:"Options", mobileOnly:true]) {
+			label title:"Assign a name", required:false
+			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license, instructions or to remove the application"
+		}
+	}
+}
+
+def pageAbout() {
+	dynamicPage(name: "pageAbout", title: "About ${textAppName()}", uninstall: true) {
+    	section {
+			paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
+    	}
+		section("Instructions") {
             paragraph textHelp()
+		}
+        section("Tap button below to remove all scenarios and application"){
+        }
 	}
 }
 
@@ -67,7 +77,7 @@ def updated() {
 def initialize() {
     childApps.each {child ->
 		log.info "Installed Scenario: ${child.label}"
-    }
+    }    
 }
 
 //Version/Copyright/Information/Help
@@ -77,7 +87,10 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 2.0.0 (11/27/2015)"
+    def version = "Parent App Version: 2.0.1 (12/29/2015)"
+    def childCount = childApps.size()
+    def childVersion = childCount ? childApps[0].textVersion() : "No scenarios installed"  
+    return "${version}\n${childVersion}"
 }
 
 private def textCopyright() {
