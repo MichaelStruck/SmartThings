@@ -8,6 +8,7 @@
  *  Version - 1.1.0 7/4/15 Added more dynamic interface options and the ability to utilize color controlled lights
  *  Version - 1.2.0 8/28/15 Added option to turn off dimmers if set to anything above 0 when lux threshold is exceeded
  *  Version - 2.0.0 11/24/15 Modified to allow more scenarios via parent/child app structure
+ *  Version - 2.0.1 12/29/15 Allow ability to see child app version within parent app and moved the remove button 
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -35,24 +36,33 @@ definition(
     )
     
 preferences {
-    page(name: "mainPage", title: "Room Scenarios", install: true, uninstall: true,submitOnChange: true) {
+    page name:"mainPage"
+    page name:"pageAbout"
+}
+    
+def mainPage() {
+    dynamicPage(name: "mainPage", title: "Room Scenarios", install: true, uninstall: false, submitOnChange: true) {
             section {
                     app(name: "childScenarios", appName: "Smart Room Lighting and Dimming-Scenario", namespace: "MichaelStruck", title: "Create New Scenario...", multiple: true)
             }
             section([title:"Options", mobileOnly:true]) {
             	label title:"Assign a name", required:false
-            	href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license and instructions"
+            	href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license, instructions or to remove the application"
         	}
     }
 }
 
-page(name: "pageAbout", title: "About ${textAppName()}") {
+def pageAbout() {
+    dynamicPage(name: "pageAbout", title: "About ${textAppName()}", uninstall: true) {
         section {
             paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
         }
         section("Instructions") {
             paragraph textHelp()
         }
+        section("Tap button below to remove all scenarios and application"){
+        }
+	}
 }
 
 def installed() {
@@ -77,7 +87,10 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 2.0.0 (11/24/2015)"
+    def version = "Parent App Version: 2.0.1 (12/29/2015)"
+    def childCount = childApps.size()
+    def childVersion = childCount ? childApps[0].textVersion() : "No scenarios installed"  
+    return "${version}\n${childVersion}"
 }
 
 private def textCopyright() {
