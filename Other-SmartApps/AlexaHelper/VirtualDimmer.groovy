@@ -1,5 +1,5 @@
 /**
- *  Alexa Helper-Virtual Dimmer
+ *  Virtual Dimmer
  *
  *  Copyright 2015 Michael Struck
  *  Version 1.0.0 11/27/15
