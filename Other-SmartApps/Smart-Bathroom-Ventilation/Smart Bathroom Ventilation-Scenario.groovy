@@ -2,6 +2,7 @@
  *  Smart Bathroom Ventilation-Scenario
  *
  *  Version 1.0.0 (11/27/15) - Initial release of child app
+ *  Version 1.0.1 (12/26/15) - Allow for parent app to see version of child app
  * 
  * 
  *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -61,9 +62,8 @@ def pageSetup() {
         	href "timeIntervalInputA", title: "Only during a certain time...", description: getTimeLabel(A_timeStart, A_timeEnd), state: greyedOutTime(A_timeStart, A_timeEnd)
             input "A_mode", "mode", title: "Only during the following modes...", multiple: true, required: false
 		}
-        section("About ${textAppName()}") { 
-			paragraph "${textVersion()}\n${textCopyright()}"
-    	}
+        section("Tap the button below to remove this scenario only"){
+        }
     }
 }
 
@@ -224,16 +224,8 @@ private getTimeOk(startTime, endTime) {
     result
 }
 
-//Version/Copyright
-
-private def textAppName() {
-	def text = "Smart Bathroom Ventilation-Scenario"
-}	
-
+//Version
+	
 private def textVersion() {
-    def text = "Version 1.0.0 (11/27/2015)"
-}
-
-private def textCopyright() {
-    def text = "Copyright © 2015 Michael Struck"
+    def text = "Child App Version: 1.0.1 (12/26/2015)"
 }
