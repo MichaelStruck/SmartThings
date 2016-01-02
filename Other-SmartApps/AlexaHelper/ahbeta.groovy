@@ -1,8 +1,8 @@
 /**
  *  Alexa Helper-Parent
  *
- *  Copyright 2015 Michael Struck
- *  Version 4.0.0 12/31/15
+ *  Copyright 2016 Michael Struck
+ *  Version 4.0.0 1/1/16
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
@@ -95,14 +95,14 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def version = "Parent App Version: 4.0.0 (12/31/2015)"
+    def version = "Parent App Version: 4.0.0 (01/01/2016)"
     def childCount = childApps.size()
     def childVersion = childCount ? childApps[0].textVersion() : "No scenarios installed"
     return "${version}\n${childVersion}"
 }
 
 private def textCopyright() {
-    def text = "Copyright © 2015 Michael Struck"
+    def text = "Copyright © 2016 Michael Struck"
 }
 
 private def textLicense() {
