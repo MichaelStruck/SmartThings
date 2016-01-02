@@ -42,7 +42,7 @@ preferences {
 }
 
 def pageStart() {
-	dynamicPage(name: "pageStart", title: "Scenario Settings", uninstall: true) {
+	dynamicPage(name: "pageStart", title: "Scenario Settings", uninstall: true, install: true) {
     	section {
     		label title:"Scenario Name", required:true
     	   	input "scenarioType", "enum", title: "Scenario Type...", options: ["Control":"Modes/Routines/Switches/HTTP/SHM","Speaker":"Speaker","Thermostat":"Thermostat"], required: false, multiple: false, submitOnChange:true
