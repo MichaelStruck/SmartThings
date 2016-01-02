@@ -1,8 +1,8 @@
 /**
  *  Alexa Helper-Child
  *
- *  Copyright 2015 Michael Struck
- *  Version 2.0.0 12/31/15
+ *  Copyright 2016 Michael Struck
+ *  Version 2.0.0 1/2/16
  * 
  *  Version 1.0.0 - Initial release of child app
  *  Version 1.1.0 - Added framework to show version number of child app and copyright
@@ -74,24 +74,25 @@ def pageControl() {
 	dynamicPage(name: "pageControl", title: "Control Scenario Settings", install: false, uninstall: false) {
         section {
 			input "AlexaSwitch", "capability.switch", title: "Alexa Switch", multiple: false, required: true
-    		input "momentary", "bool", title: "Is this a momentary switch?", defaultValue: false, submitOnChange:true
+    		input "showOptions", "enum", title: "Switch states to react to...", options: ["":"On/Off", "1":"On Only", "2":"Off Only"] , required: false, submitOnChange:true
         }
         def phrases = location.helloHome?.getPhrases()*.label
 		if (phrases) {
         	phrases.sort()
 		}	
-        section ("When switch is on..."){
-        	if (phrases) {
-            	input "onPhrase", "enum", title: "Perform this routine", options: phrases, required: false
-            }
-        	input "onMode", "mode", title: "Change to this mode", required: false
-            input "onSHM", "enum",title: "Change Smart Home Monitor to...", options: ["away":"Arm(Away)", "stay":"Arm(Stay)", "off":"Disarm"], required: false
-            input "onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: false
-            input "onHTTP", "text", title:"Run this HTTP request...", required: false
-            input "delayOn", "number", title: "Delay in minutes", defaultValue: 0, required: false
-       }
-        
-        if (!momentary) {
+        if (!showOptions || showOptions == "1") {
+        	section ("When switch is on..."){
+        		if (phrases) {
+            		input "onPhrase", "enum", title: "Perform this routine", options: phrases, required: false
+            	}
+        		input "onMode", "mode", title: "Change to this mode", required: false
+            	input "onSHM", "enum",title: "Change Smart Home Monitor to...", options: ["away":"Arm(Away)", "stay":"Arm(Stay)", "off":"Disarm"], required: false
+            	input "onSwitches", "capability.switch", title: "Turn on these switches...", multiple: true, required: false
+            	input "onHTTP", "text", title:"Run this HTTP request...", required: false
+            	input "delayOn", "number", title: "Delay in minutes", defaultValue: 0, required: false
+			}
+        }
+        if (!showOptions || showOptions == "2") {
         	section ("When switch is off..."){
         		if (phrases) {
             		input "offPhrase", "enum", title: "Perform this routine", options: phrases, required: false
@@ -204,7 +205,7 @@ def initialize() {
 def switchHandler(evt) {
     if (getOkToRun()) {    
         log.debug "Alexa Helper scenario '${label}' triggered"
-        if (evt.value == "on" && (onPhrase || onMode || onSwitches || onHTTP || onSHM)) {
+        if (evt.value == "on" && (!showOptions || showOptions == "1") && (onPhrase || onMode || onSwitches || onHTTP || onSHM)) {
         	if (!delayOn || delayOn == 0) {
             	turnOn()
             }
@@ -213,7 +214,7 @@ def switchHandler(evt) {
                 runIn(delayOn*60, turnOn, [overwrite: true])
             }
     	} 
-    	else if (evt.value == "off" && !momentary && (offPhrase || offMode || offSwitches || offHTTP || offSHM)) {
+    	else if (evt.value == "off" && (!showOptions || showOptions == "2") && (offPhrase || offMode || offSwitches || offHTTP || offSHM)) {
         	if (!delayOff || delayOff == 0) {
             	turnOff()
             }
@@ -359,15 +360,11 @@ def thermoHandler(evt){
     	tstatLevel = lowLimitTstat && vDimmerTstat.currentValue("level") < lowLimitTstat ? lowLimitTstat : tstatLevel
 		//Turn thermostat to proper level depending on mode
     	def tstatMode=tstat.currentValue("thermostatMode")
-    	if (tstatMode == "heat") {
+    	if (tstatMode == "heat" || (tstatMode == "auto" && autoControlTstat)) {
         	tstat.setHeatingSetpoint(tstatLevel)	
     	}
-    	if (tstatMode == "cool") {
+    	if (tstatMode == "cool" || (tstatMode == "auto" && autoControlTstat)) {
         	tstat.setCoolingSetpoint(tstatLevel)	
-    	}
-    	if (tstatMode == "auto" && autoControlTstat){
-    		tstat.setHeatingSetpoint(tstatLevel)
-        	tstat.setCoolingSetpoint(tstatLevel)
     	}
     	log.debug "Thermostat set to ${tstatLevel}"
 	}
@@ -449,6 +446,5 @@ private getTimeOk(startTime, endTime) {
 
 //Version
 private def textVersion() {
-    def text = "Child App Version: 2.0.0 (12/31/2015)"
+    def text = "Child App Version: 2.0.0 (01/02/2016)"
 }
-
