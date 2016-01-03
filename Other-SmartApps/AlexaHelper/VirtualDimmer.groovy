@@ -55,7 +55,7 @@ metadata {
 			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
 		}
 		main "switch"
-		details(["switch","lValue","refresh", "levelSliderControl"])
+		details(["switch","lValue","refresh"])
 
 	}
 }
