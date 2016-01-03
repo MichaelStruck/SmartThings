@@ -2,7 +2,10 @@
  *  Virtual Dimmer
  *
  *  Copyright 2015 Michael Struck
- *  Version 1.0.0 11/27/15
+ *  Version 1.1.0 1/3/16
+ *
+ *  Version 1.0.0 - Initial release
+ *  Version 1.1.0 - Updated the interface to better match SmartThings dimmers (thanks to @BoruGee)
  * 
  *  Uses code from SmartThings
  *
@@ -29,22 +32,29 @@ metadata {
 	}
 
 	// UI tile definitions
-	tiles {
-		standardTile("button", "device.switch", width: 2, height: 2, canChangeIcon: true) {
-			state "off", label: 'Off', action: "switch.on", icon: "st.Kids.kid10", backgroundColor: "#ffffff", nextState: "on"
-			state "on", label: 'On', action: "switch.off", icon: "st.Kids.kid10", backgroundColor: "#79b821", nextState: "off"
+	tiles(scale: 2) {
+		multiAttributeTile(name: "switch", type: "lighting", width: 6, height: 4, canChangeIcon: true, canChangeBackground: true) {
+			tileAttribute("device.switch", key: "PRIMARY_CONTROL") {
+    				attributeState "off", label: '${name}', action: "switch.on", icon: "st.switches.light.off", backgroundColor: "#ffffff", nextState: "turningOn"
+		      		attributeState "on", label: '${name}', action: "switch.off", icon: "st.switches.light.on", backgroundColor: "#79b821", nextState: "turningOff"
+              			attributeState "turningOff", label: '${name}', action: "switch.on", icon: "st.switches.light.off", backgroundColor: "#ffffff", nextState: "turningOn"
+		      		attributeState "turningOn", label: '${name}', action: "switch.off", icon: "st.switches.light.on", backgroundColor: "#79b821", nextState: "turningOff"
+        			}
+        			tileAttribute("device.level", key: "SLIDER_CONTROL") {
+              			attributeState "level", action:"switch level.setLevel"
+        			}
+        			tileAttribute("level", key: "SECONDARY_CONTROL") {
+              			attributeState "level", label: 'Light dimmed to ${currentValue}%'
+        		}    
 		}
-		standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat") {
-			state "default", label:'', action:"refresh.refresh", icon:"st.secondary.refresh"
-		}        
-        controlTile("levelSliderControl", "device.level", "slider", height: 1, width: 2, inactiveLabel: false, backgroundColor:"#ffe71e") {
-            state "level", action:"switch level.setLevel"
-        }
-        valueTile("lValue", "device.level", inactiveLabel: true, height:1, width:1, decoration: "flat") {
-            state "levelValue", label:'${currentValue}%', unit:"", backgroundColor: "#53a7c0"
-        }
-		main(["button"])
-		details(["button", "refresh","levelSliderControl","lValue"])
+    
+		standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
+		}
+
+		main "switch"
+		details(["switch","refresh", "levelSliderControl"])
+
 	}
 }
 
