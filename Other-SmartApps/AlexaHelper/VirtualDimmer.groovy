@@ -37,13 +37,13 @@ metadata {
 			tileAttribute("device.switch", key: "PRIMARY_CONTROL") {
     				attributeState "off", label: '${name}', action: "switch.on", icon: "st.switches.light.off", backgroundColor: "#ffffff", nextState: "turningOn"
 		      		attributeState "on", label: '${name}', action: "switch.off", icon: "st.switches.light.on", backgroundColor: "#79b821", nextState: "turningOff"
-              			attributeState "turningOff", label: '${name}', action: "switch.on", icon: "st.switches.light.off", backgroundColor: "#ffffff", nextState: "turningOn"
+				attributeState "turningOff", label: '${name}', action: "switch.on", icon: "st.switches.light.off", backgroundColor: "#ffffff", nextState: "turningOn"
 		      		attributeState "turningOn", label: '${name}', action: "switch.off", icon: "st.switches.light.on", backgroundColor: "#79b821", nextState: "turningOff"
-        			}
-        			tileAttribute("device.level", key: "SLIDER_CONTROL") {
-              			attributeState "level", action:"switch level.setLevel"
-        			}
-        			tileAttribute("level", key: "SECONDARY_CONTROL") {
+        		}
+        		tileAttribute("device.level", key: "SLIDER_CONTROL") {
+            			attributeState "level", action:"switch level.setLevel"
+        		}
+        		tileAttribute("level", key: "SECONDARY_CONTROL") {
               			attributeState "level", label: 'Light dimmed to ${currentValue}%'
         		}    
 		}
@@ -99,3 +99,4 @@ def setLevel(val){
 def refresh() {
     log.info "refresh"
 }
+
