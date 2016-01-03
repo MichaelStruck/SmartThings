@@ -35,25 +35,27 @@ metadata {
 	tiles(scale: 2) {
 		multiAttributeTile(name: "switch", type: "lighting", width: 6, height: 4, canChangeIcon: true, canChangeBackground: true) {
 			tileAttribute("device.switch", key: "PRIMARY_CONTROL") {
-    				attributeState "off", label: '${name}', action: "switch.on", icon: "st.switches.light.off", backgroundColor: "#ffffff", nextState: "turningOn"
-		      		attributeState "on", label: '${name}', action: "switch.off", icon: "st.switches.light.on", backgroundColor: "#79b821", nextState: "turningOff"
+    			attributeState "off", label: '${name}', action: "switch.on", icon: "st.switches.light.off", backgroundColor: "#ffffff", nextState: "turningOn"
+		      	attributeState "on", label: '${name}', action: "switch.off", icon: "st.switches.light.on", backgroundColor: "#79b821", nextState: "turningOff"
 				attributeState "turningOff", label: '${name}', action: "switch.on", icon: "st.switches.light.off", backgroundColor: "#ffffff", nextState: "turningOn"
-		      		attributeState "turningOn", label: '${name}', action: "switch.off", icon: "st.switches.light.on", backgroundColor: "#79b821", nextState: "turningOff"
-        		}
+		      	attributeState "turningOn", label: '${name}', action: "switch.off", icon: "st.switches.light.on", backgroundColor: "#79b821", nextState: "turningOff"
+        	}
         		tileAttribute("device.level", key: "SLIDER_CONTROL") {
-            			attributeState "level", action:"switch level.setLevel"
+            		attributeState "level", action:"switch level.setLevel"
         		}
         		tileAttribute("level", key: "SECONDARY_CONTROL") {
-              			attributeState "level", label: 'Light dimmed to ${currentValue}%'
+              		attributeState "level", label: 'Light dimmed to ${currentValue}%'
         		}    
 		}
+        valueTile("lValue", "device.level", inactiveLabel: true, height:2, width:2, decoration: "flat") {  
+			state "levelValue", label:'${currentValue}%', unit:"", backgroundColor: "#53a7c0"  
+        }  
     
 		standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
 		}
-
 		main "switch"
-		details(["switch","refresh", "levelSliderControl"])
+		details(["switch","lValue","refresh", "levelSliderControl"])
 
 	}
 }
