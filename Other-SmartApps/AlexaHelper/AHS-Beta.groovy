@@ -2,7 +2,7 @@
  *  Alexa Helper-Child
  *
  *  Copyright 2016 Michael Struck
- *  Version 2.0.0 1/2/16
+ *  Version 2.0.0 1/3/16
  * 
  *  Version 1.0.0 - Initial release of child app
  *  Version 1.1.0 - Added framework to show version number of child app and copyright
@@ -138,7 +138,7 @@ page(name: "pageThermostat", title: "Thermostat Scenario Settings", install: fal
         input "heatingSwitch", "capability.switch", title: "Heating Mode Switch", multiple: false, required: false
         input "coolingSwitch", "capability.switch", title: "Cooling Mode Switch", multiple: false, required: false
         input "autoSwitch", "capability.switch", title: "Auto Mode Switch", multiple: false, required: false
-        input "offSwitch", "capability.switch", title: "Thermostat Off Switch (requires normally on momentary switch)", multiple: false, required: false
+        input "offSwitch", "capability.switch", title: "Thermostat Off Switch", multiple: false, required: false
         input "heatingSetpoint", "number", title: "Heating setpoint when turned on or mode change", required: false
         input "coolingSetpoint", "number", title: "Cooling setpoint when turned on or mode change", required: false
 	}
@@ -446,5 +446,5 @@ private getTimeOk(startTime, endTime) {
 
 //Version
 private def textVersion() {
-    def text = "Child App Version: 2.0.0 (01/02/2016)"
+    def text = "Child App Version: 2.0.0 (01/03/2016)"
 }
