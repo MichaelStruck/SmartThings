@@ -2,7 +2,7 @@
  *  Alexa Helper-Child
  *
  *  Copyright 2016 Michael Struck
- *  Version 2.0.0 1/3/16
+ *  Version 2.0.0 1/4/16
  * 
  *  Version 1.0.0 - Initial release of child app
  *  Version 1.1.0 - Added framework to show version number of child app and copyright
@@ -356,7 +356,7 @@ def thermoHandler(evt){
     if (getOkToRun()) {
     // Get settings between limits
     	def tstatLevel = vDimmerTstat.currentValue("level") as int
-    	tstatLevel = upLimitTstat && vDimmerTstat.currentValue("level" > upLimitTstat) ? upLimitTstat : tstatLevel
+    	tstatLevel = upLimitTstat && vDimmerTstat.currentValue("level") > upLimitTstat ? upLimitTstat : tstatLevel
     	tstatLevel = lowLimitTstat && vDimmerTstat.currentValue("level") < lowLimitTstat ? lowLimitTstat : tstatLevel
 		//Turn thermostat to proper level depending on mode
     	def tstatMode=tstat.currentValue("thermostatMode")
@@ -446,5 +446,5 @@ private getTimeOk(startTime, endTime) {
 
 //Version
 private def textVersion() {
-    def text = "Child App Version: 2.0.0 (01/03/2016)"
+    def text = "Child App Version: 2.0.0 (01/04/2016)"
 }
