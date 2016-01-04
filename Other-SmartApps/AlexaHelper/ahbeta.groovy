@@ -2,7 +2,7 @@
  *  Alexa Helper-Parent
  *
  *  Copyright 2016 Michael Struck
- *  Version 4.0.0 1/1/16
+ *  Version 4.0.0 1/4/16
  * 
  *  Version 1.0.0 - Initial release
  *  Version 2.0.0 - Added 6 slots to allow for one app to control multiple on/off actions
@@ -95,7 +95,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def version = "Parent App Version: 4.0.0 (01/01/2016)"
+    def version = "Parent App Version: 4.0.0 (01/04/2016)"
     def childCount = childApps.size()
     def childVersion = childCount ? childApps[0].textVersion() : "No scenarios installed"
     return "${version}\n${childVersion}"
@@ -129,7 +129,7 @@ private def textHelp() {
 		"Within scenario settings, choose the Alexa discovered switch to be monitored and tie the on/off state of that switch to a specific routine, mode, URL, Smart Home Monitor "+
 		"security state or the on/off state of other switches. The chosen functions or switches will fire when the main switch changes, except in cases where you have a delay specified. "+ 
 		"This time delay is optional. "+
-		"\n\nPlease note that if you are using a momentary switch you should only define the 'on' action within each scenario.\n\n" +
+		"\n\nPlease note that if you are using a momentary switch you should only define either an 'on' action or an 'off' action within each scenario, but not both.\n\n" +
 		"To control a thermostat, add a new scenario choosing the 'thermostat' scenario type, then under the settings choose a dimmer switch (usually a virtual dimmer) and the thermostat you wish to control. "+
 		"You can also control the on/off of the thermostat with the state of the dimmer switch, limit the range the thermostat will reach (for example, even if you accidently set the dimmer to 100, the value sent to the "+
 		"thermostat could be limited to 72) or set the initial value of the thermostat when you change modes or turn the dimmer on. Momentary switches can be used to activate the thermostat from heating, cooling, or auto modes."+
