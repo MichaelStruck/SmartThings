@@ -76,10 +76,13 @@ def pageAbout(){
 
 def installed() {
     initialize()
+    
 }
 
 def updated() {
     initialize()
+    unsubscribe()
+    unschedule()
 }
 
 def initialize() {
