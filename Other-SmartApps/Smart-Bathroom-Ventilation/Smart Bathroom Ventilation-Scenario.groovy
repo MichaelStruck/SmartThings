@@ -24,7 +24,7 @@ definition(
     author: "Michael Struck",
     description: "Child app (do not publish) that allows ventilation scenarios based on humidity or certain lights being turned on.",
     category: "Convenience",
-    parent: "MichaelStruck:Smart Bathroom Ventilation-Scenario",
+    parent: "MichaelStruck:Smart Bathroom Ventilation",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Bathroom-Ventilation/BathVent.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Bathroom-Ventilation/BathVent@2x.png",
     iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Bathroom-Ventilation/BathVent@2x.png"
