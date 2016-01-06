@@ -2,10 +2,10 @@
  *  Smart Bathroom Ventilation-Scenario
  *
  *  Version 1.0.0 (11/27/15) - Initial release of child app
- *  Version 1.0.1 (12/26/15) - Allow for parent app to see version of child app
+ *  Version 1.0.1 (1/6/6) - Allow for parent app to see version of child app
  * 
  * 
- *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
+ *  Copyright 2016 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -24,6 +24,7 @@ definition(
     author: "Michael Struck",
     description: "Child app (do not publish) that allows ventilation scenarios based on humidity or certain lights being turned on.",
     category: "Convenience",
+    parent: "MichaelStruck:Smart Bathroom Ventilation-Scenario",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Bathroom-Ventilation/BathVent.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Bathroom-Ventilation/BathVent@2x.png",
     iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Smart-Bathroom-Ventilation/BathVent@2x.png"
@@ -227,5 +228,5 @@ private getTimeOk(startTime, endTime) {
 //Version
 	
 private def textVersion() {
-    def text = "Child App Version: 1.0.1 (12/26/2015)"
+    def text = "Child App Version: 1.0.1 (01/06/2015)"
 }
