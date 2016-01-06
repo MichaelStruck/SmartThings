@@ -228,5 +228,5 @@ private getTimeOk(startTime, endTime) {
 //Version
 	
 private def textVersion() {
-    def text = "Child App Version: 1.0.1 (01/06/2015)"
+    def text = "Child App Version: 1.0.1 (01/06/2016)"
 }
