@@ -5,9 +5,9 @@
  *  Version 1.0.1 (11/29/15) - Code opimization
  *  Version 1.0.2 (12/2/15) - Added option to have the colored lights dim to a separate color than the lit state
  *  Version 1.1.0 (12/17/15) - Added sunset/sunrise to option for time restrictions
- *  Version 1.1.1 (12/26/15) - Added ability to see child app version with parent app and added additional section for remove button
+ *  Version 1.1.1 (1/6/16) - Added ability to see child app version with parent app and added additional section for remove button
  *
- *  Copyright 2015 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
+ *  Copyright 2016 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -57,10 +57,10 @@ def pageSetup() {
         		href "colorInputA", title: "Color Options", description: getColorLabel(A_levelDimOnColor, A_levelDimOffColor, A_calcOnColor, A_colorOn, A_colorOff), state: "complete"
         	}
         	input "A_useSun", "bool", title: "Run scenario based on sunset/sunrise", defaultValue: false, submitOnChange:true
-            if (!A_useSun) {
-            	input name: "A_turnOnLux",type: "number", title: "Only run this scenario if lux is below...", multiple: false, required: false, submitOnChange:true
-        	}
+                       
             if (A_calcOn || (!A_useSun && A_turnOnLux)) {
+                def luxText=A_useSun && A_calcOn ? "Calculate on value based on lux value..." : "Only run this scenario if lux is below..."
+            	input name: "A_turnOnLux",type: "number", title: luxText, multiple: false, required: false, submitOnChange:true
                 input name: "A_luxSensors",type: "capability.illuminanceMeasurement",title: "Lux sensors",multiple: false,required: false, submitOnChange:true
         	}
             input name: "A_turnOff",type: "number",title: "Turn off this scenario after motion stops (minutes)...", multiple: false, required: false
@@ -442,5 +442,5 @@ private getDayOk(dayList) {
 }
 
 private def textVersion() {
-    def text = "Child App Version: 1.1.1 (12/26/2015)"
+    def text = "Child App Version: 1.1.1 (01/06/2015)"
 }
