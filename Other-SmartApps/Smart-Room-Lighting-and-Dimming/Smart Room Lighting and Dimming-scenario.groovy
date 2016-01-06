@@ -442,5 +442,5 @@ private getDayOk(dayList) {
 }
 
 private def textVersion() {
-    def text = "Child App Version: 1.1.1 (01/06/2015)"
+    def text = "Child App Version: 1.1.1 (01/06/2016)"
 }
