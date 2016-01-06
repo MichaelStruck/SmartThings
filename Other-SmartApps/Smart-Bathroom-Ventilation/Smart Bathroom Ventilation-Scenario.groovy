@@ -2,7 +2,7 @@
  *  Smart Bathroom Ventilation-Scenario
  *
  *  Version 1.0.0 (11/27/15) - Initial release of child app
- *  Version 1.0.1 (1/6/6) - Allow for parent app to see version of child app
+ *  Version 1.0.1 (1/6/16) - Allow for parent app to see version of child app
  * 
  * 
  *  Copyright 2016 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
