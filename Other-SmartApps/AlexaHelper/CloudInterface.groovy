@@ -1,11 +1,12 @@
 /**
  *  Alexa Helper-Cloud Interface
  *
- *  Version 1.0.2 - 12/26/15 Copyright 2015 Michael Struck
+ *  Version 1.0.3 - 1/6/16 Copyright © 2016 Michael Struck
  *  
  *  Version 1.0.0 - Initial release
  *  Version 1.0.1 - Fixed code syntax
  *  Version 1.0.2 - Fixed additional syntax items and moved the remove button to the help screen
+ *  Version 1.0.3 - Fixed OAuth reset/code optimization
  *
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -57,15 +58,8 @@ def mainPage() {
 
 def showURLs(){
 	dynamicPage(name: "showURLs", title:"Copy the desired URLs to Alexa Helper") {
-		def msg = ""
         if (!state.accessToken) {
-				try {
-					createAccessToken()
-					log.debug "Creating new Access Token"
-				} catch (e) {
-					msg = "Could not create URLs. Access Token not defined. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
-					log.error msg
-				}
+			OAuthToken()
 		}
         if (state.accessToken != null) {
         	def swName=""
@@ -81,7 +75,7 @@ def showURLs(){
 		}
         else {
         	section ("Error in creation of URLs"){
-            	paragraph "${msg}"
+            	paragraph "Could not create URLs. Access Token not defined. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
             }
         }
 	}
@@ -90,19 +84,10 @@ def showURLs(){
 def pageAbout(){
 	dynamicPage(name: "pageAbout", title: "About ${textAppName()}",uninstall: true ) {
         section {
-        	def msg = ""
             if (!state.accessToken) {
-				try {
-					createAccessToken()
-					log.debug "Creating new Access Token" 
-				} catch (e) {
-					msg = "Could not create Access Token. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
-					log.error msg
-				}
+				OAuthToken()
 			}
-            if (state.accessToken != null) {
-            	msg = state.accessToken
-            }
+            def msg = state.accessToken != null ? state.accessToken : "Could not create Access Token. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
             paragraph "${textVersion()}\n${textCopyright()}\n\nAccess Token:\n${msg}\n\n${textLicense()}"
     	}
     	section("Instructions") {
@@ -122,19 +107,9 @@ page(name: "pageSecurity", title: "Security Options"){
 def pageReset(){
 	dynamicPage(name: "pageReset", title: "Access Token Reset"){
         section{
-			def msg = ""
-            if (!state.accessToken){
-            	try {
-					createAccessToken()
-					log.debug "Creating new Access Token"
-				} catch (e) {
-					msg = "Could not reset Access Token. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
-					log.error msg
-				}
-            }
-            if (state.accessToken != null){
-            	msg = "New access token:\n${state.accessToken}\n\nClick 'Done' above to return to the previous menu."
-            }
+			state.accessToken = null
+            OAuthToken()
+            def msg = state.accessToken != null ? "New access token:\n${state.accessToken}\n\nClick 'Done' above to return to the previous menu." : "Could not reset Access Token. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
 	    	paragraph "${msg}"
 		}
 	}
@@ -170,19 +145,27 @@ def writeData() {
        	device."$command"()
 	}
 }
+//Common Code
+def OAuthToken(){
+	try {
+		createAccessToken()
+		log.debug "Creating new Access Token"
+	} catch (e) {
+		log.error "Could not create URLs. Access Token not defined. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
+	}
+}
 
 //Version/Copyright/Information/Help
-
 private def textAppName() {
 	def text = "Alexa Helper-Cloud Interface"
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.2 (12/26/2015)"
+    def text = "Version 1.0.3 (01/06/2016)"
 }
 
 private def textCopyright() {
-    def text = "Copyright © 2015 Michael Struck"
+    def text = "Copyright © 2016 Michael Struck"
 }
 
 private def textLicense() {
