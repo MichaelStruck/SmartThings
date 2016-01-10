@@ -1,12 +1,13 @@
 /**
- *  Alexa Helper-Cloud Interface
+ *  Cloud Interface
  *
- *  Version 1.0.3 - 1/6/16 Copyright © 2016 Michael Struck
+ *  Version 1.0.4 - 1/9/16 Copyright © 2016 Michael Struck
  *  
  *  Version 1.0.0 - Initial release
  *  Version 1.0.1 - Fixed code syntax
  *  Version 1.0.2 - Fixed additional syntax items and moved the remove button to the help screen
  *  Version 1.0.3 - Fixed OAuth reset/code optimization
+ *  Version 1.0.4 - Changed name to allow it to be used with other SmartApps instead of associating it with Alexa Helper
  *
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -21,7 +22,7 @@
  */
  
 definition(
-    name: "Alexa Helper-Cloud Interface",
+    name: "Cloud Interface",
     namespace: "MichaelStruck",
     author: "Michael Struck",
     description: "Allows for URL cloud interfacing to control SmartThings devices.",
@@ -57,7 +58,7 @@ def mainPage() {
 }
 
 def showURLs(){
-	dynamicPage(name: "showURLs", title:"Copy the desired URLs to Alexa Helper") {
+	dynamicPage(name: "showURLs", title:"On/Off URLs for selected switches") {
         if (!state.accessToken) {
 			OAuthToken()
 		}
@@ -157,11 +158,11 @@ def OAuthToken(){
 
 //Version/Copyright/Information/Help
 private def textAppName() {
-	def text = "Alexa Helper-Cloud Interface"
+	def text = "Cloud Interface"
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.3 (01/06/2016)"
+    def text = "Version 1.0.4 (01/09/2016)"
 }
 
 private def textCopyright() {
@@ -185,9 +186,6 @@ private def textLicense() {
 
 private def textHelp() {
 	def text =
-		"To be used with Alexa Helper 3.3.2+ (with Alexa Helper-Scenario version 1.2.0+), "+
-		"this app allows you to define switches (typically virtual) to be controlled via a single URL."+
-		"This is useful when using your Alexa with two different SmartThings locations/accounts. "+
-		"Now you can command Alexa at one location and have actions happen at another location also "+
-		"controlled by a SmartThings hub."
+		"This app allows you to define switches (typically virtual) to be controlled via a single URL REST point."+
+		"This is useful when attempting to control devices at two different SmartThings locations/accounts. "
 }
