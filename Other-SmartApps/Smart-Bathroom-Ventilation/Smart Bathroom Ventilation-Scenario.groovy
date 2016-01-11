@@ -2,7 +2,7 @@
  *  Smart Bathroom Ventilation-Scenario
  *
  *  Version 1.0.0 (11/27/15) - Initial release of child app
- *  Version 1.0.1 (1/6/16) - Allow for parent app to see version of child app
+ *  Version 1.0.1 (1/11/16) - Allow for parent app to see version of child app
  * 
  * 
  *  Copyright 2016 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -208,12 +208,12 @@ private getDayOk(dayList) {
     result
 }
 
-private getTimeOk(startTime, endTime) {
+private getTimeOk(startTime,endTime) {
 	def result = true
-	if (startTime && endTime) {
-		def currTime = now()
-		def start = timeToday(startTime).time
-		def stop = timeToday(endTime).time
+	def currTime = now()
+	def start = startTime ? timeToday(startTime).time : null
+	def stop =  endTime ? timeToday(endTime).time: null
+    if (startTime && endTime) {
 		result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start
 	}
 	else if (startTime){
@@ -224,9 +224,7 @@ private getTimeOk(startTime, endTime) {
     }
     result
 }
-
 //Version
-	
 private def textVersion() {
-    def text = "Child App Version: 1.0.1 (01/06/2016)"
+    def text = "Child App Version: 1.0.1 (01/11/2016)"
 }
