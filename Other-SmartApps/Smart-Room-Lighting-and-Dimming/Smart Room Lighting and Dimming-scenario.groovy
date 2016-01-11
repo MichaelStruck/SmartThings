@@ -5,7 +5,7 @@
  *  Version 1.0.1 (11/29/15) - Code opimization
  *  Version 1.0.2 (12/2/15) - Added option to have the colored lights dim to a separate color than the lit state
  *  Version 1.1.0 (12/17/15) - Added sunset/sunrise to option for time restrictions
- *  Version 1.1.1 (1/6/16) - Added ability to see child app version with parent app and added additional section for remove button
+ *  Version 1.1.1 (1/11/16) - Added ability to see child app version with parent app and added additional section for remove button
  *
  *  Copyright 2016 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -293,12 +293,12 @@ def getMidnight() {
 
 private getTimeOk(startTime, endTime) {
 	def result = true
-	if (startTime && endTime) {
-		def currTime = now()
-		def start = timeToday(startTime).time
-		def stop = timeToday(endTime).time
-		result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start
-	}
+	def currTime = now()
+    def start = startTime ? timeToday(startTime).time : null
+	def stop = endTime ? timeToday(endTime).time : null
+    if (startTime && endTime) {
+        result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start
+    }
 	else if (startTime){
     	result = currTime >= start
     }
@@ -442,5 +442,5 @@ private getDayOk(dayList) {
 }
 
 private def textVersion() {
-    def text = "Child App Version: 1.1.1 (01/06/2016)"
+    def text = "Child App Version: 1.1.1 (01/11/2016)"
 }
