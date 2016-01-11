@@ -2,7 +2,7 @@
  *  Alexa Helper-Child
  *
  *  Copyright 2016 Michael Struck
- *  Version 2.0.0 1/4/16
+ *  Version 2.0.0 1/11/16
  * 
  *  Version 1.0.0 - Initial release of child app
  *  Version 1.1.0 - Added framework to show version number of child app and copyright
@@ -11,6 +11,7 @@
  *  Version 1.2.1 - Added child app version information into main app
  *  Version 1.3.0 - Added ability to change the Smart Home Monitor status and added a section for the remove button
  *  Version 2.0.0 - Added in speaker and thermostat scenarios from main app to allow for more than one of these devices
+ *  Version 2.0.1 - Fixed an issue with the getTimeOk routine
  * 
  *  Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -429,22 +430,22 @@ private getDayOk(dayList) {
 
 private getTimeOk(startTime, endTime) {
 	def result = true
+    	def currTime = now()
+	def start = startTime ? timeToday(startTime).time : null
+	def stop = endTime ? timeToday(endTime).time : null
 	if (startTime && endTime) {
-		def currTime = now()
-		def start = timeToday(startTime).time
-		def stop = timeToday(endTime).time
 		result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start
 	}
 	else if (startTime){
-    	result = currTime >= start
-    }
-    else if (endTime){
-    	result = currTime <= stop
-    }
+    		result = currTime >= start
+    	}
+    	else if (endTime){
+    		result = currTime <= stop
+    	}
     result
 }
 
 //Version
 private def textVersion() {
-    def text = "Child App Version: 2.0.0 (01/04/2016)"
+    def text = "Child App Version: 2.0.1 (01/11/2016)"
 }
