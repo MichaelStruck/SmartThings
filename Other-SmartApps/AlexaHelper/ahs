@@ -2,7 +2,7 @@
  *  Alexa Helper-Child
  *
  *  Copyright © 2016 Michael Struck
- *  Version 2.1.0 1/12/16
+ *  Version 2.1.0 1/13/16
  * 
  *  Version 1.0.0 - Initial release of child app
  *  Version 1.1.0 - Added framework to show version number of child app and copyright
@@ -269,7 +269,14 @@ def pageSpeaker(){
 						required: false, options: songOptions(4)
 				}
 			}
-		}       
+		}
+        if (!songOptions(1) && parent.getSonos()){
+        	section ("Sonos Saved Stations") {
+            	paragraph "There are currently no songs available in the Sonos memory. Ensure you play a "+
+                	"song or station through SmartThings, then come back and the station list should be "+
+                    "available"
+            }
+        }
 	}
 }
 // Show "pageThermostat" page
@@ -952,5 +959,5 @@ def saveSelectedSong(slot, song) {
 }
 //Version
 private def textVersion() {
-    def text = "Child App Version: 2.1.0 (01/12/2016)"
+    def text = "Child App Version: 2.1.0 (01/13/2016)"
 }
