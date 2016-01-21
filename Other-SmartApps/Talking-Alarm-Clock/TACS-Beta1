@@ -1,7 +1,7 @@
 /**
  *  Talking Alarm Clock-Schedule
  *
- *  Version 1.0.0 (1/17/16) - Initial release of child app
+ *  Version 1.0.0 (1/20/16) - Initial release of child app
  * 
  * 
  *  Copyright 2016 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
@@ -258,6 +258,51 @@ def alarmHandler() {
 	}
 }
 //Common Methods-------------
+def getAlarmDesc() {
+	def desc = "Tap to set alarm"
+	if (alarmStart) {
+    	desc = "Alarm set to " + parseDate(alarmStart,"", "h:mm a") +" on ${alarmSpeaker}"
+		
+        def dayListSize = alarmDay ? alarmDay.size() : 7
+             
+        if (alarmDay && dayListSize < 7) {
+        	desc = desc + " on"
+            for (dayName in alarmDay) {
+ 				desc = desc + " ${dayName}"
+    			dayListSize = dayListSize -1
+                if (dayListSize) {
+            		desc = "${desc}, "
+        		}
+        	}
+        }
+        else {
+    		desc = desc + " every day"
+    	}
+    	
+        if (alarmMode) {
+    		def modeListSize = alarmMode.size()
+        	def modePrefix =" in the following modes: "
+        	if (modeListSize == 1) {
+        		modePrefix = " in the following mode: "
+        	}
+            desc = desc + "${modePrefix}" 
+       		for (modeName in alarmMode) {
+        		desc = desc + "'${modeName}'"
+    			modeListSize = modeListSize -1
+            	if (modeListSize) {
+            		desc = "${desc}, "
+            	}
+            	else {
+            		desc = "${desc}"
+        		}
+        	}
+		}
+     	else {
+    		desc = desc + " in all modes"
+        }
+    }
+	desc	
+}
 def getWeatherDesc() {
 	def desc = includeTemp || localTemp ? "Speak temperature" : ""
     desc += desc && localHumidity ? " and humidity" : ""
@@ -486,5 +531,5 @@ private saveSelectedSong() {
 }
 //Version
 private def textVersion() {
-    def text = "Child App Version: 1.0.0 (01/17/2016)"
+    def text = "Child App Version: 1.0.0 (01/20/2016)"
 }
