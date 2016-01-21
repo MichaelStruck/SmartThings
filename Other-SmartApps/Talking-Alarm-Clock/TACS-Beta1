@@ -15,8 +15,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- */
- 
+ */ 
 definition(
     name: "Talking Alarm Clock-Schedule",
     namespace: "MichaelStruck",
@@ -37,6 +36,7 @@ def pageSetup() {
 	dynamicPage(name: "pageSetup", title: "Alarm Settings", install: true, uninstall: true) {
 		section() {
 			label title:"Alarm Schedule Name", required: true
+            input "alarmStatus", "bool", title: "Enable this alarm?", defaultValue: true
     	}
         section("Alarm Settings"){
         	input "alarmSpeaker", "capability.musicPlayer", title: "Choose a speaker", required: true, submitOnChange:true
@@ -259,12 +259,10 @@ def alarmHandler() {
 }
 //Common Methods-------------
 def getAlarmDesc() {
-	def desc = "Tap to set alarm"
+	def desc = ""
 	if (alarmStart) {
-    	desc = "Alarm set to " + parseDate(alarmStart,"", "h:mm a") +" on ${alarmSpeaker}"
-		
-        def dayListSize = alarmDay ? alarmDay.size() : 7
-             
+    	desc = "Alarm set to " + parseDate(alarmStart,"", "h:mm a") +" on ${alarmSpeaker}"		
+        def dayListSize = alarmDay ? alarmDay.size() : 7            
         if (alarmDay && dayListSize < 7) {
         	desc = desc + " on"
             for (dayName in alarmDay) {
@@ -277,8 +275,26 @@ def getAlarmDesc() {
         }
         else {
     		desc = desc + " every day"
-    	}
-    	
+    	}    	
+        if (alarmPresence){
+        	def presListSize = alarmPresence.size()
+            desc += " when "
+            def verb = "are"
+            if (presListSize == 1){
+            	verb = "is"
+            }
+            for (presName in alarmPresence){
+            	desc += "${presName}"
+                presListSize =presListSize-1
+                if (presListSize) {
+                	desc = "${desc}, "
+				}
+				else {
+                	desc = "${desc}"
+                }
+			}
+        	desc += " ${verb} present"
+        }
         if (alarmMode) {
     		def modeListSize = alarmMode.size()
         	def modePrefix =" in the following modes: "
@@ -303,6 +319,9 @@ def getAlarmDesc() {
     }
 	desc	
 }
+def getAlarmStat(){
+	def result = alarmStatus
+}	
 def getWeatherDesc() {
 	def desc = includeTemp || localTemp ? "Speak temperature" : ""
     desc += desc && localHumidity ? " and humidity" : ""
