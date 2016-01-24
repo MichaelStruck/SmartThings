@@ -170,7 +170,7 @@ def initialize() {
 }
 //Handlers----------------
 def alarmHandler() {
-    if ((!alarmMode || alarmMode.contains(location.mode)) && getDayOk() && everyoneIsPresent()) {	
+    if (parent.getSchedStatus(app.id) && (!alarmMode || alarmMode.contains(location.mode)) && getDayOk() && everyoneIsPresent()) {	
         if (switches || dimmers || thermostats) {
         	def dimLevel = dimmersLevel as Integer
             switches?.on()
