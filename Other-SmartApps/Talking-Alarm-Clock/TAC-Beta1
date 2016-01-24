@@ -62,10 +62,11 @@ def pageAbout(){
 def pageSummary(){
 	dynamicPage(name: "pageSummary", title: "Alarm Schedules Summary", uninstall: false) {
         def alarmStat = ""
+        state.scheduleStatus = []
         childApps.each {child ->
-            alarmStat = child.getAlarmStat() ? "Alarm is enabled" : "Alarm is disabled"
-            section("${child.label} - ${alarmStat}"){
+            section("${child.label}"){
             	paragraph "${child.getAlarmDesc()}"
+                input "${child.id}", "bool", title: "Enable this schedule", defaultValue: false, submitOnChange:true
             }
         }	
     }
@@ -86,7 +87,10 @@ def initialize() {
     }
 }
 //Common modules (for child app)
-
+def getSchedStatus(appid){
+    def result =settings."${appid}"
+    result
+}
 //Version/Copyright/Information/Help
 private def textAppName() {
 	def text = "Talking Alarm Clock"
