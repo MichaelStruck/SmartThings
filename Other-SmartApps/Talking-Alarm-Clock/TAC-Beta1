@@ -120,7 +120,7 @@ private def textLicense() {
 private def textHelp() {
 	def text =
 		"Within each alarm schedule you create, choose a Sonos speaker, an alarm time and alarm type along with " +
-        "switches, dimmers and thermostat to control when the alarm is triggered. Routines and modes can be triggered at alarm time. "+
-        "You also have the option of setting up different alarm sounds, tracks and a personalized spoken greeting that can include a weather report. " +
-        "Variables that can be used in the voice greeting include %day%, %time% and %date%.\n\n"
+		"switches, dimmers and thermostat to control when the alarm is triggered. Routines and modes can be triggered at alarm time. "+
+		"You also have the option of setting up different alarm sounds, tracks and a personalized spoken greeting that can include a weather report. " +
+		"Variables that can be used in the voice greeting include %day%, %time% and %date%.\n\n"
 }
