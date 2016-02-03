@@ -16,7 +16,7 @@
  *  Version 2.2.0a - Added SMS to on/off control scenarios, and allow  'toggle' to change the lights; added Sonos as an alarm type
  *  Version 2.2.1a - Code and syntax optimization; added routine to turn off Sonos speaker if used as alarm
  *  Version 2.3.0 - Code optimization and configuration for additional memory slots for Sonos (advanced users only)
- *  Version 2.4.0 - Added GUI (in parent app) to allow for variable number of Sonos memory slots
+ *  Version 2.4.0 - Added GUI (in parent app) to allow for variable number of Sonos memory slots, added speaker pause toggle
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
