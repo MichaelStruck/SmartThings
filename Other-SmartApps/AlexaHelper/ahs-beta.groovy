@@ -257,9 +257,6 @@ def pageSpeaker(){
 	dynamicPage(name: "pageSpeaker", title: "Speaker Scenario Settings", install: false, uninstall: false) {
 		section {
         	input "vDimmerSpeaker", "capability.switchLevel", title: "Control Switch (Dimmer)", multiple: false, required:false, submitOnChange:true
-            	if (vDimmerSpeaker){
-                	input "speakerOffFunction", "bool", title: "Switch off action: Pause/Stop Playback", defaultValue: false
-                }
             input "speaker", "capability.musicPlayer", title: "Speaker To Control", multiple: false , required: false, submitOnChange:true
         }
     	section ("Speaker Volume Limits") {        
@@ -272,8 +269,10 @@ def pageSpeaker(){
        		input "prevSwitch", "capability.momentary", title: "Previous Track Switch (Momentary)", multiple: false, required: false
     	}
         if (vDimmerSpeaker){
-        	section ("Other Speaker Functions"){
-        		input "speakerFunction1", "capability.switch", title: "Switches activated when Control Switch on", multiple: true, required: false
+        	section ("Other Functions/Controls"){
+        		input "speakerOnSwitches", "capability.switch", title: "When Control Switch on, turn on...", multiple: true, required: false
+                input "speakerOffSwitches", "capability.switch", title: "When Control Switch off, turn off...", multiple: true, required: false
+                input "speakerOffFunction", "bool", title: "Control Switch off action: Pause/Stop Playback", defaultValue: false
         	}
 		}
         if (speaker && songOptions(1) && parent.getSonos() && speaker.name.contains("Sonos")){
@@ -555,27 +554,19 @@ def speakerControl(cmd,song){
 		}
     	if (cmd=="on"){
         	speaker.play()
-            if (speakerFunction1){
-            	speakerFunction1?.on()	
-            }
+            speakerOnSwitches?.on()
         }
     }
 	if (cmd=="off"){
-    	if (speakerOffFunction){
-        	speaker.stop()
-        }
-        else {
-        	speaker.pause()
-        }
+    	speakerOffFunction ? speaker.stop() : speaker.pause()
+     	speakerOffSwitches?.off()
     }
 }
 //Volume Handler
 def speakerVolHandler(evt){
     if (getOkToRun("Speaker volume change")) {
         def speakerLevel = vDimmerSpeaker.currentValue("level") as int
-    	if (speakerLevel == 0) {
-    		vDimmerSpeaker.off()	
-    	}
+    	if (speakerLevel == 0) {vDimmerSpeaker.off()}
     	else {
         	// Get settings between limits
         	speakerLevel = upLimitSpeaker && (vDimmerSpeaker.currentValue("level") > upLimitSpeaker) ? upLimitSpeaker : speakerLevel
