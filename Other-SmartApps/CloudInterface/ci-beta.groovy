@@ -8,7 +8,7 @@
  *  Version 1.0.2 - Fixed additional syntax items and moved the remove button to the help screen
  *  Version 1.0.3 - Fixed OAuth reset/code optimization
  *  Version 1.0.4 - Changed name to allow it to be used with other SmartApps instead of associating it with Alexa Helper
- *  Version 1.0.5 - Code optimization
+ *  Version 1.0.5 - Code optimization and GUI improvements
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -42,7 +42,16 @@ def mainPage() {
 		section("External control") {
         	input "switches", "capability.switch", title: "Choose Switches", multiple: true, required: false, submitOnChange:true
 			if (switches){
-            	href "showURLs", title: "Show URLs", description: "Tap to show URLs to control switches"
+            	if (!state.accessToken) {
+					OAuthToken()
+				}
+                if (state.accessToken != null){
+                    href url:"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/l?access_token=${state.accessToken}", style:"embedded", required:false, title:"Show URLs", description:"Tap to show URLs to control switches"
+					//href "showURLs", title: "Show URLs", description: "Tap to show URLs to control switches"
+                }
+                else {
+                	paragraph "URLs cannot be created. Access Token not defined. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
+               }
 			}
         }
         section([title:"Options", mobileOnly:true]) {
@@ -52,40 +61,6 @@ def mainPage() {
         }
 	}
 }
-def showURLs(){
-	dynamicPage(name: "showURLs", title:"On/Off URLs for selected switches") {
-        if (!state.accessToken) {
-			OAuthToken()
-		}
-        if (state.accessToken != null) {
-            generateLinks()
-            def i = 0
-            state.links.each{
-            	section ("${state.links[i].swLabel}"){
-            		paragraph "Turn the switch ON:"
-                    paragraph "${state.links[i].urlOn}"
-                    paragraph "Turn the switch OFF:"
-                    paragraph "${state.links[i].urlOff}"
-            	}
-                i ++
-			}
-		}
-        else {
-        	section ("Error in creation of URLs"){
-            	paragraph "Could not create URLs. Access Token not defined. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
-            }
-        }
-	}
-}
-def generateLinks(){
-     def swName = ""
-     state.links = []
-     switches.each {
-     	swName= "${it.label}"
-        state.links << [swLabel:"${swName}", urlOn:"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=on&access_token=${state.accessToken}", urlOff:"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=off&access_token=${state.accessToken}"]
-	}
-}
-
 def pageAbout(){
 	dynamicPage(name: "pageAbout", title: "About ${textAppName()}",uninstall: true ) {
         section {
@@ -132,6 +107,7 @@ def initialize() {
 }
 mappings {
       path("/w") {action: [GET: "writeData"]}
+      path("/l") {action: [GET: "listURLs"]}
 }
 def writeData() {
     log.debug "Command received with params $params"
@@ -150,6 +126,21 @@ def OAuthToken(){
 	} catch (e) {
 		log.error "Could not create URLs. Access Token not defined. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
 	}
+}
+def listURLs() {
+	render contentType: "text/html", data: """<!DOCTYPE html><html><head><meta charset="UTF-8" /></head><body>${displayURLS()}</body></html>"""
+}
+def displayURLS(){
+	def swName = ""
+	def display = "Copy the URL of the switch and control and paste it to your application.<br><br>Click DONE to return to the Cloud Interface SmartApp.<br><br>"
+	switches.each {
+    	display += "${it.label} ON:<br>"
+        display += "<textarea rows='5' cols='75' style='font-size:10px;'>https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=on&access_token=${state.accessToken}</textarea><br><br>"
+		display += "${it.label} OFF:<br>"
+        display += "<textarea rows='5' cols='75' style='font-size:10px;'>https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=off&access_token=${state.accessToken}</textarea><br><br>"
+    	display += "<hr>"
+    }
+    display
 }
 //Version/Copyright/Information/Help
 private def textAppName() {
