@@ -128,16 +128,16 @@ def OAuthToken(){
 	}
 }
 def listURLs() {
-	render contentType: "text/html", data: """<!DOCTYPE html><html><head><meta charset="UTF-8" /></head><body>${displayURLS()}</body></html>"""
+	render contentType: "text/html", data: """<!DOCTYPE html><html><head><meta charset="UTF-8" /></head><body style="margin: 0;">${displayURLS()}</body></html>"""
 }
 def displayURLS(){
 	def swName = ""
-	def display = "Copy the URL of the switch and control and paste it to your application.<br><br>Click DONE to return to the Cloud Interface SmartApp.<br><br>"
+	def display = "<div style='padding:10px'>Copy the URL of the switch and control and paste it to your application.</div><div style='padding:10px'>Click DONE to return to the Cloud Interface SmartApp.</div>"
 	switches.each {
-    	display += "${it.label} ON:<br>"
-        display += "<textarea rows='5' cols='75' style='font-size:10px;'>https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=on&access_token=${state.accessToken}</textarea><br><br>"
-		display += "${it.label} OFF:<br>"
-        display += "<textarea rows='5' cols='75' style='font-size:10px;'>https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=off&access_token=${state.accessToken}</textarea><br><br>"
+    	display += "<div style='padding:10px'>${it.label} ON:</div>"
+        display += "<textarea rows='5' style='font-size:10px; width: 100%'>https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=on&access_token=${state.accessToken}</textarea>"
+		display += "<div style='padding:10px'>${it.label} OFF:</div>"
+        display += "<textarea rows='5' style='font-size:10px; width: 100%'>https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/w?l=${swName}&c=off&access_token=${state.accessToken}</textarea>"
     	display += "<hr>"
     }
     display
