@@ -687,7 +687,7 @@ def voiceHandler(evt){
         log.info fullMsg
     	if (voiceVolume && voiceSpeaker) voiceSpeaker.setLevel(voiceVolume as int)
     	if (voiceSpeaker) voiceSpeaker.playText(fullMsg)
-        if (voiceDevice) voiceDevice?.speak(fullMsg)
+        if (voiceDevice) voiceDevice?.speak("${fullMsg}")
     }
 }
 //Common Methods-------------
