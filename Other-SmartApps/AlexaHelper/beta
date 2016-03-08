@@ -24,7 +24,7 @@
  *  Version 2.7.1b - Small syntax changes
  *  Version 2.7.2 - Code optimization
  *  Version 2.8.0 - Added voice reporting options
- *  Version 2.8.1 - Syntax clean up, added dimmer to voice reporting options, and speech devices besides speakers
+ *  Version 2.8.1 - Syntax clean up, added dimmer to voice reporting options, added speech devices besides speakers
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -321,17 +321,17 @@ def pageVoice(){
     dynamicPage(name: "pageVoice", title: "Voice Reporting Scenario Settings", install: false, uninstall: false){
         section {
             input "voiceControl", "capability.momentary", title: "Voice Report Control Switch (Momentary)", multiple: false, required: true
-            input "voiceSpeaker", "capability.musicPlayer", title: "Speaker For Voice Report", multiple: false, required: false
-            input "voiceDevice", "capability.speechSynthesis", title: "Voice Device For Voice Report", multiple: false, required: false
-            input "voiceVolume", "number", title: "Volume Of Voice Report", required: false
+            input "voiceSpeaker", "capability.musicPlayer", title: "Voice Report Speaker", multiple: false, required: false, submitOnChange:true
+            if (voiceSpeaker) input "voiceVolume", "number", title: "Speaker Volume", required: false
+            input "voiceDevice", "capability.speechSynthesis", title: "Voice Report Speech Synthesis Device", multiple: false, required: false
         }
         section ("Report Types"){
-            input "voicePre", "text", title: "Speak Message Before Report", description: "Enter a message to play before the report", defaultValue: "This is your SmartThings voice report.", required: false
+            input "voicePre", "text", title: "Pre Message Before Device Report", description: "Enter a message to play before the device report", defaultValue: "This is your SmartThings voice report.", required: false
             href "pageSwitchReport", title: "Switch/Dimmer Status Report", description: reportDesc(voiceSwitch, voiceDimmer, ""), state: greyOutState(voiceSwitch, voiceDimmer, "")
             href "pageDoorReport", title: "Doors/Windows Report", description: reportDesc(voiceDoorSensors, voiceDoorControls, voiceDoorLocks), state: greyOutState(voiceDoorSensors, voiceDoorControls, voiceDoorLocks)
             href "pageTempReport", title: "Temperatures/Thermostats Report", description: reportDesc(voiceTemperature, voiceTempSettings, ""), state: greyOutState(voiceTemperature, voiceTempSettings, "")
             href "pageHomeReport", title: "Mode and Smart Home Monitor Report", description: reportDesc(voiceMode, voiceSHM, ""), state: "complete"
-            input "voicePost", "text", title: "Speak Message After Report", description: "Enter a message to play after the report", required: false
+            input "voicePost", "text", title: "Post Message After Device Report", description: "Enter a message to play after the device report", required: false
         }
     }
 }
@@ -687,7 +687,7 @@ def voiceHandler(evt){
         log.info fullMsg
     	if (voiceVolume && voiceSpeaker) voiceSpeaker.setLevel(voiceVolume as int)
     	if (voiceSpeaker) voiceSpeaker.playText(fullMsg)
-        if (voiceDevice)voiceDevice.speak(fullMsg)
+        if (voiceDevice) voiceDevice.speak(fullMsg)
     }
 }
 //Common Methods-------------
@@ -740,10 +740,10 @@ def scenarioDesc(){
     	def noun = ""
         if (voiceSpeaker && !voiceDevice) noun = "'${voiceSpeaker}'"
         else if (!voiceSpeaker && voiceDevice) noun = "'${voiceDevice}'"
-        else if (!voiceSpeaker && voiceDevice) noun = "'${voiceSpeaker}' and '${voiceDevice}'}"
+        else if (voiceSpeaker && voiceDevice) noun = "'${voiceSpeaker}' and '${voiceDevice}'}"
     	desc = voiceControl && noun ? "'${voiceControl}' controls voice reports on ${noun}" : ""
     }
-    desc = desc ? desc : "Tap to configure scenario..."
+    desc = desc ? desc : "Status: UNCONFIGURED - Tap to configure scenario"
 }
 def parseList(list){
     def listSize = list.size()
