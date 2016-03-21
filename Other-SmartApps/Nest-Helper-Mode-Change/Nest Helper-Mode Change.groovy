@@ -7,6 +7,7 @@
  *  Version 1.0.2 - 5/31/15 Added About screen and code optimizations
  *  Version 1.0.3 - 8/5/15 Changed internal logic for home and away to allow for better interface layout
  *  Version 1.0.4 - 1/1/16 Change the about page slightly to align with other apps produced by Michael Struck
+ *  Version 1.1.0 - 3/19/16 Added icon to about page
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -48,9 +49,13 @@ def getPref() {
     }
 }
 
-page(name: "pageAbout", title: "About ${textAppName()}", ,uninstall: true) {
+page(name: "pageAbout", uninstall: true) {
 	section {
-    	paragraph "${textVersion()}\n${textCopyright()}\n\n${textLicense()}\n"
+    	paragraph "${textAppName()}\n${textVersion()}\n${textCopyright()}", image: "https://s3.amazonaws.com/smartapp-icons/Partner/nest-home-app@2x.png"
+    }
+    
+    section ("Apache License") {
+    	paragraph textLicense()
     }
 	section("Instructions") {
 		paragraph textHelp()
@@ -97,7 +102,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def text = "Version 1.0.4 (01/01/2016)"
+    def text = "Version 1.1.0 (03/19/2016)"
 }
 
 private def textCopyright() {
