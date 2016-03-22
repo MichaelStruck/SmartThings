@@ -5,7 +5,7 @@
  *  Version 1.0.1 (11/29/15) - Code opimization
  *  Version 1.0.2 (12/2/15) - Added option to have the colored lights dim to a separate color than the lit state
  *  Version 1.1.0 (12/17/15) - Added sunset/sunrise to option for time restrictions
- *  Version 1.1.1 (1/11/16) - Added ability to see child app version with parent app and added additional section for remove button
+ *  Version 1.1.1 (1/18/16) - Added ability to see child app version with parent app and added additional section for remove button
  *
  *  Copyright 2016 Michael Struck - Uses code from Lighting Director by Tim Slagle & Michael Struck
  *
@@ -38,8 +38,8 @@ preferences {
 
 // Show setup page
 def pageSetup() {
-    dynamicPage(name: "pageSetup", install: true, uninstall: true) {
-		section("Name your scenario") {
+    dynamicPage(name: "pageSetup", title: "Lighting Scenario", install: true, uninstall: true) {
+		section() {
 			label title:"Scenario Name", required:true
     	}
         section("Devices included in the scenario") {
@@ -67,6 +67,9 @@ def pageSetup() {
         	if (A_luxSensors && A_levelDimOff > 0 && A_turnOnLux){
         		input name: "A_turnOffLux", type: "bool", title: "Turn off dimmers when lux above threshold", defaultValue: false
         	}
+            if (A_useSun && A_levelDimOff > 0 && A_turnOnLux){
+            	input name: "A_turnOffSR", type: "bool", title: "Turn off dimmers on sunrise", defaultValue: false
+            }
 		}
             
 		section("Restrictions") {            
@@ -131,7 +134,6 @@ def updated() {
 }
 
 def initialize() {
-
 	midNightReset()
 	state.sunSet = true
     if (A_useSun){
@@ -180,8 +182,8 @@ if ((!A_mode || A_mode.contains(location.mode)) && getTimeOk (A_timeStart, A_tim
                			levelSetOnColor = 100
                		}
     			}
-        		A_dimmers?.setLevel(levelSetOn)
-                setColoredLights(A_colorControls, A_colorOn, levelSetOnColor)
+        		A_dimmers?.setLevel(levelSetOn as int)
+                setColoredLights(A_colorControls, A_colorOn, levelSetOnColor as int)
         		A_switches?.on()
         		if (A_triggerOnce && !A_triggerOnceOff){
            			state.A_triggered = true
@@ -205,10 +207,10 @@ if ((!A_mode || A_mode.contains(location.mode)) && getTimeOk (A_timeStart, A_tim
                 }
                 A_switches?.off()
         		def levelSetOff = A_levelDimOff ? A_levelDimOff : 0
-        		A_dimmers?.setLevel(levelSetOff)
+        		A_dimmers?.setLevel(levelSetOff as int)
                 def levelSetOffColor = A_levelDimOffColor ? A_levelDimOffColor : 0
                 def offColor = A_colorOff ? A_colorOff : A_colorOn
-                setColoredLights(A_colorControls, offColor, levelSetOffColor) 
+                setColoredLights(A_colorControls, offColor, levelSetOffColor as int) 
         		if (state.A_triggered) {
     				runOnce (getMidnight(), midNightReset)
     			}
@@ -229,14 +231,14 @@ def delayTurnOffA(){
     }
     A_switches?.off()
 	def levelSetOff = A_levelDimOff ? A_levelDimOff : 0
-    A_dimmers?.setLevel(levelSetOff)
+    A_dimmers?.setLevel(levelSetOff as int)
     def levelSetOffColor = A_levelDimOffColor ? A_levelDimOffColor : 0
     def offColor = A_colorOff ? A_colorOff : A_colorOn
     if (A_colorControls && !levelSetOffColor){
    		A_colorControls?.off()
    	}
     else {    
-    	setColoredLights(A_colorControls, offColor, levelSetOffColor)
+    	setColoredLights(A_colorControls, offColor, levelSetOffColor as int)
     }
 	state.A_timerStart = false
 	if (state.A_triggered) {
@@ -246,7 +248,7 @@ def delayTurnOffA(){
 
 def turnOffLuxA(evt){
 	if (A_luxSensors.latestValue("illuminance") > A_turnOnLux){
-    	A_dimmers?.setLevel(0)
+    	A_dimmers?.off()
         unschedule(delayTurnOffA)
         state.A_timerStart = false
     }
@@ -270,11 +272,15 @@ def onPressA(evt) {
 
 def sunriseHandler(evt){
 	state.sunSet = false
+    if (A_turnOffSR){
+    	A_dimmers?.off()
+        unschedule(delayTurnOffA)
+        state.A_timerStart = false
+    }
 }
 
 def sunsetHandler(evt){
 	state.sunSet = true
-
 }
 //Common Methods
 
@@ -442,5 +448,5 @@ private getDayOk(dayList) {
 }
 
 private def textVersion() {
-    def text = "Child App Version: 1.1.1 (01/11/2016)"
+    def text = "Child App Version: 1.1.1 (01/18/2016)"
 }
