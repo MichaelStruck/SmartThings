@@ -499,16 +499,17 @@ def alarmTurnOff(){alarm?.off()}
 def speakerControl(cmd, song, songName, announce){
     if (cmd=="station" || cmd=="on") {
     	//Alexa Switch should be used to prevent looping to this point when switch in turned on
-        if (speakerInitial){
+         if (speakerInitial){
         	def speakerLevel = speakerInitial as int
-    		  try{
-    		    vDimmerSpeaker.setLevel(speakerLevel)
-    	    } 
-    	    catch(e){
-      	    log.debug "Can't set level...speaker will play at current level"    
-      	  }
+    		vDimmerSpeaker.setLevel(speakerLevel)
         }
-        else vDimmerSpeaker.setLevel(speaker.currentValue("level") as int)
+        else {
+		try{
+			vDimmerSpeaker.setLevel(speaker.currentValue("level") as int)
+		}
+		catch(e){
+			log.debug "Can't set level...speaker will play at current level" 
+		}
 		if (cmd=="station"){
     		log.debug "Playing: ${song}"
             def text = textToSpeech(announce ? "Now playing: ${songName}." : " ", true)
