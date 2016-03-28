@@ -484,7 +484,7 @@ def turnOnOff(type){
 		def iphex = convertIPtoHex(param.ip)
         def porthex = convertPortToHex(param.port) 
         log.debug "Device Network Id set to ${iphex}:${porthex}"
-        sendHubCommand(new physicalgraph.device.HubAction("""GET /?${param.cmd} HTTP/1.1\r\nHOST: ${param.ip}\r\n\r\n""", physicalgraph.device.Protocol.LAN, "${iphex}:${porthex}"))    
+        sendHubCommand(new physicalgraph.device.HubAction("""GET /${param.cmd} HTTP/1.1\r\nHOST: ${param.ip}\r\n\r\n""", physicalgraph.device.Protocol.LAN, "${iphex}:${porthex}"))    
     }
     if (settings."${type}SHM"){
     	log.info "Setting Smart Home Monitor to " + settings."${type}SHM"
