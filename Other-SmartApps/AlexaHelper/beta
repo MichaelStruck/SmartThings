@@ -482,8 +482,8 @@ def turnOnOff(type){
     }
 	if (settings."${type}Advanced" && settings."${type}ExtInt" == "1" && param.ip && param.port && param.cmd){
         def deviceHexID  = convertToHex (param.ip, param.port)
-        log.debug "Device Network Id set to ${deviceHexID}"
-        sendHubCommand(new physicalgraph.device.HubAction("""GET /${param.cmd} HTTP/1.1\r\nHOST: ${param.ip}\r\n\r\n""", physicalgraph.device.Protocol.LAN, "${deviceHexID}"))    
+        log.info "Device Network Id set to ${deviceHexID}"
+        sendHubCommand(new physicalgraph.device.HubAction("""GET /${param.cmd} HTTP/1.1\r\nHOST: ${param.ip}:${param.port}\r\n\r\n""", physicalgraph.device.Protocol.LAN, "${deviceHexID}"))    
     }
     if (settings."${type}SHM"){
     	log.info "Setting Smart Home Monitor to " + settings."${type}SHM"
