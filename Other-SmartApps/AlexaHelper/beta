@@ -2,7 +2,7 @@
  *  Alexa Helper-Child
  *
  *  Copyright © 2016 Michael Struck
- *  Version 2.10.0 3/28/16
+ *  Version 2.10.0 3/30/16
  * 
  *  Version 1.0.0 - Initial release of child app
  *  Version 1.1.0 - Added framework to show version number of child app and copyright
@@ -137,8 +137,7 @@ def offPageHTTP (){
 def pageHTTPOnOff(type){
 	section{
     	input "${type}ExtInt", "enum", title: "Choose HTTP Command Type", options:["0":"External HTTP","1":"Internal HTTP"], defaultValue: 0, submitOnChange:true
-        if (settings."${type}ExtInt" == "1") input "${type}Advanced", "bool", title: "Define IP/Port/Commands (Advanced)", defaultValue: false, submitOnChange:true
-        if (!settings."${type}Advanced" || settings."${type}ExtInt" == "0") input "${type}HTTP", "text", title:"Run This HTTP Request...", required: false
+        if (settings."${type}ExtInt" == "0") input "${type}HTTP", "text", title:"Run This HTTP Request...", required: false
     	else {
         	input "${type}IP", "text", title: "Internal IP Address", description: "IPV4 address xx.xx.xx.xx format", required: false
             input "${type}Port", "number", title: "Internal Port", description: "Enter port number 0 to 65536", required: false 
@@ -476,11 +475,11 @@ def turnOnOff(type){
     	cmd.tstat == "heat" ? settings."${type}Tstats"?.setHeatingSetpoint(tLevel) : settings."${type}Tstats"?.setCoolingSetpoint(tLevel)
 	}
     def param = [http:settings."${type}HTTP", ip:settings."${type}IP", port:settings."${type}Port", cmd:settings."${type}Command"]
-    if ((!settings."${type}Advanced" || settings."${type}ExtInt" == "0") && param.http){
+    if (settings."${type}ExtInt" == "0" && param.http){
         log.info "Attempting to run: ${param.http}"
         httpGet(param.http)
     }
-	if (settings."${type}Advanced" && settings."${type}ExtInt" == "1" && param.ip && param.port && param.cmd){
+	if (settings."${type}ExtInt" == "1" && param.ip && param.port && param.cmd){
         def deviceHexID  = convertToHex (param.ip, param.port)
         log.info "Device Network Id set to ${deviceHexID}"
         sendHubCommand(new physicalgraph.device.HubAction("""GET /${param.cmd} HTTP/1.1\r\nHOST: ${param.ip}:${param.port}\r\n\r\n""", physicalgraph.device.Protocol.LAN, "${deviceHexID}"))    
@@ -775,17 +774,14 @@ def getDeviceDesc(type){
 def getHTTPDesc(type){
 	def result = ""
     def param = [http:settings."${type}HTTP", ip:settings."${type}IP", port:settings."${type}Port", cmd:settings."${type}Command"]
-    if ((!settings."${type}Advanced" || settings."${type}ExtInt" == "0") && param.http) result += param.http
-    else if (settings."${type}Advanced" && settings."${type}ExtInt" == "1" && param.ip && param.port && param.cmd) result += "http://${param.ip}:${param.port}/${param.cmd}"
+    if (settings."${type}ExtInt" == "0" && param.http) result += param.http
+    else if (settings."${type}ExtInt" == "1" && param.ip && param.port && param.cmd) result += "http://${param.ip}:${param.port}/${param.cmd}"
     result = result ? result : "Status: UNCONFIGURED - Tap to configure"
 }
 def greyOutState(param1, param2, param3){def result = param1 || param2 || param3 ? "complete" : ""}
 def greyOutStateHTTP(type){
-	def result =""
     def param = [http:settings."${type}HTTP", ip:settings."${type}IP", port:settings."${type}Port", cmd:settings."${type}Command"]
-    if ((!settings."${type}Advanced" || settings."${type}ExtInt" == "0") && param.http) result ="complete"
-    if (settings."${type}Advanced" && settings."${type}ExtInt" == "1" && param.ip && param.port && param.cmd) result ="complete"
-	result
+    def result = (settings."${type}ExtInt" == "0" && param.http) || (settings."${type}ExtInt" == "1" && param.ip && param.port && param.cmd) ? "complete" : ""
 }
 def greyOutScen(){def result = (scenarioType=="Control" && AlexaSwitch) || (scenarioType=="Speaker" && vDimmerSpeaker && speaker) || (scenarioType=="Thermostat" && vDimmerTstat && tstat) || (scenarioType=="Panic" && panicSwitchOn && panicSwitchOff) ? "complete" : ""}
 private getDayOk(dayList) {
@@ -1019,5 +1015,5 @@ private parseDate(time, type){
     new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", formattedDate).format("${type}", timeZone(formattedDate))
 }
 //Version
-private def textVersion() {return "Child App Version: 2.10.0 (03/28/2016)"}
+private def textVersion() {return "Child App Version: 2.10.0 (03/30/2016)"}
 private def versionInt() {return 292}
