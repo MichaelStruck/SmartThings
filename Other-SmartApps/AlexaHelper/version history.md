@@ -34,3 +34,4 @@
  *  Version 2.9.4 - Added additional restriction icons and syntax updates
  *  Version 2.9.5 - Fixed issue with garage door open/close selection
  *  Version 2.9.6 - Added presence sensors to voice reporting, added additional options for thermostat setpoint reporting
+ *  Version 2.9.7b - Added ability to resume music/track after voice report
