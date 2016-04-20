@@ -114,11 +114,9 @@ def writeData() {
         	def device = switches?.find{it.label == label}
        		device."$command"()
             outputTxt << [label:label, status: "ok"]
-            log.debug "made it here"
         }
         catch (e){
         	outputTxt << [label:label, status: null]
-            log.debug "error"
         }
 	}
     outputTxt
