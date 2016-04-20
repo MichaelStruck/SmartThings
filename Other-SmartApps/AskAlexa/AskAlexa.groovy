@@ -1,7 +1,7 @@
 /**
  *  Ask Alexa Interface
  *
- *  Version 1.0.0 - 4/10/16 Copyright © 2016 Michael Struck
+ *  Version 1.0.0 - 4/19/16 Copyright © 2016 Michael Struck
  *  
  *  Version 1.0.0 - Initial release
  *
@@ -108,10 +108,20 @@ def writeData() {
     log.debug "Command received with params $params"
 	def command = params.c  	//The action you want to take i.e. on/off 
 	def label = params.l		//The name given to the device by you
-	if (switches){
-        def device = switches?.find{it.label == label}
-       	device."$command"()
+	def outputTxt = []
+    if (switches){
+        try {
+        	def device = switches?.find{it.label == label}
+       		device."$command"()
+            outputTxt << [label:label, status: "ok"]
+            log.debug "made it here"
+        }
+        catch (e){
+        	outputTxt << [label:label, status: null]
+            log.debug "error"
+        }
 	}
+    outputTxt
 }
 def readData() {
     log.debug "Command received with params $params"
