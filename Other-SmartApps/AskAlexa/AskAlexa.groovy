@@ -1,7 +1,7 @@
 /**
  *  Ask Alexa Interface
  *
- *  Version 1.0.0 - 4/19/16 Copyright © 2016 Michael Struck
+ *  Version 1.0.0 - 4/20/16 Copyright © 2016 Michael Struck
  *  
  *  Version 1.0.0 - Initial release
  *
@@ -21,9 +21,9 @@ definition(
     author: "Michael Struck",
     description: "Provide interfacing to control SmartThings devices with the Amazon Echo ('Alexa').",
     category: "Convenience",
-    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/cloud-interface.src/CloudInterface.png",
-    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/cloud-interface.src/CloudInterface@2x.png",
-    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/cloud-interface.src/CloudInterface@2x.png",
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AskAlexa/AskAlexa.png",
+    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AskAlexa/AskAlexa@2x.png",
+    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AskAlexa/AskAlexa@2x.png",
   	oauth: true)
 preferences {
     page name:"mainPage"
@@ -63,8 +63,7 @@ def pageAbout(){
         }
     	section("Instructions") {
         	paragraph textHelp()
-            paragraph "Read data:\n\n${getApiServerUrl()}/api/smartapps/installations/${app.id}/r?l=NameOFDevice&access_token=${state.accessToken}"
-    		 paragraph "Read data:\n\n${getApiServerUrl()}/api/smartapps/installations/${app.id}/w?l=<LABELOFDEVICE>&c=<COMMAND>&access_token=${state.accessToken}"
+            paragraph "REST String:\n\n${getApiServerUrl()}/api/smartapps/installations/${app.id}/<device>/<operation>?access_token=${state.accessToken}"
         }
         section("Tap button below to remove the application"){
         }
@@ -101,39 +100,24 @@ def initialize() {
 	}
 }
 mappings {
-      path("/r") {action: [GET: "readData"]}
-      path("/w") {action: [GET: "writeData"]}
+      path("/:device/:operator") { action: [GET: "processData"] }
 }
-def writeData() {
+def processData() {
     log.debug "Command received with params $params"
-	def command = params.c  	//The action you want to take i.e. on/off 
-	def label = params.l		//The name given to the device by you
-	def outputTxt = []
+	def dev = params.device 	//Label of device
+	def op = params.operator	//Operation to perform
+    def outputTxt = []
     if (switches){
         try {
-        	def device = switches?.find{it.label == label}
-       		device."$command"()
-            outputTxt << [label:label, status: "ok"]
+        	def STdevice = switches?.find{it.label == dev}
+       		log.debug STdevice
+            STdevice."$op"()
+            outputTxt << [talk2me:"${dev} is ${op}"]
         }
         catch (e){
-        	outputTxt << [label:label, status: null]
+        	outputTxt << [talk2me:"I could not process your request"]
         }
 	}
-    outputTxt
-}
-def readData() {
-    log.debug "Command received with params $params"
-	def label = params.l		//The name given to the device by you
-	def outputTxt = []
-    if (switches){
-        try {
-        	def device = switches?.find{it.label == label}
-        	outputTxt << [label: label, status: device.currentValue("switch")]
-        }
-        catch (e){
-        	outputTxt << [label:label, status: null]
-        }
-	} 
     outputTxt
 }
 
