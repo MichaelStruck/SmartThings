@@ -136,7 +136,7 @@ private def textAppName() {
 	def text = "Ask Alexa Interface"
 }	
 private def textVersion() {
-    def text = "Version 1.0.0 (04/19/2016)"
+    def text = "Version 1.0.0 (04/20/2016)"
 }
 private def textCopyright() {
     def text = "Copyright © 2016 Michael Struck"
