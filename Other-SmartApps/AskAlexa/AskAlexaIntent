@@ -1,0 +1,22 @@
+{
+  "intents": [
+    {
+      "intent": "DeviceOperation",
+      "slots": [
+        {
+          "name" : "Operator",
+          "type" : "LIST_OF_OPERATORS"
+        },
+        {
+          "name" : "Device",
+          "type" : "LIST_OF_DEVICES"
+        },
+        {
+          "name" : "Num",
+          "type" : "AMAZON.NUMBER"
+        }
+        
+        ]
+    }
+	]
+}
