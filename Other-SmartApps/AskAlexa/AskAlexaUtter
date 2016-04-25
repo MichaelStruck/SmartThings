@@ -2,24 +2,22 @@ DeviceOperation to turn {Operator} the {Device}
 DeviceOperation to turn {Device} {Operator}
 DeviceOperation to turn the {Device} {Operator}
 DeviceOperation {Device} {Operator}
-DeviceOperation the {Operator} of {Device}
-DeviceOperation {Device} {Operator}
 DeviceOperation to {Operator} the {Device}
 
+//remove this line-status utterences
+
+DeviceOperation the {Operator} of {Device}
 DeviceOperation the {Operator} of the {Device}
-DeviceOperation {Operator}
 DeviceOperation play the {Device} {Operator}
 DeviceOperation play {Device} {Operator}
 DeviceOperation to play {Device} {Operator}
 DeviceOperation to play the {Device} {Operator}
-
-//remove this line-status utterences
-
 DeviceOperation {Device}
 DeviceOperation {Device} status
 DeviceOperation about {Device}
 DeviceOperation about the {Device}
 DeviceOperation status of {Device}
+DeviceOperation to give me the status of {Device}
 
 //remove this line-dimmer utterences
 
