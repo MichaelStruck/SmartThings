@@ -1,7 +1,8 @@
 /**
- *  Ask Alexa Interface
+ *  Ask Alexa
  *
- *  Version 1.0.0 - 4/20/16 Copyright © 2016 Michael Struck
+ *  Version 1.0.0 - 4/24/16 Copyright © 2016 Michael Struck
+ *  Special thanks for Keith DeLong for code and assistance
  *  
  *  Version 1.0.0 - Initial release
  *
@@ -16,10 +17,10 @@
  *
  */
 definition(
-    name: "Ask Alexa Interface",
+    name: "Ask Alexa",
     namespace: "MichaelStruck",
     author: "Michael Struck",
-    description: "Provide interfacing to control SmartThings devices with the Amazon Echo ('Alexa').",
+    description: "Provide interfacing to control and report on SmartThings devices with the Amazon Echo ('Alexa').",
     category: "Convenience",
     iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AskAlexa/AskAlexa.png",
     iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AskAlexa/AskAlexa@2x.png",
@@ -29,63 +30,79 @@ preferences {
     page name:"mainPage"
     page name:"pageReset"
     page name:"pageAbout"
-    page name: "pageSettings"
+    page name:"pageSettings"
 }
 //Show main page
 def mainPage() {
     dynamicPage(name: "mainPage", title:"", install: true, uninstall: false) {
-		section("External control") {
-        	input "switches", "capability.switch", title: "Choose Switches (On/Off)", multiple: true, required: false,
-            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/add.png"
+		section("Devices To Interface to Alexa") {
+        	input "switches", "capability.switch", title: "Choose Switches (On/Off/Status)", multiple: true, required: false
+            input "dimmers", "capability.switchLevel", title: "Choose Dimmers (On/Off/Set/Status)", multiple: true, required: false
+            input "doors", "capability.doorControl", title: "Choose Door Controls (Open/Close/Status)" , multiple: true, required: false
+            input "locks", "capability.lock", title: "Choose Locks (Lock/Unlock/Status)", multiple: true, required: false
+        }
+        section("Configure Voice Report"){
+        	href "pageReports", title: "Voice Reports", description: reportDesc(), state: reportGrey(), image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/speak.png"
         }
         section("Options") {
-			href "pageSettings", title: "Settings", description: none, 
-            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/settings.png"
+			href "pageSettings", title: "Security Settings", description: none,
+            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/img/lock.png"
 			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license, instructions or remove the application",
             	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/info.png"
         }
 	}
 }
+page(name: "pageReports", title: "Voice Reports", install: false, uninstall: false){
+	section{
+    	app(name: "childReports", appName: "Ask Alexa - Report", namespace: "MichaelStruck", title: "Create New Voice Report...", multiple: true, 
+            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/add.png")
+	}
+}
 def pageAbout(){
 	dynamicPage(name: "pageAbout", uninstall: true) {
         section {
-        	paragraph "${textAppName()}\n${textVersion()}\n${textCopyright()}",image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/cloud-interface.src/CloudInterface@2x.png"
+        	paragraph "${textAppName()}\n${textCopyright()}",
+            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AskAlexa/AskAlexa@2x.png"
         }
+        section ("SmartApp/Voice Report Version") {
+    		paragraph "${textVersion()}"
+        } 
         section ("Access Token / Application ID"){
             if (!state.accessToken) {
 				OAuthToken()
 			}
             def msg = state.accessToken != null ? state.accessToken : "Could not create Access Token. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
-            paragraph "\nAccess Token:\n${msg}\n\nApplication ID:\n${app.id}"
+            paragraph "Access Token:\n${msg}\n\nApplication ID:\n${app.id}"
     	}
         section ("Apache License"){
         	paragraph textLicense()
         }
     	section("Instructions") {
         	paragraph textHelp()
-            paragraph "REST String:\n\n${getApiServerUrl()}/api/smartapps/installations/${app.id}/<device>/<operation>?access_token=${state.accessToken}"
         }
-        section("Tap button below to remove the application"){
+        section("Tap below to remove the application"){
         }
 	}
 }
 def pageSettings(){
-    dynamicPage(name: "pageSettings", title: "Settings", uninstall: true){
-        section("Security Settings"){
-            href "pageReset", title: "Reset Access Token", description: "Tap to revoke access token."
+    dynamicPage(name: "pageSettings", title: "Security Settings", uninstall: false){
+        section {
+            href "pageReset", title: "Reset Access Token", description: "Tap to revoke access token"
         }
     }
 }
 def pageReset(){
 	dynamicPage(name: "pageReset", title: "Access Token Reset"){
         section{
-			state.accessToken = null
+			revokeAccessToken()
+            state.accessToken = null
             OAuthToken()
             def msg = state.accessToken != null ? "New access token:\n${state.accessToken}\n\nClick 'Done' above to return to the previous menu." : "Could not reset Access Token. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
 	    	paragraph "${msg}"
 		}
 	}
 }
+//---------------------------------------------------------------
 def installed() {
 	log.debug "Installed with settings: ${settings}"
 	initialize()
@@ -100,43 +117,96 @@ def initialize() {
 	}
 }
 mappings {
-      path("/:device/:operator") { action: [GET: "processData"] }
+      path("/:device/:operator/:number") { action: [GET: "processData"] }
+      path("/setup") { action: [GET: "displayData"] }
+}
+//--------------------------------------------------------------
+def setupData(){
+	def result ="<i><b>Lambda code variables:</b></i><br><br>var STappID = '${app.id}'<br>var STtoken = '${state.accessToken}'<br><br><hr>"
+    result += "<br>LIST_OF_DEVICES<br><br>"
+    if (switches) switches.each{ result += it.label+"<br>" }
+    if (dimmers) dimmers.each{ result += it.label+"<br>" }
+    if (doors) doors.each{ result += it.label+"<br>" } 
+    if (locks) locks.each{ result += it.label+"<br>" }
+    if (childApps.size()) childApps.each { result += it.label+"<br>" }
+    result += "<br><hr><br>LIST_OF_OPERATIONS<br><br>on<br>off<br>status<br>"
+    result += locks ? "lock<br>unlock<br>" : ""
+    result += doors ? "open<br>close<br>" : ""
+    result += childApps.size() ? "report" : ""
+}
+def displayData(){
+	render contentType: "text/html", data: """<!DOCTYPE html><html><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/></head><body style="margin: 0;">${setupData()}</body></html>"""
 }
 def processData() {
     log.debug "Command received with params $params"
 	def dev = params.device 	//Label of device
 	def op = params.operator	//Operation to perform
-    def outputTxt = []
-    if (switches){
-        try {
-        	def STdevice = switches?.find{it.label == dev}
-       		log.debug STdevice
-            STdevice."$op"()
-            outputTxt << [talk2me:"${dev} is ${op}"]
+    def num = params.number     //Number for dimmer type settings
+    log.debug "Device: " + dev
+    log.debug "Operation: " + op
+    log.debug "Number: " + num
+    if (op == "undefined" && num == "undefined") op = "status"
+    def outputTxt = ""
+	if (switches && switches?.find{it.label.toLowerCase() == dev}){ outputTxt = getReply (switches, "switch", dev, op, num) }
+    if (doors && doors?.find{it.label.toLowerCase() == dev}) { outputTxt = getReply (doors, "door", dev, op, num) }
+	if (locks && locks?.find{it.label.toLowerCase() == dev}) { outputTxt = getReply (locks, "lock", dev, op, num) }
+    if (dimmers && dimmers?.find {it.label.toLowerCase() == dev}) { outputTxt = getReply (dimmers, "level" , dev, op, num) }
+    if (outputTxt=="" && op != "report") outputTxt = "I had some problems finding the device you specified. Please try again."
+    if (childApps.size() && op=="report"){
+    	log.debug "Looking for report named " + dev
+        childApps.each {child -> if (child.label.toLowerCase() == dev) outputTxt = child.reportResults()}
+        if (!outputTxt) outputTxt = "I could not find the ${dev} report. Please check the name of the report and try again." 
+    }
+    log.debug outputTxt
+    return ["talk2me":outputTxt]
+}
+def getReply(devices, type, dev, op,num){
+	def result = ""
+	try {
+    	def STdevice = devices?.find{it.label.toLowerCase() == dev}
+        if (op=="status") {
+            if (type != "level"){
+            	op = STdevice.currentValue(type)
+            	result = "The ${STdevice} is ${op}."
+            }
+            else {
+                def onOffStatus = STdevice.currentValue("switch")
+                def level = STdevice.currentValue(type) as int
+                result = "The ${STdevice} is ${onOffStatus}"
+                result += onOffStatus != "off" || level==0 ? ", and the current level is ${level}%." : "."
+            }
         }
-        catch (e){
-        	outputTxt << [talk2me:"I could not process your request"]
+        else {
+            if (num == "undefined") STdevice."$op"()
+            else STdevice.setLevel(num)
+            if (op == "close") op="clos"
+        	if (type == "door" || type == "lock") result = "I am ${op}ing the ${STdevice}."
+            else if (num == "undefined") result = "I am turning the ${STdevice} ${op}."
+            else if (type == "level" && num != "undefined") result = "I am setting the ${STdevice} to ${num}%." 
         }
 	}
-    outputTxt
+	catch (e){ result = "I could not process your request on ${dev}." }
+    result
 }
-
 //Common Code
 def OAuthToken(){
 	try {
-		createAccessToken()
+        createAccessToken()
 		log.debug "Creating new Access Token"
-	} catch (e) {
-		log.error "Access Token not defined. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth."
-	}
+	} catch (e) { log.error "Access Token not defined. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth." }
 }
-
+def reportDesc(){def results = childApps.size() ? childApps.size()==1 ? childApps.size()+ " Voice Report Configured" : childApps.size() + " Voice Reports Configured" : "No Voices Reports Configured"}
+def reportGrey(){def results =childApps.size() ? "complete" : ""}
 //Version/Copyright/Information/Help
 private def textAppName() {
-	def text = "Ask Alexa Interface"
+	def text = "Ask Alexa"
 }	
 private def textVersion() {
-    def text = "Version 1.0.0 (04/20/2016)"
+    def version = "Parent App Version: 1.0.0 (04/24/2016)"
+    def childCount = childApps.size()
+    def deviceCount= getChildDevices().size()
+    def childVersion = childCount ? childApps[0].textVersion() : "No voice reports installed"
+    return "${version}\n${childVersion}"
 }
 private def textCopyright() {
     def text = "Copyright © 2016 Michael Struck"
