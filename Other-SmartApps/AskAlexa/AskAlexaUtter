@@ -13,9 +13,15 @@ DeviceOperation play {Device} {Operator}
 DeviceOperation to play {Device} {Operator}
 DeviceOperation to play the {Device} {Operator}
 
+//remove this line-status utterences
+
 DeviceOperation {Device}
+DeviceOperation {Device} status
 DeviceOperation about {Device}
 DeviceOperation about the {Device}
+DeviceOperation status of {Device}
+
+//remove this line-dimmer utterences
 
 DeviceOperation set {Device} to {Num} 
 DeviceOperation set the {Device} to {Num} 
@@ -29,3 +35,13 @@ DeviceOperation to turn {Device} to {Num} percent
 DeviceOperation to turn the {Device} to {Num} percent
 DeviceOperation to turn {Device} to {Num} 
 DeviceOperation to turn the {Device} to {Num}
+
+//remove this line-Report utterences
+
+ReportOperation {Report} report
+ReportOperation for the {Report} report
+ReportOperation report {Report}
+ReportOperation to report {Report}
+ReportOperation play the {Report} report
+ReportOperation to play the {Report} report
+ReportOperation to give me the {Report} report
