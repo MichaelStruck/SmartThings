@@ -43,3 +43,12 @@ ReportOperation to report {Report}
 ReportOperation play the {Report} report
 ReportOperation to play the {Report} report
 ReportOperation to give me the {Report} report
+
+//remove this line - Thermostat utterences
+
+DeviceOperation set {Param} of {Device} to {Num}
+DeviceOperation set the {Param} of {Device} to {Num}
+DeviceOperation set {Param} setpoint of {Device} to {Num}
+DeviceOperation set the {Param} setpoint of {Device} to {Num}
+DeviceOperation to set {Param} setpoint of {Device} to {Num}
+DeviceOperation to set the {Param} setpoint of {Device} to {Num}
