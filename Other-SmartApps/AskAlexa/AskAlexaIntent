@@ -14,6 +14,30 @@
         {
           "name" : "Num",
           "type" : "AMAZON.NUMBER"
+        },
+        {
+          "name" : "Param",
+          "type" : "LIST_OF_PARAMS"
+        }
+        
+        ]
+    },
+    {
+      "intent": "ReportOperation",
+      "slots": [
+        {
+          "name" : "Report",
+          "type" : "LIST_OF_REPORTS"
+        }
+        
+        ]
+    },
+    {
+      "intent": "DeviceStatus",
+      "slots": [
+        {
+          "name" : "Status",
+          "type" : "LIST_OF_DEVICES"
         }
         
         ]
