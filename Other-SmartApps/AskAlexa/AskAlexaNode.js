@@ -28,7 +28,7 @@ exports.handler = function( event, context ) {
 
    if (event.request.type == "LaunchRequest") {
         var speech = "Simply give me a device and a command, or ask me the status of a device, and I will carry out your request."
-        cardName = "Ask Alexa Help";
+        cardName = "Ask Alexa Welcome";
         output(speech, context, cardName);
    } 
    else if (event.request.type == "IntentRequest") {
@@ -74,6 +74,8 @@ exports.handler = function( event, context ) {
             "For those who are curious, this is version 1.0.0 of the Lambda code, written by Michael Struck.";
             output(help, context, "Ask Alexa Help");
         }
+        else if (event.request.type === "SessionEndedRequest") { }
+        
         if (!process) {
             output("I am not sure what you are asking. Please try again", context, "Ask Alexa Error");   
         }
