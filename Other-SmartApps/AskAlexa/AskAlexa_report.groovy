@@ -1,7 +1,7 @@
 /**
  *  Ask Alexa - Report
  *
- *  Version 1.0.0 - 4/29/16 Copyright © 2016 Michael Struck
+ *  Version 1.0.0 - 5/8/16 Copyright © 2016 Michael Struck
  *  
  *  Version 1.0.0 - Initial release
  *
@@ -22,9 +22,9 @@ definition(
     description: "Provide interfacing to control and report on SmartThings devices with the Amazon Echo ('Alexa').",
     category: "Convenience",
     parent: "MichaelStruck:Ask Alexa",
-    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AskAlexa/AskAlexa.png",
-    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AskAlexa/AskAlexa@2x.png",
-    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/AskAlexa/AskAlexa@2x.png"
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa-report.src/AskAlexa.png",
+    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa-report.src/AskAlexa@2x.png",
+    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa-report.src/AskAlexa@2x.png"
     )
 preferences {
     page name:"pageSetup"
@@ -34,12 +34,9 @@ preferences {
 
 // Show setup page
 def pageSetup() {
-	dynamicPage(name: "pageSetup", title: none, install: true, uninstall: true) {
+	dynamicPage(name: "pageSetup", title: "Voice Reporting Settings", install: true, uninstall: true) {
         section {
-        	paragraph "Voice Reporting Settings", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/speak.png"
-        }
-        section(" ") {
-			label title:"Voice Report Name", required: true
+			label title:"Voice Report Name", required: true,image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/speak.png"
 		}
         section("Voice Reports/Options") {
             input "voicePre", "text", title: "Pre Message Before Device Report", description: "Enter a message to play before the device report", defaultValue: "This is your voice report for %time%, %day%, %date%.", required: false
@@ -48,6 +45,7 @@ def pageSetup() {
             href "pageDoorReport", title: "Door/Window Report", description: reportDesc(voiceDoorSensors, voiceDoorControls, voiceDoorLocks, "", ""), state: greyOutState(voiceDoorSensors, voiceDoorControls, voiceDoorLocks, "", "")
             href "pageTempReport", title: "Temperature/Humidity/Thermostat Report", description: reportDesc(voiceTemperature, voiceTempSettings, voiceTempVar, voiceHumidVar, voiceHumidity), state: greyOutState(voiceTemperature, voiceTempSettings, voiceTempVar, voiceHumidVar, voiceHumidity)
             href "pageBatteryReport",title: "Battery Report", description: reportDesc(voiceBattery, "", "", "", ""), state: greyOutState(voiceBattery, "", "", "", "")
+            href "pageOtherReport", title: "Other Sensor Report", description: reportDesc(voiceWater, "", "", "", ""), state: greyOutState(voiceWater, "", "", "", "")
             href "pageHomeReport", title: "Mode and Smart Home Monitor Report", description: reportDescMSHM(), state: greyOutState(voiceMode, voiceSHM, "", "", "")
             input "voicePost", "text", title: "Post Message After Device Report", description: "Enter a message to play after the device report", required: false
         }
@@ -76,11 +74,20 @@ page(name: "pageDoorReport", title: "Door/Window Report", install: false, uninst
         input "voiceDoorAll", "bool", title: "Report Door/Window Summary Even When All Are Closed And Locked", defaultValue: false
 	}
 }
+page(name: "pageOtherReport", title: "Other Sensor Report", install: false, uninstall: false){
+	section {
+        input "voiceWater", "capability.waterSensor", title: "Water Sensors To Report Their Status...", multiple: true, required: false 
+        input "voiceWetOnly", "bool", title: "Report Only Sensors That Are 'Wet'", defaultValue: false 
+    }
+}
 def pageTempReport(){
     dynamicPage(name: "pageTempReport", title: "Temperature/Thermostat Report", install: false, uninstall: false){
-        section {
-            input "voiceTempVar", "capability.temperatureMeasurement", title: "Temperature Device Variable (%temp%)",multiple: false, required: false
-            input "voiceHumidVar", "capability.relativeHumidityMeasurement", title:"Humidity Device Variable (%humid%)",multiple: false, required: false
+        section ("Variables for pre/post messages") {
+            input "voiceTempVar", "capability.temperatureMeasurement", title: "Temperature Device Variable (%temp%)",multiple: true, required: false, submitOnChange: true
+            input "voiceHumidVar", "capability.relativeHumidityMeasurement", title:"Humidity Device Variable (%humid%)",multiple: true, required: false, submitOnChange: true
+            if ((voiceTempVar && voiceTempVar.size()>1) || (voiceHumidVar && voiceHumidVar.size()>1)) paragraph "Please note: When multiple temperature/humidity devices are selected above, the variable output will be an average of the device readings"
+        }
+        section ("Individual devices to report on"){
             input "voiceTemperature", "capability.temperatureMeasurement", title: "Devices To Report Temperatures...",multiple: true, required: false
 			input "voiceHumidity", "capability.relativeHumidityMeasurement", title: "Devices To Report Humidity...",multiple: true, required: false
         }
@@ -98,7 +105,7 @@ def pageTempReport(){
 page(name: "pageBatteryReport", title: "Battery Report", install: false, uninstall: false){
 	section {
 		input "voiceBattery", "capability.battery", title: "Devices With Batteries To Monitor...", description: "Tap to choose devices", multiple: true, required: false
-        input "batteryThreshold", "num", title: "Battery Reporting Threshold (Less Than x%)", defaultValue: 20, required: false
+        input "batteryThreshold", "enum", title: "Battery Status Threshold", required: false, defaultValue: 20, options: [5:"<5%",10:"<10%",20:"<20%",30:"<30%",40:"<40%",50:"<50%",60:"<60%",70:"<70%",80:"<80%",90:"<90%",101:"Always play battery level"]  
 	}
 }
 def pageHomeReport(){
@@ -131,8 +138,9 @@ def reportResults(){
     fullMsg += voiceHumidity ? reportStatus(voiceHumidity,"humidity") : ""
 	if (voiceTempSettingSummary && voiceTempSettingsType) fullMsg += (voiceTempSettings) ? thermostatSummary(): ""
 	else fullMsg += (voiceTempSettings && voiceTempSettingsType) ? reportStatus(voiceTempSettings, voiceTempSettingsType) : ""
-	fullMsg += voiceBattery && batteryReport() ? batteryReport() : voiceBattery ? "All monitored batteries are above threshold. " : ""
     fullMsg += voiceDoorSensors || voiceDoorControls || voiceDoorLocks ? doorWindowReport() : ""
+    fullMsg += voiceBattery && batteryReport() ? batteryReport() : voiceBattery ? "All monitored batteries are above threshold. " : ""
+    fullMsg += voiceWater && waterReport() ? waterReport() : voiceWater ? "All monitored water sensors are dry. " : ""
     fullMsg += voiceMode ? "The current SmartThings mode is set to, '${location.currentMode}'. " : ""
     fullMsg += voiceSHM ? "The current Smart Home Monitor status is '${location.currentState("alarmSystemStatus")?.value}'. " : ""
     fullMsg += voicePost ? "${replaceVoiceVar(voicePost)} " : ""
@@ -264,10 +272,24 @@ def batteryReport(){
 		if (deviceName.latestValue("battery") < batteryThresholdLevel){
 			result += "The ${deviceName} battery is at ${deviceName.latestValue("battery")}%. "
 			count = count - 1
-			if (count == 1) result += " and the "
-			else if (count> 1) result += ", "
 		}
 	}
+    result
+}
+def waterReport(){
+    def result = "", count = 0
+	for (device in voiceWater) if (device.latestValue("water") != "dry") count ++
+        if (!voiceWetOnly){
+            for (deviceName in voiceWater) { result += "The ${deviceName} is ${deviceName.latestValue("water")}. " }
+		}
+        else if (count){
+        	for (deviceName in voiceWater){
+            	if (deviceName.latestValue("water") != "dry"){
+                	result += "The ${deviceName} is sensing water is present. "
+                    count=count-1
+                }
+         	}
+        }
     result
 }
 //Common Code
@@ -301,8 +323,8 @@ private replaceVoiceVar(msg) {
     def df = new java.text.SimpleDateFormat("EEEE")
 	location.timeZone ? df.setTimeZone(location.timeZone) : df.setTimeZone(TimeZone.getTimeZone("America/New_York"))
 	def day = df.format(new Date()), time = parseDate("","h:mm a"), month = parseDate("","MMMM"), year = parseDate("","yyyy"), dayNum = parseDate("","d")
-    def temp = voiceTempVar ? "${voiceTempVar.latestValue("temperature")} degrees" : "undefined device"
-    def humid = voiceHumidVar ? "${voiceHumidVar.latestValue("humidity")} percent relative humidity" : "undefined device"
+    def temp = voiceTempVar ? getAverage(voiceTempVar, "temperature") + " degrees" : "undefined device"
+    def humid = voiceHumidVar ? getAverage(voiceHumidVar, "humidity") + " percent relative humidity"	: "undefined device"
     msg = msg.replace('%day%', day)
     msg = msg.replace('%date%', "${month} ${dayNum}, ${year}")
     msg = msg.replace('%time%', "${time}")
@@ -310,9 +332,16 @@ private replaceVoiceVar(msg) {
     msg = msg.replace('%humid%', "${humid}")
     msg
 }
+private getAverage(device,type){
+	def total = 0
+	device.each {total += it.latestValue(type) }
+    def result = ((total/device.size()) + 0.5) as int
+}	
 private parseDate(time, type){
 	def formattedDate = time ? time : new Date(now()).format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", location.timeZone)
     new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", formattedDate).format("${type}", timeZone(formattedDate))
 }
-//Version
-private def textVersion() {def text = "Voice Reports Version: 1.0.0 (04/29/2016)"}
+//Version 
+private def textVersion() {return "Voice Reports Version: 1.0.0 (05/08/2016)"}
+private def versionInt() {return 100}
+private def versionLong() {return "1.0.0"}
