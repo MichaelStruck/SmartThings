@@ -33,6 +33,16 @@
         ]
     },
     {
+      "intent": "ListOperation",
+      "slots": [
+        {
+          "name" : "Type",
+          "type" : "DEVICE_TYPE_LIST"
+        }
+        
+        ]
+    },
+    {
       "intent": "DeviceStatus",
       "slots": [
         {
@@ -41,6 +51,26 @@
         }
         
         ]
+    },
+    {
+      "intent": "VersionOperation"
+    },
+    {
+      "intent": "SmartHomeOperation",
+      "slots": [
+        {
+          "name" : "SHCmd",
+          "type" : "LIST_OF_SHCMD"
+        },
+        {
+          "name" : "SHParam",
+          "type" : "LIST_OF_SHPARAM"
+        }
+        
+        ]
+    },
+    {
+      "intent": "AMAZON.HelpIntent"
     }
 	]
 }
