@@ -1,7 +1,7 @@
 /**
  *  Ask Alexa - Lambda Code
  *
- *  Version 1.0.0 - 5/2/16 Copyright © 2016 Michael Struck
+ *  Version 1.0.0 - 5/8/16 Copyright © 2016 Michael Struck
  *  Special thanks for Keith DeLong for code and assistance
  *  
  *  Version 1.0.0 - Initial release
@@ -18,18 +18,20 @@
  */
 'use strict';
 exports.handler = function( event, context ) {
+   var version = '1.0.0'
    var https = require( 'https' );
    // Paste app code here between the breaks------------------------------------------------
-    var STappID = 'fb282c10-be02-4a8d-8608-612d6392d672';
-    var STtoken = '34989961-ddd0-47d4-8d46-85f13d83cc96';
+    var STappID = 'f42605b0-5e04-40d6-a042-8efec7ef7172';
+    var STtoken = '67deb4cb-5c8e-40fc-b942-2688b430a01c';
     var url='https://graph.api.smartthings.com:443/api/smartapps/installations/' + STappID + '/' ;
    //---------------------------------------------------------------------------------------
    var cardName ="";
-
+   console.log (event.request.type);
    if (event.request.type == "LaunchRequest") {
         var speech = "Simply give me a device and a command, or ask me the status of a device, and I will carry out your request."
-        cardName = "Ask Alexa Welcome";
+        cardName = "Ask Alexa Help";
         output(speech, context, cardName);
+        shouldEndSession: true
    } 
    else if (event.request.type == "IntentRequest") {
         var process = false;
@@ -55,6 +57,17 @@ exports.handler = function( event, context ) {
             process = true;
             cardName = "SmartThings Status Report";
         }
+        else if (intentName == "ListOperation") {
+            var Type = event.request.intent.slots.Type.value;
+            url += 'l?Type=' + Type;
+            process = true;
+            cardName = "SmartThings Help";
+        }
+        else if (intentName == "VersionOperation") {
+            url += 'v?Ver=' + version;
+            process = true;
+            cardName = "SmartThings Version Help";
+        }
         else if (intentName == "SmartHomeOperation") {
             var SHCmd = event.request.intent.slots.SHCmd.value;
             var SHParam = event.request.intent.slots.SHParam.value;
@@ -71,11 +84,10 @@ exports.handler = function( event, context ) {
             "close status, or find out the temperature in a room. To use this function, just give "+
             "me the device name. For example, you could say, 'ask SmartThings about the patio'. and I will "+
             "give you all of the common attributes I find with that device, including battery levels. "+
-            "For those who are curious, this is version 1.0.0 of the Lambda code, written by Michael Struck.";
+            "For those who are curious, this is version" + version +" of the Lambda code, written by Michael Struck."
             output(help, context, "Ask Alexa Help");
+            shouldEndSession: true
         }
-        else if (event.request.type === "SessionEndedRequest") { }
-        
         if (!process) {
             output("I am not sure what you are asking. Please try again", context, "Ask Alexa Error");   
         }
@@ -85,7 +97,7 @@ exports.handler = function( event, context ) {
                 response.on( 'data', function( data ) {
                 var resJSON = JSON.parse(data);
                 var speechText = "The SmartThings SmartApp returned an error. I was unable to complete your request";
-                if (resJSON.talk2me) { speechText = resJSON.talk2me; }
+                if (resJSON.voiceOutput) { speechText = resJSON.voiceOutput; }
                 console.log(speechText);
                 output(speechText, context, cardName);
                 } );
