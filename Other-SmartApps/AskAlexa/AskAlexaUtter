@@ -1,3 +1,4 @@
+As of 5/18
 ListOperation list {Type}
 ListOperation {Type}
 ListOperation about {Type}
@@ -10,26 +11,8 @@ DeviceOperation {Device} {Operator}
 DeviceOperation to {Operator} the {Device}
 DeviceOperation to {Operator} the {Device} password {Num}
 
-DeviceStatus the status of {Status}
-DeviceStatus the status of the {Status}
-DeviceStatus play the {Status} status
-DeviceStatus play {Status} status
-DeviceStatus to play {Status} status
-DeviceStatus to play the {Status} status
-DeviceStatus {Status}
-DeviceStatus {Status} status
-DeviceStatus {Status} state
-DeviceStatus about {Status}
-DeviceStatus about the {Status}
-DeviceStatus status of {Status}
-DeviceStatus the state of {Status}
-DeviceStatus to give me the status of {Status}
-DeviceStatus if the {Status} is open
-DeviceStatus if the {Status} is locked
-DeviceStatus if the {Status} is unlocked
-DeviceStatus if the {Status} is closed
-
-DeviceOperation set {Device} to {Num} 
+DeviceOperation set {Device} to {Num}
+DeviceOperation {Device} to {Num}
 DeviceOperation set the {Device} to {Num} 
 DeviceOperation to set {Device} to {Num} 
 DeviceOperation to set the {Device} to {Num}
@@ -42,22 +25,47 @@ DeviceOperation to turn the {Device} to {Num} percent
 DeviceOperation to turn {Device} to {Num} 
 DeviceOperation to turn the {Device} to {Num}
 
-DeviceOperation set {Device} to {Param} 
+DeviceOperation turn {Device} {Param} 
+DeviceOperation turn {Device} to {Param}
+DeviceOperation turn the {Device} {Param}
+DeviceOperation turn the {Device} to {Param}
+DeviceOperation set {Device} {Param} 
+DeviceOperation set {Device} to {Param}
+DeviceOperation set the {Device} {Param}
 DeviceOperation set the {Device} to {Param}
 DeviceOperation set the color of {Device} to {Param} and set level to {Num}
 DeviceOperation set the {Device} to {Param} and {Num}
+DeviceOperation {Operator} {Device} by {Num}
+DeviceOperation turn {Device} {Operator} by {Num}
+DeviceOperation turn the {Device} {Operator} by {Num} percent
+DeviceOperation turn {Device} {Operator}
+DeviceOperation {Operator} the {Device}
+DeviceOperation to {Operator} the {Device} volume
+DeviceOperation to {Operator} the {Device} temperature
+DeviceOperation to {Operator} the {Device} {Param} temperature
+DeviceOperation to {Operator} the {Device} level
+DeviceOperation to {Operator} the {Device} brightness
+DeviceOperation {Operator} brightness of the {Device}
+DeviceOperation {Operator} level of the {Device}
+DeviceOperation {Operator} temperature of the {Device}
+DeviceOperation {Operator} volume of the {Device}
 
-ReportOperation {Report} report
-ReportOperation {Report} reports
-ReportOperation for the {Report} report
-ReportOperation report {Report}
-ReportOperation reports {Report}
-ReportOperation to report {Report}
-ReportOperation play the {Report} report
-ReportOperation to play {Report}
-ReportOperation to play the {Report} report
-ReportOperation to give me the {Report} report
-ReportOperation to tell me the {Report} report
+MacroOperation {Macro} report
+MacroOperation for {Macro} reports
+MacroOperation for the {Macro} reports
+MacroOperation {Macro} reports
+MacroOperation for the {Macro} report
+MacroOperation report {Macro}
+MacroOperation reports {Macro}
+MacroOperation to report {Macro}
+MacroOperation play the {Macro} report
+MacroOperation to play {Macro}
+MacroOperation to play the {Macro} report
+MacroOperation to give me the {Macro} report
+MacroOperation to tell me the {Macro} report
+MacroOperation turn on {Macro} report
+MacroOperation turn on the {Macro} report
+MacroOperation give me the {Macro} report
 
 DeviceOperation set {Param} of {Device} to {Num} degrees
 DeviceOperation set {Param} of {Device} to {Num} 
@@ -95,6 +103,8 @@ SmartHomeOperation what is the current {SHCmd}
 SmartHomeOperation the current {SHCmd}
 SmartHomeOperation to change the {SHCmd} to {SHParam}
 SmartHomeOperation {SHParam} {SHCmd}
+SmartHomeOperation {SHParam}
+SmartHomeOperation {SHCmd}
 SmartHomeOperation execute the {SHParam} {SHCmd}
 SmartHomeOperation about {SHCmd}
 SmartHomeOperation about the {SHCmd}
@@ -104,3 +114,20 @@ VersionOperation tell me the version
 VersionOperation about the Ask Alexa smartapp
 VersionOperation about Ask Alexa
 VersionOperation about the smartapp version
+
+DeviceOperation about {Device}
+DeviceOperation about {Device} {Operator}
+DeviceOperation about the {Device} {Operator}
+DeviceOperation about the {Device}
+DeviceOperation {Device} {Operator}
+DeviceOperation {Operator} of {Device}
+DeviceOperation for the {Operator} of {Device}
+DeviceOperation for the last {Num} {Operator} of {Device}
+DeviceOperation for the last {Num} {Operator} of the {Device}
+DeviceOperation for the last {Num} {Device} {Operator}
+DeviceOperation last {Num} {Operator} on {Device}
+DeviceOperation play the last {Num} {Operator} on {Device}
+DeviceOperation play the last {Num} {Operator} from {Device}
+DeviceOperation play the last {Num} {Operator} from the {Device}
+DeviceOperation to give me the last {Operator} for the {Device}
+DeviceOperation to give me the last {Num} {Operator} for the {Device}
