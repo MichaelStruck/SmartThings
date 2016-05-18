@@ -1,3 +1,4 @@
+As of 5/18
 {
   "intents": [
     {
@@ -23,13 +24,29 @@
         ]
     },
     {
-      "intent": "ReportOperation",
+      "intent": "MacroOperation",
       "slots": [
         {
-          "name" : "Report",
-          "type" : "LIST_OF_REPORTS"
+          "name" : "Macro",
+          "type" : "LIST_OF_MACROS"
+        },
+        {
+          "name" : "mNum",
+          "type" : "AMAZON.NUMBER"
         }
-        
+        ]
+    },
+     {
+      "intent": "GroupOperation",
+      "slots": [
+        {
+          "name" : "Group",
+          "type" : "LIST_OF_GROUPS"
+        },
+        {
+          "name" : "gNum",
+          "type" : "AMAZON.NUMBER"
+        }
         ]
     },
     {
@@ -39,17 +56,6 @@
           "name" : "Type",
           "type" : "DEVICE_TYPE_LIST"
         }
-        
-        ]
-    },
-    {
-      "intent": "DeviceStatus",
-      "slots": [
-        {
-          "name" : "Status",
-          "type" : "LIST_OF_DEVICES"
-        }
-        
         ]
     },
     {
@@ -66,7 +72,6 @@
           "name" : "SHParam",
           "type" : "LIST_OF_SHPARAM"
         }
-        
         ]
     },
     {
