@@ -97,7 +97,10 @@ def pageGroupM() {
         section("Custom acknowledgment"){ 
             if (!noAck) input "voicePost", "text", title: "Acknowledgement Message", description: "Enter a short statement to play after macro runs", required: false
             input "noAck", "bool", title: "No Acknowledgement Message", defaultValue: false, submitOnChange: true
-		}	
+		}
+        section("Please note"){
+        	paragraph "Any acknowledgement message, or activating the 'no acknowledgement message' above will disable any output from the macros. "
+        }
 	}
 }
 //Control Macro
@@ -319,6 +322,7 @@ def updated() {
 }
 def initialize() {
     unschedule()
+    state.scheduled=false
 }
 //Group Handler-----------------------------------------------------------
 def groupResults(num, op, colorData, param){
@@ -384,19 +388,25 @@ def groupResults(num, op, colorData, param){
 def controlResults(delay){	
 	def result = ""
     if (macroDesc() !="Status: UNCONFIGURED - Tap to configure macro"){	
-    	result = "I am running the '${app.label}' control macro"
-        result += (!delay || delay == 0) ? ". " : delay==1 ? " in ${delay} minute. " : " in ${delay} minutes. "
-    	if (delay == 9999) result = "I am cancelling all scheduled instances of the control macro named, '${app.label}'. "
-        if (!delay || delay == 0) controlHandler() 
-		else if (delay < 9999) runIn(delay*60, controlHandler, [overwrite: true])
-        else if (delay == 9999) unschedule()
-		result = voicePost && !noAck ? replaceVoiceVar(voicePost) : noAck ? " " : result
+		result = (!delay || delay == 0) ? "I am running the '${app.label}' control macro. " : delay==1 ? "I'll run the '${app.label}' control macro in ${delay} minute. " : "I'll run the '${app.label}' control macro in ${delay} minutes. "
+		if (delay == 9999) { 
+        	result = "I am cancelling all scheduled execution of the control macro, '${app.label}'. "  
+            state.scheduled = false
+            unschedule() 
+        }
+		if (!state.scheduled) {
+        	if (!delay || delay == 0) controlHandler() 
+            else if (delay < 9999) { runIn(delay*60, controlHandler, [overwrite: true]) ; state.scheduled=true}
+            result = voicePost && !noAck ? replaceVoiceVar(voicePost) : noAck ? " " : result
+		}
+        else result = "The control macro, '${app.label}', is already scheduled to run. You must cancel the execution or wait until it runs before you can run it again. "
     }
     else result="The control macro, '${app.label}' is not properly configured. Use your SmartApp to configure the macro. "
 	return result
 }
 def controlHandler(){
-    def cmd = [switch: switchesCMD, dimmer: dimmersCMD, cLight: cLightsCMD, tstat: tstatsCMD, lock: locksCMD, garage: garagesCMD]
+   	state.scheduled = false
+   	def cmd = [switch: switchesCMD, dimmer: dimmersCMD, cLight: cLightsCMD, tstat: tstatsCMD, lock: locksCMD, garage: garagesCMD]
     if (phrase) location.helloHome.execute(phrase)
 	if (setMode && location.mode != setMode) {
 		if (location.modes?.find{it.name == setMode}) setLocationMode(setMode)
@@ -673,10 +683,10 @@ def getTimeLabel(start, end){
 }
 def macroDesc(){
 	def desc = ""
-    def customAck = voicePost && !noAck ? "and a custom acknowledgement message" : noAck ? "and no acknowledgement message" : ""
+    def customAck = voicePost && !noAck ? "; includes a custom acknowledgement message" : noAck ? "; there will be no acknowledgement message" : ""
     if (macroType == "Control" && (phrase || setMode || SHM || getDeviceDesc() != "Status: UNCONFIGURED - Tap to configure" || 
     	getHTTPDesc() !="Status: UNCONFIGURED - Tap to configure" || (contacts && smsMsg) || (smsNum && pushMsg && smsMsg))) 
-        	desc= "Control Macro CONFIGURED - Tap to edit" 
+        	desc= "Control Macro CONFIGURED${customAck} - Tap to edit" 
     if (macroType =="Voice" && (voicePre || voiceSwitch || voiceDimmer || voiceDoorSensors || voiceDoorControls || voiceDoorLocks || 
     	voiceTemperature ||  voiceTempSettings || voiceTempVar || voiceHumidVar || voiceHumidity || weatherDesc()=="Status: CONFIGURED - Tap to edit" ||
         voiceWater || voiceMotion || voicePresence || voiceBattery || voicePost || voiceMode || voiceSHM)) { 
@@ -685,11 +695,11 @@ def macroDesc(){
 	if (macroType =="Group" && groupType && settings."groupDevice${groupType}") {
     	def groupDesc =[switch:"Switch Group",switchLevel:"Dimmer Group",colorControl:"Colored Light Group",lock:"Lock Group",doorControl: "Door Group"][groupType] ?: groupType
         def countDesc = settings."groupDevice${groupType}".size() == 1 ? "one device" : settings."groupDevice${groupType}".size() + " devices"
-        desc = "${groupDesc} CONFIGURED with ${countDesc} ${customAck} - Tap to edit" 
+        desc = "${groupDesc} CONFIGURED with ${countDesc}${customAck} - Tap to edit" 
     }
     if (macroType =="GroupM" &&  groupMacros) {
     	def countDesc = groupMacros.size() == 1 ? "one macro" : groupMacros.size() + " macros"
-        desc = "Macro Group CONFIGURED with ${countDesc} ${customAck} - Tap to edit" 
+        desc = "Macro Group CONFIGURED with ${countDesc}${customAck} - Tap to edit" 
     }
     desc = desc ? desc : "Status: UNCONFIGURED - Tap to configure macro"
 }
