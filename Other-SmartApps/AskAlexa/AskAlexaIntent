@@ -1,4 +1,4 @@
-As of 5/18
+As of 5/27
 {
   "intents": [
     {
@@ -22,8 +22,8 @@ As of 5/18
         }
         
         ]
-    },
-    {
+    },  
+	{
       "intent": "MacroOperation",
       "slots": [
         {
@@ -31,21 +31,20 @@ As of 5/18
           "type" : "LIST_OF_MACROS"
         },
         {
-          "name" : "mNum",
+          "name" : "MNum",
           "type" : "AMAZON.NUMBER"
-        }
-        ]
-    },
-     {
-      "intent": "GroupOperation",
-      "slots": [
-        {
-          "name" : "Group",
-          "type" : "LIST_OF_GROUPS"
         },
         {
-          "name" : "gNum",
-          "type" : "AMAZON.NUMBER"
+          "name" : "MCmd",
+          "type" : "LIST_OF_OPERATORS"
+        },
+        {
+          "name" : "Cancel",
+          "type" : "CANCEL_CMDS"
+        },
+        {
+          "name" : "MParam",
+          "type" : "LIST_OF_PARAMS"
         }
         ]
     },
