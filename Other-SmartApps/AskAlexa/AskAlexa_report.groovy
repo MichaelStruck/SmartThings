@@ -1,7 +1,7 @@
 /**
  *  Ask Alexa - Macro
  *
- *  Version 2.0.0 - 5/24/16 Copyright © 2016 Michael Struck
+ *  Version 2.0.0 - 5/26/16 Copyright © 2016 Michael Struck
  *  
  *  Version 1.0.0 - Initial release
  *  Version 1.0.1 - Added motion sensor reports; added events report to various sensors
@@ -99,7 +99,8 @@ def pageGroupM() {
             input "noAck", "bool", title: "No Acknowledgement Message", defaultValue: false, submitOnChange: true
 		}
         section("Please note"){
-        	paragraph "Any acknowledgement message, or activating the 'no acknowledgement message' above will disable any output from the macros. "
+        	paragraph "Any acknowledgement message, or activating the 'no acknowledgement message' above will disable any output from the macros, " +
+            	"including voice reports."
         }
 	}
 }
@@ -109,7 +110,7 @@ def pageControl() {
         def phrases = location.helloHome?.getPhrases()*.label
         if (phrases) phrases.sort()	
         section { paragraph "Control Settings", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/control.png" }
-        section ("Do the following when voice macro is activated...") {
+        section ("When voice macro is activated...") {
             if (phrases) input "phrase", "enum", title: "Perform This Routine...", options: phrases, required: false,
             	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/routine.png" 
             input "setMode", "mode", title: "Set Mode To...", required: false, 
@@ -326,7 +327,10 @@ def initialize() {
 }
 //Group Handler-----------------------------------------------------------
 def groupResults(num, op, colorData, param){
-    def result= "", level = num as int, noun=""
+    def result= "", noun="", valueWord, proNoun=""
+    num = num < 0 ? 0 : num >99 ? 100 : num
+    proNoun = settings."groupDevice${groupType}".size()==1 ? "its" : "their"
+    valueWord = num ==100 ? "${proNoun} maximum brightness" :  op =="low" || op=="medium" || op=="high" ? "${op}, or a value of ${num}%" : "${num}%"
     if (groupType=="switch"){
     	noun=settings."groupDevice${groupType}".size()==1 ? "device" : "devices"
         if (op == "on" || op == "off") { settings."groupDevice${groupType}"?."$op"();result = voicePost && !noAck ? replaceVoiceVar(voicePost) : noAck ? " " : "I am turning ${op} the ${noun} in the group named '${app.label}'. " }
@@ -338,29 +342,44 @@ def groupResults(num, op, colorData, param){
         if (num==0 && op=="undefined") op="off"
         if (op=="on" || op=="off"){ settings."groupDevice${groupType}"?."$op"();result = voicePost ? replaceVoiceVar(voicePost) : noAck ? " " :  "I am turning ${op} the ${noun} in the group named '${app.label}'. "}
         else if (op == "toggle") { toggleState(settings."groupDevice${groupType}");result = voicePost ? replaceVoiceVar(voicePost) : noAck ? " " : "I am toggling the ${noun} in the group named '${app.label}'. " }
-		else if (num >0) { settings."groupDevice${groupType}"?.setLevel(num); result = voicePost ? replaceVoiceVar(voicePost) : noAck ? " " : "I am setting the ${noun} in the ${app.label} to ${num}%. " }
-		else result = "For a dimmer group, be sure to use an 'on', 'off', 'toggle' or brightness level setting. " 
+		else if (num >0 && cmd =="undefined") { settings."groupDevice${groupType}"?.setLevel(num); result = voicePost ? replaceVoiceVar(voicePost) : noAck ? " " : "I am setting the ${noun} in the ${app.label} to ${valueWord}. " }
+		else if (op == "increase" || op=="raise" || op=="up" || op == "decrease" || op=="down" || op=="lower"){
+        	settings."groupDevice${groupType}".each{
+            	upDown(it, op, num)
+                if (op == "increase" || op=="raise" || op=="up") result = "I have raised the brightness of the ${noun} in the group named '${app.label}'. "
+                if (op == "decrease" || op=="down" || op=="lower") result = "I have decreased the brightness of the ${noun} in the group named '${app.label}'. "
+            }    
+        }
+        else result = "For a dimmer group, be sure to use an 'on', 'off', 'toggle' or brightness level setting. " 
 	}
     else if (groupType=="colorControl"){
         noun=settings."groupDevice${groupType}".size()==1 ? "colored light" : "colored lights"
         if (op=="on" || op=="off"){ settings."groupDevice${groupType}"?."$op"();result = voicePost && !noAck ? replaceVoiceVar(voicePost) :  noAck ? " " : "I am turning ${op} the ${noun} in the group named '${app.label}'. "}
         else if (op == "toggle") { toggleState(settings."groupDevice${groupType}");result = voicePost && !noAck ? replaceVoiceVar(voicePost) :  noAck ? " " :"I am toggling the ${noun} in the group named '${app.label}'. " }
-		else if (num > 0 && !colorData) { settings."groupDevice${groupType}"?.setLevel(num); result = voicePost && !noAck  ? replaceVoiceVar(voicePost) :  noAck ? " " :"I am setting the ${noun} in the ${app.label} to ${num}%. " }
+		else if (num > 0 && !colorData && op =="undefined") { settings."groupDevice${groupType}"?.setLevel(num); result = voicePost && !noAck  ? replaceVoiceVar(voicePost) :  noAck ? " " :"I am setting the ${noun} in the '${app.label}' group to ${valueWord}. " }
 		else if (colorData && param) { 
         	settings."groupDevice${groupType}"?.setColor(colorData)
             if (!voicePost && !noAck){
             	result ="I am setting the ${noun} in the ${app.label} to ${param}"
-            	result += num > 0 ? ", at a level of ${num}%. " : ". "
+    			valueWord = num ==100 ? " and ${proNoun} maximum brightness" : op =="low" || op=="medium" || op=="high" ? ",and to ${op}, or a brightness level of ${num}%" : ", at a brightness level of ${num}%"
+                result += num > 0 ? "${valueWord}. " : ". "
             }
             else if (voicePost && !noAck)  result = replaceVoiceVar(voicePost) 
             else result = " "
+        }
+        else if (op == "increase" || op=="raise" || op=="up" || op == "decrease" || op=="down" || op=="lower"){
+        	settings."groupDevice${groupType}".each{
+            	upDown(it, op, num)
+                if (op == "increase" || op=="raise" || op=="up") result = "I have raised the brightness of the ${noun} in the group named '${app.label}'"
+                if (op == "decrease" || op=="down" || op=="lower") result = "I have decreased the brightness of the ${noun} in the group named '${app.label}'"
+            	result += num>0 ? " by ${num}%. " : ". "
+            }    
         }
         else result = "For a colored light group, be sure to give me an 'on', 'off', 'toggle', brightness level or color command. " 
 	}
     else if (groupType=="lock"){
     	noun=settings."groupDevice${groupType}".size()==1 ? "device" : "devices"
             if (op == "lock"|| op == "unlock" ){ 
-				log.debug param
                 if (param =="undefined" || (param !="undefined" && param == num)){
 				settings."groupDevice${groupType}"?."$op"()
 				result = voicePost && !noAck ? replaceVoiceVar(voicePost) : noAck ? " " : "I am ${op}ing the ${noun} in the group named '${app.label}'. " 
@@ -451,6 +470,7 @@ def controlHandler(){
 }
 //Macro Handler-------------------------------------------------------------
 def macroResults(num, cmd, colorData, param){ def result = macroType == "Voice" ? reportResults() : macroType == "Control" ? controlResults(num) : groupResults(num, cmd, colorData, param) }
+//Report Handler-------------------------------------------------------------
 def reportResults(){
     def fullMsg=""
     try {
@@ -655,6 +675,14 @@ def getOkToRun(){ def result = (!runMode || runMode.contains(location.mode)) && 
 def getType(){ return macroType }
 def groupMacroList(){ return groupMacros }
 //Common Code
+def upDown(device, op, num){
+    def numChange, newLevel, currLevel, defMove
+    defMove = parent.getLightIncVal() ; currLevel = device.currentValue("switch")=="on" ? device.currentValue("level") as int : 0
+    if (op == "increase" || op=="raise" || op=="up")  numChange = num == 0 ? defMove : num > 0 ? num : 0
+    if (op == "decrease" || op=="down" || op=="lower") numChange = num == 0 ? -defMove : num > 0 ? -num  : 0
+    newLevel = currLevel + numChange; newLevel = newLevel > 100 ? 100 : newLevel < 0 ? 0 : newLevel
+    device?.setLevel(newLevel)
+}
 private getDayOk(dayList) {
 	def result = true
     if (dayList) {
@@ -867,6 +895,6 @@ private setColoredLights(switches, color, level, type){
 	switches?.setColor(newValue)
 }
 //Version 
-private def textVersion() {return "Voice Reports Version: 2.0.0 (05/24/2016)"}
+private def textVersion() {return "Voice Reports Version: 2.0.0 (05/26/2016)"}
 private def versionInt() {return 200}
 private def versionLong() {return "2.0.0"}
