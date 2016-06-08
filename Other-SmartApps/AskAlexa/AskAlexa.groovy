@@ -376,12 +376,8 @@ def pageGroup() {
 def pageCoRE() {
 	dynamicPage(name: "pageCoRE", install: false, uninstall: false) {
 		section { paragraph "CoRE Trigger Settings", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/CoRE.png" }
-		section ("Instructions"){
-        	paragraph "To use the CoRE Trigger Macro, enter the Acknowledgement Message below (or choose 'No Acknowledgement Message'), "+ 
-            	"a delay (if required), then click 'Done' above. Ensure the name and restrictions are appropriate and click 'Done' again to save it. "+
-            	"\n\nEnter the CoRE application and configure a piston to react to the Ask Alexa CoRE Trigger Macro name." 
-        }
-        section("Delay to trigger"){
+		section (" "){
+   			input "CoREName", "enum", title: "Choose CoRE Piston", options: parent.listPistons(), required: false, multiple: false
         	input "cDelay", "number", title: "Default Delay (Minutes) To Trigger", defaultValue: 0, required: false,
             	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/stopwatch.png"
         }
@@ -688,6 +684,7 @@ def initialize() {
         if (!state.accessToken) log.error "Access token not defined. Ensure OAuth is enabled in the SmartThings IDE."
         fillColorSettings()
         fillTypeList()
+        subscribe(location, "CoRE", coreHandler)
 	}
     else{
     	unschedule()
@@ -982,7 +979,7 @@ def getReply(devices, type, dev, op, num, param){
         def supportedCaps = STdevice.capabilities
         if (op=="status") {
             if (type == "temperature"){
-                result = "The temperature of the ${STdevice} is ${STdevice.currentValue(type)} degrees"
+                result = "The temperature of the ${STdevice} is ${Math.round(STdevice.currentValue(type))} degrees"
                 if (otherStatus) {
                     def humidity = STdevice.currentValue("humidity"), wet=STdevice.currentValue("water")
                     result += humidity ? ", and the relative humidity is ${humidity}%. " : ". "
@@ -998,7 +995,7 @@ def getReply(devices, type, dev, op, num, param){
             else if (type == "humidity"){
                 result = "The relative humidity at the ${STdevice} is ${STdevice.currentValue(type)}%"
                 if (otherStatus) {
-                    def temp =STdevice.currentValue("temperature")
+                    def temp =Math.round(STdevice.currentValue("temperature"))
                     result += temp ? ", and the temperature is ${temp} degrees." : ". "
 				}
             }
@@ -1013,7 +1010,7 @@ def getReply(devices, type, dev, op, num, param){
             }
             else if (type == "thermostat"){
                 def temp = STdevice.currentValue("temperature")
-                result = "The ${STdevice} temperature reading is currently ${temp as int} degrees"
+                result = "The ${STdevice} temperature reading is currently ${temp} degrees"
                 if (otherStatus){
                     def heat, cool
                     def humidity = STdevice.currentValue("humidity"), opState = STdevice.currentValue("thermostatMode")
@@ -1025,9 +1022,9 @@ def getReply(devices, type, dev, op, num, param){
                     	result += " This thermostat's presence sensor is reading "
                         result += STdevice.currentValue("presence")=="present" ? "'Home'. " : "'Away'. "
                     }
-                    result += heat ? " The heating setpoint is set to ${heat as int} degrees. " : ""
+                    result += heat ? " The heating setpoint is set to ${heat} degrees. " : ""
                     result += heat && cool ? "And finally, " : ""
-                    result += cool ? " The cooling setpoint is set to ${cool as int} degrees. " : ""
+                    result += cool ? " The cooling setpoint is set to ${cool} degrees. " : ""
             	}           
             }
             else if (type == "contact") result = "The ${STdevice} is currently ${STdevice.currentValue(type)}. "
@@ -1179,9 +1176,9 @@ def getReply(devices, type, dev, op, num, param){
         	}
 		}
         if (otherStatus && op=="status"){
-            def temp =STdevice.currentValue("temperature"), accel=STdevice.currentValue("acceleration"), motion=STdevice.currentValue("motion"), lux =STdevice.currentValue("illuminance") 
+            def temp = Math.round(STdevice.currentValue("temperature")), accel=STdevice.currentValue("acceleration"), motion=STdevice.currentValue("motion"), lux =STdevice.currentValue("illuminance") 
             result += lux ? "The illuminance at this device's location is ${lux} lux. " : ""
-            result += temp && type != "thermostat" && type != "humidity" && type != "temperature" ? "In addition, the temperature reading from this device is ${temp as int} degrees. " : ""
+            result += temp && type != "thermostat" && type != "humidity" && type != "temperature" ? "In addition, the temperature reading from this device is ${temp} degrees. " : ""
 			result += motion == "active" && type != "motion" ? "This device is also a motion sensor, and it is currently reading movement. " : ""
 			result += accel == "active" ? "This device has a vibration sensor, and it is currently reading movement. " : ""
         }
@@ -1252,14 +1249,17 @@ def displayData(){
 	render contentType: "text/html", data: """<!DOCTYPE html><html><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/></head><body style="margin: 0;">${setupData()}</body></html>"""
 }
 //Child code pieces here----------------------------------------
-//Macro Handler-------------------------------------------------------------
+//Macro Handler
 def macroResults(num, cmd, colorData, param){ 
 	def result 
     if (macroType == "Voice") result = reportResults() 
     if (macroType == "Control") result = controlResults(num)
     if (macroType == "Group") result = groupResults(num, cmd, colorData, param)
-	if (macroType == "CoRE") result = CoREResults(num)
-	sendLocationEvent(name: "askAlexaMacro", value: app.label, displayed: true, isStateChange: true, descriptionText: "Ask Alexa ran '${app.label}'.")
+	if (macroType == "CoRE") {
+    	result = CoREResults(num)
+        sendLocationEvent (name: "CoRE", value: "execute", data: [ pistonName: CoREName], descriptionText: "Ask Alexa triggered '${CoREName}' piston.") 
+    }
+    else sendLocationEvent(name: "askAlexaMacro", value: app.label, displayed: true, isStateChange: true, descriptionText: "Ask Alexa ran '${app.label}'.")
 	return result
 }
 //Group Handler
@@ -1514,6 +1514,7 @@ def switchOnReport(devices, type){
 def thermostatSummary(){
 	def result = "", monitorCount = voiceTempSettings.size(), matchCount = 0, err = false
     for (device in voiceTempSettings) {
+        if (parent.isNest()) try { device.poll() } catch(e) { }
         try{ if (device.latestValue(voiceTempSettingsType) as int == voiceTempTarget as int)  matchCount ++ }
         catch (e) { err=true }
     }
@@ -1525,6 +1526,7 @@ def thermostatSummary(){
             if (difCount==monitorCount) result += "None of the thermostats are set to ${voiceTempTarget} degrees. "
             else if (matchCount==1) {
                 for (device in voiceTempSettings){
+                    if (parent.isNest()) try { device.poll() } catch(e) { }
                     if (device.latestValue(voiceTempSettingsType) as int == voiceTempTarget as int){
                         result += "Of the ${monitorCount} monitored thermostats, only ${device} is set to ${voiceTempTarget} degrees. "
                     }
@@ -1533,6 +1535,7 @@ def thermostatSummary(){
             else if (difCount && matchCount>1) {
                 result += "Some of the thermostats are set to ${voiceTempTarget} degrees except"
                 for (device in voiceTempSettings){
+                    if (parent.isNest()) try { device.poll() } catch(e) { }
                     if (device.latestValue(voiceTempSettingsType) as int != voiceTempTarget as int){
                         result += " ${device}"
                         difCount = difCount -1
@@ -1556,10 +1559,12 @@ def reportStatus(deviceList, type){
 		}
     }
 	else if (type != "autoAll") deviceList.each { deviceName->
+        if (parent.isNest()) try { deviceName.poll() } catch(e) { }
         try { result += "The ${deviceName} is set to ${Math.round(deviceName.latestValue(type))}${appd}. " }
     	catch (e) { result = "The ${deviceName} is not able to provide its setpoint. Please choose another setpoint type to report on. " }
     }
     else if (type == "autoAll") deviceList.each { deviceName->
+        if (parent.isNest()) try { deviceName.poll() } catch(e) { }
         try { 
         	result += "The ${deviceName} has a cooling setpoint of ${Math.round(deviceName.latestValue("coolingSetpoint"))}${appd}, " +
         		"and a heating setpoint of ${Math.round(deviceName.latestValue("heatingSetpoint"))}${appd}. " 
@@ -1713,6 +1718,7 @@ def waterReport(){
 def getOkToRun(){ def result = (!runMode || runMode.contains(location.mode)) && getDayOk(runDay) && getTimeOk(timeStart,timeEnd) }
 def getType(){ return macroType }
 def groupMacroList(){ return groupMacros }
+def listPistons() { return state.CoREPistons }
 //Common Code(Child)-----------------------------------------------------------
 def upDown(device, op, num){
     def numChange, newLevel, currLevel, defMove
@@ -1771,9 +1777,9 @@ def macroTypeDesc(){
     	def countDesc = groupMacros.size() == 1 ? "one macro" : groupMacros.size() + " macros"
         desc = "Macro Group CONFIGURED with ${countDesc}${customAck} - Tap to edit" 
     }
-    if (macroType =="CoRE") {
+    if (macroType =="CoRE" && CoREName) {
         def timer = !cDelay || cDelay==0 ? "no delay" : cDelay==1 ? "a one minute delay to trigger" : "a ${cDelay} minute delay to trigger"
-        desc = "CoRE Trigger CONFIGURED with ${timer}${customAck} - Tap to edit" 
+        desc = "Trigger '${CoREName}' piston with ${timer}${customAck} - Tap to edit" 
     }
     desc = desc ? desc : "Status: UNCONFIGURED - Tap to configure macro"
 }
@@ -1909,7 +1915,7 @@ private getWeatherReport(){
         if (voiceWeatherLoc) sb << "This weather report comes from  " + cond.observation_location.full + ". "
         if (voiceWeatherTemp){
         	sb << "The current temperature is "
-            if (isMetric) sb << Math.round(cond.temp_c) else sb <<Math.round(cond.temp_f)
+            if (isMetric) sb << Math.round(cond.temp_c) else sb << Math.round(cond.temp_f)
             sb << " degrees with " + cond.weather 
             switch (cond.weather) {
             case "Overcast":
@@ -1969,8 +1975,10 @@ private getWeatherReport(){
         if (voiceWeatherVisiblity) {
         	sb << "Visibility is "
             def visibility = isMetric ? cond.visibility_km.toFloat() : cond.visibility_mi.toFloat()
-            visibility = visibility < 1 ?  visibility : Math.round(visibility)
-     		if (isMetric) sb << visibility + " kilometers. " else sb << visibility + " miles. "
+            String t = visibility as String
+            if (visibility >1  && t.endsWith(".0")) t = t - ".0"
+            else if (visibility < 1 ) t=t.toFloat()
+     		if (isMetric) sb << t + " kilometers. " else sb << t + " miles. "
      	}
         if (voiceWeatherPrecip) {    
             sb << "There has been "
@@ -2072,9 +2080,15 @@ def getMacroList(callingGrp){
     }
     result
 }
+def coreHandler(evt) {
+	log.debug "made it here"
+    if (evt.value =="refresh") {
+		if (evt.jsonData && evt.jsonData?.pistons) state.CoREPistons = evt.jsonData.pistons
+    }
+}
 def getCoREMacroList(){
     def result =[]
-	childApps.each{ child-> result << child.label }
+	childApps.each{child-> if (child.macroType !="CoRE") result << child.label }
     return result
 }
 def getVariableList(){
