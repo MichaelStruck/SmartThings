@@ -1,7 +1,7 @@
 /**
  *  Ask Alexa - Macro
  *
- *  Version 2.0.4 - 6/5/16 Copyright © 2016 Michael Struck
+ *  Version 2.0.3c - 6/5/16 Copyright © 2016 Michael Struck
  *  Special thanks to Barry Burke for weather reporting code
  *  
  *  Version 1.0.0 - Initial release
@@ -11,7 +11,6 @@
  *  Version 2.0.1a - Fixed an issue with dimmer voice reporting, added averages for report parameters, added thermostat device groups and Nest support, various other syntax fixes.
  *  Version 2.0.2a - Added speakers to the list of voice reports. Minor bug fixes. Added multiple weather reports to voice reports.
  *  Version 2.0.3c - Added extensive current conditions weather reporting (thanks @storageanarchy (Barry))
- *  Version 2.0.4 - Added more detail to menu items; refined reporting a bit more for things like thermostats
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -24,7 +23,7 @@
  *
  */ 
 definition(
-    name: "Ask Alexa - Macroold",
+    name: "Ask Alexa - Macro",
     namespace: "MichaelStruck",
     author: "Michael Struck",
     description: "Provide interfacing to control and report on SmartThings devices with the Amazon Echo ('Alexa').",
@@ -35,7 +34,7 @@ definition(
     iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa-macro.src/AskAlexa@2x.png"
     )
 preferences {
-    page name:"mainPageChild"
+    page name:"mainSelection"
     	page name:"pageGroup"
         page name:"pageGroupM"
     	page name:"pageControl"
@@ -53,8 +52,8 @@ preferences {
             	page name:"pageWeatherForecast"
             page name:"pageSpeakerReport"
 }
-def mainPageChild(){
-    dynamicPage(name: "mainPageChild", title: "Voice Macro Settings", install: true, uninstall: true) {
+def mainSelection(){
+    dynamicPage(name: "mainSelection", title: "Voice Macro Settings", install: true, uninstall: true) {
     	section {
 			if (parent.versionInt() < 111) paragraph "You are using a version of the parent app that is older than the recommended version. Please upgrade "+
 					"to the latest version to ensure you have the latest features and bug fixes.", 
@@ -62,7 +61,7 @@ def mainPageChild(){
             label title:"Voice Macro Name", required: true, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/speak.png"
             input "macroType", "enum", title: "Macro Type...", options: [["Control":"Control (Run/Execute)"],["Group":"Device Group (On/Off/Toggle, Lock/Unlock, etc.)"],["GroupM":"Macro Group (Run/Execute)"],["Voice":"Voice Reporting (Run/Execute) "]], required: false, multiple: false, submitOnChange:true
 			def fullMacroName=[GroupM: "Macro Group", Control:"Control", Group:"Device Group", Voice:"Voice Reporting"][macroType] ?: macroType
-            if (macroType) href "page${macroType}", title: "${fullMacroName} Settings", description: macroTypeDesc(), state: greyOutMacro()
+            if (macroType) href "page${macroType}", title: "${fullMacroName} Settings", description: macroDesc(), state: greyOutMacro()
         }
         if (macroType && macroType !="GroupM" && macroType !="Group"){
             section("Restrictions") {            
@@ -219,7 +218,7 @@ def pageVoice() {
             	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/lock.png"
             href "pageTempReport", title: "Temperature/Humidity/Thermostat Report", description: reportDesc(voiceTemperature, voiceTempSettings, voiceTempVar, voiceHumidVar, voiceHumidity), state: greyOutState(voiceTemperature, voiceTempSettings, voiceTempVar, voiceHumidVar, voiceHumidity, ""),
             	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/temp.png"
-            href "pageSpeakerReport", title: "Speaker Report", description: speakerDesc(), state: greyOutState(voiceSpeaker, "","","","",""),
+            href "pageSpeakerReport", title: "Speaker Report", description: reportDesc(voiceSpeaker, "","","",""), state: greyOutState(voiceSpeaker, "","","","",""),
             	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/speaker.png"
 			href "pageWeatherReport", title: "Weather Report", description: weatherDesc(), state: greyOutWeather(),
             	image : "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/weather.png"
@@ -227,7 +226,7 @@ def pageVoice() {
             	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/sensor.png"
             href "pageHomeReport", title: "Mode and Smart Home Monitor Report", description: reportDescMSHM(), state: greyOutState(voiceMode, voiceSHM, "", "", "", ""),
             	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/modes.png"
-            href "pageBatteryReport",title: "Battery Report", description: batteryDesc(), state: greyOutState(voiceBattery, "", "", "", "", ""),
+            href "pageBatteryReport",title: "Battery Report", description: reportDesc(voiceBattery, "", "", "", ""), state: greyOutState(voiceBattery, "", "", "", "", ""),
             	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/battery.png"
             input "voicePost", "text", title: "Post Message After Device Report", description: "Use variables like %time%, %day%, %date% here.", required: false
         }
@@ -300,11 +299,11 @@ def pageTempReport(){
         section ("Thermostat Setpoint Reporting") {
             input "voiceTempSettings", "capability.thermostat", title: "Thermostats To Report Their Setpoints...",multiple: true, required: false, submitOnChange:true
             if (voiceTempSettings) {
-            	input "voiceTempSettingsType", "enum", title: "Which Setpoint To Report", defaultValue: "heatingSetpoint", submitOnChange:true, 
-                	options: ["autoAll":"Cooling & Heating Setpoints (must be in a compatible mode to read both values)","coolingSetpoint":"Cooling Setpoint Only","heatingSetpoint": "Heating Setpoint Only","thermostatSetpoint":"Single Setpoint (Not compatible with all thermostats)"]
-            	if (voiceTempSettingsType !="autoAll") input "voiceTempSettingSummary", "bool", title: "Report Only Thermostats Not At Desired Setpoint", defaultValue: false, submitOnChange:true
+            	input "voiceTempSettingsType", "enum", title: "Which Setpoint To Report", defaultValue: "heatingSetpoint", 
+                	options: ["heatingSetpoint": "Heating Setpoint","coolingSetpoint":"Cooling Setpoint","thermostatSetpoint":"Single Setpoint (Not compatible with all thermostats)"]
+            	input "voiceTempSettingSummary", "bool", title: "Report Only Thermostats Not At Desired Setpoint", defaultValue: false, submitOnChange:true
             }
-            if (voiceTempSettingSummary && voiceTempSettings && voiceTempSettingsType !="autoAll") input "voiceTempTarget", "number", title: "Thermostat Setpoint Target", required: false, defaultValue: 50
+            if (voiceTempSettingSummary && voiceTempSettings) input "voiceTempTarget", "number", title: "Thermostat Setpoint Target", required: false, defaultValue: 50
         }
     }
 }
@@ -316,7 +315,7 @@ def pageSpeakerReport(){
         	if (voiceSpeaker) input "voiceSpeakerOn", "bool", title: "Report Only Speakers That Are Playing", defaultValue:false
         }
         section("Please Note"){
-        	paragraph "There may be up to a 5 minute delay before SmartThings refreshes the current speaker status. This may cause the report to produce " +
+        	paragraph "There may be up to 5 a minute delay before SmartThings refreshes the current speaker status. This may cause the report to produce " +
             	"inaccurate results."
         }
     }
@@ -512,7 +511,7 @@ def groupResults(num, op, colorData, param){
 def controlResults(sDelay){	
 	def result = "", delay
     if (cDelay>0 || sDelay>0) delay = sDelay==0 ? cDelay as int : sDelay as int
-    if (macroTypeDesc() !="Status: UNCONFIGURED - Tap to configure macro"){	
+    if (macroDesc() !="Status: UNCONFIGURED - Tap to configure macro"){	
 		result = (!delay || delay == 0) ? "I am running the '${app.label}' control macro. " : delay==1 ? "I'll run the '${app.label}' control macro in ${delay} minute. " : "I'll run the '${app.label}' control macro in ${delay} minutes. "
 		if (sDelay == 9999) { 
         	result = "I am cancelling all scheduled executions of the control macro, '${app.label}'. "  
@@ -595,7 +594,7 @@ def reportResults(){
         else if (voiceTemperature && voiceTemperature.size() > 1 && voiceTempAvg) fullMsg += "The average of the monitored temperature devices is: " + parent.getAverage(voiceTemperature, "temperature") + " degrees. "
         if (voiceHumidity && (voiceHumidity.size() == 1 || !voiceHumidAvg)) fullMsg += reportStatus(voiceHumidity, "humidity")
         else if (voiceHumidity  && voiceHumidity.size() > 1 && voiceHumidAvg) fullMsg += "The average of the monitored humidity devices is " + parent.getAverage(voiceHumidity, "humidity") + "%. "
-        if (voiceTempSettingSummary && voiceTempSettingsType && voiceTempSettingsType !="autoAll") fullMsg += voiceTempSettings ? thermostatSummary(): ""
+        if (voiceTempSettingSummary && voiceTempSettingsType) fullMsg += voiceTempSettings ? thermostatSummary(): ""
         else fullMsg += (voiceTempSettings && voiceTempSettingsType) ? reportStatus(voiceTempSettings, voiceTempSettingsType) : ""
         fullMsg += voiceSpeaker ? speakerReport() : ""
         fullMsg += voiceWeatherTemp|| voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip ? getWeatherReport() : ""
@@ -632,8 +631,8 @@ def thermostatSummary(){
     }
     if (!err){
         def difCount = monitorCount - matchCount
-        if (monitorCount == 1 &&  difCount==1) result +="The monitored thermostat, ${parent.getList(voiceTempSettings)}, is not set to ${voiceTempTarget} degrees. "
-        else if (monitorCount == 1 && !difCount) result +="The monitored thermostat, ${parent.getList(voiceTempSettings)}, is set to ${voiceTempTarget} degrees. "
+        if (monitorCount == 1 &&  difCount==1) result +="The monitored thermostat, ${voiceTempSettings}, is not set to ${voiceTempTarget} degrees. "
+        else if (monitorCount == 1 && !difCount) result +="The monitored thermostat, ${voiceTempSettings}, is set to ${voiceTempTarget} degrees. "
         if (monitorCount > 1) {
             if (difCount==monitorCount) result += "None of the thermostats are set to ${voiceTempTarget} degrees. "
             else if (matchCount==1) {
@@ -660,24 +659,17 @@ def thermostatSummary(){
 }
 def reportStatus(deviceList, type){
 	def result = ""
-    def appd = type=="temperature" || type=="thermostatSetpoint" || type == "heatingSetpoint" || type=="coolingSetpoint" || type == "autoAll" ? " degrees" : type == "humidity" ? " percent relative humidity" : ""
-    if (type != "thermostatSetpoint" && type != "heatingSetpoint" && type !="coolingSetpoint" && type != "autoAll") {
+    def appd = type=="temperature" || type=="thermostatSetpoint" || type == "heatingSetpoint" || type=="coolingSetpoint" ? " degrees" : type == "humidity" ? " percent relative humidity" : ""
+    if (type != "thermostatSetpoint" && type != "heatingSetpoint" && type !="coolingSetpoint") {
 		deviceList.each {deviceName->
 			if (type=="level" && deviceName.latestValue("switch")=="on") result += "The ${deviceName} is on and set to ${deviceName.latestValue(type) as int}%. "
             else if (type=="level" && deviceName.latestValue("switch")=="off") result += "The ${deviceName} is off. "
             else result += "The ${deviceName} is ${deviceName.latestValue(type)}${appd}. " 
 		}
     }
-	else if (type != "autoAll") deviceList.each { deviceName->
+	else deviceList.each { deviceName->
     	try { result += "The ${deviceName} is set to ${deviceName.latestValue(type) as int}${appd}. " }
     	catch (e) { result = "The ${deviceName} is not able to provide its setpoint. Please choose another setpoint type to report on. " }
-    }
-    else if (type == "autoAll") deviceList.each { deviceName->
-    	try { 
-        	result += "The ${deviceName} has a cooling setpoint of ${deviceName.latestValue("coolingSetpoint") as int}${appd}, " +
-        		"and a heating setpoint of ${deviceName.latestValue("heatingSetpoint") as int}${appd}. " 
-        }
-    	catch (e) { result += "The ${deviceName} is not able to provide one of its setpoint. Ensure you are in a thermostat mode that allows reading of these setpoints. " }
     }
     result
 }
@@ -861,7 +853,7 @@ def getTimeLabel(start, end){
     else if (end) timeLabel = "End at " + timeParse("${end}", "h:mm a")
 	timeLabel	
 }
-def macroTypeDesc(){
+def macroDesc(){
 	def desc = ""
     def customAck = voicePost && !noAck ? "; includes a custom acknowledgement message" : noAck ? "; there will be no acknowledgement message" : ""
     if (macroType == "Control" && (phrase || setMode || SHM || getDeviceDesc() != "Status: UNCONFIGURED - Tap to configure" || 
@@ -886,30 +878,13 @@ def macroTypeDesc(){
     }
     desc = desc ? desc : "Status: UNCONFIGURED - Tap to configure macro"
 }
-def greyOutMacro(){ def result = macroTypeDesc() == "Status: UNCONFIGURED - Tap to configure macro" ? "" : "complete" }
+def greyOutMacro(){ def result = macroDesc() == "Status: UNCONFIGURED - Tap to configure macro" ? "" : "complete" }
 def greyOutStateHTTP(){ def result = getHTTPDesc() == "Status: UNCONFIGURED - Tap to configure" ? "" : "complete" }
 def reportDesc(param1, param2, param3, param4, param5) {def result = param1 || param2 || param3 || param4 || param5  ? "Status: CONFIGURED - Tap to edit" : "Status: UNCONFIGURED - Tap to configure"}
-def batteryDesc(){
-	def result = "Status: UNCONFIGURED - Tap to configure"
-    if (voiceBattery && batteryThreshold) result = voiceBattery.size()>1 ? "Batteries report when level < ${batteryThreshold}%" : "Battery reports when level < ${batteryThreshold}%"
-	return result
-}
 def reportDescMSHM() {
-	def result= "Status: UNCONFIGURED - Tap to configure"
-    if (voiceMode || voiceSHM){
-    	result = "Report: "
-        result += voiceMode ? "Mode Status" : ""
-    	result += voiceMode && voiceSHM ? " and " : ""
-    	result += voiceSHM ? "SHM Status" : ""
-	}
-    return result
-}
-def speakerDesc(){
-	def result = "Status: UNCONFIGURED - Tap to configure"
-    if (voiceSpeaker && voiceSpeakerOn) result = voiceSpeaker.size()>1 ? "The active speakers" : "The active speaker"
-    else if (voiceSpeaker && !voiceSpeakerOn) result = voiceSpeaker.size()>1 ? "All speakers" : "One speaker"
-    if (voiceSpeaker) result += voiceBattery.size()>1 ? " report status" : " reports status" 
-	return result
+	def result= "Status: "
+    result += voiceMode ? "Mode: On" : "Mode: Off"
+    result += voiceSHM ? ", SHM: On" : ", SHM: Off"
 }
 def greyOutState(param1, param2, param3, param4, param5, param6){def result = param1 || param2 || param3 || param4 || param5 || param6 ? "complete" : ""}
 def weatherDesc(){ 
@@ -1046,24 +1021,22 @@ private getWeatherReport(){
             else if (isMetric) sb << "From the " + cond.wind_dir + " at " + cond.wind_kph + " kph Gusting to " + cond.wind_gust_kph + " kph. "
             else sb << cond.wind_string + ". "
          	sb << "The barometric pressure is "
-            switch (cond.pressure_trend) {
+    		if (isMetric) sb << cond.pressure_mb + " millibars" else sb << cond.pressure_in + " inches"
+    		switch (cond.pressure_trend) {
     		case "+":
-        		if (isMetric) sb << cond.pressure_mb + " millibars" else sb << cond.pressure_in + " inches"
-                sb << " and rising. "
+        		sb << " and rising. "
             	break
         	case "-":
-        		if (isMetric) sb << cond.pressure_mb + " millibars" else sb << cond.pressure_in + " inches"
-                sb << " and falling. "
+        		sb << " and falling. "
         		break
         	default:
-        		sb << "steady at "
-                if (isMetric) sb << cond.pressure_mb + " millibars. " else sb << cond.pressure_in + " inches. "
+        		sb << ". "
      		}   
        	}
         if (voiceWeatherDew){
         	sb << "The dewpoint is "
             if (isMetric) sb << cond.dewpoint_c else sb << cond.dewpoint_f
-            sb << " degrees, and the 'feels like' temperature is "
+            sb << " degrees, and the 'Feels Like' temperature is "
             if (isMetric) sb << cond.feelslike_c + " degrees. " else sb << cond.feelslike_f + " degrees. "
         }
         if (voiceWeatherSolar){
@@ -1097,19 +1070,16 @@ private getWeatherForecast(){
 		def weather = getWeatherFeature("forecast", zipCode)
         if (voiceWeatherToday  || voiceWeatherTonight || voiceWeatherTomorrow ){
             if (voiceWeatherToday){
-                sb << "Today's forecast call for "
-                def formattedWeather = isMetric ? weather.forecast.txt_forecast.forecastday[0].fcttext_metric : weather.forecast.txt_forecast.forecastday[0].fcttext 
-                sb << formattedWeather[0].toLowerCase() + formattedWeather.substring(1) + " "
+                sb << "Today's forecast is "
+                if (isMetric) sb << weather.forecast.txt_forecast.forecastday[0].fcttext_metric else sb << weather.forecast.txt_forecast.forecastday[0].fcttext + " "
             }
             if (voiceWeatherTonight){
-                sb << "For tonight's forecast you can expect "
-                def formattedWeather = isMetric ? weather.forecast.txt_forecast.forecastday[1].fcttext_metric : weather.forecast.txt_forecast.forecastday[1].fcttext
-                sb << formattedWeather[0].toLowerCase() + formattedWeather.substring(1) + " "
+                sb << "Tonight's forecast is "
+                if (isMetric) sb << weather.forecast.txt_forecast.forecastday[1].fcttext_metric else sb << weather.forecast.txt_forecast.forecastday[1].fcttext + " "
             }
             if (voiceWeatherTomorrow){
-                sb << "Tomorrow your forecast is "
-				def formattedWeather = isMetric ? weather.forecast.txt_forecast.forecastday[2].fcttext_metric : weather.forecast.txt_forecast.forecastday[2].fcttext
-                sb << formattedWeather[0].toLowerCase() + formattedWeather.substring(1) + " "
+                sb << "Tomorrow's forecast is "
+                if (isMetric) sb << weather.forecast.txt_forecast.forecastday[2].fcttext_metric  else sb << weather.forecast.txt_forecast.forecastday[2].fcttext + " "
             }
             msg = sb.toString()
             translateTxt().each {msg = msg.replaceAll(it.txt,it.cvt)}
@@ -1137,7 +1107,7 @@ def translateTxt(){
     wordCvt <<[txt:" NW ",cvt: " North West "] << [txt:" SW ",cvt: " South West "] << [txt:" NE ",cvt: " North East "] << [txt:" SE ",cvt: " South East "]
 	wordCvt <<[txt:" NNW ",cvt: " North-North West "] << [txt:" SSW ",cvt: " South-South West "] << [txt:" NNE ",cvt: " North-North East "] << [txt:" SSE ",cvt: " South-South East "]
 	wordCvt <<[txt:" WNW ",cvt: " West-North West "] << [txt:" WSW ",cvt: " West-South West "] << [txt:" ENE ",cvt: " East-North East "] << [txt:" ESE ",cvt: " East-South East "]
-	wordCvt <<[txt: /([0-9]+)C/, cvt: '$1 degrees'] << [txt: /([0-9]+)F/, cvt: '$1 degrees'] << [txt: "mph", cvt: "miles per hour"]<<[txt: "kph", cvt: "kilometers per hour"]
+	wordCvt <<[txt: /([0-9]+)C/, cvt: '$1 degrees'] << [txt: /([0-9]+)F/, cvt: '$1 degrees']<<[txt: "mph", cvt: "miles per hour"]<<[txt: "kph", cvt: "kilometers per hour"]
 	wordCvt <<[txt: "MPH", cvt: "miles per hour"]
 }
 //Send Messages
@@ -1170,6 +1140,6 @@ private setColoredLights(switches, color, level, type){
 	switches?.setColor(newValue)
 }
 //Version 
-private def textVersion() {return "Voice Macros Version: 2.0.4 (06/05/2016)"}
-private def versionInt() {return 204}
-private def versionLong() {return "2.0.4"}
+private def textVersion() {return "Voice Macros Version: 2.0.3c (06/05/2016)"}
+private def versionInt() {return 203}
+private def versionLong() {return "2.0.3c"}
