@@ -2073,9 +2073,7 @@ def getMacroList(callingGrp){
 }
 def getCoREMacroList(){
     def result =[]
-		childApps.each{child->
-			if (child.macroType =="CoRE") result << "${child.label}"
-        }
+	childApps.each{ child-> result << "${child.label}" }
     result
 }
 def getVariableList(){
