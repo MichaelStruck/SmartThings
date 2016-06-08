@@ -681,7 +681,7 @@ def updated() {
 }
 def childUninstalled() {
 	def data = [macros:parent.getCoREMacroList()]
-	sendLocationEvent(name: "askAlexa", value: "refresh", data: data, isStateChange: true, descriptionText: "Ask Alexa refresh")
+	sendLocationEvent(name: "askAlexa", value: "refresh", data: data, isStateChange: true, descriptionText: "Ask Alexa macro list refresh")
 }
 def initialize() {
 	if (!parent){
@@ -693,7 +693,7 @@ def initialize() {
     	unschedule()
     	state.scheduled=false
         def data = [macros:parent.getCoREMacroList()]
-        sendLocationEvent(name: "askAlexa", value: "refresh", data: data, isStateChange: true, descriptionText: "Ask Alexa refresh")  
+        sendLocationEvent(name: "askAlexa", value: "refresh", data: data, isStateChange: true, descriptionText: "Ask Alexa macro list refresh")  
     }
 }
 //--------------------------------------------------------------
@@ -1255,10 +1255,12 @@ def displayData(){
 //Macro Handler-------------------------------------------------------------
 def macroResults(num, cmd, colorData, param){ 
 	def result 
-    if (macroType == "Voice") result= reportResults() 
-    if (macroType == "Control") result= controlResults(num)
+    if (macroType == "Voice") result = reportResults() 
+    if (macroType == "Control") result = controlResults(num)
     if (macroType == "Group") result = groupResults(num, cmd, colorData, param)
 	if (macroType == "CoRE") result = CoREResults(num)
+	sendLocationEvent(name: "askAlexaMacro", value: app.label, displayed: true, isStateChange: true, descriptionText: "Ask Alexa ran '${app.label}'.")
+	return result
 }
 //Group Handler
 def groupResults(num, op, colorData, param){   
@@ -1394,7 +1396,6 @@ def CoREResults(sDelay){
 }
 def CoREHandler(){
    	state.scheduled = false
-    sendLocationEvent(name: "askAlexaMacro", value: app.label, displayed: true, isStateChange: true, descriptionText: "Ask Alexa ran '${app.label}'.")
 }
 //Control Handler-----------------------------------------------------------
 def controlResults(sDelay){	
@@ -1468,7 +1469,7 @@ def controlHandler(){
 //Report Handler-------------------------------------------------------------
 def reportResults(){
     def fullMsg=""
-	try {
+    try {
         fullMsg = voicePre ?  voicePre + " ": ""
         if (voiceOnSwitchOnly) fullMsg += voiceSwitch ? switchOnReport(voiceSwitch, "switches") : ""
         else fullMsg += voiceSwitch ? reportStatus(voiceSwitch, "switch") : ""
@@ -1497,7 +1498,7 @@ def reportResults(){
     catch(e){ fullMsg = "There was an error processing the report. Please try again. If this error continues, please contact the author of Ask Alexa. " }
     if (!fullMsg) fullMsg = "The voice report, '${app.label}', did not produce any output. Please check the configuration of the report within the SmartApp. "  
     if ((parent.getAdvEnabled() && voiceRepFilter) || voicePre || voicePost) fullMsg = replaceVoiceVar(fullMsg)
-	return fullMsg
+    return fullMsg
 }
 //Voice report sections---------------------------------------------------
 def switchOnReport(devices, type){
@@ -1513,7 +1514,7 @@ def switchOnReport(devices, type){
 def thermostatSummary(){
 	def result = "", monitorCount = voiceTempSettings.size(), matchCount = 0, err = false
     for (device in voiceTempSettings) {
-    	try{ if (device.latestValue(voiceTempSettingsType) as int == voiceTempTarget as int)  matchCount ++ }
+        try{ if (device.latestValue(voiceTempSettingsType) as int == voiceTempTarget as int)  matchCount ++ }
         catch (e) { err=true }
     }
     if (!err){
@@ -1555,11 +1556,11 @@ def reportStatus(deviceList, type){
 		}
     }
 	else if (type != "autoAll") deviceList.each { deviceName->
-    	try { result += "The ${deviceName} is set to ${Math.round(deviceName.latestValue(type))}${appd}. " }
+        try { result += "The ${deviceName} is set to ${Math.round(deviceName.latestValue(type))}${appd}. " }
     	catch (e) { result = "The ${deviceName} is not able to provide its setpoint. Please choose another setpoint type to report on. " }
     }
     else if (type == "autoAll") deviceList.each { deviceName->
-    	try { 
+        try { 
         	result += "The ${deviceName} has a cooling setpoint of ${Math.round(deviceName.latestValue("coolingSetpoint"))}${appd}, " +
         		"and a heating setpoint of ${Math.round(deviceName.latestValue("heatingSetpoint"))}${appd}. " 
         }
