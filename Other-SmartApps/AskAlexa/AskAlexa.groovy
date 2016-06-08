@@ -1,7 +1,7 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.0.0 - 6/6/16 Copyright © 2016 Michael Struck
+ *  Version 2.0.0 - 6/7/16 Copyright © 2016 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance and Barry Burke for weather reporting code
  * 
  *  Version 1.0.0 - Initial release
@@ -2073,7 +2073,7 @@ def getMacroList(callingGrp){
 }
 def getCoREMacroList(){
     def result =[]
-	childApps.each{ child-> result << "${child.label}" }
+	childApps.each{ child-> result << child.label }
     return result
 }
 def getVariableList(){
@@ -2206,7 +2206,7 @@ def sendJSON(outputTxt, lVer){
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private def textAppName() { def text = "Ask Alexa" }	
 private def textVersion() {
-    def version = "SmartApp Version: 2.0.0 (06/06/2016)"
+    def version = "SmartApp Version: 2.0.0 (06/07/2016)"
     def lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
     return "${version}${lambdaVersion}"
 }
