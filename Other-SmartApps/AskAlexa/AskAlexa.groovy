@@ -2074,7 +2074,7 @@ def getMacroList(callingGrp){
 def getCoREMacroList(){
     def result =[]
 	childApps.each{ child-> result << "${child.label}" }
-    result
+    return result
 }
 def getVariableList(){
 	def result = []
