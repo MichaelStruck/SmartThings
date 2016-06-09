@@ -1,7 +1,7 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.0.0 - 6/7/16 Copyright © 2016 Michael Struck
+ *  Version 2.0.1 - 6/9/16 Copyright © 2016 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance and Barry Burke for weather reporting code
  * 
  *  Version 1.0.0 - Initial release
@@ -12,7 +12,8 @@
  *  Version 1.1.0a - Changed voice reports to macros, added toggle commands to switches, bug fixes and code optimization
  *  Version 1.1.1d - Added limits to temperature and speaker values; additional macros device types added
  *  Version 1.1.2 - Updated averages of temp/humidity with proper math function
- *  Version 2.0.0 - Code consolidated from Parent/Child to a single code base. Added CoRE Trigger and CoRE support. Many fixes
+ *  Version 2.0.0b - Code consolidated from Parent/Child to a single code base. Added CoRE Trigger and CoRE support. Many fixes
+ *  Version 2.0.1 - Fixed issue with listing CoRE macros; fixed syntax issues and improved acknowledgment message in Group Macros, more CoRE output behind-the-scenes
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -336,11 +337,12 @@ def mainPageChild(){
         }
         if (macroType && macroType !="GroupM" && macroType !="Group"){
             section("Restrictions") {            
-                    input "runDay", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only Certain Days Of The Week...",  multiple: true, required: false,
-                        image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/calendar.png"
-                    href "timeIntervalInput", title: "Only During Certain Times...", description: getTimeLabel(timeStart, timeEnd), state: greyOutState(timeStart, timeEnd,"","","",""),
-                        image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/clock.png"
-                    input "runMode", "mode", title: "Only In The Following Modes...", multiple: true, required: false, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/modes.png"
+				input "runDay", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only Certain Days Of The Week...",  multiple: true, required: false,
+				image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/calendar.png"
+				href "timeIntervalInput", title: "Only During Certain Times...", description: getTimeLabel(timeStart, timeEnd), state: greyOutState(timeStart, timeEnd,"","","",""),
+					image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/clock.png"
+				input "runMode", "mode", title: "Only In The Following Modes...", multiple: true, required: false, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/modes.png"
+				input "muteRestrictions", "bool", title: "Mute Restriction Messages In Macro Group", defaultValue: false
             }
         }
         section("Tap below to remove this macro"){}
@@ -367,8 +369,8 @@ def pageGroup() {
             }
         }
         section("Custom acknowledgment"){
-             if (!noAck) input "voicePost", "text", title: "Acknowledgement Message", description: "Enter a short statement to play after macro runs", required: false 
-             input "noAck", "bool", title: "No Acknowledgement Message", defaultValue: false, submitOnChange: true
+             if (!noAck) input "voicePost", "text", title: "Acknowledgment Message", description: "Enter a short statement to play after macro runs", required: false, capitalization: "sentences"
+             input "noAck", "bool", title: "No Acknowledgment Message", defaultValue: false, submitOnChange: true
         }
 	}
 }
@@ -378,28 +380,31 @@ def pageCoRE() {
 		section { paragraph "CoRE Trigger Settings", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/CoRE.png" }
 		section (" "){
    			input "CoREName", "enum", title: "Choose CoRE Piston", options: parent.listPistons(), required: false, multiple: false
-        	input "cDelay", "number", title: "Default Delay (Minutes) To Trigger", defaultValue: 0, required: false,
-            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/stopwatch.png"
+        	input "cDelay", "number", title: "Default Delay (Minutes) To Trigger", defaultValue: 0, required: false
         }
         section("Custom acknowledgment"){
-             if (!noAck) input "voicePost", "text", title: "Acknowledgement Message", description: "Enter a short statement to play after macro runs", required: false 
-             input "noAck", "bool", title: "No Acknowledgement Message", defaultValue: false, submitOnChange: true
+             if (!noAck) input "voicePost", "text", title: "Acknowledgment Message", description: "Enter a short statement to play after macro runs", required: false, capitalization: "sentences"
+             input "noAck", "bool", title: "No Acknowledgment Message", defaultValue: false, submitOnChange: true
         }
+        if (!parent.listPistons()){
+        	section("Missing CoRE Pistons"){
+				paragraph "It looks like you don't have the CoRE SmartApp installed, or you haven't created any pistons yet. To use this capability, please install CoRE or, "+
+                	"if already installed, create some pistons first, then try again."
+            }
+        }	
     }
 }
 //Group Macro----------------------------------------------------
 def pageGroupM() {
 	dynamicPage(name: "pageGroupM", install: false, uninstall: false) {
 		section { paragraph "Macro Group Settings", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/macrofolder.png" }
-        section (" ") { input "groupMacros", "enum", title: "Macros To Run (Control/CoRE/Voice Reports)...", options: parent.getMacroList(app.label), required: false, multiple: true }
+        section (" ") { input "groupMacros", "enum", title: "Child Macros To Run (Control/CoRE/Voice Reports)...", options: parent.getMacroList(app.label), required: false, multiple: true }
         section("Custom acknowledgment"){ 
-            if (!noAck) input "voicePost", "text", title: "Acknowledgement Message", description: "Enter a short statement to play after macro runs", required: false
-            input "noAck", "bool", title: "No Acknowledgement Message", defaultValue: false, submitOnChange: true
+            if (!noAck) input "stdAck", "bool", title: "Use Default Acknowledgment Message", defaultValue: false, submitOnChange: true
+            if (!noAck && !stdAck) input "voicePost", "text", title: "Acknowledgment Messages", description: "Enter a short statement to play after group macro runs", required: false, capitalization: "sentences"
+            if (!noAck) input  "addPost", "bool", title: "Append Default/Custom Acknowledgment Message To Any Output Of Child Messages, Otherwise Replace Child Messages", defaultValue: false
+            input "noAck", "bool", title: "No Acknowledgment Messages", defaultValue: false, submitOnChange: true
 		}
-        section("Please note"){
-        	paragraph "Any acknowledgement message, or activating the 'no acknowledgement message' above will disable any output from the macros, " +
-            	"including voice reports."
-        }
 	}
 }
 //Control Macro----------------------------------------------------
@@ -430,8 +435,8 @@ def pageControl() {
             input "smsMsg", "text", title: "Send This Message...", required: false
         }
         section("Custom acknowledgment"){
-             if (!noAck) input "voicePost", "text", title: "Acknowledgement Message", description: "Enter a short statement to play after macro runs", required: false
-             input "noAck", "bool", title: "No Acknowledgement Message", defaultValue: false, submitOnChange: true
+             if (!noAck) input "voicePost", "text", title: "Acknowledgment Message", description: "Enter a short statement to play after macro runs", required: false, capitalization: "sentences"
+             input "noAck", "bool", title: "No Acknowledgment Message", defaultValue: false, submitOnChange: true
         }
 	}
 }
@@ -497,7 +502,7 @@ def pageVoice() {
 	dynamicPage(name: "pageVoice", install: false, uninstall: false) {
         section { paragraph "Voice Reporting Settings", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/voice.png" }
         section (" ") {
-            input "voicePre", "text", title: "Pre Message Before Device Report", description: "Use variables like %time%, %day%, %date% here.", required: false
+            input "voicePre", "text", title: "Pre Message Before Device Report", description: "Use variables like %time%, %day%, %date% here.", required: false, capitalization: "sentences"
             href "pageSwitchReport", title: "Switch/Dimmer Report", description: reportDesc(voiceSwitch, voiceDimmer, "", "", ""), state: greyOutState(voiceSwitch, voiceDimmer, "", "", "", ""),
             	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/power.png"
             href "pageDoorReport", title: "Door/Window/Lock Report", description: reportDesc(voiceDoorSensors, voiceDoorControls, voiceDoorLocks, "", ""), state: greyOutState(voiceDoorSensors, voiceDoorControls, voiceDoorLocks, "", "", ""),
@@ -514,7 +519,8 @@ def pageVoice() {
             	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/modes.png"
             href "pageBatteryReport",title: "Battery Report", description: batteryDesc(), state: greyOutState(voiceBattery, "", "", "", "", ""),
             	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/battery.png"
-            input "voicePost", "text", title: "Post Message After Device Report", description: "Use variables like %time%, %day%, %date% here.", required: false
+            input "voicePost", "text", title: "Post Message After Device Report", description: "Use variables like %time%, %day%, %date% here.", required: false, capitalization: "sentences"
+        	input "allowNullRpt", "bool", title: "Allow For Empty Report (For Group Macros)", defaultValue: false
         }
         if (parent.getAdvEnabled()){
         	section("Advanced"){
@@ -676,8 +682,7 @@ def updated() {
 	initialize()
 }
 def childUninstalled() {
-	def data = [macros:parent.getCoREMacroList()]
-	sendLocationEvent(name: "askAlexa", value: "refresh", data: data, isStateChange: true, descriptionText: "Ask Alexa macro list refresh")
+	sendLocationEvent(name: "askAlexa", value: "refresh", data: [macros: parent ? parent.getCoREMacroList() : getCoREMacroList()] , isStateChange: true, descriptionText: "Ask Alexa macro list refresh")
 }
 def initialize() {
 	if (!parent){
@@ -688,10 +693,9 @@ def initialize() {
 	}
     else{
     	unschedule()
-    	state.scheduled=false
-        def data = [macros:parent.getCoREMacroList()]
-        sendLocationEvent(name: "askAlexa", value: "refresh", data: data, isStateChange: true, descriptionText: "Ask Alexa macro list refresh")  
+    	state.scheduled=false 
     }
+	sendLocationEvent(name: "askAlexa", value: "refresh", data: [macros: parent ? parent.getCoREMacroList() : getCoREMacroList()] , isStateChange: true, descriptionText: "Ask Alexa macro list refresh")
 }
 //--------------------------------------------------------------
 mappings {
@@ -818,6 +822,7 @@ def processList(){
         outputTxt = parseMacroLists("Group","device group","control")
 	}
     if (listType == "control" ||  listType == "controls" || listType == "control macro" || listType == "control macros") outputTxt = parseMacroLists("Control","control macro","run")
+    if (listType =="core" || listType =="core trigger" || listType =="core triggers" || listType =="core macro" || listType =="core macros") outputTxt = parseMacroLists("CoRE","core trigger","run")
     if (listType == "macro group" || listType == "macro groups") outputTxt = parseMacroLists("GroupM","macro group","run")
     if (listType=="events") { outputTxt = "To list events, you must give me a device name to query. For example, you could say, 'tell ${getIName()} to give me the last events for "+ 
         "the Bedroom'. You may also include the number of events you would like to hear. An example would be, 'tell ${getIName()} to give me the last 4 events for " +
@@ -829,12 +834,12 @@ def processList(){
 }
 def parseMacroLists(type, noun, action){
     def macName = "", count = 0
-	childApps.each{if (it.getType()==type) count++}
-    def extraTxt = type == "Control" && count ? "Please note: You can also delay the execution of a control macro by adding a time, in minutes, after the name. For example,  " +
+	childApps.each{if (it.macroType==type) count++}
+    def extraTxt = (type == "Control" || type=="CoRE") && count ? "Please note: You can also delay the execution ${noun}s by adding a time, in minutes, after the name. For example,  " +
     	"you could say, 'tell ${getIName()} to run the Macro in 5 minutes'. " : ""
 	macName = count==1 ? "You only have one ${noun} called: " : count> 1 ? "You can ask me to ${action} the following ${noun}s: " : "You don't have any ${noun}s for me to ${action}"
 	if (count){
-		childApps.each{if (it.getType()==type){
+		childApps.each{if (it.macroType==type){
 			macName += it.label ; count= count-1
 			macName += count>1 ? ", " : count==1 ? " and " : ""
 			}	
@@ -843,20 +848,28 @@ def parseMacroLists(type, noun, action){
 	return macName + ". " + extraTxt
 }
 //Macro Group
-def processMacroGroup(macroList, msg){
+def processMacroGroup(macroList, msg, append, std, noMsg){
     def result = "", runCount=0
     if (macroList){ 
         macroList.each{
             childApps.each{child->
                 if (child.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == (it.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", ""))){ 
-                    result += child.getOkToRun() ? child.macroResults(0,"","","") : "You have restrictions on '${child.label}' that prevented it from running. "             
+                    result += child.getOkToRun() ? child.macroResults(0,"","","")  : child.muteRestrictions ? "" : "You have restrictions on '${child.label}' that prevented it from running. "             
                     runCount++
                 }
             }
         }
         def extraTxt = runCount > 1 ? "macros" : "macro"
-        if (runCount == macroList.size()) result = msg ? msg : result + "I ran ${runCount} ${extraTxt} in this macro group. "
-        else result = "There was a problem running one or more of the macros in the macro group."
+        if (runCount == macroList.size()) {
+            if (!noMsg) {
+                if (msg && append && !std) result += msg
+                if (msg && !append && !std)  result = msg
+                if (append && std )  result += "I ran ${runCount} ${extraTxt} in this macro group. "
+                if (!append && std )  result = "I ran ${runCount} ${extraTxt} in this macro group. "
+        	}
+            else result = " "
+        }
+        else result = "There was a problem running one or more of the macros in the macro group. "
     }
     else result="There were no macros present within this macro group. Please check your Ask Alexa SmartApp and try again. "
     return result
@@ -897,10 +910,9 @@ def processMacro() {
         if (count == 1){
             childApps.each {child -> 
                 if (child.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac.toLowerCase()) {         
-                    macroType = child.getType()
-                    fullMacroName = [GroupM: "Macro Group",CoRE: "CoRE Trigger", Control:"Control Macro", Group:"Device Group", Voice:"Voice Report"][macroType] ?: macroType
-                    if (child.getType() != "GroupM") outputTxt = child.getOkToRun() ? child.macroResults(num, cmd, colorData, param) : "You have restrictions within the ${fullMacroName} named, '${child.label}', that prevent it from running. Check your settings and try again. "
-                    else outputTxt = processMacroGroup(child.groupMacroList(), child.voicePost)
+                    fullMacroName = [GroupM: "Macro Group",CoRE: "CoRE Trigger", Control:"Control Macro", Group:"Device Group", Voice:"Voice Report"][child.macroType] ?: child.macroType
+                    if (child.macroType != "GroupM") outputTxt = child.getOkToRun() ? child.macroResults(num, cmd, colorData, param) : "You have restrictions within the ${fullMacroName} named, '${child.label}', that prevent it from running. Check your settings and try again. "
+                    else outputTxt = processMacroGroup(child.groupMacros, child.voicePost, child.addPost, child.stdAck, child.noAck)
                 }
             }
         }
@@ -974,7 +986,7 @@ def processSmartHome() {
 def getReply(devices, type, dev, op, num, param){
 	def result = ""
     log.debug "Type: " + type
-    try {
+    //try {
     	def STdevice = devices?.find{it.label.replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase() == dev}
         def supportedCaps = STdevice.capabilities
         if (op=="status") {
@@ -1190,8 +1202,8 @@ def getReply(devices, type, dev, op, num, param){
         if (op !="status" && !result && (type=="motion" || type=="presence" || type=="humidity" || type=="water" || type == "contact" || type == "temperature")){
         	result = "You attempted to take action on a device that can only give a status reading. Please try again. "
         }
-	}
-    catch (e){ result = "I could not process your request for the '${dev}'. Ensure you are using the correct commands with the device and try again. " }
+	//}
+    //catch (e){ result = "I could not process your request for the '${dev}'. Ensure you are using the correct commands with the device and try again. " }
     if (!result) result = "Sorry, I had a problem understanding your request. Please rephrase and try again. "
     result
 }
@@ -1251,16 +1263,20 @@ def displayData(){
 //Child code pieces here----------------------------------------
 //Macro Handler
 def macroResults(num, cmd, colorData, param){ 
-	def result 
+	def result, data
     if (macroType == "Voice") result = reportResults() 
     if (macroType == "Control") result = controlResults(num)
     if (macroType == "Group") result = groupResults(num, cmd, colorData, param)
 	if (macroType == "CoRE") {
     	result = CoREResults(num)
-        sendLocationEvent (name: "CoRE", value: "execute", data: [ pistonName: CoREName], descriptionText: "Ask Alexa triggered '${CoREName}' piston.") 
+        data = [ pistonName: CoREName, alexaOutput: result, num: num, cmd: cmd, color: colorData, param:param]
+        sendLocationEvent (name: "CoRE", value: "execute", data: data , descriptionText: "Ask Alexa triggered '${CoREName}' piston.") 
     }
-    else sendLocationEvent(name: "askAlexaMacro", value: app.label, displayed: true, isStateChange: true, descriptionText: "Ask Alexa ran '${app.label}'.")
-	return result
+    else if (macroType == "Voice" ||  macroType == "Control" || macroType == "Group") {
+    	data = [alexaOutput: result, num: num, cmd: cmd, color: colorData, param:param]
+        sendLocationEvent(name: "askAlexaMacro", value: app.label, data: data, displayed: true, isStateChange: true, descriptionText: "Ask Alexa ran '${app.label}'.")
+	}
+    return result
 }
 //Group Handler
 def groupResults(num, op, colorData, param){   
@@ -1411,7 +1427,7 @@ def controlResults(sDelay){
 		if (!state.scheduled) {
         	if (!delay || delay == 0) controlHandler() 
             else if (delay < 9999) { runIn(delay*60, controlHandler, [overwrite: true]) ; state.scheduled=true}
-            result = voicePost && !noAck ? replaceVoiceVar(voicePost) : noAck ? " " : result
+            result = voicePost && !noAck ? replaceVoiceVar(voicePost) : noAck ? "" : result
 		}
         else result = "The control macro, '${app.label}', is already scheduled to run. You must cancel the execution or wait until it runs before you can run it again. "
     }
@@ -1470,7 +1486,7 @@ def controlHandler(){
 def reportResults(){
     def fullMsg=""
     try {
-        fullMsg = voicePre ?  voicePre + " ": ""
+        fullMsg = voicePre ?  voicePre : ""
         if (voiceOnSwitchOnly) fullMsg += voiceSwitch ? switchOnReport(voiceSwitch, "switches") : ""
         else fullMsg += voiceSwitch ? reportStatus(voiceSwitch, "switch") : ""
         if (voiceOnSwitchEvt) fullMsg += getLastEvt(voiceSwitch, "'switch on'", "on", "switch")
@@ -1496,7 +1512,7 @@ def reportResults(){
         fullMsg += voicePost ? voicePost : ""
 	}
     catch(e){ fullMsg = "There was an error processing the report. Please try again. If this error continues, please contact the author of Ask Alexa. " }
-    if (!fullMsg) fullMsg = "The voice report, '${app.label}', did not produce any output. Please check the configuration of the report within the SmartApp. "  
+    if (!fullMsg && !allowNullRpt) fullMsg = "The voice report, '${app.label}', did not produce any output. Please check the configuration of the report within the SmartApp. "  
     if ((parent.getAdvEnabled() && voiceRepFilter) || voicePre || voicePost) fullMsg = replaceVoiceVar(fullMsg)
     return fullMsg
 }
@@ -1716,8 +1732,6 @@ def waterReport(){
 }
 //Parent Code Access (from Child)-----------------------------------------------------------
 def getOkToRun(){ def result = (!runMode || runMode.contains(location.mode)) && getDayOk(runDay) && getTimeOk(timeStart,timeEnd) }
-def getType(){ return macroType }
-def groupMacroList(){ return groupMacros }
 def listPistons() { return state.CoREPistons }
 //Common Code(Child)-----------------------------------------------------------
 def upDown(device, op, num){
@@ -2081,10 +2095,10 @@ def getMacroList(callingGrp){
     result
 }
 def coreHandler(evt) {
-	log.debug "made it here"
-    if (evt.value =="refresh") {
-		if (evt.jsonData && evt.jsonData?.pistons) state.CoREPistons = evt.jsonData.pistons
-    }
+	log.debug "Refreshing CoRE Piston List"
+    if (evt.value =="refresh") { 
+    	state.CoREPistons = evt.jsonData && evt.jsonData?.pistons ? evt.jsonData.pistons : []
+	}
 }
 def getCoREMacroList(){
     def result =[]
@@ -2168,7 +2182,7 @@ def fillTypeList(){
     	"lock","locks","thermostats","thermostat","temperature sensors","modes","routines","smart home monitor","SHM","security","temperature","door","doors", "humidity", "humidity sensor", 
         "humidity sensors", "presence", "presence sensors", "motion", "motion sensor", "motion sensors", "door sensor", "door sensors", "window sensor", "window sensors", "open close sensors",
         "colored light", "events", "macro", "macros", "group", "groups", "voice reports", "voice report", "device group", "device groups","control macro", "control macros","control", "controls",
-        "macro group","macro groups","device macros","device macro","device group macro", "device group macros"]    	  
+        "macro group","macro groups","device macros","device macro","device group macro","device group macros","core","core trigger","core macro","core macros","core triggers"]    	  
 }
 def upDown(device, type, op, num){
     def numChange, newLevel, currLevel, defMove, txtRsp = ""
@@ -2221,12 +2235,12 @@ def sendJSON(outputTxt, lVer){
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private def textAppName() { def text = "Ask Alexa" }	
 private def textVersion() {
-    def version = "SmartApp Version: 2.0.0 (06/07/2016)"
+    def version = "SmartApp Version: 2.0.1 (06/09/2016)"
     def lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
     return "${version}${lambdaVersion}"
 }
-private def versionInt(){ return 200 }
-private def versionLong(){ return "2.0.0" }
+private def versionInt(){ return 201 }
+private def versionLong(){ return "2.0.1" }
 private def textCopyright() {return "Copyright © 2016 Michael Struck" }
 private def textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); "+
