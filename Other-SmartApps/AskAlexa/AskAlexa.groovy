@@ -2294,51 +2294,56 @@ def getMoonInfo(){
 }
 def weatherAlerts(){
 	def msg = "", brief = false
-    def alerts = getWeatherFeature("alerts", zipCode).alerts
-	if ( alerts.size() > 0 ) {
-		if ( alerts.size() == 1 ) msg += "There is one active advisory for this area. "
-		else msg += "There are ${alerts.size()} active advisories for this area. "
-		def warn
-        if (voiceWeatherWarnFull) {
-            if (alerts[0].date_epoch == "NA") {
-                def explained = []
-                alerts.each {
-                    msg += "${it.wtype_meteoalarm_name} Advisory"
-                    if (it.level_meteoalarm != "") sb << ", level ${it.level_meteoalarm}"
-                    if (it.level_meteoalarm_name != "") sb << ", color ${it.level_meteoalarm_name}"
-                    msg += ". "
-                    if (brief) warn = " ${it.description} Advisory issued ${it.date}, expires ${it.expires}. "
-                    else {
-                        if (it.level_meteoalarm == "") {
-                            if (it.level_meteoalarm_description != "") sb << "${it.level_meteoalarm_description} "
-                        } else if (!explained.contains(it.level_meteoalarm)) {
-                            if (it.level_meteoalarm_description != "") sb << "${it.level_meteoalarm_description} "                       	
-                                explained.add(it.level_meteoalarm)
-                            }
-                            warn = "${it.description} This advisory was issued on ${it.date} and it expires on ${it.expires}. " // description & message are usually the same
-                    }
-                    warn = warn.replaceAll("kn\\, ", " knots, ").replaceAll("Bft ", " Beaufort level ").replaceAll("\\s+", " ").trim()	// Cleanup
-                    if (!warn.endsWith(".")) warn += "."
-                    msg += "${warn} " 
-                }
-            } else {
-                alerts.each {
-                    if ( brief ) sb << "A ${it.description} is in effect from ${it.date} until ${it.expires}. "
-                    else {
-                        warn = it.message.replaceAll("\\.\\.\\.", ", ").replaceAll("\\* ", " ") 
-                        warn = warn.replaceAll( "\\s+", " ").replaceAll(/\b(\d+)(\d\d) (.[mM])\b/, /$1:$2 $3/) 
-                        def m = warn.indexOf("Lat, Lon")
-                        if (m > 0) warn = warn.take(m-1)
-                        warn = warn.trim()
+    if (location.timeZone || zipCode) {
+        def alerts = getWeatherFeature("alerts", zipCode).alerts
+        if ( alerts.size() > 0 ) {
+            if ( alerts.size() == 1 ) msg += "There is one active advisory for this area"
+            else msg += "There are ${alerts.size()} active advisories for this area"
+            def warn
+            if (voiceWeatherWarnFull) {
+                if (alerts[0].date_epoch == "NA") {
+                    def explained = []
+                    alerts.each {
+                        msg += "${it.wtype_meteoalarm_name} Advisory"
+                        if (it.level_meteoalarm != "") msg += ", level ${it.level_meteoalarm}"
+                        if (it.level_meteoalarm_name != "") msg += ", color ${it.level_meteoalarm_name}"
+                        msg += ". "
+                        if (brief) warn = " ${it.description} Advisory issued ${it.date}, expires ${it.expires}. "
+                        else {
+                            if (it.level_meteoalarm == "") {
+                                if (it.level_meteoalarm_description != "") msg += "${it.level_meteoalarm_description} "
+                            } else if (!explained.contains(it.level_meteoalarm)) {
+                                if (it.level_meteoalarm_description != "") msg += "${it.level_meteoalarm_description} "                       	
+                                    explained.add(it.level_meteoalarm)
+                                }
+                                warn = "${it.description} This advisory was issued on ${it.date} and it expires on ${it.expires}. "
+                        }
+                        warn = warn.replaceAll("kn\\, ", " knots, ").replaceAll("Bft ", " Beaufort level ").replaceAll("\\s+", " ").trim()
                         if (!warn.endsWith(".")) warn += "."
-                        msg += "${warn} "
+                        msg += "${warn} " 
                     }
-                }	
+                } else {
+                    alerts.each {
+                        if ( brief ) msg += "A ${it.description} is in effect from ${it.date} until ${it.expires}. "
+                        else {
+                            warn = it.message.replaceAll("\\.\\.\\.", ": ").replaceAll("\\* ", " ")
+                            warn = warn.replaceAll( "\\s+", " ").replaceAll(/\b(\d+)(\d\d) (.[mM])\b/, /$1:$2 $3/) 
+                            def m = warn.indexOf("Lat, Lon")
+                            if (m > 0) warn = warn.take(m-1)
+                            warn = warn.trim()
+                            if (!warn.endsWith(".")) warn += "."
+                            msg += "${warn} "
+                        }
+                    }	
+                }
             }
+            else msg += ". To hear more about this advisory, configure your SmartApp to give you the full message."
         }
-        else msg += "To hear more about this advisory, configure your SmartApp to give you the full message."
     }
-	return msg
+    else  msg = "Please set the location of your hub with the SmartThings mobile app, or enter a zip code to receive advisory information ." 
+	
+    translateTxt().each {msg = msg.replaceAll(it.txt,it.cvt)}
+    return msg
 }
 //Translate Maxtrix-----------------------------------------------------------
 def translateTxt(){
@@ -2347,8 +2352,9 @@ def translateTxt(){
     wordCvt <<[txt:" NW ",cvt: " north west "] << [txt:" SW ",cvt: " south west "] << [txt:" NE ",cvt: " north east "] << [txt:" SE ",cvt: " south east "]
 	wordCvt <<[txt:" NNW ",cvt: " north-north west "] << [txt:" SSW ",cvt: " south-south west "] << [txt:" NNE ",cvt: " north-north east "] << [txt:" SSE ",cvt: " south-south east "]
 	wordCvt <<[txt:" WNW ",cvt: " west-north west "] << [txt:" WSW ",cvt: " west-south west "] << [txt:" ENE ",cvt: " east-north east "] << [txt:" ESE ",cvt: " east-south east "]
-	wordCvt <<[txt: /([0-9]+)C/, cvt: '$1 degrees'] << [txt: /([0-9]+)F/, cvt: '$1 degrees'] << [txt: "mph", cvt: "miles per hour"]<<[txt: "kph", cvt: "kilometers per hour"]
-	wordCvt <<[txt: "MPH", cvt: "miles per hour"]
+	wordCvt <<[txt: /([0-9]+)C/, cvt: '$1 degrees'] << [txt: /([0-9]+)F/, cvt: '$1 degrees'] << [txt: "mph", cvt: "mi/h"]<<[txt: "kph", cvt: "km/h"]
+	wordCvt <<[txt: "MPH", cvt: "mi/h"]<< [txt: "PDT", cvt: "pacific daylight time"]<< [txt: "MDT", cvt: "mountain daylight time"]<< [txt: "MDT", cvt: "eastern daylight time"]
+	wordCvt <<[txt: /\\.0 /, cvt: / /]<<[txt: "CDT", cvt: "central daylight time"]
 }
 //Send Messages-----------------------------------------------------------
 def sendMSG(num, msg, push, recipients){
@@ -2568,3 +2574,4 @@ private def textHelp() {
     	"query the SmartThings environment via the Amazon Echo ('Alexa'). "+
     	"For more information, go to http://thingsthataresmart.wiki/index.php?title=Ask_Alexa."
 }
+
