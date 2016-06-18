@@ -15,7 +15,7 @@
  *  Version 2.0.0b - Code consolidated from Parent/Child to a single code base. Added CoRE Trigger and CoRE support. Many fixes
  *  Version 2.0.1 - Fixed issue with listing CoRE macros; fixed syntax issues and improved acknowledgment message in Group Macros, more CoRE output behind-the-scenes
  *  Version 2.0.2a - Added %delay% macro for custom acknowledgment for pre/post text areas, dimmer/group fixes and added lunar phases (thanks again to Barry Burke), 2nd level acknowledgments in Alexa
- *  Version 2.0.3 - Filter of power meters in reports. Added Weather Advistories.
+ *  Version 2.0.3 - Filter of power meters in reports. Added Weather Advisories.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
