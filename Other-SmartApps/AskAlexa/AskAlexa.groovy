@@ -230,7 +230,7 @@ def pageSettings(){
         	input "otherStatus", "bool", title: "Speak Additional Status Attributes Of Devices", defaultValue: false, submitOnChange: true
             input "batteryWarn", "bool", title: "Speak Battery Level When Below Threshold", defaultValue: false, submitOnChange: true
             if (batteryWarn) input "batteryThres", "enum", title: "Battery Status Threshold", required: false, defaultValue: 20, options: [5:"<5%",10:"<10%",20:"<20%",30:"<30%",40:"<40%",50:"<50%",60:"<60%",70:"<70%",80:"<80%",90:"<90%",101:"Always play battery level"]
-			if (doors || locks) input "pwNeeded", "bool", title: "Password (PIN) Required For Lock Or Door Commands", defaultValue: false, submitOnChange: true
+			if (doors || locks) input "pwNeeded", "bool", title: "Password (PIN) Option Enabled", defaultValue: false, submitOnChange: true
             if ((doors || locks) && pwNeeded) input "password", "num", title: "Numeric Password (PIN)", description: "Enter a short numeric PIN (i.e. 1234)", required: false
        		input "eventCt", "enum", title: "Default Number Of Past Events to Report", options: [[1:"1"],[2:"2"],[3:"3"],[4:"4"],[5:"5"],[6:"6"],[7:"7"],[8:"8"],[9:"9"]], required: false, defaultValue: 1 	
         	href "pageContCommands", title: "Continuation Of Commands/Personality", description: none, state: (contError || contStatus || contAction || contMacro ? "complete" : null)
@@ -1124,7 +1124,8 @@ def getReply(devices, type, dev, op, num, param){
                 result += onOffStatus =="stopped" ? ". " : onOffStatus=="playing" && track ? ": '${track}'" : ""
                 result += onOffStatus == "playing" && level && mute =="unmuted" ? ", and it's volume is set to ${level}%. " : mute =="muted" ? ", and it's currently muted. " :""
             }
-            else if (type == "water") result = "The water sensor, ${STdevice}, is currently ${STdevice.currentValue(type)}. "
+            else if (type == "water") result = "The water sensor, '${STdevice}', is currently ${STdevice.currentValue(type)}. "
+            else if (type == "shade") result = "The window shade, '${STdevice}',  is currently ${STdevice.currentValue('windowShade')}. "
             else result = "The ${STdevice} is currently ${STdevice.currentValue(type)}. "
         }
         else {
@@ -1967,7 +1968,7 @@ def reportDoors(){
 }
 def reportSensors(){
 	def result="Status: UNCONFIGURED - Tap to configure"
-    if (voiceWater || voiceMotion || voicePresence||voicePower){
+    if (voiceWater || voiceMotion || voicePresence|| voicePower){
     	def water = voiceWetOnly ? "(Wet)" : "(Wet/Dry)"
         def arriveEvt = voicePresentEvt ? "/Arrival" : ""
         def departEvt = voiceGoneEvt ? "/Departure" : ""
