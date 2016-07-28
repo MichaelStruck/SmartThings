@@ -1,7 +1,7 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.0.8 - 7/27/16 Copyright © 2016 Michael Struck
+ *  Version 2.0.8 - 7/28/16 Copyright © 2016 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance and Barry Burke for weather reporting/advisory/lunar phases/tide code
  * 
  *  Version 1.0.0 - Initial release
@@ -20,7 +20,7 @@
  *  Version 2.0.5 (7/9/16) Fix for null String issues
  *  Version 2.0.6 (7/14/16) Syntax fixes, additional filters on voice reports, expanded secondary responses, CoRE Macro fix
  *  Version 2.0.7b (7/23/16) Small code/syntax/interface fixes, code optimization. Allows you to place an entry into the Notification Event Log when a macro is run. Fixed CoRE Macro activation logic
- *  Version 2.0.8 (7/27/16) Restructured code to allow future personality features; fixed thermostat heating/cooling logic; added minium value command to theromstat, added tide information; added window shade control
+ *  Version 2.0.8 (7/28/16) Restructured code to allow future personality features; fixed thermostat heating/cooling logic; added minium value command to theromstat, added tide information; added window shade control
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -538,7 +538,7 @@ def pageVoice() {
             input "voicePre", "text", title: "Pre Message Before Device Report", description: "Use variables like %time%, %day%, %date% here.", required: false, capitalization: "sentences"
             href "pageSwitchReport", title: "Switch/Dimmer Report", description: reportSwitches(), state: (voiceSwitch || voiceDimmer ? "complete" : null),
             	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/power.png"
-            href "pageDoorReport", title: "Door/Window/Lock Report", description: reportDoors(), state: (voiceDoorSensors || voiceDoorControls || voiceDoorLocks ? "complete": null),
+            href "pageDoorReport", title: "Door/Window/Lock Report", description: reportDoors(), state: (voiceDoorSensors || voiceDoorControls || voiceDoorLocks || voiceWindowShades ? "complete": null),
             	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/lock.png"
             href "pageTempReport", title: "Temperature/Humidity/Thermostat Report", description: reportTemp(), state:(voiceTemperature || voiceTempSettings || voiceHumidity? "complete" : null),
             	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/temp.png"
@@ -581,7 +581,7 @@ def pageSwitchReport(){
 def pageDoorReport(){
     dynamicPage(name: "pageDoorReport", install: false, uninstall: false){
         section { paragraph "Doors/Windows/Locks", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/lock.png" }
-        section(" ") {
+        section("Doors/Windows/Locks Reporting"){
             input "voiceDoorSensors", "capability.contactSensor", title: "Doors/Windows Sensors To Report Their Status...", multiple: true, required: false, submitOnChange: true
             input "voiceDoorControls", "capability.doorControl", title: "Door Controls To Report Their Status...", multiple: true, required: false, submitOnChange: true
             input "voiceDoorLocks", "capability.lock", title: "Locks To Report Their Status...", multiple: true, required: false, submitOnChange: true
@@ -589,6 +589,10 @@ def pageDoorReport(){
             if (voiceDoorSensors || voiceDoorControls)input "voiceDoorEvt", "bool",title: "Report The Time Of The Last Door/Window Opening", defaultValue: false
             if (voiceDoorLocks)input "voiceLockEvt", "bool",title: "Report The Time Of The Last Lock Unlocking", defaultValue: false
         }
+        section("Window Shades Reporting"){
+        	input "voiceWindowShades", "capability.windowShade", title: "Window Shades To Report Their Status...", multiple: true, required: false
+        }
+        
     }
 }
 def pageOtherReport(){
@@ -752,7 +756,7 @@ mappings {
 }
 //--------------------------------------------------------------
 def processBegin(){
-	log.debug "Begin commands received"
+	log.debug "--Begin commands received--"
     def ver = params.Ver 		//Lambda Code Verisons
     def lVer = params.lVer		//Version number of Lambda code
     def date = params.Date		//Version date of Lambda code
@@ -771,7 +775,7 @@ def sendJSON(outputTxt){
     return ["voiceOutput":outputTxt]
 }
 def processDevice() {    
-    log.debug "Device command received"
+    log.debug "-Device command received-"
 	def dev = params.Device 	//Label of device
 	def op = params.Operator	//Operation to perform
     def numVal = params.Num     //Number for dimmer/PIN type settings
@@ -801,7 +805,7 @@ def processDevice() {
 }
 //List Request
 def processList(){
-	log.debug "List command received"
+	log.debug "-List command received-"
 	def listType = params.Type	//Help type
     log.debug "List Type: " + listType
     String outputTxt = ""
@@ -886,7 +890,9 @@ def processList(){
     if (listType =="light" || listType =="lights") outputTxt ="Please be a bit more specific about what kind of lighting devices you are to list. You can ask me to list devices like 'switches', 'dimmers' or 'colored lights'. %1%"
     if (outputTxt.startsWith("%") && outputTxt.endsWith("%")) outputTxt = "There are no" + outputTxt.replaceAll("%", " ") + "set up within your Ask Alexa SmartApp. "
     if (outputTxt == "") { 
-    	outputTxt = "I didn't understand what you wanted information about. Be sure you have properly run the setup and populated the developer section with the device names and try again. %1%"
+    	outputTxt = "I didn't understand what you wanted information about. " 
+    	if (Math.abs(new Random().nextInt() % 2)==1) outputTxt += "Be sure you have populated the developer section with the device names. "
+    	outputTxt += "%1%"
     }
     else if (!outputTxt.endsWith("%")) outputTxt += "%2%"
     sendJSON(outputTxt)
@@ -940,7 +946,7 @@ def processMacroGroup(macroList, msg, append, noMsg, macLabel,macFeed,macFeedDat
 }
 //Macro Processing
 def processMacro() {
-    log.debug "Macro command received"
+    log.debug "-Macro command received-"
 	def mac = params.Macro 		//Macro name
     def mNum = params.Num		//Number variable-Typically delay to run
     def cmd = params.Cmd		//Group Command
@@ -988,7 +994,7 @@ def processMacro() {
 }
 //Smart Home Commands
 def processSmartHome() {
-    log.debug "Smart home command received"
+    log.debug "-Smart home command received-"
 	def cmd = params.SHCmd 						//Smart Home Command
 	def param = params.SHParam.toLowerCase()	//Smart Home Parameter
     log.debug "Cmd: " + cmd
@@ -1255,20 +1261,18 @@ def getReply(devices, type, dev, op, num, param){
                     if ((op=="open" || op=="close") && (pwNeeded && password && num>0 && num != password as int)) result="Sorry, I did not hear the correct password to ${op} the ${STdevice}. %1%"
                     else if ((op=="open" || op=="close") && (!pwNeeded || (password && pwNeeded && num ==password as int) || !password)) {
                         STdevice."$op"() 
-                        if (op == "close") op="clos"
-                        result = "I am ${op}ing the ${STdevice}. "
+                        result = op=="close" ? "I am closing the ${STdevice}. " : "I am opening the ${STdevice}. "
                     }
              	}
 			}
             if (type == "shade"){
-                def currentShadeState = STdevice.currentValue(type)
-				if (currentShadeState==op || (currentShadeState == "closed" && op=="close")) result = "The ${STdevice} is already ${currentShadeState}. "
+                def currentShadeState = STdevice.currentValue("windowShade")
+                if (currentShadeState==op || (currentShadeState == "closed" && op=="close")) result = "The ${STdevice} is already ${currentShadeState}. "
                 else {
-                    if (op != "open" || op != "close") result ="For the ${STdevice}, you must give an 'open' or 'close' command. %1%"
-                    else if (op=="open" || op=="close") { 
-                    	STdevice."$op"() 
-                    	if (op == "close") op="clos"
-                    	result = "I am ${op}ing the ${STdevice}. "
+                    if (op != "open" && op != "close") result ="For the ${STdevice}, you must give an 'open' or 'close' command. %1%"
+                    else { 
+                        STdevice."$op"() 
+                    	result = op=="close" ? "I am closing the ${STdevice}. " : "I am opening the ${STdevice}. "
                 	}
                 }
 			}
@@ -1393,26 +1397,26 @@ def groupResults(num, op, colorData, param){
 				settings."groupDevice${groupType}"?."$op"()
 				result = voicePost && !noAck ? replaceVoiceVar(voicePost,"") : noAck ? " " : "I am ${op}ing the ${noun} in the group named '${app.label}'. " 
 			}
-			else result = "To lock or unlock a group, you must say use the proper password. %1%"
+			else result = "To lock or unlock a group, you must use the proper password. %1%"
         }
         else { result = "For a lock group, you must use a 'lock' or 'unlock' command. %1%" }
     }
     else if (groupType=="doorControl"){
      	noun=settings."groupDevice${groupType}".size()==1 ? "door" : "doors"
         if (op == "open"|| op == "close" ){
-        	if (param && param == num){
-            	settings."groupDevice${groupType}"?."$cmd"()
+        	if (param =="undefined" || (param !="undefined" && param == num)){
+            	settings."groupDevice${groupType}"?."$op"()
             	def condition = op=="close" ? "closing" : "opening"
             	result = voicePost && !noAck  ? replaceVoiceVar(voicePost,"") : noAck ? " " :  "I am ${condition} the ${noun} in the group named '${app.label}'. "
         	}
-            else result = "To open or close a group of doors, you must say use the proper password. %1%"
+            else result = "To open or close a group of doors, you must use the proper password. %1%"
         }
         else result = "For a door group, you must use an 'open' or 'close' command. %1%"
     }
     else if (groupType=="windowShade"){
-     	noun=settings."groupDevice${groupType}".size()==1 ? "window shade" : "window shades"
+        noun=settings."groupDevice${groupType}".size()==1 ? "window shade" : "window shades"
         if (op == "open"|| op == "close" ){
-          	settings."groupDevice${groupType}"?."$cmd"()
+          	settings."groupDevice${groupType}"?."$op"()
            	def condition = op=="close" ? "closing" : "opening"
            	result = voicePost && !noAck  ? replaceVoiceVar(voicePost,"") : noAck ? " " :  "I am ${condition} the ${noun} in the group named '${app.label}'. "
         }
@@ -1582,6 +1586,7 @@ def reportResults(){
         else fullMsg += voiceDimmer ? reportStatus(voiceDimmer, "level") : ""
  		if (voiceOnDimmerEvt) fullMsg += getLastEvt(voiceDimmer, "'dimmer on'", "on", "dimmer")
         fullMsg += voiceDoorSensors || voiceDoorControls || voiceDoorLocks ? doorWindowReport() : ""
+        fullMsg += voiceWindowShades ? shadeReport() : ""
         if (voiceTemperature && (voiceTemperature.size() == 1 || !voiceTempAvg)) fullMsg += reportStatus(voiceTemperature, "temperature")
         else if (voiceTemperature && voiceTemperature.size() > 1 && voiceTempAvg) fullMsg += "The average of the monitored temperature devices is: " + getAverage(voiceTemperature, "temperature") + " degrees. "
         if (voiceHumidity && (voiceHumidity.size() == 1 || !voiceHumidAvg)) fullMsg += reportStatus(voiceHumidity, "humidity")
@@ -1764,9 +1769,18 @@ def powerReport(){
 	}
     return result 
 }
+def shadeReport(){
+	def currVal
+    String result = ""
+    voiceWindowShades.each { deviceName->
+		currVal = deviceName.currentValue("windowShade")
+        result += "The ${deviceName} is " + currVal  + ". "
+	}
+    return result
+}
 def doorWindowReport(){
 	def countOpened = 0, countOpenedDoor = 0, countUnlocked = 0, listOpened = "", listUnlocked = ""
-    String result = ""
+    String result = ""   
     if (voiceDoorSensors && voiceDoorSensors.latestValue("contact").contains("open")){
     	for (sensor in voiceDoorSensors) if (sensor.latestValue("contact")=="open") countOpened ++
         listOpened = listDevices(voiceDoorSensors, "contact", "open", countOpened )
@@ -1898,7 +1912,7 @@ def macroTypeDesc(){
         	desc= "Voice Report CONFIGURED - Tap to edit" 
 	}
 	if (macroType =="Group" && groupType && settings."groupDevice${groupType}") {
-    	def groupDesc =[switch:"Switch Group",switchLevel:"Dimmer Group",thermostat:"Thermostat Group",colorControl:"Colored Light Group",lock:"Lock Group",doorControl: "Door Group"][groupType] ?: groupType
+    	def groupDesc =[switch:"Switch Group",switchLevel:"Dimmer Group",thermostat:"Thermostat Group",colorControl:"Colored Light Group",lock:"Lock Group",doorControl: "Door Group",windowShade: "Window Shade Group"][groupType] ?: groupType
         def countDesc = settings."groupDevice${groupType}".size() == 1 ? "one device" : settings."groupDevice${groupType}".size() + " devices"
         if (parent.stelproCMD && groupType=="thermostat") customAck = "- Accepts Stelpro baseboard heater commands" + customAck
         if (parent.nestCMD && groupType=="thermostat") customAck = "- Accepts Nest 'Home'/'Away' commands" + customAck
@@ -1933,9 +1947,10 @@ def reportSwitches(){
 }
 def reportDoors(){
 	def result="Status: UNCONFIGURED - Tap to configure"
-    if (voiceDoorSensors || voiceDoorControls || voiceDoorLocks ){
+    if (voiceDoorSensors || voiceDoorControls || voiceDoorLocks || voiceWindowShades ){
         def doorEvt = voiceDoorEvt ? " with door & window events" : ""
         def lockEvt = voiceLockEvt ?"/lock events${doorEvt}":"${doorEvt}"
+        def shadeRpt = voiceWindowShades && voiceWindowShades.size()>1  ? "Window shades report" : voiceWindowShades && voiceWindowShades.size()==1 ? "Window shade report" :""	
         def status = voiceDoorAll ? "full status${lockEvt}" : "open/unlocked status${lockEvt}"
         result  = voiceDoorSensors && voiceDoorSensors.size()>1 ? "Door/Window sensors" : voiceDoorSensors && voiceDoorSensors.size()==1 ? "Door/Window sensor" : ""
         if (voiceDoorControls) result  += voiceDoorSensors && voiceDoorControls.size()>1 && voiceDoorLocks ? ", door controls" : voiceDoorSensors && voiceDoorControls.size()==1 && voiceDoorLocks ? ", door control" : ""
@@ -1945,6 +1960,8 @@ def reportDoors(){
         if (voiceDoorLocks) result  += !result && voiceDoorLocks.size()>1 ? "Locks" : !result && voiceDoorLocks.size()==1 ? "Lock" : ""
         result += (voiceDoorSensors && voiceDoorControls && voiceDoorLocks) || (voiceDoorSensors && voiceDoorControls) || (voiceDoorControls && voiceDoorLocks) || (voiceDoorSensors && voiceDoorLocks) ||
         	(voiceDoorSensors && voiceDoorSensors.size()>1) || (voiceDoorControls && voiceDoorControls.size()>1) || (voiceDoorLocks && voiceDoorLocks.size()>1 ) ? " report ${status}" : " reports ${status}"
+    	result += voiceWindowShades ? ". Includes ${shadeRpt.toLowerCase()}" : ""
+        if (!voiceDoorSensors && !voiceDoorControls && !voiceDoorLocks && voiceWindowShades) result = shadeRpt
     }
     return result
 }
@@ -2765,7 +2782,7 @@ def setupData(){
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private def textAppName() { return "Ask Alexa" }	
 private def textVersion() {
-    def version = "SmartApp Version: 2.0.8 (07/27/2016)"
+    def version = "SmartApp Version: 2.0.8 (07/28/2016)"
     def lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
     return "${version}${lambdaVersion}"
 }
