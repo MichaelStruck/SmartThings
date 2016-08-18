@@ -1241,7 +1241,7 @@ def getReply(devices, type, dev, op, num, param){
                     if (param =="auto" || param=="automatic") {result="I am setting the ${STdevice} to 'auto' mode. Please note, "+
                     	"to properly set the temperature in 'auto' mode, you must specify the heating or cooling setpoints separately. " ; STdevice.auto()}
                     if (param =="home" && nestCMD) {result = "I am setting the ${STdevice} to 'home'. "; STdevice.present()} 
-                    if (param =="away" && nestCMD) {result = "I am setting the ${STdevice} to 'away'. Please note that Nest thermostats will not temperature changes while in 'away' status. "; STdevice.away()} 
+                    if (param =="away" && nestCMD) {result = "I am setting the ${STdevice} to 'away'. Please note that Nest thermostats will not respond to temperature changes while in 'away' status. "; STdevice.away()} 
                     if ((param =="home" || param =="away" || param =="sleep") && ecobee3CMD) {result = "I am setting the ${STdevice} to '" + param + "'. "; STdevice.setThermostatProgram("${param.capitalize()}")}
                     if (param =="resume program" && ecobee3CMD) {result = "I am resuming the climate program of the ${STdevice}. "; STdevice.resumeProgram()} 
                     if (op =="off") {result = "I am turning the ${STdevice} ${op}. "; STdevice.off()}
