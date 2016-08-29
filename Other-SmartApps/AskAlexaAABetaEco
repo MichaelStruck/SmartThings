@@ -260,7 +260,7 @@ def pageSettings(){
                     image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/warning.png"
             }
         section ("Advanced") {
-            href "pageCustomDevices", title: "Device Specific Commands", description: none, state: (nestCMD || stelproCMD || sonosCMD || ecobee3CMD || MyEcobeeCMD ? "complete" : null)
+            href "pageCustomDevices", title: "Device Specific Commands", description: none, state: (nestCMD || stelproCMD || sonosCMD || MyEcobeeCMD ? "complete" : null)
             input "advReportOutput", "bool", title: "Advanced Voice Report Filter", defaultValue: false
             input "showURLs", "bool", title: "Display REST URL For Certain Macros\n(Experimental)", defaultValue: false
         }
@@ -310,7 +310,6 @@ def pageContCommands(){
 def pageCustomDevices(){
     dynamicPage(name: "pageCustomDevices", uninstall: false){
 		section("Device Specific Commands"){
-            input "ecobee3CMD", "bool", title: "Ecobee3 (Connect)\nSpecific Thermostat Modes\n(Home/Away/Sleep/Resume Program)", defaultValue: false
             input "MyEcobeeCMD", "bool", title: "MyEcobee Specific Thermostat Modes\n(Home/Away/Sleep/Resume Program)\nAnd Specific Tips (Get Tips/Restart Tips)", defaultValue: false             
             input "nestCMD", "bool", title: "Nest-Specific Thermostat Presence Commands (Home/Away)", defaultValue: false
             input "stelproCMD", "bool", title: "Stelpro Baseboard\nThermostat Modes (Eco/Comfort)", defaultValue:false
@@ -554,7 +553,6 @@ def pageSTDevices(){
             if (tstats) {
             	def tstatOptions=["heat":"Set heating temperature","cool":"Set cooling temperature"]
                 if (parent.nestCMD) tstatOptions += ["away":"Nest 'Away' Presence","home":"Nest 'Home' Presence"]
-                if (parent.ecobee3CMD) tstatOptions += ["away":"Ecobee 'Away' Climate","home":"Ecobee 'Home' Climate","sleep":"Ecobee 'Sleep' Climate","resume program":"Ecobee 'Resume Program'"]
     	        if (parent.MyEcobeeCMD) tstatOptions += ["away":"Ecobee 'Away' Climate","home":"Ecobee 'Home' Climate","sleep":"Ecobee 'Sleep' Climate","resume program":"Ecobee 'Resume Program'","get tips":"Ecobee 'Get Tips'","erase tips":"Ecobee 'Erase Tips'"]
                 input "tstatsCMD", "enum", title: "Command To Send To Thermostats", options :tstatOptions , multiple: false, required: false, submitOnChange:true
             }
@@ -1200,7 +1198,7 @@ def getReply(devices, type, dev, op, num, param){
                     	result += " This thermostat's presence sensor is reading "
                         result += STdevice.currentValue("presence")=="present" ? "'Home'. " : "'Away'. "
                     }
-                    if (ecobee3CMD && STdevice.currentValue('currentProgramId') =~ /home|away|sleep/ ){
+                    if (MyEcobeeCMD && STdevice.currentValue('currentProgramId') =~ /home|away|sleep/ ){
                 		result += " This thermostat's comfort setting is set to "
                     	result += "${STdevice.currentValue('currentProgramId')}. "
 					}
@@ -1251,12 +1249,21 @@ def getReply(devices, type, dev, op, num, param){
                     if (param =="auto" || param=="automatic") {result="I am setting the ${STdevice} to 'auto' mode. Please note, "+
                     	"to properly set the temperature in 'auto' mode, you must specify the heating or cooling setpoints separately. " ; STdevice.auto()}
                     if (param =="home" && nestCMD) {result = "I am setting the ${STdevice} to 'home'. "; STdevice.present()} 
-                    if (param =="away" && nestCMD) {result = "I am setting the ${STdevice} to 'away'. Please note that Nest thermostats will not respond to temperature changes while in 'away' status. "; STdevice.away()} 
-                    if ((param =="home" || param =="away" || param =="sleep") && ecobee3CMD) {result = "I am setting the ${STdevice} to '" + param + "'. "; STdevice.setThermostatProgram("${param.capitalize()}")}
-                    if (param =="resume program" && ecobee3CMD) {result = "I am resuming the climate program of the ${STdevice}. "; STdevice.resumeProgram()} 
+                    if (param =="away" && nestCMD) {result = "I am setting the ${STdevice} to 'away'. Please note that Nest thermostats will not respond to temperature changes while in 'away' status. "; STdevice.away()}
                     if (op =="off") {result = "I am turning the ${STdevice} ${op}. "; STdevice.off()}
                     if (stelproCMD && (param=="eco" || param=="comfort")) { result="I am setting the ${STdevice} to '${param}' mode. "; STdevice.setThermostatMode("${param}") }
-                    if ((param =="home" || param =="away" || param =="sleep") && MyEcobeeCMD) {result = "I am setting the ${STdevice} to '" + param + "'. "; STdevice.setClimate("","${param.capitalize()}")}
+                    if ((param =="home" || param =="away" || param =="sleep") && MyEcobeeCMD) {
+                        STdevice.supportedCommands.each {comm ->
+                            if(comm.name == "setThermostatProgram") {
+                                result = "I am setting the ${STdevice} to '" + param + "'. "
+                                STdevice.setThermostatProgram("${param.capitalize()}")
+                            }
+                            else if(comm.name == "setClimate") {
+                                result = "I am setting the ${STdevice} to '" + param + "'. "
+                                STdevice.setClimate("","${param.capitalize()}")
+                            }
+                        }
+                    }
                     if (param =="resume program" && MyEcobeeCMD) {result = "I am resuming the climate program of the ${STdevice}. "; STdevice.resumeProgram()} 
                     if (param =="get tips" || param == "erase tips" && MyEcobeeCMD) {result = "I am sending the ${param} command to ${STdevice}. "; STdevice.resumeProgram()} 
 				}
@@ -1569,17 +1576,17 @@ def groupResults(num, op, colorData, param, mNum){
             	result="I am setting the ${noun} to 'away' mode. Please note that Nest thermostats will not accept temperature changes while in 'away' status. "
                 settings."groupDevice${groupType}"?.away()
             }
-            if ((param=="home" || param=="away" || param=="sleep") && parent.ecobee3CMD) { 
-				result="I am setting the ${noun} to the '${param}' climate."
-				settings."groupDevice${groupType}"?.setThermostatProgram("${param.capitalize()}")
-			}
-			if ((param=="resume program") && parent.ecobee3CMD) { 
-				result="I am resuming the climate program of the ${noun}."
-				settings."groupDevice${groupType}"?.resumeProgram()
-            }
             if ((param =="home" || param =="away" || param =="sleep") && parent.MyEcobeeCMD) {
-                result = "I am setting the ${noun} to '" + param + "'. ";
-                settings."groupDevice${groupType}"?.setClimate("","${param.capitalize()}")
+                result = "I am setting the ${noun} to '" + param + "'. "
+                settings."groupDevice${groupType}".each { -> myDevice
+                    myDevice.supportedCommands.each {comm ->
+                        if(comm.name == "setThermostatProgram") {
+                            myDevice.setThermostatProgram("${param.capitalize()}")
+                        }else if(comm.name == "setClimate") {
+                            myDevice.setClimate("","${param.capitalize()}")
+                        }
+                    }
+                }
             }
             if (param =="resume program" && parent.MyEcobeeCMD) {
                result = "I am resuming the climate program of the ${noun}. "
@@ -2062,7 +2069,6 @@ def macroTypeDesc(){
         def countDesc = settings."groupDevice${groupType}".size() == 1 ? "one device" : settings."groupDevice${groupType}".size() + " devices"
         if (parent.stelproCMD && groupType=="thermostat") customAck = "- Accepts Stelpro baseboard heater commands" + customAck
         if (parent.nestCMD && groupType=="thermostat") customAck = "- Accepts Nest 'Home'/'Away' commands" + customAck
-        if (parent.ecobee3CMD && groupType=="thermostat") customAck = "- Accepts Ecobee3 (Connect) 'Home'/'Away'/'Sleep'/'Resume Program' commands" + customAck
         if (parent.MyEcobeeCMD && groupType=="thermostat") customAck = "- Accepts My Ecobee 'Home'/'Away'/'Sleep'/'Resume Program'/'Get Tips/'Erase Tips' commands" + customAck
         customAck = tstatDefaultHeat && groupType=="thermostat" ? "- Sends heating setpoint by default" + customAck : tstatDefaultCool && groupType=="thermostat" ? "- Sends cooling setpoint by default" + customAck : customAck
         desc = "${groupDesc} CONFIGURED with ${countDesc}${customAck}${PIN} - Tap to edit" 
@@ -2922,9 +2928,8 @@ def setupData(){
 	def PARAMS=[]
     PARAMS<<"heat"<<"cool"<<"heating"<<"cooling"<<"auto"<<"automatic"<<"AC"
     if (tstats && stelproCMD) PARAMS<< "eco"<<"comfort"
-    if (tstats && (nestCMD || ecobee3CMD || MyEcobeeCMD)) PARAMS<<"home"<<"away"
-    if (tstats && (ecobee3CMD || MyEcobeeCMD)) PARAMS<<"sleep"<<"resume program"
-    if (tstats && MyEcobeeCMD) PARAMS<<"get tips"<<"erase tips"    
+    if (tstats && (nestCMD || MyEcobeeCMD)) PARAMS<<"home"<<"away"
+    if (tstats && MyEcobeeCMD) PARAMS<<"sleep"<<"resume program"<<"get tips"<<"erase tips"
     if (sonosCMD && speakers && sonosMemoryCount){
     	def memCount = sonosMemoryCount as int
     	for (int i=1; i<memCount+1; i++){
