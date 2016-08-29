@@ -1204,9 +1204,9 @@ def getReply(devices, type, dev, op, num, param){
                 		result += " This thermostat's comfort setting is set to "
                     	result += "${STdevice.currentValue('currentProgramId')}. "
 					}
-                    if (MyEcobeeCMD && STdevice.currentValue('currentClimate') =~ /home|away|sleep/ ){
-                 		result += " This thermostat's comfort setting is set to "
-                        result += "${STdevice.currentValue('currentClimate')}. "
+                    if (MyEcobeeCMD && STdevice.currentValue('climateName') =~ /home|away|sleep/ ){
+             		result += " This thermostat's comfort setting is set to "
+                    result += "${STdevice.currentValue('climateName')}. "
                     }
                     if (MyEcobeeCMD && STdevice.currentValue('tip1Text')) {
                  		result += " My Ecobee's current tip is "
