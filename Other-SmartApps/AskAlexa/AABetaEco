@@ -1198,17 +1198,20 @@ def getReply(devices, type, dev, op, num, param){
              			result += " This thermostat's comfort setting is set to "
                     	result += "${STdevice.currentValue('climateName')}. "
                     }
-                    if (ecobeeCMD && MyEcobeeCMD) {
+                    if (MyEcobeeCMD) {
                  		def tipNum = state.tipCount && state.tipCount<6 ? state.tipCount as int : 1
-                        if (STdevice.currentValue('tip${tipNum}Text')) {
-                        	result += " My Ecobee's current tip number ${tipNum} is '" + "${STdevice.currentValue('tip${tipNum}Text')}'. "
-                    		state.tipCount ++
+						def attribute="tip${tipNum}Text"   
+						log.debug ("MyEcobeeCMD tip attribute=$attribute, num=$tipNum")                       
+                        if (STdevice.currentValue(attribute)) {
+                        	result += " My Ecobee's current tip number ${tipNum} is '" + "${STdevice.currentValue(attribute)}'. "
+                    		state.tipCount = state.tipCount +1
+							                            
                             if (state.tipCount==6) { 
-                            	STdevice.resetTips()
-                        		result += "Please note. You have reached the last of the tips. Please issue the 'get tip' command to reload them. "
+	                       		result += "Please note. You have reached the last of the tips. Please issue the 'get tip' command to reload more. "
 							}
+							                         
                          }
-                         else result +="Tip number ${tipNum} is unavailable for the ${STdevice}. Try erasing the tips, then issue the 'GET TIPS' command and try again. %1%"
+                         else result +="Tip is unavailable at this time for the ${STdevice}. Try erasing the tips, then issue the 'GET TIPS' command and try again. %1%"
                     }
                     result += heat ? " The heating setpoint is set to ${heat} degrees. " : ""
                     result += heat && cool ? "And finally, " : ""
@@ -1259,14 +1262,17 @@ def getReply(devices, type, dev, op, num, param){
                     if (param =="resume program" && ecobeeCMD) {result = "I am resuming the climate program of the ${STdevice}. "; STdevice.resumeProgram()} 
                     if (op =="off") { result = "I am turning the ${STdevice} ${op}. "; STdevice.off() }
                     if (stelproCMD && param==~/eco|comfort/) { result="I am setting the ${STdevice} to '${param}' mode. "; STdevice.setThermostatMode("${param}") }
-                    if (param =~/get tip/ && MyEcobeeCMD && ecobeeCMD) { 
+                    if (param =~/get tip/ && MyEcobeeCMD) {
+                    
                     	def tipLevel = num>0 && num<5 ? num :1
-                        result = "I am loading level ${num} tips to ${STdevice}. "
+//                    	def tipLevel = 1
+                        result = "I am loading level ${tipLevel} tips to ${STdevice}. "
                         STdevice.getTips(tipLevel)
-                        state.tipCount=1
+						log.debug("result for MyEcobeeCMD=$result")
+						state.tipCount=1
                     } 
-                    if (param =~/erase tip|reset tip/ && MyEcobeeCMD && ecobeeCMD) { 
-                    	result = "I am resetting the tips from ${STdevice}. Be sure to run the 'get tip' command to reload your thermostat advice. "
+                    if (param =~/erase tip|restart tip/ && MyEcobeeCMD) { 
+                    	result = "I am resetting the tips from ${STdevice}. Be sure to ask for the 'get tip' command to reload your thermostat advice. "
                         STdevice.resetTips() 
                     } 
 				}
@@ -2941,7 +2947,7 @@ def setupData(){
     if (tstats && stelproCMD) PARAMS<< "eco"<<"comfort"
     if (tstats && (nestCMD || ecobeeCMD)) PARAMS<<"home"<<"away"
     if (tstats && ecobeeCMD) PARAMS<<"sleep"<<"resume program"
-    if (tstats && MyEcobeeCMD) PARAMS<<"get tips"<<"get tip"<<"erase tips"<<"reset tips"<<"erase tip"<<"reset tip"     
+    if (tstats && MyEcobeeCMD) PARAMS<<"get tips"<<"get tip"<<"erase tips"<<"restart tips"<<"erase tip"<<"restart tip"     
     if (sonosCMD && speakers && sonosMemoryCount){
     	def memCount = sonosMemoryCount as int
     	for (int i=1; i<memCount+1; i++){
