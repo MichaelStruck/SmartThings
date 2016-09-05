@@ -1254,7 +1254,8 @@ def getReply(devices, type, dev, op, num, param){
                 if (param =~/tip/ || op=~/tip/) {
                 	if (MyEcobeeCMD && ecobeeCMD) {
                         if (op ==~/repeat|replay/) {
-                            def currentTipNum= state.tipCount.isNumber() ? state.tipCount : 1 
+                            def currentTipNum= state.tipCount>0 ? state.tipCount : 1 
+                            log.debug "Made it here"
                             def previousTipNum= currentTipNum - 1                    
                             def tipNum = previousTipNum>0 && previousTipNum <6 ? (previousTipNum) as int : 1
                             def attribute="tip${tipNum}Text"
