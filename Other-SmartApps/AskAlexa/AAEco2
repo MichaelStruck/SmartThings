@@ -1262,7 +1262,7 @@ def getReply(devices, type, dev, op, num, param){
                             if (STdevice.currentValue(attribute)) result = "My Ecobee's current tip number ${tipNum} is '" + STdevice.currentValue(attribute) + "'. "
                             else result ="Tip number is unavailable at this time for the ${STdevice}. Try erasing the tips, then issue the 'GET TIPS' command and try again. %1%"
                         }
-                        else if (op==~/play|give|undefined/) { 
+                        else if (op==~/play|give/ || (param=="tip" && op=="undefined")) { 
                             def tipNum= state.tipCount>0 ? state.tipCount : 1                    
                             def attribute="tip${tipNum}Text"
                             log.debug "Giving tip number: " + tipNum
