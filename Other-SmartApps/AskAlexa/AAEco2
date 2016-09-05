@@ -1253,7 +1253,7 @@ def getReply(devices, type, dev, op, num, param){
             if (type == "thermostat"){
                 if (param =~/tip/ || op=~/tip/) {
                 	if (MyEcobeeCMD && ecobeeCMD) {
-                        if (op =="repeat") {
+                        if (op ==~/repeat|replay/) {
                             def currentTipNum= state.tipCount.isNumber() ? state.tipCount : 1 
                             def previousTipNum= currentTipNum - 1                    
                             def tipNum = previousTipNum>0 && previousTipNum <6 ? (previousTipNum) as int : 1
@@ -1287,6 +1287,7 @@ def getReply(devices, type, dev, op, num, param){
                         } 
                         else if (op ==~/restart|erase|delete|clear|reset/) { 
                             result = "I am resetting the tips from ${STdevice}. Be sure to ask for the 'GET TIP' command to reload your thermostat advice. "
+                            log.debug "Resetting My Ecobee tips"
                             STdevice.resetTips() 
                         }
                         else result = "I did not understand what you wanted me to do with the Ecobee tips. Valid commands are 'get', 'give', or 'erase' tips. %1%"
@@ -3007,7 +3008,7 @@ def setupData(){
     result += speakers ?"stop<br>pause<br>mute<br>unmute<br>next track<br>previous track<br>" : ""
     result += msgQueue || speakers || (ecobeeCMD && MyEcobeeCMD) ?"play<br>" : ""
     result += msgQueue || (ecobeeCMD && MyEcobeeCMD) ? "erase<br>delete<br>clear<br>reset<br>" : ""
-    result += ecobeeCMD && MyEcobeeCMD ? "get<br>restart<br>repeat<br>give<br>" : ""
+    result += ecobeeCMD && MyEcobeeCMD ? "get<br>restart<br>repeat<br>replay<br>give<br>" : ""
     result += "<br><b>LIST_OF_PARAMS</b><br><br>"
 	def PARAMS=[]
     PARAMS<<"heat"<<"cool"<<"heating"<<"cooling"<<"auto"<<"automatic"<<"AC"
