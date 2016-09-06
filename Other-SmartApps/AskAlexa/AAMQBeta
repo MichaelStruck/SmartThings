@@ -1,13 +1,13 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.1.3 - 9/3/16 Copyright © 2016 Michael Struck
+ *  Version 2.1.3 - 9/6/16 Copyright © 2016 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; Barry Burke for Weather Underground Integration; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.1.2 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *  Version 2.1.2b (8/26/16) Fixed weather report issue; Added Ecobee (Connect) code for thermostat climate modes; added brief device action reply; REST URL visibility option for Control Macros; brighten/dim commands for dimmers
- *  Version 2.1.3 (9/3/16) Added My Ecobee tips; code optimization/bug fixes; implementation of Message Queue; added acceleration sensors
+ *  Version 2.1.3 (9/6/16) Added My Ecobee tips; code optimization/bug fixes; implementation of Message Queue; added acceleration sensors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -259,15 +259,15 @@ def pageSettings(){
         	href "pageGlobalVariables", title: "Text Field Variables", description: none, state: (voiceTempVar || voiceHumidVar || voicePresenceVar ? "complete" : null)
         }
         section("Security"){
+            href "pageConfirmation", title: "Revoke/Reset Access Token", description: "Tap to confirm this action", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/warning.png"
             input "pwNeeded", "bool", title: "Password (PIN) Option Enabled", defaultValue: false, submitOnChange: true
             if (pwNeeded) input "password", "num", title: "Numeric Password (PIN)", description: "Enter a short numeric PIN (i.e. 1234)", required: false
-            href "pageConfirmation", title: "Revoke/Reset Access Token", description: "Tap to confirm this action",
-                    image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/warning.png"
-            }
+		}
         section ("Advanced") {
             href "pageCustomDevices", title: "Device Specific Commands", description: none, state: (nestCMD || stelproCMD || sonosCMD || ecobeeCMD ? "complete" : null)
             input "advReportOutput", "bool", title: "Advanced Voice Report Filter", defaultValue: false
             input "showURLs", "bool", title: "Display REST URL For Certain Macros\n(Experimental)", defaultValue: false
+            label title:"Assign a name", required:false, defaultValue: "Ask Alexa"
         }
     }
 }
@@ -316,7 +316,7 @@ def pageCustomDevices(){
     dynamicPage(name: "pageCustomDevices", uninstall: false){
 		section("Device Specific Commands"){
             input "ecobeeCMD", "bool", title: "Ecobee Specific Thermostat Modes\n(Home/Away/Sleep/Resume Program)", defaultValue: false, submitOnChange: true
-            if (ecobeeCMD) input "MyEcobeeCMD", "bool", title: "MyEcobee Specific Tips\n(Get Tips/Erase Tips)", defaultValue: false             
+            if (ecobeeCMD) input "MyEcobeeCMD", "bool", title: "MyEcobee Specific Tips\n(Get Tips/Play Tips/Erase Tips)", defaultValue: false             
             input "nestCMD", "bool", title: "Nest-Specific Thermostat Presence Commands (Home/Away)", defaultValue: false
             input "stelproCMD", "bool", title: "Stelpro Baseboard\nThermostat Modes (Eco/Comfort)", defaultValue:false
             input "sonosCMD", "bool", title: "SONOS Memory Slots", defaultValue: false, submitOnChange: true
@@ -334,8 +334,7 @@ def pageSONOSReset(){
     dynamicPage(name: "pageSONOSReset",title: "Song Database Reset", uninstall: false){
 		state.songLoc = []
     	section{
-			paragraph "The SONOS song database has been reset. It is recommended you now go into the memory slots, choose the "+
-        	"songs you wish to play in each slot, then properly exit the SmartApp. This will rebuild the database."
+			paragraph "The SONOS song database has been reset. Go into the memory slots, choose the songs you wish to play in each slot, then properly exit the SmartApp. This will rebuild the database."
 		}
 	}
 }
@@ -508,13 +507,11 @@ def pageControl() {
             href "pageHTTP", title: "Run This HTTP Request...", description: getHTTPDesc(), state: greyOutStateHTTP(), image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/network.png"
             input "cDelay", "number", title: "Default Delay (Minutes) To Activate", defaultValue: 0, required: false, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/stopwatch.png"
             input ("contacts", "contact", title: "Send Notifications To...", required: false, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/sms.png") {
-			input "smsNum", "phone", title: "Send SMS Message To (Phone Number)...", required: false, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/sms.png"
-			input "pushMsg", "bool", title: "Send Push Message", defaultValue: false
+				input "smsNum", "phone", title: "Send SMS Message To (Phone Number)...", required: false, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/sms.png"
+				input "pushMsg", "bool", title: "Send Push Message", defaultValue: false
             }
             input "smsMsg", "text", title: "Send This Message...", required: false, capitalization: "sentences"
-            if (parent.pwNeeded){
-        		input "usePW", "bool", title: "Require PIN To Run This Macro", defaultValue: false
-        	}
+            if (parent.pwNeeded) input "usePW", "bool", title: "Require PIN To Run This Macro", defaultValue: false
         }
         section("Custom acknowledgment"){
              if (!noAck) input "voicePost", "text", title: "Acknowledgment Message", description: "Enter a short statement to play after macro runs", required: false, capitalization: "sentences"
@@ -671,8 +668,7 @@ def pageOtherReport(){
             input "voiceAccel", "capability.accelerationSensor", title: "Acceleration Sensors To Report Their Status...", multiple: true, required: false, submitOnChange: true
             if (voiceAccel) input "voiceAccelOnly", "bool",title: "Report Only Sensors That Read 'Active'", defaultValue: false
             if (voiceAccel) input "voiceAccelEvt", "bool",title: "Report Time Of The Last Movement", defaultValue: false 
-        }
-        
+        }   
         section ("Motion Sensors"){
             input "voiceMotion", "capability.motionSensor", title: "Motion Sensors To Report Their Status...", multiple: true, required: false, submitOnChange: true
             if (voiceMotion) input "voiceMotionOnly", "bool",title: "Report Only Sensors That Read 'Active'", defaultValue: false
@@ -791,11 +787,9 @@ def pageWeatherCurrent(){
 }
 //---------------------------------------------------------------
 def installed() {
-	log.debug "Installed with settings: ${settings}"
 	initialize()
 }
 def updated() {
-	log.debug "Updated with settings: ${settings}"
 	initialize()
 }
 def childUninstalled() {
@@ -816,13 +810,13 @@ def initialize() {
 }
 //--------------------------------------------------------------
 mappings {
-      path("/d") { action: [GET: "processDevice"] }
-      path("/m") { action: [GET: "processMacro"] }
-      path("/h") { action: [GET: "processSmartHome"] }
-      path("/l") { action: [GET: "processList"] }
-      path("/b") { action: [GET: "processBegin"] }
-      path("/setup") { action: [GET: "setupData"] }
-      path("/u") { action: [GET: "getURLs"] }
+	path("/d") { action: [GET: "processDevice"] }
+	path("/m") { action: [GET: "processMacro"] }
+	path("/h") { action: [GET: "processSmartHome"] }
+	path("/l") { action: [GET: "processList"] }
+	path("/b") { action: [GET: "processBegin"] }
+	path("/u") { action: [GET: "getURLs"] }
+	path("/setup") { action: [GET: "setupData"] }
 }
 //--------------------------------------------------------------
 def processBegin(){
@@ -893,7 +887,7 @@ def processDevice() {
 //Message Queue Reply
 def msgQueueReply(op){
 	log.debug "-Message Queue Response-"
-    def cmd = op =~ /delete|reset|clear/ ? "delete" : op =~ /play|list|undefined/ ? "playback" : ""
+    def cmd = op =~ /delete|reset|clear|erase/ ? "delete" : op =~ /play|list|undefined|status/ ? "playback" : ""
     log.debug "Message Queue Command: " + cmd
     String outputTxt = ""
     if (msgQueue){
@@ -915,10 +909,10 @@ def msgQueueReply(op){
             }
         }
         else if (cmd == "delete") {
-        	state.msgQueue =[]
-            outputTxt="I have deleted the message queue. %5%"
+			state.msgQueue =[]
+            outputTxt="I have deleted all of the items from the message queue. %5%"
         }
-        else outputTxt="For a message queue, be sure to give a 'play' or 'delete' command. %1%"
+        else outputTxt="For the message queue, be sure to give a 'play' or 'delete' command. %1%"
     }
     else outputTxt = "You do not have the message queue option enabled in your SmartApp. %1%"
     sendJSON(outputTxt)  
@@ -1251,39 +1245,48 @@ def getReply(devices, type, dev, op, num, param){
         }
         else {
             if (type == "thermostat"){
-                if (param =~/tip/ && MyEcobeeCMD && ecobeeCMD) {
-                	if (param =~/repeat tip/) {
-                		def previousTipNum= (state.tipCount -1)                    
-                		def tipNum = ((previousTipNum>0) && (previousTipNum <6 ))? (previousTipNum) as int : 1
-                		def attribute="tip${tipNum}Text"
-                		if (STdevice.currentValue(attribute)) result += "My Ecobee's current tip number ${tipNum} is '" + STdevice.currentValue(attribute) + "'. "
-                		else result +="Tip number is unavailable at this time for the ${STdevice}. Try erasing the tips, then issue the 'GET TIPS' command and try again. %1%"
-            		}
-                    if (param =~/give tip/) { 
-                   		def tipNum= state.tipCount.isNumber() ? state.tipCount : 1                    
-                   		def attribute="tip${tipNum}Text"
-                   		if (!(STdevice.currentValue(attribute))) {
-                      		STdevice.getTips(1)
-                      		state.tipCount=1                       
-                      		tipNum= 1                           
-                      		attribute="tip${tipNum}Text"
-                   		}                            
-                		if (STdevice.currentValue(attribute)) { 
-							result += "My Ecobee's current tip number ${tipNum} is '" + STdevice.currentValue(attribute) + "'. "
-							state.tipCount=state.tipCount+1
-						}
-						else result +="Tip number is unavailable at this time for the ${STdevice}. Try erasing the tips, then issue the 'GET TIPS' command and try again. %1%"
-            		}
-                    if (param =~/get tip/) { 
-                    	def tipLevel = num>0 && num<5 ? num :1
-                        result = "I am loading level ${tipLevel} tips to ${STdevice}. "
-                        STdevice.getTips(tipLevel)
-                        state.tipCount=1
-                    } 
-                    if (param =~/erase tip|restart tip/) { 
-                    	result = "I am resetting the tips from ${STdevice}. Be sure to ask for the 'GET TIP' command to reload your thermostat advice. "
-                        STdevice.resetTips() 
-                    }
+                if (param =~/tip/ || op=~/tip/) {
+                	if (MyEcobeeCMD && ecobeeCMD) {
+                        if (op ==~/repeat|replay/) {
+                            def currentTipNum= state.tipCount>0 ? state.tipCount : 1 
+                            def previousTipNum= currentTipNum - 1                    
+                            def tipNum = previousTipNum>0 && previousTipNum <6 ? (previousTipNum) as int : 1
+                            def attribute="tip${tipNum}Text"
+                            log.debug "Repeating tip number: " + tipNum
+                            if (STdevice.currentValue(attribute)) result = "My Ecobee's current tip number ${tipNum} is '" + STdevice.currentValue(attribute) + "'. "
+                            else result ="Tip number is unavailable at this time for the ${STdevice}. Try erasing the tips, then issue the 'GET TIPS' command and try again. %1%"
+                        }
+                        else if (op==~/play|give/ || (op=="tip" && param=="undefined")) { 
+                            def tipNum= state.tipCount>0 ? state.tipCount : 1                    
+                            def attribute="tip${tipNum}Text"
+                            log.debug "Giving tip number: " + tipNum
+                            if (!(STdevice.currentValue(attribute))) {
+                                STdevice.getTips(1)
+                                state.tipCount=1                       
+                                tipNum= 1                           
+                                attribute="tip${tipNum}Text"
+                            }                            
+                            if (STdevice.currentValue(attribute)) { 
+                                result = "My Ecobee's current tip number ${tipNum} is '" + STdevice.currentValue(attribute) + "'. "
+                                state.tipCount=state.tipCount+1
+                            }
+                            else result ="Tip number is unavailable at this time for the ${STdevice}. Try erasing the tips, then issue the 'GET TIPS' command and try again. %1%"
+                        }
+                        else if (op ==~/get|load|reload/) { 
+                            def tipLevel = num>0 && num<5 ? num :1
+                            result = "I am loading level ${tipLevel} tips to ${STdevice}. "
+                            log.debug "Getting new tips level: " + tipLevel
+                            STdevice.getTips(tipLevel)
+                            state.tipCount=1
+                        } 
+                        else if (op ==~/restart|erase|delete|clear|reset/) { 
+                            result = "I am resetting the tips from ${STdevice}. Be sure to ask for the 'GET TIP' command to reload your thermostat advice. "
+                            log.debug "Resetting My Ecobee tips"
+                            STdevice.resetTips() 
+                        }
+                        else result = "I did not understand what you wanted me to do with the Ecobee tips. Valid commands are 'get', 'give', 'repete' or 'erase' tips. %1%"
+					}
+                    else result = "You do not have the Ecobee tips functionality enabled in your SmartApp. %1%"
                 }
                 else {
                     if ((op ==~/increase|raise|up|decrease|down|lower/)){
@@ -1302,8 +1305,7 @@ def getReply(devices, type, dev, op, num, param){
                         if (param == "undefined" && op == "on") result="You must designate 'heating mode' or 'cooling mode' when turning the ${STdevice} on. "
                         if (param =~/heat/) {result="I am setting the ${STdevice} to 'heating' mode. "; STdevice.heat()}
                         if (param =~/cool|AC/) {result="I am setting the ${STdevice} to 'cooling' mode. "; STdevice.cool()}
-                        if (param =="auto" || param=="automatic") {result="I am setting the ${STdevice} to 'auto' mode. Please note, "+
-                            "to properly set the temperature in 'auto' mode, you must specify the heating or cooling setpoints separately. " ; STdevice.auto()}
+                        if (param =~/auto/) {result="I am setting the ${STdevice} to 'auto' mode. Please note, to properly set the temperature in 'auto' mode, you must specify the heating or cooling setpoints separately. " ; STdevice.auto()}
                         if (param =="home" && nestCMD) {result = "I am setting the ${STdevice} to 'home'. "; STdevice.present()} 
                         if (param =="away" && nestCMD) {result = "I am setting the ${STdevice} to 'away'. Please note that Nest thermostats will not respond to temperature changes while in 'away' status. "; STdevice.away()} 
                         if (param ==~/home|away|sleep/ && ecobeeCMD) {
@@ -1331,12 +1333,12 @@ def getReply(devices, type, dev, op, num, param){
                             result = "You do not have a minimum thermostat setpoint defined within your SmartApp. %1%"
                             param = "undefined"
                         }
-                        if ((param ==~/heat|heating/) && num > 0) {
+                        if ((param =~/heat/) && num > 0) {
                             result="I am setting the heating setpoint of the ${STdevice} to ${num} degrees. "
                             STdevice.setHeatingSetpoint(num) 
                             if (stelproCMD) STdevice.applyNow()
                         }
-                        if ((param ==~/cool|cooling|AC/) && num > 0) {
+                        if ((param =~/cool|AC/) && num > 0) {
                             result="I am setting the cooling setpoint of the ${STdevice} to ${num} degrees. "
                             STdevice.setCoolingSetpoint(num)
                         }
@@ -1441,9 +1443,9 @@ def getReply(devices, type, dev, op, num, param){
 				if (currentDoorState==op || (currentDoorState == "closed" && op=="close")) result = "The ${STdevice} is already ${currentDoorState}. "
                 else {
                     if (op != "open" || op != "close") result ="For the ${STdevice}, you must give an 'open' or 'close' command. %1%"
-                    if ((op=="open" || op=="close") && (doorPW && pwNeeded && password && num == 0)) result="You must say your password to ${op} the ${STdevice}. %1%"
-                    if ((op=="open" || op=="close") && (doorPW && pwNeeded && password && num>0 && num != password as int)) result="I did not hear the correct password to ${op} the ${STdevice}. %1%"
-                    else if ((op=="open" || op=="close") && (!doorPW || !pwNeeded || (password && pwNeeded && num == password as int) || !password)) {
+                    if ((op==~/open|close/) && (doorPW && pwNeeded && password && num == 0)) result="You must say your password to ${op} the ${STdevice}. %1%"
+                    if ((op==~/open|close/) && (doorPW && pwNeeded && password && num>0 && num != password as int)) result="I did not hear the correct password to ${op} the ${STdevice}. %1%"
+                    else if ((op==~/open|close/) && (!doorPW || !pwNeeded || (password && pwNeeded && num == password as int) || !password)) {
                         STdevice."$op"() 
                         result = op=="close" ? "I am closing the ${STdevice}. " : "I am opening the ${STdevice}. "
                     }
@@ -1464,9 +1466,9 @@ def getReply(devices, type, dev, op, num, param){
                 if (STdevice.currentValue("lock") == op+"ed") result = "The ${STdevice} is already ${op}ed. "
                 else {
                     if (op != "lock" || op != "unlock" ) result= "For the ${STdevice}, you must give a 'lock' or 'unlock' command. %1%"
-                    if ((op=="lock" || op=="unlock") && (lockPW && pwNeeded && password && num ==0)) result= "You must say your password to ${op} the ${STdevice}. %1%"
-                    if ((op=="lock" || op=="unlock") && (lockPW && pwNeeded && password && num>0 && num != password as int)) result="I did not hear the correct password to ${op} the ${STdevice}. %1%"
-                    else if ((op=="lock" || op=="unlock") && (!lockPW || !pwNeeded || (password && pwNeeded && num ==password as int) || !password)) {
+                    if ((op==~/lock|unlock/) && (lockPW && pwNeeded && password && num ==0)) result= "You must say your password to ${op} the ${STdevice}. %1%"
+                    if ((op==~/lock|unlock/) && (lockPW && pwNeeded && password && num>0 && num != password as int)) result="I did not hear the correct password to ${op} the ${STdevice}. %1%"
+                    else if ((op==~/lock|unlock/) && (!lockPW || !pwNeeded || (password && pwNeeded && num ==password as int) || !password)) {
                         STdevice."$op"()
                         result = "I am ${op}ing the ${STdevice}. "
                     }
@@ -1489,7 +1491,7 @@ def getReply(devices, type, dev, op, num, param){
 	}
     catch (e){ result = "I could not process your request for the '${dev}'. Ensure you are using the correct commands with the device. %1%" }
     if (op=="status" && result && !result.endsWith("%")) result += batteryWarnTxt + "%2%"
-    if (op!="status" && result && !result.endsWith("%")) result += batteryWarnTxt + "%3%"
+    else if (op!="status" && result && !result.endsWith("%")) result += batteryWarnTxt + "%3%"
     if (result.endsWith("%3%") && briefReply) {
     	def reply = briefReplyTxt && briefReplyTxt !="No reply spoken" ? briefReplyTxt : ""
         result = reply ? reply + ". " + batteryWarnTxt +"%3%" : batteryWarnTxt + " %3%"
@@ -1576,7 +1578,7 @@ def groupResults(num, op, colorData, param, mNum){
     }
     else if (groupType=="lock"){
         noun=settings."groupDevice${groupType}".size()==1 ? "device" : "devices"
-		if ((op == "lock"|| op == "unlock")){         
+		if (op ==~ /lock|unlock/){         
 			settings."groupDevice${groupType}"?."$op"()
 			result = voicePost && !noAck ? replaceVoiceVar(voicePost,"") : noAck ? " " : "I am ${op}ing the ${noun} in the group named '${app.label}'. " 
 		}
@@ -1584,7 +1586,7 @@ def groupResults(num, op, colorData, param, mNum){
     }
     else if (groupType=="doorControl"){
      	noun=settings."groupDevice${groupType}".size()==1 ? "door" : "doors"
-        if (op == "open"|| op == "close" ){
+        if (op ==~ /open|close/){
 			settings."groupDevice${groupType}"?."$op"()
 			def condition = op=="close" ? "closing" : "opening"
 			result = voicePost && !noAck  ? replaceVoiceVar(voicePost,"") : noAck ? " " :  "I am ${condition} the ${noun} in the group named '${app.label}'. "
@@ -1593,7 +1595,7 @@ def groupResults(num, op, colorData, param, mNum){
     }
     else if (groupType=="windowShade"){
         noun=settings."groupDevice${groupType}".size()==1 ? "window shade" : "window shades"
-        if (op == "open"|| op == "close" ){
+        if (op ==~ /open|close/){
           	settings."groupDevice${groupType}"?."$op"()
            	def condition = op=="close" ? "closing" : "opening"
            	result = voicePost && !noAck  ? replaceVoiceVar(voicePost,"") : noAck ? " " :  "I am ${condition} the ${noun} in the group named '${app.label}'. "
@@ -1611,10 +1613,9 @@ def groupResults(num, op, colorData, param, mNum){
         if ((param==~/heat|heating|cool|cooling|auto|automatic|eco|AC|comfort|home|away|sleep|resume program/) && num == 0 && op=="undefined") op="on"
         if (op ==~/on|off/) {
         	if (param == "undefined" && op == "on") result="You must designate 'heating mode' or 'cooling mode' when turning on a thermostat group. %1%"
-            if (param ==~/heat|heating/) {result="I am setting the ${noun} to 'heating' mode. "; settings."groupDevice${groupType}"?.heat()}
-			if (param ==~/cool|cooling|AC/) {result="I am setting the ${noun} to 'cooling' mode. "; settings."groupDevice${groupType}"?.cool()}
-			if (param ==~/auto|automatic/) {result="I am setting the ${noun} to 'auto' mode. Please note, "+
-				"to properly set the temperature in 'auto' mode, you must specify the heating or cooling setpoints separately. " ; settings."groupDevice${groupType}"?.auto()}
+            if (param =~/heat/) {result="I am setting the ${noun} to 'heating' mode. "; settings."groupDevice${groupType}"?.heat()}
+			if (param =~/cool|AC/) {result="I am setting the ${noun} to 'cooling' mode. "; settings."groupDevice${groupType}"?.cool()}
+			if (param =~/auto/) {result="I am setting the ${noun} to 'auto' mode. Please note, to properly set the temperature in 'auto' mode, you must specify the heating or cooling setpoints separately. " ; settings."groupDevice${groupType}"?.auto()}
             if (op == "off") { result = "I am turning off the ${noun}. "; settings."groupDevice${groupType}"?.off() }
             if (parent.stelproCMD && (param=="eco" || param=="comfort")){ result="I am setting the ${noun} to '${param}' mode. "; settings."groupDevice${groupType}"?.setThermostatMode("${param}") }
         	if (param=="home" && parent.nestCMD) { result="I am setting the ${noun} to 'home' mode. "; settings."groupDevice${groupType}"?.present() }
@@ -1648,12 +1649,12 @@ def groupResults(num, op, colorData, param, mNum){
             	result = "You do not have a minimum thermostat setpoint defined within your SmartApp. %1%"
                 param = "undefined"
             }
-            if ((param =="heat" || param =="heating") && num > 0) {
+            if (param =~/heat/ && num > 0) {
 				result="I am setting the heating setpoint of the ${noun} to ${num} degrees. "
 				settings."groupDevice${groupType}"?.setHeatingSetpoint(num) 
 				if (parent.stelproCMD) settings."groupDevice${groupType}"?.applyNow()
 			}
-			if ((param ==~/cool|cooling|AC/) && num>0) {
+			if (param =~/cool|AC/ && num>0) {
 				result="I am setting the cooling setpoint of the ${noun} to ${num} degrees. "
 				settings."groupDevice${groupType}"?.setCoolingSetpoint(num)
 			}
@@ -1751,10 +1752,7 @@ def controlHandler(){
 	}
     if (garages && cmd.garage) garages?."${cmd.garage}"()
     if (shades && cmd.shade) shades?."${cmd.shade}"()
-    if (extInt == "0" && http){
-        log.info "Attempting to run: ${http}"
-        httpGet(http) 
-    }
+    if (extInt == "0" && http) httpGet(http) 
 	if (extInt == "1" && ip && port && command){
         def deviceHexID  = convertToHex (ip, port)
         log.info "Device Network Id set to ${deviceHexID}"
@@ -1877,7 +1875,7 @@ def reportStatus(deviceList, type){
 	String result = ""
     def appd = type==~/temperature|thermostatSetpoint|heatingSetpoint|coolingSetpoint|autoAll/ ? " degrees" : type == "humidity" ? " percent relative humidity" : ""
     if (type != "thermostatSetpoint" && type != "heatingSetpoint" && type !="coolingSetpoint" && type != "autoAll") {
-		deviceList.each {deviceName->
+        deviceList.each {deviceName->
 			if (type=="level" && deviceName.latestValue("switch")=="on") result += "The ${deviceName} is on, and set to ${deviceName.latestValue(type) as int}%. "
             else if (type=="level" && deviceName.latestValue("switch")=="off") result += "The ${deviceName} is off. "
             else {
@@ -1897,7 +1895,7 @@ def reportStatus(deviceList, type){
         	result += "The ${deviceName} has a cooling setpoint of ${Math.round(deviceName.latestValue("coolingSetpoint"))}${appd}, " +
         		"and a heating setpoint of ${Math.round(deviceName.latestValue("heatingSetpoint"))}${appd}. " 
         }
-    	catch (e) { result += "The ${deviceName} is not able to provide one of its setpoint. Ensure you are in a thermostat mode that allows reading of these setpoints. " }
+    	catch (e) { result += "The ${deviceName} is not able to provide one of its setpoints. Ensure you are in a thermostat mode that allows reading of these setpoints. " }
     }
     return result
 }
@@ -2108,8 +2106,7 @@ def getTimeLabel(start, end){
 	return timeLabel	
 }
 def macroTypeDesc(){
-	def desc = "", PIN = (macroType =="CoRE" || macroType == "Control" || (macroType == "Group" && groupType == "lock") || macroType=="GroupM" ||
-    	(macroType == "Group" && groupType == "doorControl") || desc) && usePW ? " - PIN Required" : ""
+	def desc = "", PIN = (macroType ==~/CoRE|Control|GroupM/ || (macroType == "Group" && groupType == "lock") || (macroType == "Group" && groupType == "doorControl") || desc) && usePW ? " - PIN Required" : ""
     def customAck = !noAck && !voicePost ? "; uses standard acknowledgment message" : !noAck  && voicePost ? "; includes a custom acknowledgment message" :  "; there will be no acknowledgment messages"
     if (macroType ==~ /Control|CoRE/) customAck += cDelay>1 ? "; activates ${cDelay} minutes after triggered" : cDelay==1 ? "; activates one minute after triggered" : ""
     if (macroType == "Control" && (phrase || setMode || SHM || getDeviceDesc() != "Status: UNCONFIGURED${PIN} - Tap to configure" || 
@@ -2260,16 +2257,15 @@ def weatherDesc(){
     result += voiceTide ?"Tide Information" : ""
     return result ? "Reports: ${result}" : "Status: UNCONFIGURED - Tap to configure"
 }
-def greyOutWeather(){ def result = voiceWeatherToday || voiceWeatherTonight || voiceWeatherTomorrow || voiceSunrise || voiceSunset || voiceMoon || voiceTide ||
+def greyOutWeather(){ return voiceWeatherToday || voiceWeatherTonight || voiceWeatherTomorrow || voiceSunrise || voiceSunset || voiceMoon || voiceTide ||
 	voiceWeatherTemp|| voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip ? "complete" : "" }
 def deviceGreyOut(){ return getDeviceDesc() == "Status: UNCONFIGURED - Tap to configure" ? "" : "complete" }
 def getDeviceDesc(){  
-    def result,lvl, cLvl, clr, tLvl
-    def cmd = [switch: switchesCMD, dimmer: dimmersCMD, cLight: cLightsCMD, tstat: tstatsCMD, lock: locksCMD, garage: garagesCMD, shade: shadesCMD]
-	lvl = cmd.dimmer == "set" && dimmersLVL ? dimmersLVL as int : 0
-	cLvl = cmd.cLight == "set" && cLightsLVL ? cLightsLVL as int : 0
-	clr = cmd.cLight == "set" && cLightsCLR ? cLightsCLR  : ""
-    tLvl = tstats ? tstatLVL : 0
+    def result, cmd = [switch: switchesCMD, dimmer: dimmersCMD, cLight: cLightsCMD, tstat: tstatsCMD, lock: locksCMD, garage: garagesCMD, shade: shadesCMD]
+	def lvl = cmd.dimmer == "set" && dimmersLVL ? dimmersLVL as int : 0
+	def cLvl = cmd.cLight == "set" && cLightsLVL ? cLightsLVL as int : 0
+	def clr = cmd.cLight == "set" && cLightsCLR ? cLightsCLR  : ""
+    def tLvl = tstats ? tstatLVL : 0
     lvl = lvl < 0 ? lvl = 0 : lvl >100 ? lvl=100 : lvl
     tLvl = tLvl < 0 ? tLvl = 0 : tLvl >100 ? tLvl=100 : tLvl
     cLvl = cLvl < 0 ? cLvl = 0 : cLvl >100 ? cLvl=100 : cLvl
@@ -2365,7 +2361,7 @@ private parseDate(time, type){
     return new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", formattedDate).format("${type}", timeZone(formattedDate))
 }
 private getWeatherReport(){
-	def msg = "", temp, sb = new StringBuilder(), isMetric = location.temperatureScale == 'C'
+	def temp, sb = new StringBuilder(), isMetric = location.temperatureScale == 'C'
 	Map conditions = getWeatherFeature('conditions', zipCode)
     if ((conditions == null) || conditions.response.containsKey('error')) return "There was an error in the weather data received Weather Underground. "
 	def cond = conditions.current_observation        
@@ -2373,25 +2369,9 @@ private getWeatherReport(){
         sb << 'The current temperature is '
         temp = isMetric ? roundValue(cond.temp_c) : Math.round(cond.temp_f)
 		sb << temp + ' degrees with ' + cond.weather
-        switch (cond.weather) {
-            case 'Overcast':
-            case 'Clear':
-            case 'Partly Cloudy':
-            case 'Mostly Cloudy': 
-            	sb << ' skies. '
-            break
-            case 'Unknown':
-            case 'Thunderstorm':
-            case 'Light Thunderstorm':
-            case 'Heavy Thunderstorm':
-            case 'Sandstorm':
-            case 'Light Sandstorm':
-            case 'Heavy Sandstorm':
-            	sb << ' conditions. '
-            break
-            default:
-                sb << '. '
-   		}
+        if (cond.weather =~/Overcast|Clear|Cloudy/) sb << " skies. "
+        else if (cond.weather =~/Unknown|storm/) sb << " conditions. "
+        else sb << ". "
 	}
     if (voiceWeatherHumid){
     	sb << 'The relative humidity is ' + cond.relative_humidity + ' and the winds are '
@@ -2403,19 +2383,10 @@ private getWeatherReport(){
 		}
 		else sb << cond.wind_string + '. '
 		sb << 'The barometric pressure is '
-        switch (cond.pressure_trend) {
-        	case '+': 
-            	if (isMetric) sb << cond.pressure_mb + ' millibars' else sb << cond.pressure_in + ' inches'
-            	sb << ' and rising. '
-            	break
-            case '-':
-				if (isMetric) sb << cond.pressure_mb + ' millibars' else sb << cond.pressure_in + ' inches'
-            	sb << " and falling. "
-        		break
-        	default:
-				sb << "steady at "
-				if (isMetric) sb << cond.pressure_mb + ' millibars. ' else sb << cond.pressure_in + ' inches. '
-     	}   
+        def pressure = isMetric ? cond.pressure_mb + ' millibars' : cond.pressure_in + ' inches'
+        if (cond.pressure_trend=="+") sb << pressure + " and rising. "
+        else if (cond.pressure_trend=="1") sb << pressure + " and falling. "
+        else sb << "steady at " + pressure + ". "
 	}
     if (voiceWeatherDew){
         temp = isMetric ? roundValue(cond.dewpoint_c) : Math.round(cond.dewpoint_f)
@@ -2459,31 +2430,27 @@ private getWeatherReport(){
     	}
 		sb << ' precipitation today. '
 	}
-	msg = sb.toString()
-    return msg
+	return sb.toString()
 }
 private getWeatherForecast(){
-    def msg = "", sb = new StringBuilder(), isMetric = location.temperatureScale == 'C'
+    def msg = "", isMetric = location.temperatureScale == 'C'
 	Map weather = getWeatherFeature('forecast', zipCode)
     if ((weather == null) || weather.response.containsKey('error')) return "There was an error in the weather data received Weather Underground. "
     if (voiceWeatherToday  || voiceWeatherTonight || voiceWeatherTomorrow ){
 		if (voiceWeatherToday){
-                sb << "${weather.forecast.txt_forecast.forecastday[0].title}'s forecast calls for "
-                def formattedWeather = isMetric ? weather.forecast.txt_forecast.forecastday[0].fcttext_metric : weather.forecast.txt_forecast.forecastday[0].fcttext 
-                sb << formattedWeather + " "
+                msg += "${weather.forecast.txt_forecast.forecastday[0].title}'s forecast calls for "
+                msg += isMetric ? weather.forecast.txt_forecast.forecastday[0].fcttext_metric + " " : weather.forecast.txt_forecast.forecastday[0].fcttext + " "
         }
         if (voiceWeatherTonight){
-                sb << "For ${weather.forecast.txt_forecast.forecastday[1].title}'s forecast you can expect "
-                def formattedWeather = isMetric ? weather.forecast.txt_forecast.forecastday[1].fcttext_metric : weather.forecast.txt_forecast.forecastday[1].fcttext
-                sb << formattedWeather + " "
+                msg += "For ${weather.forecast.txt_forecast.forecastday[1].title}'s forecast you can expect "
+                msg += isMetric ? weather.forecast.txt_forecast.forecastday[1].fcttext_metric + " " : weather.forecast.txt_forecast.forecastday[1].fcttext + " "
         }
         if (voiceWeatherTomorrow){
-                sb << "Your forecast for ${weather.forecast.txt_forecast.forecastday[2].title} is "
-				def formattedWeather = isMetric ? weather.forecast.txt_forecast.forecastday[2].fcttext_metric : weather.forecast.txt_forecast.forecastday[2].fcttext
-                sb << formattedWeather + " "
+                msg += "Your forecast for ${weather.forecast.txt_forecast.forecastday[2].title} is "
+				msg += isMetric ? weather.forecast.txt_forecast.forecastday[2].fcttext_metric + " " : weather.forecast.txt_forecast.forecastday[2].fcttext + " "
         }
-        msg = sb.toString()
-	}
+		msg = msg.replaceAll( /(Cloudy|Overcast|Sunny) skies|(Cloudy|Overcast|Sunny)|(cloudy) skies|(cloudy)/, /$1 $2 $3 $4/ + " skies ")
+    }
     if (voiceSunrise || voiceSunset){
     	Map astronomy = getWeatherFeature('astronomy', zipCode)
         if ((astronomy == null) || astronomy.response.containsKey('error')) return "There was an error in the sunrise or sunset data received Weather Underground. "
@@ -2816,8 +2783,7 @@ private songLocations(){
     }
 }
 def memoryState(){
-	def slotCount = 0
-    def memCount = sonosMemoryCount as int
+	def slotCount = 0, memCount = sonosMemoryCount as int
 	for (int i=1; i<memCount+1; i++){ if (settings."sonosSlot${i}Music" && settings."sonosSlot${i}Name") slotCount ++ }
     def result = slotCount ? "complete" : ""
 }
@@ -2852,7 +2818,7 @@ def coreHandler(evt) {
 def msgHandler(evt) {
     if (!state.msgQueue) state.msgQueue=[]
     log.debug "New message added to message queue from: " + evt.value
-	state.msgQueue<<["date":evt.date.getTime(),"appName":evt.value,"msg":evt.descriptionText]
+	state.msgQueue<<["date":evt.date.getTime(),"appName":evt.value,"msg":evt.descriptionText,"id":evt.unit]
 }
 def getCoREMacroList(){ return getChildApps().findAll {it.macroType !="CoRE"}.label }
 def getVariableList(){
@@ -2998,15 +2964,16 @@ def setupData(){
 	result += "<br><b>LIST_OF_OPERATORS</b><br><br>on<br>off<br>toggle<br>up<br>down<br>increase<br>decrease<br>lower<br>raise<br>brighten<br>dim<br>" +
     	"status<br>events<br>event<br>low<br>medium<br>high<br>lock<br>unlock<br>open<br>close<br>maximum<br>minimum<br>"
     result += speakers ?"stop<br>pause<br>mute<br>unmute<br>next track<br>previous track<br>" : ""
-    result += msgQueue || speakers ?"play<br>" : ""
-    result += msgQueue ? "delete<br>clear<br>reset<br>" : ""
+    result += msgQueue || speakers || (tstats && ecobeeCMD && MyEcobeeCMD) ?"play<br>" : ""
+    result += msgQueue || (tstats && ecobeeCMD && MyEcobeeCMD) ? "erase<br>delete<br>clear<br>reset<br>" : ""
+    result += tstats && ecobeeCMD && MyEcobeeCMD ? "get<br>restart<br>repeat<br>replay<br>give<br>load<br>reload<br>" : ""
     result += "<br><b>LIST_OF_PARAMS</b><br><br>"
 	def PARAMS=[]
     PARAMS<<"heat"<<"cool"<<"heating"<<"cooling"<<"auto"<<"automatic"<<"AC"
     if (tstats && stelproCMD) PARAMS<< "eco"<<"comfort"
     if (tstats && (nestCMD || ecobeeCMD)) PARAMS<<"home"<<"away"
     if (tstats && ecobeeCMD) PARAMS<<"sleep"<<"resume program"
-    if (tstats && ecobeeCMD && MyEcobeeCMD) PARAMS<<"get tips"<<"get tip"<<"erase tips"<<"restart tips"<<"erase tip"<<"restart tip"<<"repeat tip"<<"give tip"<<"give tips"   
+    if (tstats && ecobeeCMD && MyEcobeeCMD) PARAMS<<"tips"<<"tip"
     if (sonosCMD && speakers && sonosMemoryCount){
     	def memCount = sonosMemoryCount as int
     	for (int i=1; i<memCount+1; i++){
@@ -3062,11 +3029,11 @@ def getURLs(){
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private def textAppName() { return "Ask Alexa" }	
 private def textVersion() {
-    def version = "SmartApp Version: 2.1.3 (09/03/2016)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
+    def version = "SmartApp Version: 2.1.3 (09/06/2016)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
     return "${version}${lambdaVersion}"
 }
 private def versionInt(){ return 213 }
-private def LambdaReq() { return 121 }
+private def LambdaReq() { return 122 }
 private def versionLong(){ return "2.1.3" }
 private def textCopyright() {return "Copyright © 2016 Michael Struck" }
 private def textLicense() {
