@@ -1,13 +1,13 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.1.3 - 9/6/16 Copyright © 2016 Michael Struck
+ *  Version 2.1.3 - 9/7/16 Copyright © 2016 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; Barry Burke for Weather Underground Integration; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.1.2 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *  Version 2.1.2b (8/26/16) Fixed weather report issue; Added Ecobee (Connect) code for thermostat climate modes; added brief device action reply; REST URL visibility option for Control Macros; brighten/dim commands for dimmers
- *  Version 2.1.3 (9/6/16) Added My Ecobee tips; code optimization/bug fixes; implementation of Message Queue; added acceleration sensors
+ *  Version 2.1.3 (9/7/16) Added My Ecobee tips; code optimization/bug fixes; implementation of Message Queue; added acceleration sensors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -48,6 +48,7 @@ preferences {
             page name:"pageReset"
             	page name:"pageConfirmation"
                 page name:"pageContCommands"
+                page name:"pageMsgQueue"
             page name:"pageDefaultValue"
             page name:"pageCustomDevices"
             page name:"pageLimitValue"
@@ -209,10 +210,8 @@ def pageMacros() {
         if (childApps.size()) section(childApps.size()==1 ? "One Voice Macro available" : childApps.size() + " Voice Macro available" ){}
         def duplicates = childApps.label.findAll{childApps.label.count(it)>1}.unique()
         if (duplicates){
-        	section {
-        	paragraph "You have two or more macros with the same name. Please ensure each macro has a unique name and also does not conflict with  " +
-        		"device names as well. ", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png"
-        	}
+        	section { paragraph "You have two or more macros with the same name. Please ensure each macro has a unique name and also does not conflict with  " +
+        		"device names as well. ", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png" }
         }
         section(" "){
         	app(name: "childMacros", appName: "Ask Alexa", namespace: "MichaelStruck", title: "Create A New Macro...", description: "Tap to create a new voice macro", multiple: true, 
@@ -222,8 +221,7 @@ def pageMacros() {
 }
 def pageAbout(){
 	dynamicPage(name: "pageAbout", uninstall: true) {
-        section {paragraph "${textAppName()}\n${textCopyright()}",
-            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa.src/AskAlexa@2x.png"}
+        section { paragraph "${textAppName()}\n${textCopyright()}", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa.src/AskAlexa@2x.png" }
         section ("Version numbers") { paragraph "${textVersion()}" } 
         section ("Access token / Application ID"){
             if (!state.accessToken) OAuthToken()
@@ -242,11 +240,10 @@ def pageSettings(){
         	input "briefReply", "bool", title: "Give 'Brief' Device Action Reply", defaultValue: false, submitOnChange: true
             if (briefReply) input "briefReplyTxt", "enum", title: "Brief Reply", options: ["No reply spoken", "Ok", "Done"], required:false, multiple:false, defaultValue: "Ok"
             input "otherStatus", "bool", title: "Speak Additional Device Status Attributes", defaultValue: false
-            input "msgQueue", "bool", title: "Enable Message Queue", defaultValue: false, submitOnChange: true
-            if (msgQueue) input "msgQueueNotify", "bool", title: "Notify When Messages Are Present", defaultValue: false
             input "batteryWarn", "bool", title: "Speak Battery Level When Below Threshold", defaultValue: false, submitOnChange: true
             if (batteryWarn) input "batteryThres", "enum", title: "Battery Status Threshold", required: false, defaultValue: 20, options: [5:"<5%",10:"<10%",20:"<20%",30:"<30%",40:"<40%",50:"<50%",60:"<60%",70:"<70%",80:"<80%",90:"<90%",101:"Always play battery level"]
-        	input "eventCt", "enum", title: "Default Number Of Past Events to Report", options: optionCount(1,9), required: false, defaultValue: 1 	
+        	input "eventCt", "enum", title: "Default Number Of Past Events to Report", options: optionCount(1,9), required: false, defaultValue: 1
+            href "pageMsgQueue", title: "Message Queue Options", description: none, state: (msgQueue ? "complete" : null)
             href "pageContCommands", title: "Personalization", description: none, state: (contError || contStatus || contAction || contMacro ? "complete" : null)
         }
         section ("Other Values/Variables"){
@@ -267,10 +264,22 @@ def pageSettings(){
             href "pageCustomDevices", title: "Device Specific Commands", description: none, state: (nestCMD || stelproCMD || sonosCMD || ecobeeCMD ? "complete" : null)
             input "advReportOutput", "bool", title: "Advanced Voice Report Filter", defaultValue: false
             input "showURLs", "bool", title: "Display REST URL For Certain Macros\n(Experimental)", defaultValue: false
-            label title:"Assign a name", required:false, defaultValue: "Ask Alexa"
+            label title:"Rename App (Optional)", required:false, defaultValue: "Ask Alexa"
         }
     }
 }
+def pageMsgQueue(){
+    dynamicPage(name: "pageMsgQueue", uninstall: false){
+    	section{ paragraph "Message Queue Options", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/mailbox.png" }
+        section (" "){
+            input "msgQueue", "bool", title: "Enable Message Queue", defaultValue: false, submitOnChange: true
+            if (msgQueue) input "msgQueueOrder", "enum", title: "Message Play Back Order", options:[0:"Oldest to newest", 1:"Newest to oldest"], defaultValue: 0
+            if (msgQueue) input "msgQueueNotify", "bool", title: "Notify When Messages Are Present", defaultValue: false
+            if (msgQueue) input "msgQueueDelete", "bool", title: "Allow SmartApps To Delete Messages", defaultValue: false   
+    	}
+    }
+}
+
 def pageDefaultValue(){
     dynamicPage(name: "pageDefaultValue", uninstall: false){
         if (dimmers || tstats || cLights || speakers){
@@ -307,9 +316,7 @@ def pageContCommands(){
                 input "snarkName2", "text", title: "Random Snarky Name 2", description: "Silly", required: false
 			}
         }
-        section("Other Options"){
-        	input "invocationName", title: "Invocation Name (Only Used For Examples)", defaultValue: "SmartThings", required: false
-        }
+        section("Other Options"){ input "invocationName", title: "Invocation Name (Only Used For Examples)", defaultValue: "SmartThings", required: false }
     }
 }
 def pageCustomDevices(){
@@ -333,18 +340,12 @@ def pageCustomDevices(){
 def pageSONOSReset(){
     dynamicPage(name: "pageSONOSReset",title: "Song Database Reset", uninstall: false){
 		state.songLoc = []
-    	section{
-			paragraph "The SONOS song database has been reset. Go into the memory slots, choose the songs you wish to play in each slot, then properly exit the SmartApp. This will rebuild the database."
-		}
+    	section{ paragraph "The SONOS song database has been reset. Go into the memory slots, choose the songs you wish to play in each slot, then properly exit the SmartApp. This will rebuild the database." }
 	}
 }
 def pageLimitValue(){
     dynamicPage(name: "pageLimitValue", uninstall: false){
-        if (speakers){
-            section("Speaker Volume Limits"){
-				input "speakerHighLimit", "number", title: "Speaker Maximum Volume", defaultValue:20, required: false
-            }
-        }
+        if (speakers){ section("Speaker Volume Limits"){ input "speakerHighLimit", "number", title: "Speaker Maximum Volume", defaultValue:20, required: false } }
         if (tstats){
         	section("Thermostat Setpoint Limits"){
             	input "tstatLowLimit", "number", title: "Thermostat Minimum Value ", defaultValue: 55, required: false
@@ -361,9 +362,7 @@ def pageGlobalVariables(){
             input "voiceHumidVar", "capability.relativeHumidityMeasurement", title:"Humidity Device Variable (%humid%)",multiple: true, required: false, submitOnChange: true
             if ((voiceTempVar && voiceTempVar.size()>1) || (voiceHumidVar && voiceHumidVar.size()>1)) paragraph "Please note: When multiple temperature/humidity devices are selected above, the variable output will be an average of the device readings"
         }
-        section ("People"){
-        	input "voicePresenceVar", "capability.presenceSensor", title: "Presence Sensor Variable (%people%)", multiple: true, required: false
-        }
+        section ("People"){ input "voicePresenceVar", "capability.presenceSensor", title: "Presence Sensor Variable (%people%)", multiple: true, required: false }
     }
 }
 def pageConfirmation(){
@@ -375,9 +374,7 @@ def pageConfirmation(){
         		"your Amazon Echo. You will need to copy the new access token to your Amazon Lambda code to re-enable access." +
                 "Tap below to go back to the main menu with out resetting the token. You may also tap Done in the upper left corner."
         }
-        section(" "){
-        	href "mainPageParent", title: "Cancel And Go Back To Main Menu", description: " "
-        }
+        section(" "){ href "mainPageParent", title: "Cancel And Go Back To Main Menu", description: " " }
 	}
 }
 def pageReset(){
@@ -460,9 +457,7 @@ def pageCoRE() {
 		section (" "){
    			input "CoREName", "enum", title: "Choose CoRE Piston", options: parent.state.CoREPistons, required: false, multiple: false
         	input "cDelay", "number", title: "Default Delay (Minutes) To Trigger", defaultValue: 0, required: false
-            if (parent.pwNeeded){
-        		input "usePW", "bool", title: "Require PIN To Run This CoRE Macro", defaultValue: false
-        	}
+            if (parent.pwNeeded){ input "usePW", "bool", title: "Require PIN To Run This CoRE Macro", defaultValue: false }
         }
         section("Custom acknowledgment"){
              if (!noAck) input "voicePost", "text", title: "Acknowledgment Message", description: "Enter a short statement to play after macro runs", required: false, capitalization: "sentences"
@@ -482,9 +477,7 @@ def pageGroupM() {
 		section { paragraph "Macro Group Settings", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/macrofolder.png" }
         section (" ") { 
         	input "groupMacros", "enum", title: "Child Macros To Run (Control/CoRE/Voice Reports)...", options: parent.getMacroList(app.label), required: false, multiple: true
-        	if (parent.pwNeeded){
-        		input "usePW", "bool", title: "Require PIN To Run This Macro", defaultValue: false
-        	}
+        	if (parent.pwNeeded){ input "usePW", "bool", title: "Require PIN To Run This Macro", defaultValue: false }
         }
         section("Acknowledgment options"){ 
             if (!noAck) input "voicePost", "text", title: "Custom Acknowledgment Message", description: "Enter a short statement to play after group macro runs", required: false, capitalization: "sentences"
@@ -655,10 +648,7 @@ def pageDoorReport(){
             if (voiceDoorSensors || voiceDoorControls)input "voiceDoorEvt", "bool",title: "Report Time Of Last Door/Window Opening", defaultValue: false
             if (voiceDoorLocks)input "voiceLockEvt", "bool",title: "Report Time Of Last Lock Unlocking", defaultValue: false
         }
-        section("Window Shades Reporting"){
-        	input "voiceWindowShades", "capability.windowShade", title: "Window Shades To Report Their Status...", multiple: true, required: false
-        }
-        
+        section("Window Shades Reporting"){ input "voiceWindowShades", "capability.windowShade", title: "Window Shades To Report Their Status...", multiple: true, required: false } 
     }
 }
 def pageOtherReport(){
@@ -713,9 +703,7 @@ def pageSpeakerReport(){
             input "voiceSpeaker", "capability.musicPlayer", title: "Speakers To Report Status...", description: "Tap to choose devices", multiple: true, required: false, submitOnChange:true
         	if (voiceSpeaker) input "voiceSpeakerOn", "bool", title: "Report Only Speakers That Are Playing", defaultValue:false
         }
-        section("Please Note"){
-        	paragraph "There may be up to a 5 minute delay before SmartThings refreshes the current speaker status. This may cause the report to produce inaccurate results."
-        }
+        section("Please Note"){ paragraph "There may be up to a 5 minute delay before SmartThings refreshes the current speaker status. This may cause the report to produce inaccurate results." }
     }
 }
 def pageBatteryReport(){
@@ -800,6 +788,7 @@ def initialize() {
         if (!state.accessToken) log.error "Access token not defined. Ensure OAuth is enabled in the SmartThings IDE."
         subscribe(location, "CoRE", coreHandler)
         if (msgQueue) subscribe(location, "AskAlexaMsgQueue", msgHandler)
+        if (msgQueue && msgQueueDelete) subscribe(location, "AskAlexaMsgQueueDelete", msgDeleteHandler)
         if (sonosCMD && sonosMemoryCount) songLocations()
 	}
     else{
@@ -897,7 +886,7 @@ def msgQueueReply(op){
             else {
                 outputTxt = "You have " + msgCount + msgS + ": "
                 state.msgQueue.sort({it.date})
-                state.msgQueue.reverse(true)
+                state.msgQueue.reverse(msgQueueOrder as int? true : false)
                 state.msgQueue.each{
                 	def today = new Date(now()).format("EEEE, MMMM d, yyyy", location.timeZone)
                 	def msgDay = new Date(it.date).format("EEEE, MMMM d, yyyy", location.timeZone)
@@ -1252,14 +1241,12 @@ def getReply(devices, type, dev, op, num, param){
                             def previousTipNum= currentTipNum - 1                    
                             def tipNum = previousTipNum>0 && previousTipNum <6 ? (previousTipNum) as int : 1
                             def attribute="tip${tipNum}Text"
-                            log.debug "Repeating tip number: " + tipNum
                             if (STdevice.currentValue(attribute)) result = "My Ecobee's current tip number ${tipNum} is '" + STdevice.currentValue(attribute) + "'. "
                             else result ="Tip number is unavailable at this time for the ${STdevice}. Try erasing the tips, then issue the 'GET TIPS' command and try again. %1%"
                         }
                         else if (op==~/play|give/ || (op=="tip" && param=="undefined")) { 
                             def tipNum= state.tipCount>0 ? state.tipCount : 1                    
                             def attribute="tip${tipNum}Text"
-                            log.debug "Giving tip number: " + tipNum
                             if (!(STdevice.currentValue(attribute))) {
                                 STdevice.getTips(1)
                                 state.tipCount=1                       
@@ -1275,13 +1262,11 @@ def getReply(devices, type, dev, op, num, param){
                         else if (op ==~/get|load|reload/) { 
                             def tipLevel = num>0 && num<5 ? num :1
                             result = "I am loading level ${tipLevel} tips to ${STdevice}. "
-                            log.debug "Getting new tips level: " + tipLevel
                             STdevice.getTips(tipLevel)
                             state.tipCount=1
                         } 
                         else if (op ==~/restart|erase|delete|clear|reset/) { 
                             result = "I am resetting the tips from ${STdevice}. Be sure to ask for the 'GET TIP' command to reload your thermostat advice. "
-                            log.debug "Resetting My Ecobee tips"
                             STdevice.resetTips() 
                         }
                         else result = "I did not understand what you wanted me to do with the Ecobee tips. Valid commands are 'get', 'give', 'repete' or 'erase' tips. %1%"
@@ -1292,7 +1277,6 @@ def getReply(devices, type, dev, op, num, param){
                     if ((op ==~/increase|raise|up|decrease|down|lower/)){
                          def newValues = upDown(STdevice, type, op, num)  
                          num = newValues.newLevel
-                         log.debug num
                     }
                     if (num>0) {
                         if (tstatHighLimit) num = num <= tstatHighLimit ? num : tstatHighLimit 
@@ -2004,8 +1988,6 @@ def doorWindowReport(){
     	if (!totalCount) {
         	result += "All of the doors and windows are closed"
         	result += voiceDoorLocks && !countUnlocked ? " and locked. " : ". "
-            log.debug voiceDoorLocks
-            log.debug countUnlocked
         }
         if (!countOpened && !countOpenedDoor && countUnlocked){
    			result += "All of the doors and windows are closed, but the "
@@ -2820,6 +2802,13 @@ def msgHandler(evt) {
     log.debug "New message added to message queue from: " + evt.value
 	state.msgQueue<<["date":evt.date.getTime(),"appName":evt.value,"msg":evt.descriptionText,"id":evt.unit]
 }
+def msgDeleteHandler(evt){
+	if (state.msgQueue.size()>0){
+    	log.debug evt.value + " is deleting messages from the message queue."
+    	state.msgQueue.removeAll{it.appName==evt.value && it.id==evt.unit}
+    } 
+    else log.debug "Message queue is empty. No messages were deleted."
+}
 def getCoREMacroList(){ return getChildApps().findAll {it.macroType !="CoRE"}.label }
 def getVariableList(){
     def temp = voiceTempVar ? getAverage(voiceTempVar, "temperature") : "undefined device"
@@ -3029,7 +3018,7 @@ def getURLs(){
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private def textAppName() { return "Ask Alexa" }	
 private def textVersion() {
-    def version = "SmartApp Version: 2.1.3 (09/06/2016)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
+    def version = "SmartApp Version: 2.1.3 (09/07/2016)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
     return "${version}${lambdaVersion}"
 }
 private def versionInt(){ return 213 }
