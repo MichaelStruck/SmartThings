@@ -3200,7 +3200,10 @@ def setupData(){
     PARAMS<<"heat"<<"cool"<<"heating"<<"cooling"<<"auto"<<"automatic"<<"AC"
     if (tstatsSel() && stelproCMD) PARAMS<< "eco"<<"comfort"
     if (tstatsSel() && (nestCMD || ecobeeCMD)) PARAMS<<"home"<<"away"
-    if (tstatsSel() && ecobeeCMD) PARAMS<<"sleep"<<"resume program"
+    if (tstats && ecobeeCMD){
+        PARAMS<<"sleep"<<"resume program"
+        getEcobeeCustomList(tstats).each { PARAMS<<"${it}" }
+    }
     if (tstatsSel() && ecobeeCMD && MyEcobeeCMD) PARAMS<<"tips"<<"tip"
     if (sonosCMD && speakersSel() && sonosMemoryCount){
     	def memCount = sonosMemoryCount as int
@@ -3211,9 +3214,9 @@ def setupData(){
     if (cLightsSel() || childApps.size()) { fillColorSettings().each {PARAMS<<it.name.toLowerCase()}}
     duplicates = PARAMS.findAll{PARAMS.count(it)>1}.unique()
     if (duplicates.size()){ 
-            result += "<b>**NOTICE:</b>The following duplicate(s) are only listed once below in LIST_OF_PARAMS:<br><br>"
-            duplicates.each{result +="* " + it +" *<br><br>"}
-            result += "Be sure to have unique names for your SONOS memory slots and custom colors.**<br><br>"
+		result += "<b>**NOTICE:</b>The following duplicate(s) are only listed once below in LIST_OF_PARAMS:<br><br>"
+		duplicates.each{result +="* " + it +" *<br><br>"}
+		result += "Be sure to have unique names for your SONOS memory slots and custom colors.**<br><br>"
 	}
 	PARAMS.unique().each {result += it + "<br>" } 
     result +="<br><b>LIST_OF_SHPARAM</b><br><br>"  
