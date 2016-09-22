@@ -1,12 +1,12 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.1.4 - 9/20/16 Copyright © 2016 Michael Struck
+ *  Version 2.1.4 - 9/21/16 Copyright © 2016 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; Barry Burke for Weather Underground Integration; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.1.4 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
- *  Version 2.1.4 (9/20/16) Code optimization; addition of device alias function
+ *  Version 2.1.4 (9/21/16) Code optimization; addition of device alias function
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -120,7 +120,7 @@ def mainPageParent() {
 }
 def pageSwitches(){
     dynamicPage(name: "pageSwitches", install: false, uninstall: false) {
-        section { paragraph "Switches / Dimmers / Colored lights", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/power.png"} 
+        section { paragraph "Switches/Dimmers/Colored lights", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/power.png"} 
         section("Choose the devices to interface", hideWhenEmpty: true) {
             input "switches", "capability.switch", title: "Choose Switches (On/Off/Toggle/Status)", multiple: true, required: false
             input "dimmers", "capability.switchLevel", title: "Choose Dimmers (On/Off/Toggle/Level/Status)", multiple: true, required: false
@@ -134,7 +134,7 @@ def pageSwitches(){
                 input "cLightsAlias", "capability.colorControl", title: "Choose Colored Lights", multiple: true, required: false, submitOnChange: true
             }
         }
-        if (cLightsSel) {
+        if (cLightsSel()) {
             section("Custom color"){
                 input "customName", "text", title: "Custom Color Name", required: false
                 input "customHue", "number", title: "Custom Color Hue", required: false
@@ -145,12 +145,12 @@ def pageSwitches(){
 }
 def pageDoors() {
     dynamicPage(name: "pageDoors", install: false, uninstall: false) {
-        section { paragraph "Doors / Windows / Locks", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/lock.png" }
+        section { paragraph "Doors/Windows/Locks", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/lock.png" }
         section("Choose the devices to interface", hideWhenEmpty: true) {
-            input "doors", "capability.doorControl", title: "Choose Door Controls (Open/Close/Status)" , multiple: true, required: false, submitOnChange: true 
+			input "doors", "capability.doorControl", title: "Choose Door Controls (Open/Close/Status)" , multiple: true, required: false, submitOnChange: true 
             input "shades", "capability.windowShade", title: "Choose Window Shade Controls (Open/Close/Status)", multiple: true, required: false
-            input "ocSensors", "capability.contactSensor", title: "Choose Open/Close Sensors (Status)", multiple: true, required: false
-            input "locks", "capability.lock", title: "Choose Locks (Lock/Unlock/Status)", multiple: true, required: false, submitOnChange: true
+			input "ocSensors", "capability.contactSensor", title: "Choose Open/Close Sensors (Status)", multiple: true, required: false
+			input "locks", "capability.lock", title: "Choose Locks (Lock/Unlock/Status)", multiple: true, required: false, submitOnChange: true
             
         }
         if (deviceAlias){
@@ -171,7 +171,7 @@ def pageDoors() {
 }
 def pageTemps(){
     dynamicPage(name: "pageTemps",  install: false, uninstall: false) {
-        section {paragraph "Thermostats / Temperature / Humidity", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/temp.png"}
+        section {paragraph "Thermostats/Temperature/Humidity", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/temp.png"}
         section("Choose the devices to interface", hideWhenEmpty: true) {
             input "tstats", "capability.thermostat", title: "Choose Thermostats (Temperature Setpoint/Status)", multiple: true, required: false 
             input "temps", "capability.temperatureMeasurement", title: "Choose Temperature Devices (Status)", multiple: true, required: false
@@ -241,7 +241,7 @@ def pageHomeControl(){
         if (phrases) phrases.each{if (!it) findNull++}
         if (findNull) phrases.each{if (it) phrasesList<<it}
         else phrasesList=phrases
-		section { paragraph "Modes / SHM / Routines", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/modes.png" }
+		section { paragraph "Modes/SHM/Routines", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/modes.png" }
         if (findNull) {
         	section("**Warning**"){
             	paragraph "You have a null routine present in your SmartThings setup. Go to your SmartThings IDE to resolve this situation. This routine has been removed from the list below.",
@@ -287,6 +287,7 @@ def pageAliasAdd(){
         	section(" "){
 				href "pageAliasAddFinal", title: "Add Device Alias", description: "Tap to add the device alias", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/add.png"
 			}
+            section("Please note") { paragraph "Do not use the \"<\" or the \"Done\" buttons on this page except to go back without adding the alias.", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png" }
 		}
 	}
 }
@@ -310,13 +311,17 @@ def pageAliasAddFinal(){
         	href "pageAliasMain", title: "Tap Here To Add/Delete Another Alias", description:none 
 			href "mainPageParent", title: "Tap Here To Return To The Main Menu", description:none 
 		}
+        section("Please note") { paragraph "Do not use the \"<\" or the \"Done\" buttons on this page to go back in the interface. You may encounter undesired results. Please use the two buttons above to return to the alias area or main menu.", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png" }
 	}    
 }
 def pageAliasDel(){
 	dynamicPage(name: "pageAliasDel", uninstall: false) {
 		section { input "aliasDelete", "enum", title:"Choose An Alias To Delete...", options: getAliasList(), required: false, submitOnChange: true }
         if (aliasDelete){
-        	section(" "){ href "pageAliasDelFinal", title: "Delete Device Alias", description: "Tap to delete the device alias", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/delete.png" }
+        	section(" "){ 
+				href "pageAliasDelFinal", title: "Delete Device Alias", description: "Tap to delete the device alias", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/delete.png" 
+        	}
+            section("Please note") { paragraph "Do not use the \"<\" or the \"Done\" buttons on this page except to go back without deleting the alias.", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png" }
 		}
     }
 }
@@ -328,6 +333,7 @@ def pageAliasDelFinal(){
             href "pageAliasMain", title: "Tap Here To Add/Delete Another Alias", description:none 
             href "mainPageParent", title: "Tap Here To Return To The Main Menu", description:none
         }
+        section("Please note") { paragraph "Do not use the \"<\" or the \"Done\" buttons on this page to go back in the interface. You may encounter undesired results. Please use the two buttons above to return to the alias area or main menu.", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png" }
 	}    
 }
 def pageMacros() {
@@ -409,7 +415,7 @@ def pageMsgQueue(){
 def pageDefaultValue(){
     dynamicPage(name: "pageDefaultValue", uninstall: false){
         if (dimmersSel() || tstatsSel() || cLightsSel() || speakersSel()){
-            section("Increase / Brighten / Decrease / Dim values (When no values are requested)"){
+            section("Increase / Brighten / Decrease / Dim values\n(When no values are requested)"){
                 if (dimmersSel() || cLightsSel()) input "lightAmt", "number", title: "Dimmer/Colored Lights", defaultValue: 20, required: false
                 if (tstatsSel()) input "tstatAmt", "number", title: "Thermostat Temperature", defaultValue: 5, required: false
                 if (speakersSel()) input "speakerAmt", "number", title: "Speaker Volume", defaultValue: 5, required: false
@@ -417,9 +423,9 @@ def pageDefaultValue(){
         }
         if (dimmersSel() || cLightsSel()) {
         	section("Low / Medium / High values (For dimmers or colored lights)") {
-            	input "dimmerLow", "number", title: "Low Value", defaultValue: 10, required: false
-                input "dimmerMed", "number", title: "Medium Value", defaultValue: 50, required: false
-                input "dimmerHigh", "number", title: "High Value", defaultValue: 100, required: false
+            	input "dimmerLow", "number", title: "\"Low\" Value", defaultValue: 10, required: false
+                input "dimmerMed", "number", title: "\"Medium\" Value", defaultValue: 50, required: false
+                input "dimmerHigh", "number", title: "\"High\" Value", defaultValue: 100, required: false
             }
         }
     }
@@ -523,7 +529,7 @@ def mainPageChild(){
             if (macroType) {
             	href "page${macroType}", title: "${fullMacroName} Settings", description: macroTypeDesc(), state: greyOutMacro()
                 input "noteFeed", "bool", title: "Post To Notification Feed When Triggered", defaultValue: false, submitOnChange: true
-                if (noteFeed && (macroType=="CoRE" || macroType=="Control")) input "noteFeedAct", "bool", title: "Post When Activated (Ex. When Delayed)", defaultValue: false
+                if (noteFeed && (macroType=="CoRE" || macroType=="Control")) input "noteFeedAct", "bool", title: "Post When Activated (i.e. When Delayed)", defaultValue: false
                 if (noteFeed) input "noteFeedData", "bool", title: "Include SmartApp's Response To Alexa", defaultValue: false
                 if (parent.contMacro) input "overRideMsg", "bool", title: "Override Continuation Commands (Except Errors)" , defaultValue: false
                 if (parent.showURLs && macroType=="Control" &&  macroTypeDesc() !="Status: UNCONFIGURED - Tap to configure macro" && app.label !="Ask Alexa") {
@@ -858,8 +864,8 @@ def pageWeatherReport(){
 	dynamicPage(name: "pageWeatherReport", install: false, uninstall: false) {
     	section { paragraph "Weather report", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/weather.png" }
         section("Weather reporting") {
-        	 href "pageWeatherCurrent", title: "Current Weather Report Options", description: none, state: (voiceWeatherTemp || voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip ? "complete" : null)	
-             href "pageWeatherForecast", title: "Weather Forecast Options", description: none, state: (voiceWeatherToday||voiceWeatherTonight||voiceWeatherTomorrow ? "complete" : null)	
+        	 href "pageWeatherCurrent", title: "Current Weather Report Options", description: none, state: (currWeatherSel() ? "complete" : null)	
+             href "pageWeatherForecast", title: "Weather Forecast Options", description: none, state: (foreWeatherSel() ? "complete" : null)	
         }
         section ("Sunrise / Sunset"){    
             input "voiceSunrise", "bool", title: "Speak Today's Sunrise", defaultValue: false
@@ -868,12 +874,10 @@ def pageWeatherReport(){
         section ("Other Weather Underground information"){
         	input "voiceMoon", "bool", title: "Lunar Rise/Set/Phases", defaultValue:false
             input "voiceTide", "bool", title: "Tide Information", defaultValue: false
-            if (voiceWeatherTemp || voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip ||
-            	voiceWeatherToday||voiceWeatherTonight||voiceWeatherTomorrow) input "voiceWeatherWarnFull", "bool", title: "Give Full Weather Advisories (If Present)", defaultValue: false
+            if (currWeatherSel() || foreWeatherSel()) input "voiceWeatherWarnFull", "bool", title: "Give Full Weather Advisories (If Present)", defaultValue: false
         }
         section ("Location") {
-        	if (voiceWeatherTemp || voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip || voiceWeatherToday||voiceWeatherTonight||
-            	voiceWeatherTomorrow || voiceSunset || voiceSunrise || voiceMoon || voiceTide) input "voiceWeatherLoc", "bool", title: "Speak Location Of Weather Report/Forecast", defaultValue: false
+        	if (currWeatherSel() || foreWeatherSel() || voiceSunset || voiceSunrise || voiceMoon || voiceTide) input "voiceWeatherLoc", "bool", title: "Speak Location Of Weather Report/Forecast", defaultValue: false
             input "zipCode", "text", title: "Zip Code", required: false
             paragraph "Please Note:\nYour SmartThings location is currently set to: ${location.zipCode}. If you leave the area above blank the report will use your SmartThings location. " +
             	"Enter a zip code above if you want to report on a different location.\n\nData obtained from Weather Underground."
@@ -995,7 +999,7 @@ def processDevice() {
                 else outputTxt = "I had a problem finding the alias device you specified. Please check your SmartApp settings to ensure you have a device associated with the alias name. %1%"
 			}
         }
-        if (count > 1) outputTxt ="The device named '${dev}' is used multiple times in your SmartThings SmartApp. Please rename or remove duplicate items so I may properly utlize them. "   
+        if (count > 1) outputTxt ="The name, '${dev}', is used multiple times in your SmartThings SmartApp. Please rename or remove duplicate items so I may properly utlize them. "   
         else if (deviceList || aliasDeviceList) {
             def deviceObj=deviceList ? deviceList.devices.find{it.label.replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase() == dev} : aliasDeviceObj
             def devType=deviceList? deviceList.type : aliasDeviceType  
@@ -1908,23 +1912,20 @@ def reportResults(){
         if (voiceTempSettingSummary && voiceTempSettingsType && voiceTempSettingsType !="autoAll") fullMsg += voiceTempSettings ? thermostatSummary(): ""
         else fullMsg += (voiceTempSettings && voiceTempSettingsType) ? reportStatus(voiceTempSettings, voiceTempSettingsType) : ""
         fullMsg += voiceSpeaker ? speakerReport() : ""
-        if (voiceWeatherTemp|| voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip ||
-        	voiceWeatherToday  || voiceWeatherTonight || voiceWeatherTomorrow || voiceSunset || voiceSunrise || voiceMoon || voiceTide ){
+        if (currWeatherSel() || foreWeatherSel() || voiceSunset || voiceSunrise || voiceMoon || voiceTide ){
             if (location.timeZone || zipCode){
                 Map cond = getWeatherFeature("conditions", zipCode)
                 if ((cond == null) || cond.response.containsKey("error")) fullMsg += "Your hub location or supplied Zip Code is unrecognized by Weather Underground. "
                  else {
                     if (voiceWeatherLoc){
-                        def type = voiceWeatherTemp|| voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip ||
-                        	 voiceSunset || voiceSunrise || voiceMoon || voiceTide ? "report" : ""
-                        if ((voiceWeatherToday  || voiceWeatherTonight || voiceWeatherTomorrow) && type) type += " and forecast"
-                        else if ((voiceWeatherToday  || voiceWeatherTonight || voiceWeatherTomorrow) && !type) type = "forecast"
+                        def type = currWeatherSel() || voiceSunset || voiceSunrise || voiceMoon || voiceTide ? "report" : ""
+                        if (foreWeatherSel() && type) type += " and forecast"
+                        else if (foreWeatherSel() && !type) type = "forecast"
                         if (type) fullMsg += "The following weather ${type} comes from " + cond.current_observation.observation_location.full.replaceAll(',', '') + ": "
                     }
-                    fullMsg += voiceWeatherTemp|| voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip ||
-                        voiceWeatherToday  || voiceWeatherTonight || voiceWeatherTomorrow || voiceSunset || voiceSunrise ? weatherAlerts() : ""
-                    fullMsg += voiceWeatherTemp|| voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip ? getWeatherReport() : ""
-                    fullMsg += voiceWeatherToday  || voiceWeatherTonight || voiceWeatherTomorrow || voiceSunset || voiceSunrise ? getWeatherForecast() : ""
+                    fullMsg += currWeatherSel() || foreWeatherSel() || voiceSunset || voiceSunrise ? weatherAlerts() : ""
+                    fullMsg += currWeatherSel() ? getWeatherReport() : ""
+                    fullMsg += foreWeatherSel() || voiceSunset || voiceSunrise ? getWeatherForecast() : ""
                     fullMsg += voiceMoon ? getMoonInfo() : ""
                     fullMsg += voiceTide ? tideInfo(): ""
                 }
@@ -2194,6 +2195,8 @@ def waterReport(){
 //Parent Code Access (from Child)-----------------------------------------------------------
 def getOkToRun(){ def result = (!runMode || runMode.contains(location.mode)) && getDayOk(runDay) && getTimeOk(timeStart,timeEnd) }
 //Common Code(Child)-----------------------------------------------------------
+private currWeatherSel() { return voiceWeatherTemp || voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip }
+private foreWeatherSel() { return voiceWeatherToday || voiceWeatherTonight || voiceWeatherTomorrow}
 def upDownChild(device, op, num){
     def numChange, newLevel, currLevel, defMove
     defMove = parent.lightAmt as int ?: 0 ; currLevel = device.currentValue("switch")=="on" ? device.currentValue("level") as int : 0
@@ -2232,8 +2235,7 @@ def macroTypeDesc(){
     def customAck = !noAck && !voicePost ? "; uses standard acknowledgment message" : !noAck  && voicePost ? "; includes a custom acknowledgment message" :  "; there will be no acknowledgment messages"
     if (macroType ==~ /Control|CoRE/) customAck += cDelay>1 ? "; activates ${cDelay} minutes after triggered" : cDelay==1 ? "; activates one minute after triggered" : ""
     if (macroType == "Control" && (phrase || setMode || SHM || getDeviceDesc() != "Status: UNCONFIGURED${PIN} - Tap to configure" || 
-    	getHTTPDesc() !="Status: UNCONFIGURED - Tap to configure" || (contacts && smsMsg) || (smsNum && pushMsg && smsMsg))) 
-        	desc= "Control Macro CONFIGURED${customAck}${PIN} - Tap to edit" 
+    	getHTTPDesc() !="Status: UNCONFIGURED - Tap to configure" || (contacts && smsMsg) || (smsNum && pushMsg && smsMsg))) desc= "Control Macro CONFIGURED${customAck}${PIN} - Tap to edit" 
     if (macroType =="Voice" && (voicePre || voiceSwitch || voiceDimmer || voiceDoorSensors || voiceDoorControls || voiceDoorLocks || voiceTemperature ||  
     	voiceTempSettings || voiceTempVar || voiceHumidVar || voiceHumidity || greyOutWeather()=="complete" || voiceWater || voiceMotion || voicePresence || 
         voiceBattery || voicePost || voiceMode || voiceSHM || voicePower || voiceAccel)) desc= "Voice Report CONFIGURED - Tap to edit" 
@@ -2366,10 +2368,10 @@ def speakerDesc(){
 	return result
 }
 def weatherDesc(){ 
-	def result = voiceWeatherTemp|| voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip ? "Current weather" : ""
-	if (result && (voiceWeatherToday || voiceWeatherTonight || voiceWeatherTomorrow)) result +=", "
+	def result = currWeatherSel() ? "Current weather" : ""
+	if (result && foreWeatherSel()) result +=", "
     result += (voiceWeatherToday && voiceWeatherTonight && voiceWeatherTomorrow) || (voiceWeatherToday && voiceWeatherTonight) || (voiceWeatherTonight && voiceWeatherTomorrow) ||
-    	(voiceWeatherToday && voiceWeatherTomorrow) ? "Forecasts" : voiceWeatherToday || voiceWeatherTonight || voiceWeatherTomorrow ? "Forecast" : ""
+    	(voiceWeatherToday && voiceWeatherTomorrow) ? "Forecasts" : foreWeatherSel() ? "Forecast" : ""
     if (result && voiceWeatherWarnFull) result+=", Full weather alerts"
     if (result && (voiceSunrise || voiceSunset)) result +=", "
     result += voiceSunrise && voiceSunset ? "Sunrise/Sunset" : voiceSunrise ? "Sunrise" : voiceSunset ? "Sunset" : ""
@@ -2379,8 +2381,7 @@ def weatherDesc(){
     result += voiceTide ?"Tide Information" : ""
     return result ? "Reports: ${result}" : "Status: UNCONFIGURED - Tap to configure"
 }
-def greyOutWeather(){ return voiceWeatherToday || voiceWeatherTonight || voiceWeatherTomorrow || voiceSunrise || voiceSunset || voiceMoon || voiceTide ||
-	voiceWeatherTemp|| voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip ? "complete" : "" }
+def greyOutWeather(){ return foreWeatherSel() || voiceSunrise || voiceSunset || voiceMoon || voiceTide || currWeatherSel() ? "complete" : "" }
 def deviceGreyOut(){ return getDeviceDesc() == "Status: UNCONFIGURED - Tap to configure" ? "" : "complete" }
 def getDeviceDesc(){  
     def result, cmd = [switch: switchesCMD, dimmer: dimmersCMD, cLight: cLightsCMD, tstat: tstatsCMD, lock: locksCMD, garage: garagesCMD, shade: shadesCMD]
@@ -2420,11 +2421,11 @@ def getHTTPDesc(){
 }
 private getLastEvt(devGroup, evtTxt, searchVal, devTxt){
     def devEvt, evtLog=[],  lastEvt="I could not find any ${evtTxt} events in the log. "
-        devGroup.each{ deviceName-> devEvt= deviceName.events()
-            devEvt.each {
-                if (it.value && it.value==searchVal) evtLog << [device: deviceName, time: it.date.getTime(), desc: it.descriptionText]
-            }
-       	} 
+	devGroup.each{ deviceName-> devEvt= deviceName.events()
+		devEvt.each {
+			if (it.value && it.value==searchVal) evtLog << [device: deviceName, time: it.date.getTime(), desc: it.descriptionText]
+		}
+	} 
     if (evtLog.size()>0){
         evtLog.sort({it.time})
         evtLog.reverse(true)
@@ -2558,18 +2559,18 @@ private getWeatherForecast(){
     def msg = "", isMetric = location.temperatureScale == 'C'
 	Map weather = getWeatherFeature('forecast', zipCode)
     if ((weather == null) || weather.response.containsKey('error')) return "There was an error in the weather data received Weather Underground. "
-    if (voiceWeatherToday  || voiceWeatherTonight || voiceWeatherTomorrow ){
+    if (foreWeatherSel()){
 		if (voiceWeatherToday){
-                msg += "${weather.forecast.txt_forecast.forecastday[0].title}'s forecast calls for "
-                msg += isMetric ? weather.forecast.txt_forecast.forecastday[0].fcttext_metric + " " : weather.forecast.txt_forecast.forecastday[0].fcttext + " "
+			msg += "${weather.forecast.txt_forecast.forecastday[0].title}'s forecast calls for "
+			msg += isMetric ? weather.forecast.txt_forecast.forecastday[0].fcttext_metric + " " : weather.forecast.txt_forecast.forecastday[0].fcttext + " "
         }
         if (voiceWeatherTonight){
-                msg += "For ${weather.forecast.txt_forecast.forecastday[1].title}'s forecast you can expect "
-                msg += isMetric ? weather.forecast.txt_forecast.forecastday[1].fcttext_metric + " " : weather.forecast.txt_forecast.forecastday[1].fcttext + " "
+			msg += "For ${weather.forecast.txt_forecast.forecastday[1].title}'s forecast you can expect "
+			msg += isMetric ? weather.forecast.txt_forecast.forecastday[1].fcttext_metric + " " : weather.forecast.txt_forecast.forecastday[1].fcttext + " "
         }
         if (voiceWeatherTomorrow){
-                msg += "Your forecast for ${weather.forecast.txt_forecast.forecastday[2].title} is "
-				msg += isMetric ? weather.forecast.txt_forecast.forecastday[2].fcttext_metric + " " : weather.forecast.txt_forecast.forecastday[2].fcttext + " "
+			msg += "Your forecast for ${weather.forecast.txt_forecast.forecastday[2].title} is "
+			msg += isMetric ? weather.forecast.txt_forecast.forecastday[2].fcttext_metric + " " : weather.forecast.txt_forecast.forecastday[2].fcttext + " "
         }
 		msg = msg.replaceAll( /(Cloudy|Overcast|Sunny) skies|(Cloudy|Overcast|Sunny)|(cloudy) skies|(cloudy)/, /$1 $2 $3 $4/ + " skies ")
     }
@@ -3229,16 +3230,16 @@ def getURLs(){
     displayData(result)
 }
 //Version/Copyright/Information/Help-----------------------------------------------------------
-private def textAppName() { return "Ask Alexa" }	
-private def textVersion() {
-    def version = "SmartApp Version: 2.1.4 (09/20/2016)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
+private textAppName() { return "Ask Alexa" }	
+private textVersion() {
+    def version = "SmartApp Version: 2.1.4 (09/21/2016)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
     return "${version}${lambdaVersion}"
 }
-private def versionInt(){ return 214 }
-private def LambdaReq() { return 122 }
-private def versionLong(){ return "2.1.4" }
-private def textCopyright() {return "Copyright © 2016 Michael Struck" }
-private def textLicense() {
+private versionInt(){ return 214 }
+private LambdaReq() { return 122 }
+private versionLong(){ return "2.1.4" }
+private textCopyright() {return "Copyright © 2016 Michael Struck" }
+private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. "+
 		"You may obtain a copy of the License at\n\n"+
 		"    http://www.apache.org/licenses/LICENSE-2.0"+
@@ -3246,6 +3247,6 @@ private def textLicense() {
 		"WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and "+
 		"limitations under the License."
 }
-private def textHelp() { 
+private textHelp() { 
 	def text = "This SmartApp provides an interface to control and query the SmartThings environment via the Amazon Echo ('Alexa'). For more information, go to http://thingsthataresmart.wiki/index.php?title=Ask_Alexa."
 }
