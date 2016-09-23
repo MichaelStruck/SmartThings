@@ -1,12 +1,12 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.1.4 - 9/22/16 Copyright © 2016 Michael Struck
+ *  Version 2.1.4 - 9/21/16 Copyright © 2016 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; Barry Burke for Weather Underground Integration; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.1.4 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
- *  Version 2.1.4 (9/22/16) Code optimization; addition of device alias function, updates to the Ecobee code (thanks jhamstead & Yves Racine)
+ *  Version 2.1.4 (9/21/16) Code optimization; addition of device alias function
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -88,39 +88,39 @@ def mainPageParent() {
         if (duplicates || findNullDevices() || (aliasDups && deviceAlias)){
         	section ("**WARNING**"){
             	if (duplicates) paragraph "You have the following device(s) used multiple times within Ask Alexa:\n\n${getList(duplicates)}\n\nA device should be uniquely named and appear only once in the categories below.", 
-                	image:imgURL()+"caution.png"
+                	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png"
                 if (aliasDups && deviceAlias) paragraph "The following alias(es) conflict with a device name already set up:\n\n${getList(aliasDups)}\n\nAliases should be uniquely named and appear only once within the Ask Alexa SmartApp.", 
-                	image: imgURL()+"caution.png"
-                if (findNullDevices()) paragraph findNullDevices(), image: imgURL()+"caution.png"  
+                	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png"
+                if (findNullDevices()) paragraph findNullDevices(), image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png"  
             }
         }
         section("Items to interface to Alexa") {
             href "pageSwitches", title: "Switches/Dimmers/Colored Lights", description:getDesc(switchesSel() || dimmersSel() || cLightsSel()), 
-            	state: switchesSel() || dimmersSel() || cLightsSel() ? "complete" : null, image: imgURL()+"power.png"
+            	state: switchesSel() || dimmersSel() || cLightsSel() ? "complete" : null, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/power.png"
             href "pageDoors", title: "Doors/Windows/Locks", description: getDesc(doorsSel() || locksSel() || ocSensorsSel() || shadesSel()), 
-            	state: doorsSel() || locksSel() || ocSensorsSel() || shadesSel() ? "complete" : null, image: imgURL()+"lock.png"
+            	state: doorsSel() || locksSel() || ocSensorsSel() || shadesSel() ? "complete" : null, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/lock.png"
             href "pageTemps", title: "Thermostats/Temperature/Humidity", description:getDesc(tstatsSel() || tempsSel() || humidSel()), 
-            	state: tstatsSel() || tempsSel() || humidSel() ? "complete" : null, image: imgURL()+"temp.png"
-            href "pageSpeakers", title: "Connected Speakers", description: getDesc(speakersSel()), state: speakersSel() ? "complete" : null, image:imgURL()+"speaker.png"     
+            	state: tstatsSel() || tempsSel() || humidSel() ? "complete" : null, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/temp.png"
+            href "pageSpeakers", title: "Connected Speakers", description: getDesc(speakersSel()), state: speakersSel() ? "complete" : null, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/speaker.png"     
             href "pageSensors", title: "Other Sensors", description:getDesc(waterSel() || presenceSel() || motionSel() || accelerationSel()), 
-            	state: waterSel() || presenceSel() || motionSel() || accelerationSel() ? "complete" : null, image: imgURL()+"sensor.png"
+            	state: waterSel() || presenceSel() || motionSel() || accelerationSel() ? "complete" : null, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/sensor.png"
             href "pageHomeControl", title: "Modes/SHM/Routines", description:getDesc(listModes || listRoutine || listSHM), state: (listModes|| listRoutines|| listSHM ? "complete" : null),
-            	image: imgURL()+"modes.png"
+            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/modes.png"
             if (deviceAlias && mapDevices(true)) href "pageAliasMain", title: "Device Aliases", description:getDesc(state.aliasList), state: (state.aliasList ?"complete":null), 
-            	image: imgURL()+"alias.png"     
+            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/alias.png"     
         }
         section("Configure macros"){
-        	href "pageMacros", title: "Voice Macros", description: macroDesc(), state: (childApps.size() ? "complete" : null), image: imgURL()+"speak.png"
+        	href "pageMacros", title: "Voice Macros", description: macroDesc(), state: (childApps.size() ? "complete" : null), image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/speak.png"
         }
         section("Options") {
-			href "pageSettings", title: "Settings", description: "Tap to configure app settings, get setup information or to reset the access token", image: imgURL()+"settings.png"
-			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version information, license, instructions or to remove the application", image: imgURL()+"info.png"
+			href "pageSettings", title: "Settings", description: "Tap to configure app settings, get setup information or to reset the access token", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/img/settings.png"
+			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version information, license, instructions or to remove the application", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/info.png"
         }
 	}
 }
 def pageSwitches(){
     dynamicPage(name: "pageSwitches", install: false, uninstall: false) {
-        section { paragraph "Switches/Dimmers/Colored lights", image: imgURL()+"power.png"} 
+        section { paragraph "Switches/Dimmers/Colored lights", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/power.png"} 
         section("Choose the devices to interface", hideWhenEmpty: true) {
             input "switches", "capability.switch", title: "Choose Switches (On/Off/Toggle/Status)", multiple: true, required: false
             input "dimmers", "capability.switchLevel", title: "Choose Dimmers (On/Off/Toggle/Level/Status)", multiple: true, required: false
@@ -145,7 +145,7 @@ def pageSwitches(){
 }
 def pageDoors() {
     dynamicPage(name: "pageDoors", install: false, uninstall: false) {
-        section { paragraph "Doors/Windows/Locks", image: imgURL()+"lock.png" }
+        section { paragraph "Doors/Windows/Locks", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/lock.png" }
         section("Choose the devices to interface", hideWhenEmpty: true) {
 			input "doors", "capability.doorControl", title: "Choose Door Controls (Open/Close/Status)" , multiple: true, required: false, submitOnChange: true 
             input "shades", "capability.windowShade", title: "Choose Window Shade Controls (Open/Close/Status)", multiple: true, required: false
@@ -171,7 +171,7 @@ def pageDoors() {
 }
 def pageTemps(){
     dynamicPage(name: "pageTemps",  install: false, uninstall: false) {
-        section {paragraph "Thermostats/Temperature/Humidity", image: imgURL()+"temp.png"}
+        section {paragraph "Thermostats/Temperature/Humidity", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/temp.png"}
         section("Choose the devices to interface", hideWhenEmpty: true) {
             input "tstats", "capability.thermostat", title: "Choose Thermostats (Temperature Setpoint/Status)", multiple: true, required: false 
             input "temps", "capability.temperatureMeasurement", title: "Choose Temperature Devices (Status)", multiple: true, required: false
@@ -188,7 +188,7 @@ def pageTemps(){
 }
 def pageSpeakers(){
     dynamicPage(name: "pageSpeakers",  install: false, uninstall: false) {
-        section {paragraph "Connected Speakers", image: imgURL()+"speaker.png"}
+        section {paragraph "Connected Speakers", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/speaker.png"}
         section("Choose the devices to interface", hideWhenEmpty: true) {
             input "speakers", "capability.musicPlayer", title: "Choose Speakers (Speaker Control, Status)", multiple: true, required: false, submitOnChange: true
         }
@@ -206,7 +206,7 @@ def pageSpeakers(){
 }
 def pageMemorySlots(){
     dynamicPage(name: "pageMemorySlots") {
-        section {paragraph "SONOS Memory Slots", image: imgURL()+"music.png"}
+        section {paragraph "SONOS Memory Slots", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/music.png"}
         def songList = songOptions(), memCount = sonosMemoryCount as int
         for (int i=1; i<memCount+1; i++){
             section ("Memory slot ${i}"){
@@ -218,7 +218,7 @@ def pageMemorySlots(){
 }
 def pageSensors(){
     dynamicPage(name: "pageSensors",  install: false, uninstall: false) {
-        section {paragraph "Other Sensors", image: imgURL()+"sensor.png"}
+        section {paragraph "Other Sensors", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/sensor.png"}
         section("Choose the devices to interface", hideWhenEmpty: true) {
             input "acceleration", "capability.accelerationSensor", title: "Choose Acceleration Sensors (Status)", multiple: true, required: false
             input "motion", "capability.motionSensor", title: "Choose Motion Sensors (Status)", multiple: true, required: false
@@ -241,11 +241,11 @@ def pageHomeControl(){
         if (phrases) phrases.each{if (!it) findNull++}
         if (findNull) phrases.each{if (it) phrasesList<<it}
         else phrasesList=phrases
-		section { paragraph "Modes/SHM/Routines", image: imgURL()+"modes.png" }
+		section { paragraph "Modes/SHM/Routines", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/modes.png" }
         if (findNull) {
         	section("**Warning**"){
             	paragraph "You have a null routine present in your SmartThings setup. Go to your SmartThings IDE to resolve this situation. This routine has been removed from the list below.",
-                	image: imgURL()+"caution.png"
+                	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png"
             }
         }
         section ("Mode options", hideWhenEmpty: true) {
@@ -264,12 +264,12 @@ def pageHomeControl(){
 }
 def pageAliasMain(){
     dynamicPage(name: "pageAliasMain",  install: false, uninstall: false) {
-        section {paragraph "Device Aliases", image: imgURL()+"alias.png"}
+        section {paragraph "Device Aliases", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/alias.png"}
         section("Add / Remove device aliases") {
-           	href "pageAliasAdd", title: "Add Device Alias", description: "Tap to add a device alias", image: imgURL()+"add.png"
-           	if (state.aliasList) href "pageAliasDel", title: "Delete Device Alias", description: "Tap to delete a device alias", image: imgURL()+"delete.png"    
+           	href "pageAliasAdd", title: "Add Device Alias", description: "Tap to add a device alias", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/add.png"
+           	if (state.aliasList) href "pageAliasDel", title: "Delete Device Alias", description: "Tap to delete a device alias", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/delete.png"    
         }
-        section(state.aliasList && state.aliasList.size()==1 ? "One device alias configured" : state.aliasList && state.aliasList.size()>1 ? state.aliasList.size() + " device aliases configured" : "") {
+        section(state.aliasList && state.aliasList.size()==1 ? "One device alias configured" : state.aliasList.size() + " device aliases configured") {
             paragraph state.aliasList && state.aliasList.size()>0 ? getAliasDisplayList(): "There are no device aliases set up yet"            	
         }
     }
@@ -285,9 +285,9 @@ def pageAliasAdd(){
 		}
         if (aliasDevice && aliasName && aliasType && getDeviceAliasList(aliasType)) {
         	section(" "){
-				href "pageAliasAddFinal", title: "Add Device Alias", description: "Tap to add the device alias", image: imgURL()+"add.png"
+				href "pageAliasAddFinal", title: "Add Device Alias", description: "Tap to add the device alias", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/add.png"
 			}
-            section("Please note") { paragraph "Do not use the \"<\" or the \"Done\" buttons on this page except to go back without adding the alias.", image: imgURL()+"caution.png" }
+            section("Please note") { paragraph "Do not use the \"<\" or the \"Done\" buttons on this page except to go back without adding the alias.", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png" }
 		}
 	}
 }
@@ -304,14 +304,14 @@ def pageAliasAddFinal(){
             state.aliasList<<["aliasName":aliasName,"aliasType":devType,"aliasDevice":"${aliasDevice}", "aliasTypeFull": aliasType, "aliasNameLC":aliasName.toLowerCase()]
 			success = true
         }
-		section { paragraph success ? "Successfully Added Alias" : "Error Adding Alias", image: success ? imgURL()+"check.png" :
-        	imgURL()+"caution.png" }
+		section { paragraph success ? "Successfully Added Alias" : "Error Adding Alias", image: success ? "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/check.png" :
+        	"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png" }
         section (" "){ paragraph result }
         section { 
         	href "pageAliasMain", title: "Tap Here To Add/Delete Another Alias", description:none 
 			href "mainPageParent", title: "Tap Here To Return To The Main Menu", description:none 
 		}
-        section("Please note") { paragraph "Do not use the \"<\" or the \"Done\" buttons on this page to go back in the interface. You may encounter undesired results. Please use the two buttons above to return to the alias area or main menu.", image: imgURL()+"caution.png" }
+        section("Please note") { paragraph "Do not use the \"<\" or the \"Done\" buttons on this page to go back in the interface. You may encounter undesired results. Please use the two buttons above to return to the alias area or main menu.", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png" }
 	}    
 }
 def pageAliasDel(){
@@ -319,35 +319,35 @@ def pageAliasDel(){
 		section { input "aliasDelete", "enum", title:"Choose An Alias To Delete...", options: getAliasList(), required: false, submitOnChange: true }
         if (aliasDelete){
         	section(" "){ 
-				href "pageAliasDelFinal", title: "Delete Device Alias", description: "Tap to delete the device alias", image: imgURL()+"delete.png" 
+				href "pageAliasDelFinal", title: "Delete Device Alias", description: "Tap to delete the device alias", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/delete.png" 
         	}
-            section("Please note") { paragraph "Do not use the \"<\" or the \"Done\" buttons on this page except to go back without deleting the alias.", image: imgURL()+"caution.png" }
+            section("Please note") { paragraph "Do not use the \"<\" or the \"Done\" buttons on this page except to go back without deleting the alias.", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png" }
 		}
     }
 }
 def pageAliasDelFinal(){
 	dynamicPage(name: "pageAliasDelFinal", uninstall: false) {
-        section { paragraph "Successfully Deleted '${aliasDelete}' Alias", image: imgURL()+"check.png" }
+        section { paragraph "Successfully Deleted '${aliasDelete}' Alias", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/check.png" }
         section (" "){
 			state.aliasList.removeAll{it.aliasName==aliasDelete}
             href "pageAliasMain", title: "Tap Here To Add/Delete Another Alias", description:none 
             href "mainPageParent", title: "Tap Here To Return To The Main Menu", description:none
         }
-        section("Please note") { paragraph "Do not use the \"<\" or the \"Done\" buttons on this page to go back in the interface. You may encounter undesired results. Please use the two buttons above to return to the alias area or main menu.", image:imgURL()+"caution.png" }
+        section("Please note") { paragraph "Do not use the \"<\" or the \"Done\" buttons on this page to go back in the interface. You may encounter undesired results. Please use the two buttons above to return to the alias area or main menu.", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png" }
 	}    
 }
 def pageMacros() {
     dynamicPage(name: "pageMacros", install: false, uninstall: false) {
-        section{ paragraph "Voice Macros", image: imgURL()+"speak.png" }
+        section{ paragraph "Voice Macros", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/speak.png" }
         if (childApps.size()) section(childApps.size()==1 ? "One voice macro configured" : childApps.size() + " voice macros configured" ){}
         def duplicates = childApps.label.findAll{childApps.label.count(it)>1}.unique()
         if (duplicates){
         	section { paragraph "You have two or more macros with the same name. Please ensure each macro has a unique name and also does not conflict with device names as well. ", 
-            	image: imgURL()+"caution.png" }
+            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png" }
         }
         section(" "){
         	app(name: "childMacros", appName: "Ask Alexa", namespace: "MichaelStruck", title: "Create A New Macro...", description: "Tap to create a new voice macro", multiple: true, 
-        	image: imgURL()+"add.png") 
+        	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/add.png") 
         }
 	}
 }
@@ -367,7 +367,7 @@ def pageAbout(){
 }
 def pageSettings(){
     dynamicPage(name: "pageSettings", uninstall: false){
-        section { paragraph "Settings", image: imgURL()+"settings.png" }
+        section { paragraph "Settings", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/img/settings.png" }
         section ("Additional voice settings"){ 
         	input "briefReply", "bool", title: "Give 'Brief' Device Action Reply", defaultValue: false, submitOnChange: true
             if (briefReply) input "briefReplyTxt", "enum", title: "Brief Reply", options: ["No reply spoken", "Ok", "Done"], required:false, multiple:false, defaultValue: "Ok"
@@ -384,11 +384,11 @@ def pageSettings(){
         	if (!state.accessToken) OAuthToken()
             if (!state.accessToken) paragraph "**You must enable OAuth via the IDE to setup this app**"
             else href url:"${getApiServerUrl()}/api/smartapps/installations/${app.id}/setup?access_token=${state.accessToken}", style:"embedded", required:false, title:"Setup Variables", description: "For Amazon developer sites",
-            	image: imgURL()+"amazon.png"
+            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/amazon.png"
         	href "pageGlobalVariables", title: "Text Field Variables", description: none, state: (voiceTempVar || voiceHumidVar || voicePresenceVar ? "complete" : null)
         }
         section("Security"){
-            href "pageConfirmation", title: "Revoke/Reset Access Token", description: "Tap to confirm this action", image: imgURL()+"warning.png"
+            href "pageConfirmation", title: "Revoke/Reset Access Token", description: "Tap to confirm this action", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/warning.png"
             input "pwNeeded", "bool", title: "Password (PIN) Option Enabled", defaultValue: false, submitOnChange: true
             if (pwNeeded) input "password", "num", title: "Numeric Password (PIN)", description: "Enter a short numeric PIN (i.e. 1234)", required: false
 		}
@@ -403,7 +403,7 @@ def pageSettings(){
 }
 def pageMsgQueue(){
     dynamicPage(name: "pageMsgQueue", uninstall: false){
-    	section{ paragraph "Message Queue Options", image: imgURL()+"mailbox.png" }
+    	section{ paragraph "Message Queue Options", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/mailbox.png" }
         section (" "){
             input "msgQueue", "bool", title: "Enable Message Queue", defaultValue: false, submitOnChange: true
             if (msgQueue) input "msgQueueOrder", "enum", title: "Message Play Back Order", options:[0:"Oldest to newest", 1:"Newest to oldest"], defaultValue: 0
@@ -432,7 +432,7 @@ def pageDefaultValue(){
 }
 def pageContCommands(){
 	dynamicPage(name: "pageContCommands", uninstall: false){
-		section{ paragraph "Personalization", image: imgURL()+"personality.png" }
+		section{ paragraph "Personalization", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/personality.png" }
         section ("Continuation of commands..."){
 			input "contError", "bool", title: "After Error", defaultValue: false
             input "contStatus", "bool", title: "After Status/List", defaultValue: false
@@ -464,7 +464,7 @@ def pageCustomDevices(){
                 paragraph "To reset the database of SONOS songs listed in the memory slots, tap the area below. "+
      			"It is recommended you do this ONLY if you are having issues playing the songs in the list. The database will be "+
                 "rebuilt from the recently played songs from the speakers upon exiting the SmartApp."
-            	href "pageSONOSReset", title: "Reset Song Database", description: "Tap to reset database", image: imgURL()+"warning.png"
+            	href "pageSONOSReset", title: "Reset Song Database", description: "Tap to reset database", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/warning.png"
 			}
         }
 	}
@@ -488,7 +488,7 @@ def pageLimitValue(){
 }
 def pageGlobalVariables(){
     dynamicPage(name: "pageGlobalVariables", uninstall: false){
-        section { paragraph "Text Field Variables", image: imgURL()+"variable.png" }
+        section { paragraph "Text Field Variables", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/variable.png" }
         section ("Environmental") {
             input "voiceTempVar", "capability.temperatureMeasurement", title: "Temperature Device Variable (%temp%)",multiple: true, required: false, submitOnChange: true
             input "voiceHumidVar", "capability.relativeHumidityMeasurement", title:"Humidity Device Variable (%humid%)",multiple: true, required: false, submitOnChange: true
@@ -500,7 +500,7 @@ def pageGlobalVariables(){
 def pageConfirmation(){
 	dynamicPage(name: "pageConfirmation", title: "Revoke/Reset Access Token Confirmation", uninstall: false){
         section {
-			href "pageReset", title: "Revoke / Reset Access Token", description: "Tap to take action - READ WARNING BELOW", image: imgURL()+"warning.png"
+			href "pageReset", title: "Revoke / Reset Access Token", description: "Tap to take action - READ WARNING BELOW", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/warning.png"
 			paragraph "PLEASE CONFIRM! By resetting the access token you will disable the ability to interface this SmartApp with your Amazon Echo. You will need to copy the new access token to your Amazon Lambda code to re-enable access." +
                 "Tap below to go back to the main menu with out resetting the token. You may also tap Done in the upper left corner."
         }
@@ -523,7 +523,7 @@ def pageReset(){
 def mainPageChild(){
     dynamicPage(name: "mainPageChild", title: "Voice Macro Settings", install: true, uninstall: true) {
     	section {
-            label title:"Voice Macro Name", required: true, image: imgURL()+"speak.png"
+            label title:"Voice Macro Name", required: true, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/speak.png"
             input "macroType", "enum", title: "Macro Type...", options: [["Control":"Control (Run/Execute)"],["CoRE":"CoRE Trigger (Run/Execute)"],["Group":"Device Group (On/Off/Toggle, Lock/Unlock, etc.)"],["GroupM":"Macro Group (Run/Execute)"],["Voice":"Voice Reporting (Run/Execute) "]], required: false, multiple: false, submitOnChange:true
             def fullMacroName=[GroupM: "Macro Group",CoRE:"CoRE Trigger", Control:"Control", Group:"Device Group", Voice:"Voice Reporting"][macroType] ?: macroType
             if (macroType) {
@@ -540,10 +540,10 @@ def mainPageChild(){
         if (macroType && macroType !="GroupM" && macroType !="Group"){
             section("Restrictions") {            
 				input "runDay", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only Certain Days Of The Week...",  multiple: true, required: false,
-				image: imgURL()+"calendar.png"
+				image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/calendar.png"
 				href "timeIntervalInput", title: "Only During Certain Times...", description: getTimeLabel(timeStart, timeEnd), state: (timeStart || timeEnd ? "complete":null),
-					image: imgURL()+"clock.png"
-				input "runMode", "mode", title: "Only In The Following Modes...", multiple: true, required: false, image: imgURL()+"modes.png"
+					image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/clock.png"
+				input "runMode", "mode", title: "Only In The Following Modes...", multiple: true, required: false, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/modes.png"
 				input "muteRestrictions", "bool", title: "Mute Restriction Messages In Macro Group", defaultValue: false
             }
         }
@@ -559,7 +559,7 @@ page(name: "timeIntervalInput", title: "Only during a certain time") {
 //Device Macro----------------------------------------------------
 def pageGroup() {
 	dynamicPage(name: "pageGroup", install: false, uninstall: false) {
-		section { paragraph "Device Group Settings", image: imgURL()+"folder.png" }
+		section { paragraph "Device Group Settings", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/folder.png" }
         section (" ") {
             input "groupType", "enum", title: "Group Type...", options: [["colorControl": "Colored Light (On/Off/Toggle/Level/Color)"],["switchLevel":"Dimmer (On/Off/Toggle/Level)"],["doorControl": "Door (Open/Close)"],["lock":"Lock (Lock/Unlock)"],
             	["switch":"Switch (On/Off/Toggle)"],["thermostat":"Thermostat (Mode/Off/Setpoint)"],["windowShade": "Window Shades (Open/Close)"]],required: false, multiple: false, submitOnChange:true
@@ -583,7 +583,7 @@ def pageGroup() {
 //CoRe Macro----------------------------------------------------
 def pageCoRE() {
 	dynamicPage(name: "pageCoRE", install: false, uninstall: false) {
-		section { paragraph "CoRE Trigger Settings", image: imgURL()+"CoRE.png" }
+		section { paragraph "CoRE Trigger Settings", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/CoRE.png" }
 		section (" "){
    			input "CoREName", "enum", title: "Choose CoRE Piston", options: parent.state.CoREPistons, required: false, multiple: false
         	input "cDelay", "number", title: "Default Delay (Minutes) To Trigger", defaultValue: 0, required: false
@@ -603,7 +603,7 @@ def pageCoRE() {
 //Group Macro----------------------------------------------------
 def pageGroupM() {
 	dynamicPage(name: "pageGroupM", install: false, uninstall: false) {
-		section { paragraph "Macro Group Settings", image: imgURL()+"macrofolder.png" }
+		section { paragraph "Macro Group Settings", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/macrofolder.png" }
         section (" ") { 
         	input "groupMacros", "enum", title: "Child Macros To Run (Control/CoRE/Voice Reports)...", options: parent.getMacroList(app.label), required: false, multiple: true
         	if (parent.pwNeeded){ input "usePW", "bool", title: "Require PIN To Run This Macro", defaultValue: false }
@@ -622,22 +622,22 @@ def pageControl() {
         if (phrases) phrases.each{if (!it) findNull++}
         if (findNull) phrases.each{if (it) phrasesList<<it}
         else phrasesList=phrases
-        section { paragraph "Control Settings", image: imgURL()+"control.png" }
+        section { paragraph "Control Settings", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/control.png" }
         if (findNull) {
         	section("**Warning**"){
             	paragraph "You have a null routine present in your SmartThings setup. Go to your SmartThings IDE to resolve this situation. This routine has been removed from the list below.",
-                	image: imgURL()+"caution.png"
+                	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/caution.png"
             }
         }
         section ("When voice macro is activated...") {
-            input "phrase", "enum", title: "Perform This Routine...", options: phrasesList, required: false, image: imgURL()+"routine.png" 
-            input "setMode", "mode", title: "Set Mode To...", required: false, image: imgURL()+"modes.png"  
-            input "SHM", "enum",title: "Set Smart Home Monitor To...", options: ["away":"Arm (Away)", "stay":"Arm (Stay)", "off":"Disarm"], required: false, image: imgURL()+"SHM.png"
-            href "pageSTDevices", title: "Control These SmartThings Devices...", description: getDeviceDesc(), state: deviceGreyOut(), image: imgURL()+"smartthings.png"
-            href "pageHTTP", title: "Run This HTTP Request...", description: getHTTPDesc(), state: greyOutStateHTTP(), image: imgURL()+"network.png"
-            input "cDelay", "number", title: "Default Delay (Minutes) To Activate", defaultValue: 0, required: false, image: imgURL()+"stopwatch.png"
-            input ("contacts", "contact", title: "Send Notifications To...", required: false, image: imgURL()+"sms.png") {
-				input "smsNum", "phone", title: "Send SMS Message To (Phone Number)...", required: false, image: imgURL()+"sms.png"
+            input "phrase", "enum", title: "Perform This Routine...", options: phrasesList, required: false, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/routine.png" 
+            input "setMode", "mode", title: "Set Mode To...", required: false, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/modes.png"  
+            input "SHM", "enum",title: "Set Smart Home Monitor To...", options: ["away":"Arm (Away)", "stay":"Arm (Stay)", "off":"Disarm"], required: false, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/SHM.png"
+            href "pageSTDevices", title: "Control These SmartThings Devices...", description: getDeviceDesc(), state: deviceGreyOut(), image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/smartthings.png"
+            href "pageHTTP", title: "Run This HTTP Request...", description: getHTTPDesc(), state: greyOutStateHTTP(), image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/network.png"
+            input "cDelay", "number", title: "Default Delay (Minutes) To Activate", defaultValue: 0, required: false, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/stopwatch.png"
+            input ("contacts", "contact", title: "Send Notifications To...", required: false, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/sms.png") {
+				input "smsNum", "phone", title: "Send SMS Message To (Phone Number)...", required: false, image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/sms.png"
 				input "pushMsg", "bool", title: "Send Push Message", defaultValue: false
             }
             input "smsMsg", "text", title: "Send This Message...", required: false, capitalization: "sentences"
@@ -651,7 +651,7 @@ def pageControl() {
 }
 def pageSTDevices(){
 	dynamicPage (name: "pageSTDevices", install: false, uninstall: false) {
-        section { paragraph "SmartThings Device Control", image: imgURL()+"smartthings.png"}
+        section { paragraph "SmartThings Device Control", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/smartthings.png"}
         section ("Switches", hideWhenEmpty: true){
             input "switches", "capability.switch", title: "Control These Switches...", multiple: true, required: false, submitOnChange:true
             if (switches) input "switchesCMD", "enum", title: "Command To Send To Switches", options:["on":"Turn on","off":"Turn off", "toggle":"Toggle the switches' on/off state"], multiple: false, required: false
@@ -678,10 +678,7 @@ def pageSTDevices(){
             if (tstats) {
             	def tstatOptions=["heat":"Set heating temperature","cool":"Set cooling temperature"]
                 if (parent.nestCMD) tstatOptions += ["away":"Nest 'Away' Presence","home":"Nest 'Home' Presence"]
-                if (parent.ecobeeCMD) {
-                    tstatOptions += ["away":"Ecobee 'Away' Climate","home":"Ecobee 'Home' Climate","sleep":"Ecobee 'Sleep' Climate","resume program":"Ecobee 'Resume Program'"]
-                    getEcobeeCustomList(tstats).each { tstatOptions += ["${it}":"Ecobee '${it}' Climate"] }
-                }
+                if (parent.ecobeeCMD) tstatOptions += ["away":"Ecobee 'Away' Climate","home":"Ecobee 'Home' Climate","sleep":"Ecobee 'Sleep' Climate","resume program":"Ecobee 'Resume Program'"]
                 input "tstatsCMD", "enum", title: "Command To Send To Thermostats", options :tstatOptions , multiple: false, required: false, submitOnChange:true
             }
             if (tstatsCMD =="heat" || tstatsCMD =="cool") input "tstatLVL", "number", title: "Temperature Level", description: "Set temperature level", required: false
@@ -702,7 +699,7 @@ def pageSTDevices(){
 }
 def pageHTTP (){
     dynamicPage(name: "pageHTTP", install: false, uninstall: false){
-        section { paragraph "HTTP Request", image: imgURL()+"network.png" }
+        section { paragraph "HTTP Request", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/network.png" }
         section(" "){
             input "extInt", "enum", title: "Choose HTTP Command Type", options:[0:"External REST",1:"Internal (IP, port, command)"], required: false, submitOnChange:true
             if (extInt == "0") input "http", "text", title:"HTTP Address...", required: false
@@ -717,27 +714,27 @@ def pageHTTP (){
 // Show Voice page----------------------------------------------------
 def pageVoice() {
 	dynamicPage(name: "pageVoice", install: false, uninstall: false) {
-        section { paragraph "Voice Reporting Settings", image: imgURL()+"voice.png" }
+        section { paragraph "Voice Reporting Settings", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/voice.png" }
         section (" ") {
             input "voicePre", "text", title: "Pre Message Before Device Report", description: "Use variables like %time%, %day%, %date% here.", required: false, capitalization: "sentences"
             href "pageSwitchReport", title: "Switch/Dimmer Report", description: reportSwitches(), state: (voiceSwitch || voiceDimmer ? "complete" : null),
-            	image:imgURL()+"power.png"
+            	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/power.png"
             href "pageDoorReport", title: "Door/Window/Lock Report", description: reportDoors(), state: (voiceDoorSensors || voiceDoorControls || voiceDoorLocks || voiceWindowShades ? "complete": null),
-            	image:imgURL()+"lock.png"
+            	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/lock.png"
             href "pageTempReport", title: "Temperature/Humidity/Thermostat Report", description: reportTemp(), state:(voiceTemperature || voiceTempSettings || voiceHumidity? "complete" : null),
-            	image:imgURL()+"temp.png"
+            	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/temp.png"
             href "pageSpeakerReport", title: "Speaker Report", description: speakerDesc(), state: (voiceSpeaker ? "complete": null),
-            	image:imgURL()+"speaker.png"
+            	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/speaker.png"
 			href "pageWeatherReport", title: "Weather Report", description: weatherDesc(), state: greyOutWeather(),
-            	image : imgURL()+"weather.png"
+            	image : "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/weather.png"
             href "pagePresenceReport", title: "Presence Report", description: presenceSensors(), state:(voicePresence ? "complete": null),
-            	image : imgURL()+"people.png"    
+            	image : "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/people.png"    
             href "pageOtherReport", title: "Other Sensors Report", description: reportSensors(), state: (voiceWater|| voiceMotion|| voicePower || voiceAccel  ? "complete" :null),
-            	image:imgURL()+"sensor.png"
+            	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/sensor.png"
             href "pageHomeReport", title: "Mode and Smart Home Monitor Report", description: reportDescMSHM(), state: (voiceMode|| voiceSHM? "complete": null),
-            	image:imgURL()+"modes.png"
+            	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/modes.png"
             href "pageBatteryReport",title: "Battery Report", description: batteryDesc(), state: (voiceBattery ? "complete" : null),
-            	image:imgURL()+"battery.png"
+            	image:"https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/battery.png"
             input "voicePost", "text", title: "Post Message After Device Report", description: "Use variables like %time%, %day%, %date% here.", required: false, capitalization: "sentences"
         	input "allowNullRpt", "bool", title: "Allow For Empty Report (For Group Macros)", defaultValue: false
         }
@@ -751,7 +748,7 @@ def pageVoice() {
 }
 def pagePresenceReport(){
 	dynamicPage(name: "pagePresenceReport", install: false, uninstall: false){
-    	section { paragraph "Presence Report", image: imgURL()+"people.png" }
+    	section { paragraph "Presence Report", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/people.png" }
         section(" ") {
             input "voicePresence", "capability.presenceSensor", title: "Presence Sensors To Report Their Status...", multiple: true, required: false, submitOnChange: true 
             if (voicePresence) input "voicePresRepType", "enum", title: "Presence Sensor Report Type", options:[0:"Each device reports status (Default)",
@@ -763,7 +760,7 @@ def pagePresenceReport(){
 }
 def pageSwitchReport(){
     dynamicPage(name: "pageSwitchReport", install: false, uninstall: false){
-        section { paragraph "Switch/Dimmer Report", image: imgURL()+"power.png" }
+        section { paragraph "Switch/Dimmer Report", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/power.png" }
         section("Switch report", hideWhenEmpty: true) {
             input "voiceSwitch", "capability.switch", title: "Switches To Report Their Status...", multiple: true, required: false, submitOnChange: true
             if (voiceSwitch) input "voiceOnSwitchOnly", "bool", title: "Report Only Switches That Are On", defaultValue: false
@@ -778,7 +775,7 @@ def pageSwitchReport(){
 }
 def pageDoorReport(){
     dynamicPage(name: "pageDoorReport", install: false, uninstall: false){
-        section { paragraph "Doors/Windows/Locks", image: imgURL()+"lock.png" }
+        section { paragraph "Doors/Windows/Locks", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/lock.png" }
         section("Doors / Windows / Locks reporting (Open / Unlocked)", hideWhenEmpty: true){
             input "voiceDoorSensors", "capability.contactSensor", title: "Doors/Windows Sensors To Report Their Status...", multiple: true, required: false, submitOnChange: true
             input "voiceDoorControls", "capability.doorControl", title: "Door Controls To Report Their Status...", multiple: true, required: false, submitOnChange: true
@@ -792,7 +789,7 @@ def pageDoorReport(){
 }
 def pageOtherReport(){
     dynamicPage(name: "pageOtherReport", install: false, uninstall: false){
-        section { paragraph "Other Sensors Report", image: imgURL()+"sensor.png" }
+        section { paragraph "Other Sensors Report", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/sensor.png" }
         section ("Acceleration sensors", hideWhenEmpty: true){
             input "voiceAccel", "capability.accelerationSensor", title: "Acceleration Sensors To Report Their Status...", multiple: true, required: false, submitOnChange: true
             if (voiceAccel) input "voiceAccelOnly", "bool",title: "Report Only Sensors That Read 'Active'", defaultValue: false
@@ -815,7 +812,7 @@ def pageOtherReport(){
 }
 def pageTempReport(){
     dynamicPage(name: "pageTempReport", install: false, uninstall: false){
-        section { paragraph "Temperature/Humidity/Thermostat Report", image: imgURL()+"temp.png" }
+        section { paragraph "Temperature/Humidity/Thermostat Report", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/temp.png" }
         section ("Temperature reporting", hideWhenEmpty: true){
             input "voiceTemperature", "capability.temperatureMeasurement", title: "Devices To Report Temperatures...",multiple: true, required: false, submitOnChange: true
 			if (voiceTemperature && voiceTemperature.size() > 1) input "voiceTempAvg", "bool", title: "Report Average Of Temperature Readings", defaultValue: false	
@@ -837,7 +834,7 @@ def pageTempReport(){
 }
 def pageSpeakerReport(){
     dynamicPage(name: "pageSpeakerReport", install: false, uninstall: false){
-        section { paragraph "Speaker Report", image: imgURL()+"speaker.png" }
+        section { paragraph "Speaker Report", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/speaker.png" }
         section(" "){
             input "voiceSpeaker", "capability.musicPlayer", title: "Speakers To Report Status...", description: "Tap to choose devices", multiple: true, required: false, submitOnChange:true
         	if (voiceSpeaker) input "voiceSpeakerOn", "bool", title: "Report Only Speakers That Are Playing", defaultValue:false
@@ -847,7 +844,7 @@ def pageSpeakerReport(){
 }
 def pageBatteryReport(){
     dynamicPage(name: "pageBatteryReport", install: false, uninstall: false){
-        section { paragraph "Battery Report", image: imgURL()+"battery.png" }
+        section { paragraph "Battery Report", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/battery.png" }
         section(" "){
             input "voiceBattery", "capability.battery", title: "Devices With Batteries To Monitor...", description: "Tap to choose devices", multiple: true, required: false, submitOnChange:true
             if (voiceBattery) input "batteryThreshold", "enum", title: "Battery Status Threshold", required: false, defaultValue: 20, options: [5:"<5%",10:"<10%",20:"<20%",30:"<30%",40:"<40%",50:"<50%",60:"<60%",70:"<70%",80:"<80%",90:"<90%",101:"Always play battery level"]  
@@ -856,7 +853,7 @@ def pageBatteryReport(){
 }
 def pageHomeReport(){
     dynamicPage(name: "pageHomeReport", install: false, uninstall: false){
-        section { paragraph "Mode And Security Report", image: imgURL()+"modes.png" }
+        section { paragraph "Mode And Security Report", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/modes.png" }
         section(" ") {
             input "voiceMode", "bool", title: "Report SmartThings Mode Status", defaultValue: false
             input "voiceSHM", "bool", title: "Report Smart Home Monitor Status", defaultValue: false
@@ -865,7 +862,7 @@ def pageHomeReport(){
 }
 def pageWeatherReport(){
 	dynamicPage(name: "pageWeatherReport", install: false, uninstall: false) {
-    	section { paragraph "Weather report", image: imgURL()+"weather.png" }
+    	section { paragraph "Weather report", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/weather.png" }
         section("Weather reporting") {
         	 href "pageWeatherCurrent", title: "Current Weather Report Options", description: none, state: (currWeatherSel() ? "complete" : null)	
              href "pageWeatherForecast", title: "Weather Forecast Options", description: none, state: (foreWeatherSel() ? "complete" : null)	
@@ -1362,11 +1359,6 @@ def getReply(devices, type, STdeviceName, op, num, param){
                     }
                     if (ecobeeCMD && STdevice.currentValue('currentProgramId') =~ /home|away|sleep/ ) result += " This thermostat's comfort setting is set to ${STdevice.currentValue('currentProgramId')}. "
                     if (ecobeeCMD && STdevice.currentValue('climateName') =~ /home|away|sleep/ ) result += " This thermostat's comfort setting is set to ${STdevice.currentValue('climateName')}. "
-                    if (MyEcobeeCMD && STdevice.currentValue('climateName')) {
-                       def climatename = STdevice.currentValue('setClimate')
-                       def climateList = STdevice.currentValue('climateList')
-                       if (climateList.contains(climatename)) result += " This thermostat's comfort setting is set to ${climatename}. "
-                    } 
                     result += heat ? " The heating setpoint is set to ${heat} degrees. " : ""
                     result += heat && cool ? "And finally, " : ""
                     result += cool ? " The cooling setpoint is set to ${cool} degrees. " : ""
@@ -1436,7 +1428,7 @@ def getReply(devices, type, STdeviceName, op, num, param){
                     }
                     if (op =="maximum" && tstatHighLimit) num = tstatHighLimit
                     if (op =="minimum" && tstatLowLimit) num = tstatLowLimit
-                    if ((param==~/heat|heating|cool|cooling|auto|automatic|eco|AC|comfort|home|away|sleep|resume program/ || (ecobeeCustomRegEx && param =~ /${ecobeeCustomRegEx}/)) && num == 0 && op=="undefined") op="on"
+                    if ((param==~/heat|heating|cool|cooling|auto|automatic|eco|AC|comfort|home|away|sleep|resume program/) && num == 0 && op=="undefined") op="on"
                     if (op == "on" || op=="off") {
                         if (param == "undefined" && op == "on") result="You must designate 'heating mode' or 'cooling mode' when turning the ${STdeviceName} on. "
                         if (param =~/heat/) {result="I am setting the ${STdeviceName} to 'heating' mode. "; STdevice.heat()}
@@ -1444,8 +1436,8 @@ def getReply(devices, type, STdeviceName, op, num, param){
                         if (param =~/auto/) {result="I am setting the ${STdeviceName} to 'auto' mode. Please note, to properly set the temperature in 'auto' mode, you must specify the heating or cooling setpoints separately. " ; STdevice.auto()}
                         if (param =="home" && nestCMD) {result = "I am setting the ${STdeviceName} to 'home'. "; STdevice.present()} 
                         if (param =="away" && nestCMD) {result = "I am setting the ${STdeviceName} to 'away'. Please note that Nest thermostats will not respond to temperature changes while in 'away' status. "; STdevice.away()} 
-                        if (ecobeeCMD && (param =~/home|away|sleep/ || (ecobeeCustomRegEx && param =~ /${ecobeeCustomRegEx}/))) {
-                            result = "I am setting the ${STdevice} to '" + param + "'. "
+                        if (param ==~/home|away|sleep/ && ecobeeCMD) {
+                            result = "I am setting the ${STdeviceName} to '" + param + "'. "
                             if (STdevice.hasCommand("setThermostatProgram")) STdevice.setThermostatProgram("${param.capitalize()}")
                             else if (STdevice.hasCommand("setClimate")) STdevice.setClimate("","${param.capitalize()}")
                             else result ="There was an error setting your climate. %1%"
@@ -1746,8 +1738,7 @@ def groupResults(num, op, colorData, param, mNum){
         }
         if (op =="maximum" && parent.getTstatLimits().hi) num = parent.getTstatLimits().hi
         if (op =="minimum" && parent.getTstatLimits().lo) num = parent.getTstatLimits().lo
-        def ecobeeCustomRegEx = ecobeeCMD ? getEcobeeCustomRegEx(settings."groupDevice${groupType}") : null
-        if ((param==~/heat|heating|cool|cooling|auto|automatic|eco|AC|comfort|home|away|sleep|resume program/ || (ecobeeCustomRegEx && param =~ /${ecobeeCustomRegEx}/)) && num == 0 && op=="undefined") op="on"
+        if ((param==~/heat|heating|cool|cooling|auto|automatic|eco|AC|comfort|home|away|sleep|resume program/) && num == 0 && op=="undefined") op="on"
         if (op ==~/on|off/) {
         	if (param == "undefined" && op == "on") result="You must designate 'heating mode' or 'cooling mode' when turning on a thermostat group. %1%"
             if (param =~/heat/) {result="I am setting the ${noun} to 'heating' mode. "; settings."groupDevice${groupType}"?.heat()}
@@ -1760,7 +1751,7 @@ def groupResults(num, op, colorData, param, mNum){
             	result="I am setting the ${noun} to 'away' mode. Please note that Nest thermostats will not accept temperature changes while in 'away' status. "
                 settings."groupDevice${groupType}"?.away()
             }
-            if (parent.ecobeeCMD && (param ==~/home|away|sleep/ || (ecobeeCustomRegEx && param =~ /${ecobeeCustomRegEx}/))) {
+            if (param ==~/home|away|sleep/ && parent.ecobeeCMD) {
                 result = "I am setting the ${noun} to '" + param + "'. "
                 settings."groupDevice${groupType}".each {myDevice ->
                     myDevice.supportedCommands.each {comm ->
@@ -1885,8 +1876,7 @@ def controlHandler(){
         	def tLevel = tstatLVL < 0 ?  0 : tstatLVL > 100 ? 100 : tstatLVL as int
     		cmd.tstat == "heat" ? tstats?.setHeatingSetpoint(tLevel) : tstats?.setCoolingSetpoint(tLevel)
         }
-       def ecobeeCustomRegEx = ecobeeCMD ? getEcobeeCustomRegEx(tstats) : null
-       if (cmd.tstat =~ /home|away|sleep|resume program/ || (ecobeeCustomRegEx && cmd.tstat =~ /${ecobeeCustomRegEx}/)) tstats?."${cmd.tstat}"()
+        if (cmd.tstat == "home" || cmd.tstat == "away" || cmd.tstat == "sleep" || cmd.tstat == "resume program") tstats?."${cmd.tstat}"()
 	}
     if (garages && cmd.garage) garages?."${cmd.garage}"()
     if (shades && cmd.shade) shades?."${cmd.shade}"()
@@ -2204,8 +2194,6 @@ def waterReport(){
 }
 //Parent Code Access (from Child)-----------------------------------------------------------
 def getOkToRun(){ def result = (!runMode || runMode.contains(location.mode)) && getDayOk(runDay) && getTimeOk(timeStart,timeEnd) }
-//Common Code (Child and Parent)
-def imgURL() { return "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/" }
 //Common Code(Child)-----------------------------------------------------------
 private currWeatherSel() { return voiceWeatherTemp || voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip }
 private foreWeatherSel() { return voiceWeatherToday || voiceWeatherTonight || voiceWeatherTomorrow}
@@ -2877,30 +2865,6 @@ def toggleState(swDevices){
         it?."$newstate"()
     }
 }
-private getEcobeeCustomList(myEcobeeGroup){
-    def myEcobeeList = []	
-    if (MyEcobeeCMD) {
-        myEcobeeGroup.each {myTstat ->
-			if (myTstat.currentValue("climateList")) {            
-                def myCustomClimateList = myTstat.currentValue("climateList").toString().minus('[').minus(']').minus('Away').minus('Home').minus('Sleep').tokenize(',').unique()         
-		        myCustomClimateList.each { myEcobeeList += [ it.toLowerCase() ].unique() }                   
-            }                 
-        }            
-	} else {     	
-	    myEcobeeGroup.each { myTstat ->
-    	    (1..10).each {
-        	    if (myTstat.currentValue("smart${it}")) myEcobeeList += [ myTstat.currentValue("smart${it}").toLowerCase() ].unique()
-        	}
-		}            
-    }
-    return myEcobeeList
-}
-private getEcobeeCustomRegEx(myEcobeeGroup){
-    def myCustomClimate = ""
-    getEcobeeCustomList(myEcobeeGroup).each { myCustomClimate += "|${it}" }
-    myCustomClimate = myCustomClimate[1..myCustomClimate.length() - 1]
-    return myCustomClimate
-}
 private setColoredLights(switches, color, level, type){
 	def getColorData = parent.fillColorSettings().find {it.name==color}
     def hueColor = getColorData.hue, satLevel = getColorData.sat
@@ -3202,10 +3166,7 @@ def setupData(){
     PARAMS<<"heat"<<"cool"<<"heating"<<"cooling"<<"auto"<<"automatic"<<"AC"
     if (tstatsSel() && stelproCMD) PARAMS<< "eco"<<"comfort"
     if (tstatsSel() && (nestCMD || ecobeeCMD)) PARAMS<<"home"<<"away"
-    if (tstats && ecobeeCMD){
-        PARAMS<<"sleep"<<"resume program"
-        getEcobeeCustomList(tstats).each { PARAMS<<"${it}" }
-    }
+    if (tstatsSel() && ecobeeCMD) PARAMS<<"sleep"<<"resume program"
     if (tstatsSel() && ecobeeCMD && MyEcobeeCMD) PARAMS<<"tips"<<"tip"
     if (sonosCMD && speakersSel() && sonosMemoryCount){
     	def memCount = sonosMemoryCount as int
@@ -3216,9 +3177,9 @@ def setupData(){
     if (cLightsSel() || childApps.size()) { fillColorSettings().each {PARAMS<<it.name.toLowerCase()}}
     duplicates = PARAMS.findAll{PARAMS.count(it)>1}.unique()
     if (duplicates.size()){ 
-		result += "<b>**NOTICE:</b>The following duplicate(s) are only listed once below in LIST_OF_PARAMS:<br><br>"
-		duplicates.each{result +="* " + it +" *<br><br>"}
-		result += "Be sure to have unique names for your SONOS memory slots and custom colors.**<br><br>"
+            result += "<b>**NOTICE:</b>The following duplicate(s) are only listed once below in LIST_OF_PARAMS:<br><br>"
+            duplicates.each{result +="* " + it +" *<br><br>"}
+            result += "Be sure to have unique names for your SONOS memory slots and custom colors.**<br><br>"
 	}
 	PARAMS.unique().each {result += it + "<br>" } 
     result +="<br><b>LIST_OF_SHPARAM</b><br><br>"  
@@ -3271,7 +3232,7 @@ def getURLs(){
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private textAppName() { return "Ask Alexa" }	
 private textVersion() {
-    def version = "SmartApp Version: 2.1.4 (09/22/2016)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
+    def version = "SmartApp Version: 2.1.4 (09/21/2016)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
     return "${version}${lambdaVersion}"
 }
 private versionInt(){ return 214 }
