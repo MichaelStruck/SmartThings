@@ -1,7 +1,8 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.1.5 - 9/29/16 Copyright © 2016 Michael Struck
+ *  Version 2.1.5a - 9/30/16 Contribution by Y.Racine for My Ecobee's custom climates
+ *  9/29/16 Copyright © 2016 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; Barry Burke for Weather Underground Integration; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.1.5 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
@@ -646,7 +647,12 @@ def pageSTDevices(){
             	def tstatOptions=["heat":"Set heating temperature","cool":"Set cooling temperature"]
                 if (parent.nestCMD) tstatOptions += ["away":"Nest 'Away' Presence","home":"Nest 'Home' Presence"]
                 if (parent.ecobeeCMD) tstatOptions += ["away":"Ecobee 'Away' Climate","home":"Ecobee 'Home' Climate","sleep":"Ecobee 'Sleep' Climate","resume program":"Ecobee 'Resume Program'"]
-                input "tstatsCMD", "enum", title: "Command To Send To Thermostats", options :tstatOptions , multiple: false, required: false, submitOnChange:true
+                if (parent.MyEcobeeCMD) {
+                    getEcobeeCustomList(tstats).each {
+                        tstatOptions += ["${it}":"Ecobee '${it}' Climate"]
+                    }
+                }
+                 input "tstatsCMD", "enum", title: "Command To Send To Thermostats", options :tstatOptions , multiple: false, required: false, submitOnChange:true
             }
             if (tstatsCMD =="heat" || tstatsCMD =="cool") input "tstatLVL", "number", title: "Temperature Level", description: "Set temperature level", required: false
         }
@@ -1314,12 +1320,17 @@ def getReply(devices, type, STdeviceName, op, num, param){
                     	result += " This thermostat's presence sensor is reading "
                         result += STdevice.currentValue("presence")=="present" ? "'Home'. " : "'Away'. "
                     }
-                    if (ecobeeCMD && STdevice.currentValue('currentProgramId') =~ /home|away|sleep/ ) result += " This thermostat's comfort setting is set to ${STdevice.currentValue('currentProgramId')}. "
-                    if (ecobeeCMD && STdevice.currentValue('climateName') =~ /home|away|sleep/ ) result += " This thermostat's comfort setting is set to ${STdevice.currentValue('climateName')}. "
+                    if ((ecobeeCMD && !MyEcobeeCMD) && STdevice.currentValue('currentProgramId') =~ /home|away|sleep/ ) result += " This thermostat's comfort setting is set to ${STdevice.currentValue('currentProgramId')}. "
+                    if (MyEcobeeCMD && STdevice.currentValue('setClimate')) {
+                       def climatename = STdevice.currentValue('setClimate')
+                       def climateList = STdevice.currentValue('climateList')
+                       if (climateList.contains(climatename)) 
+                          result += " This thermostat's comfort setting is set to ${climatename}. "
+                    }                    
                     result += heat ? " The heating setpoint is set to ${heat} degrees. " : ""
                     result += heat && cool ? "And finally, " : ""
                     result += cool ? " The cooling setpoint is set to ${cool} degrees. " : ""
-            	}
+             	}
                 else result += ". "
             }
             else if (type == "contact") result = "The ${STdeviceName} is currently ${STdevice.currentValue(type)}. "
@@ -1385,7 +1396,8 @@ def getReply(devices, type, STdeviceName, op, num, param){
                     }
                     if (op =="maximum" && tstatHighLimit) num = tstatHighLimit
                     if (op =="minimum" && tstatLowLimit) num = tstatLowLimit
-                    if ((param==~/heat|heating|cool|cooling|auto|automatic|eco|AC|comfort|home|away|sleep|resume program/) && num == 0 && op=="undefined") op="on"
+                    def ecobeeCustomRegEx = MyEcobeeCMD ? getEcobeeCustomRegEx(STdevice) : null
+                    if ((param =~/heat|heating|cool|cooling|auto|automatic|eco|AC|comfort|home|away|sleep|resume program/ || (ecobeeCustomRegEx && param =~ /${ecobeeCustomRegEx}/)) && num == 0 && op=="undefined") op="on"
                     if (op ==~/on|off/) {
                         if (param == "undefined" && op == "on") result="You must designate 'heating mode' or 'cooling mode' when turning the ${STdeviceName} on. "
                         if (param =~/heat/) {result="I am setting the ${STdeviceName} to 'heating' mode. "; STdevice.heat()}
@@ -1393,13 +1405,14 @@ def getReply(devices, type, STdeviceName, op, num, param){
                         if (param =~/auto/) {result="I am setting the ${STdeviceName} to 'auto' mode. Please note, to properly set the temperature in 'auto' mode, you must specify the heating or cooling setpoints separately. " ; STdevice.auto()}
                         if (param =="home" && nestCMD) {result = "I am setting the ${STdeviceName} to 'home'. "; STdevice.present()} 
                         if (param =="away" && nestCMD) {result = "I am setting the ${STdeviceName} to 'away'. Please note that Nest thermostats will not respond to temperature changes while in 'away' status. "; STdevice.away()} 
-                        if (param ==~/home|away|sleep/ && ecobeeCMD) {
+                        if (param ==~/home|away|sleep/ || (ecobeeCustomRegEx && param =~ /${ecobeeCustomRegEx}/) && ecobeeCMD) {
                             result = "I am setting the ${STdeviceName} to '" + param + "'. "
                             if (STdevice.hasCommand("setThermostatProgram")) STdevice.setThermostatProgram("${param.capitalize()}")
-                            else if (STdevice.hasCommand("setClimate")) STdevice.setClimate("","${param.capitalize()}")
+                            else if (STdevice.hasCommand("setClimate")) STdevice.setThisTstatClimate("${param.capitalize()}")
                             else result ="There was an error setting your climate. %1%"
                         }
-                        if (param =="resume program" && ecobeeCMD) {result = "I am resuming the climate program of the ${STdeviceName}. "; STdevice.resumeProgram()} 
+                        if (param =="resume program" && ecobeeCMD && !MyEcobeeCMD) {result = "I am resuming the climate program of the ${STdeviceName}. "; STdevice.resumeProgram()} 
+                        if (param =="resume program" && MyEcobeeCMD) {result = "I am resuming the climate program of the ${STdeviceName}. "; STdevice.resumeThisTstat()} 
                         if (op =="off") { result = "I am turning the ${STdeviceName} ${op}. "; STdevice.off() }
                         if (stelproCMD && param==~/eco|comfort/) { result="I am setting the ${STdeviceName} to '${param}' mode. "; STdevice.setThermostatMode("${param}") } 
                     }
@@ -1680,9 +1693,11 @@ def groupResults(num, op, colorData, param, mNum){
                 if (parent.getTstatLimits().hi) num = num <= parent.getTstatLimits().hi ? num : parent.getTstatLimits().hi
                 if (parent.getTstatLimits().lo) num = num >= parent.getTstatLimits().lo ? num : parent.getTstatLimits().lo
             }
+            def ecobeeCustomRegEx = MyEcobeeCMD ? getEcobeeCustomRegEx(settings."groupDevice${groupType}") : null
+            
             if (op =="maximum" && parent.getTstatLimits().hi) num = parent.getTstatLimits().hi
             if (op =="minimum" && parent.getTstatLimits().lo) num = parent.getTstatLimits().lo
-            if ((param==~/heat|heating|cool|cooling|auto|automatic|eco|AC|comfort|home|away|sleep|resume program/) && num == 0 && op=="undefined") op="on"
+            if ((param==~/heat|heating|cool|cooling|auto|automatic|eco|AC|comfort|home|away|sleep|resume program/ || (ecobeeCustomRegEx && param =~ /${ecobeeCustomRegEx}/)) && num == 0 && op=="undefined") op="on"
             if (op ==~/on|off/) {
                 if (param == "undefined" && op == "on") result="You must designate 'heating mode' or 'cooling mode' when turning on a thermostat group. %1%"
                 if (param =~/heat/) {result="I am setting the ${noun} to 'heating' mode. "; settings."groupDevice${groupType}"?.heat()}
@@ -1695,7 +1710,7 @@ def groupResults(num, op, colorData, param, mNum){
                     result="I am setting the ${noun} to 'away' mode. Please note that Nest thermostats will not accept temperature changes while in 'away' status. "
                     settings."groupDevice${groupType}"?.away()
                 }
-                if (param ==~/home|away|sleep/ && parent.ecobeeCMD) {
+                if (param ==~/home|away|sleep/ || (ecobeeCustomRegEx && param =~ /${ecobeeCustomRegEx}/) && parent.ecobeeCMD) {
                     result = "I am setting the ${noun} to '" + param + "'. "
                     settings."groupDevice${groupType}".each {myDevice ->
                         myDevice.supportedCommands.each {comm ->
@@ -1704,9 +1719,13 @@ def groupResults(num, op, colorData, param, mNum){
                         }
                     }
                 }
-                if ((param=="resume program") && parent.ecobeeCMD) { 
+                if ((param=="resume program") && parent.ecobeeCMD && !parent.MyEcobeeCMD) { 
                     result="I am resuming the climate program of the ${noun}."
                     settings."groupDevice${groupType}"?.resumeProgram()
+                }
+                if ((param=="resume program") && parent.MyecobeeCMD) { 
+                    result="I am resuming the climate program of the ${noun}."
+                    settings."groupDevice${groupType}"?.resumeThisTstat()
                 }
             }
             else if (op ==~/increase|raise|up|decrease|down|lower/) result = "Increase and decrease commands are not yet compatible with thermostat group macros. %1%" //need to add this soon
@@ -1817,7 +1836,10 @@ def controlHandler(){
         	def tLevel = tstatLVL < 0 ?  0 : tstatLVL > 100 ? 100 : tstatLVL as int
     		cmd.tstat == "heat" ? tstats?.setHeatingSetpoint(tLevel) : tstats?.setCoolingSetpoint(tLevel)
         }
-        if (cmd.tstat == "home" || cmd.tstat == "away" || cmd.tstat == "sleep" || cmd.tstat == "resume program") tstats?."${cmd.tstat}"()
+//        if (cmd.tstat == "home" || cmd.tstat == "away" || cmd.tstat == "sleep" || cmd.tstat == "resume program") tstats?."${cmd.tstat}"()
+        def ecobeeCustomRegEx = MyEcobeeCMD ? getEcobeeCustomRegEx(tstats) : null
+        if (cmd.tstat =~ /home|away|sleep|resume program/ || (ecobeeCustomRegEx && cmd.tstat =~ /${ecobeeCustomRegEx}/)) tstats?."${cmd.tstat}"()
+        
 	}
     if (garages && cmd.garage) garages?."${cmd.garage}"()
     if (shades && cmd.shade) shades?."${cmd.shade}"()
@@ -2809,6 +2831,30 @@ def sendMSG(num, msg, push, recipients){
     }
 }
 def toggleState(swDevices){ swDevices.each{ it.currentValue("switch")=="off" ? it.on() : it.off() } }
+private getEcobeeCustomList(myEcobeeGroup){
+    def myEcobeeList = []
+
+	
+    if (MyEcobeeCMD) {
+        myEcobeeGroup.each {myTstat ->
+			if (myTstat.currentValue("climateList")) {            
+                def myCustomClimateList = myTstat.currentValue("climateList").toString().minus('[').minus(']').minus('Away').minus('Home').minus('Sleep').tokenize(',').unique()         
+		        myCustomClimateList.each {
+                   myEcobeeList += [ it.toLowerCase() ].unique()
+                }                   
+            }                 
+        }            
+	} 
+    return myEcobeeList
+}
+private getEcobeeCustomRegEx(myEcobeeGroup){
+    def myCustomClimate = ""
+    getEcobeeCustomList(myEcobeeGroup).each {
+        myCustomClimate += "|${it}"
+    }
+    myCustomClimate = myCustomClimate[1..myCustomClimate.length() - 1]
+    return myCustomClimate
+}
 private setColoredLights(switches, color, level, type){
 	def getColorData = parent.fillColorSettings().find {it.name==color}
     def hueColor = getColorData.hue, satLevel = getColorData.sat
@@ -3088,6 +3134,10 @@ def setupData(){
     if (tstatsSel() && stelproCMD) PARAMS<< "eco"<<"comfort"
     if (tstatsSel() && (nestCMD || ecobeeCMD)) PARAMS<<"home"<<"away"
     if (tstatsSel() && ecobeeCMD) PARAMS<<"sleep"<<"resume program"
+    if (tstats && MyEcobeeCMD){
+        getEcobeeCustomList(tstats).each { PARAMS<<"${it}" }
+    }
+        
     if (tstatsSel() && ecobeeCMD && MyEcobeeCMD) PARAMS<<"tips"<<"tip"
     if (sonosCMD && speakersSel() && sonosMemoryCount){
     	def memCount = sonosMemoryCount as int
@@ -3100,7 +3150,10 @@ def setupData(){
     if (duplicates.size()){ 
             result += "<b>**NOTICE:</b>The following duplicate(s) are only listed once below in LIST_OF_PARAMS:<br><br>"
             duplicates.each{result +="* " + it +" *<br><br>"}
-            result += "Be sure to have unique names for your SONOS memory slots and custom colors.**<br><br>"
+            if (sonosCMD && ecobeeCMD) { 
+                result += "Be sure to have unique names for your Ecobee Custom Climates, SONOS memory slots and custom colors.**<br><br>" 
+                
+			}
 	}
 	PARAMS.unique().each {result += it + "<br>" } 
     result +="<br><b>LIST_OF_SHPARAM</b><br><br>"  
