@@ -1,13 +1,14 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.1.6 - 10/2/16 Copyright © 2016 Michael Struck
+ *  Version 2.1.7 - 10/6/16 Copyright © 2016 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; Barry Burke for Weather Underground Integration; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.1.5 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *  Version 2.1.5 (09/29/16) Code optimization/bug fixes, list command for certain macros (Device and Macro Groups), REST API display for Macro Groups
- *  Version 2.1.6 (10/2/16) Additional Ecobee climate modes, bug fixes, added heating/cooling default feature on individual device thermostats
+ *  Version 2.1.6a (10/4/16) Additional Ecobee climate modes, bug fixes, added heating/cooling default feature on individual device thermostats
+ *  Version 2.1.7 (10/6/16) Allow for flash briefing reports
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -326,7 +327,7 @@ def pageMacros() {
         	section { paragraph "You have two or more macros with the same name. Please ensure each macro has a unique name and also does not conflict with device names as well. ", image: imgURL() + "caution.png" }
         }
         section(" "){
-        	app(name: "childMacros", appName: "Ask Alexa", namespace: "MichaelStruck", title: "Create A New Macro...", description: "Tap to create a new voice macro", multiple: true, image: imgURL() + "add.png") 
+        	app(name: "childMacros", appName: "Ask Alexa", namespace: "MichaelStruck", title: "Create A New Macro...", description: "Tap to create a new voice macro", multiple: true, image: imgURL() + "add.png")
         }
 	}
 }
@@ -348,8 +349,10 @@ def pageSettings(){
     dynamicPage(name: "pageSettings", uninstall: false){
         section { paragraph "Settings", image: imgURL() + "settings.png" }
         section ("Additional voice settings"){ 
-        	input "briefReply", "bool", title: "Give 'Brief' Device Action Reply", defaultValue: false, submitOnChange: true
+        	input "briefReply", "bool", title: "Give 'Brief' Device Action Reply", defaultValue: false
             if (briefReply) input "briefReplyTxt", "enum", title: "Brief Reply", options: ["No reply spoken", "Ok", "Done"], required:false, multiple:false, defaultValue: "Ok"
+            input "flash", "bool", title: "Enable Flash Briefing", defaultValue: false, submitOnChange: true            
+            if (flash) input "flashMacro", "enum", title: "Macro Group Output For Flash Briefing", options: getMacroList("flash"), required: false, multiple: false
             input "otherStatus", "bool", title: "Speak Additional Device Status Attributes", defaultValue: false
             input "batteryWarn", "bool", title: "Speak Battery Level When Below Threshold", defaultValue: false, submitOnChange: true
             if (batteryWarn) input "batteryThres", "enum", title: "Battery Status Threshold", required: false, defaultValue: 20, options: [5:"<5%",10:"<10%",20:"<20%",30:"<30%",40:"<40%",50:"<50%",60:"<60%",70:"<70%",80:"<80%",90:"<90%",101:"Always play battery level"]
@@ -580,7 +583,7 @@ def pageGroupM() {
 	dynamicPage(name: "pageGroupM", install: false, uninstall: false) {
 		section { paragraph "Macro Group Settings", image: imgURL() + "macrofolder.png" }
         section (" ") { 
-        	input "groupMacros", "enum", title: "Child Macros To Run (Control/CoRE/Voice Reports)...", options: parent.getMacroList(app.label), required: false, multiple: true
+        	input "groupMacros", "enum", title: "Child Macros To Run (Control/CoRE/Voice Reports)...", options: parent.getMacroList("all"), required: false, multiple: true
         	if (parent.pwNeeded){ input "usePW", "bool", title: "Require PIN To Run This Macro", defaultValue: false }
         }
         section("Acknowledgment options"){ 
@@ -900,6 +903,7 @@ mappings {
 	path("/b") { action: [GET: "processBegin"] }
 	path("/u") { action: [GET: "getURLs"] }
 	path("/setup") { action: [GET: "setupData"] }
+    path("/flash") { action: [GET: "flash"] }
 }
 //--------------------------------------------------------------
 def processBegin(){
@@ -2099,9 +2103,9 @@ def doorWindowReport(){
     }
     def totalCount = countOpenedDoor + countOpened
     if (voiceDoorAll){
-    	if (!totalCount) {
+        if (!totalCount && !countUnlocked) {
         	result += "All of the doors and windows are closed"
-        	result += voiceDoorLocks && !countUnlocked ? " and locked. " : ". "
+        	result += voiceDoorLocks ? " and locked. " : ". "
         }
         if (!countOpened && !countOpenedDoor && countUnlocked){
    			result += "All of the doors and windows are closed, but the "
@@ -2940,9 +2944,10 @@ def memoryDesc(){
     }
     return result ? result : "No memory slots configured - Tap to configure"
 }
-def getMacroList(callingGrp){
-    def result = []
-    childApps.each{ if (it.macroType !="GroupM" && it.macroType!="Group") result << ["${it.label}": "${it.label} (${it.macroType})"] }
+def getMacroList(type){
+    def result=[]
+    if (type =="all") childApps.each{ if (it.macroType !="GroupM" && it.macroType!="Group") result << ["${it.label}": "${it.label} (${it.macroType})"] }
+    if (type == "flash") childApps.each{ if (it.macroType =="GroupM" || it.macroType=="Voice") result << ["${it.label}":"${it.label} (${it.macroType=="GroupM"?"Macro Group":"Voice"})"] }
     return result
 }
 def coreHandler(evt) {
@@ -3100,10 +3105,31 @@ def getLastEvent(device, count, deviceName) {
     if (evtCount==0) result="There were no past events in the device log. "
     return result
 }
+def flash(){
+    String outputTxt = ""
+	try {
+        if (flash && flashMacro){
+            def child = getChildApps().find {it.label == flashMacro}
+            if (child.macroType != "GroupM") outputTxt = child.getOkToRun() ? child.macroResults("", "", "", "", "") : "You have restrictions within the ${fullMacroName} named, '${child.label}', that prevent it from running. Check your settings and try again. %1%"
+            else outputTxt = processMacroGroup(child.groupMacros, child.voicePost, child.addPost, child.noAck, child.label, child.noteFeed, child.noteFeedData) 
+            if (outputTxt.endsWith("%")) outputTxt=outputTxt[0..-4]
+        }
+        else outputTxt = "You do not have the flash briefing option enabled in your Ask Alexa Smart App, or you don't have any macros selected for the briefing output. Go to Settings in your SmartApp to fix this. "
+    } catch (e) { outputTxt ="There was an error producing the flash briefing report. Check your settings and try again." }
+    log.debug "Sending Flash Briefing Output: "+outputTxt
+    return ["uid": "1",
+		"updateDate": new Date().format("yyyy-MM-dd'T'HH:mm:ss'.0Z'"),
+		"titleText": "${flashMacro} macro report",
+		"mainText": outputTxt,
+		"redirectionUrl": "https://graph.api.smartthings.com/",
+		"description": "Ask Alexa Flash Briefing Report"
+	]
+}
 def setupData(){
 	log.info "Set up web page located at : ${getApiServerUrl()}/api/smartapps/installations/${app.id}/setup?access_token=${state.accessToken}"
     def result ="<div style='padding:10px'><i><b><a href='http://aws.amazon.com' target='_blank'>Lambda</a> code variables:</b></i><br><br>var STappID = '${app.id}';<br>var STtoken = '${state.accessToken}';<br>"
     result += "var url='${getApiServerUrl()}/api/smartapps/installations/' + STappID + '/' ;<br><br><hr>"
+    result += flash ? "<i><b><a href='http://developer.amazon.com' target='_blank'>Amazon ASK</a> Flash Briefing Skill URL:</b></i><br><br>${getApiServerUrl()}/api/smartapps/installations/${app.id}/flash?access_token=${state.accessToken}<br><br><hr>":""
 	result += "<i><b><a href='http://developer.amazon.com' target='_blank'>Amazon ASK</a> Custom Slot Information:</b></i><br><br><b>CANCEL_CMDS</b><br><br>cancel<br>stop<br>unschedule<br><br><b>DEVICE_TYPE_LIST</b><br><br>"
     fillTypeList().each{result += it + "<br>"}
     result += "<br><b>LIST_OF_DEVICES</b><br><br>"
@@ -3200,12 +3226,12 @@ def getURLs(){
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private textAppName() { return "Ask Alexa" }	
 private textVersion() {
-    def version = "SmartApp Version: 2.1.6 (10/02/2016)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
+    def version = "SmartApp Version: 2.1.7 (10/06/2016)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
     return "${version}${lambdaVersion}"
 }
-private versionInt(){ return 216 }
+private versionInt(){ return 217 }
 private LambdaReq() { return 122 }
-private versionLong(){ return "2.1.6" }
+private versionLong(){ return "2.1.7" }
 private textCopyright() {return "Copyright © 2016 Michael Struck" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
