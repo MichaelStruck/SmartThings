@@ -1,14 +1,14 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.1.7 - 10/6/16 Copyright © 2016 Michael Struck
+ *  Version 2.1.7 - 10/7/16 Copyright © 2016 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; Barry Burke for Weather Underground Integration; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.1.5 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *  Version 2.1.5 (09/29/16) Code optimization/bug fixes, list command for certain macros (Device and Macro Groups), REST API display for Macro Groups
  *  Version 2.1.6a (10/4/16) Additional Ecobee climate modes, bug fixes, added heating/cooling default feature on individual device thermostats
- *  Version 2.1.7 (10/6/16) Allow for flash briefing reports
+ *  Version 2.1.7 (10/7/16) Allow for flash briefing reports
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -67,6 +67,7 @@ preferences {
         page name:"pageGroupM"
     	page name:"pageControl"
     		page name:"pageSTDevices"
+            page name:"pageOutputAudio"
             page name:"pageHTTP"
     	page name:"pageVoice"
     		page name:"pageTempReport"
@@ -611,6 +612,7 @@ def pageControl() {
             input "setMode", "mode", title: "Set Mode To...", required: false, image: imgURL() + "modes.png"  
             input "SHM", "enum",title: "Set Smart Home Monitor To...", options: ["away":"Arm (Away)", "stay":"Arm (Stay)", "off":"Disarm"], required: false, image: imgURL() + "SHM.png"
             href "pageSTDevices", title: "Control These SmartThings Devices...", description: getDeviceDesc(), state: deviceGreyOut(), image: imgURL() + "smartthings.png"
+            href "pageOutputAudio", title: "Output Audio...", description: getAudioDesc(), state: (ttsMsg && (ttsSpeaker || ttsSynth) ? "complete": none), image: imgURL() + "speaker.png"
             href "pageHTTP", title: "Run This HTTP Request...", description: getHTTPDesc(), state: greyOutStateHTTP(), image: imgURL() + "network.png"
             input "cDelay", "number", title: "Default Delay (Minutes) To Activate", defaultValue: 0, required: false, image: imgURL() + "stopwatch.png"
             input ("contacts", "contact", title: "Send Notifications To...", required: false, image: imgURL() + "sms.png") {
@@ -624,6 +626,17 @@ def pageControl() {
              if (!noAck) input "voicePost", "text", title: "Acknowledgment Message", description: "Enter a short statement to play after macro runs", required: false, capitalization: "sentences"
              input "noAck", "bool", title: "No Acknowledgment Message", defaultValue: false, submitOnChange: true    
         }
+	}
+}
+def pageOutputAudio(){
+	dynamicPage (name: "pageOutputAudio", install: false, uninstall: false) {
+        section { paragraph "Output Audio", image: imgURL() + "speaker.png"}
+        section ("TTS Output"){
+        	input "ttsMsg", "text", title: "Speak Message", required: false, capitalization: "sentences"
+            input "ttsSpeaker", "capability.musicPlayer", title: "Choose Speakers", multiple: true, required: false, submitOnChange: on
+            if (ttsSpeaker) input "ttsVolume", "number", title: "Speaker Volume", description: "0-100%", required: false
+            input "ttsSynth", "capability.speechSynthesis", title: "Choose Voice Synthesis Devices", multiple: true, required: false
+		}
 	}
 }
 def pageSTDevices(){
@@ -1859,6 +1872,12 @@ def controlHandler(){
     }
     if (SHM) sendLocationEvent(name: "alarmSystemStatus", value: SHM)
    	if ((pushMsg || smsNum || contacts) && smsMsg) sendMSG(smsNum, smsMsg, pushMsg, contacts)
+    if (ttsMsg && ttsSpeaker){ 
+    	if (ttsVolume) {ttsSpeaker.setLevel(ttsVolume)}
+        def ttsOutput = textToSpeech(ttsMsg, true)
+        ttsSpeaker.playTrack (ttsOutput.uri)
+        }
+    if (ttsMsg && ttsSynth) ttsSynth.speak(audioText)
     def data = [args: "I am activating the Control Macro: '${app.label}'."]
     sendLocationEvent(name: "askAlexaMacro", value: app.label, data: data, displayed: true, isStateChange: true, descriptionText: "Ask Alexa activated '${app.label}' macro.")	
 	if (noteFeedAct && noteFeed) sendNotificationEvent("Ask Alexa activated Control Macro: '${app.label}'.")
@@ -2241,8 +2260,7 @@ def macroTypeDesc(){
 	def desc = "", PIN = (macroType ==~/CoRE|Control|GroupM/ || (macroType == "Group" && groupType == "lock") || (macroType == "Group" && groupType == "doorControl") || desc) && usePW ? " - PIN Required" : ""
     def customAck = !noAck && !voicePost ? "; uses standard acknowledgment message" : !noAck  && voicePost ? "; includes a custom acknowledgment message" :  "; there will be no acknowledgment messages"
     if (macroType ==~ /Control|CoRE/) customAck += cDelay>1 ? "; activates ${cDelay} minutes after triggered" : cDelay==1 ? "; activates one minute after triggered" : ""
-    if (macroType == "Control" && (phrase || setMode || SHM || getDeviceDesc() != "Status: UNCONFIGURED${PIN} - Tap to configure" || 
-    	getHTTPDesc() !="Status: UNCONFIGURED - Tap to configure" || (contacts && smsMsg) || (smsNum && pushMsg && smsMsg))) desc= "Control Macro CONFIGURED${customAck}${PIN} - Tap to edit" 
+    if (macroType == "Control" && (phrase || setMode || SHM || getDeviceDesc() != "Status: UNCONFIGURED${PIN} - Tap to configure" || getHTTPDesc() !="Status: UNCONFIGURED - Tap to configure" || (ttsMsg && (ttsSpeaker || ttsSynth))|| (contacts && smsMsg) || (smsNum && pushMsg && smsMsg))) desc= "Control Macro CONFIGURED${customAck}${PIN} - Tap to edit" 
     if (macroType =="Voice" && (voicePre || voiceSwitch || voiceDimmer || voiceDoorSensors || voiceDoorControls || voiceDoorLocks || voiceTemperature ||  
     	voiceTempSettings || voiceTempVar || voiceHumidVar || voiceHumidity || greyOutWeather()=="complete" || voiceWater || voiceMotion || voicePresence || 
         voiceBattery || voicePost || voiceMode || voiceSHM || voicePower || voiceAccel)) desc= "Voice Report CONFIGURED - Tap to edit" 
@@ -2389,6 +2407,15 @@ def weatherDesc(){
 }
 def greyOutWeather(){ return foreWeatherSel() || voiceSunrise || voiceSunset || voiceMoon || voiceTide || currWeatherSel() ? "complete" : "" }
 def deviceGreyOut(){ return getDeviceDesc() == "Status: UNCONFIGURED - Tap to configure" ? "" : "complete" }
+def getAudioDesc(){
+    def result = "Status: UNCONFIGURED - Tap to configure"
+    if (ttsMsg && ttsSpeaker) result = "TTS audio sent to speakers: ${ttsSpeaker}"
+    if (ttsMsg && ttsSpeaker && ttsVolume) result+=", speaker volume: ${ttsVolume}"
+    if (ttsMsg && ttsSynth) result = "TTS audio sent to speech devices: ${ttsSynth}"
+    if (ttsMsg && ttsSynth && ttsSpeakers) result = "Text audio sent to speech and speaker devices"
+    if (ttsMsg && ttsSynth && ttsSpeakers && ttsVolume) result+=", speaker volume: ${ttsVolume}"
+    return result
+}
 def getDeviceDesc(){  
     def result, cmd = [switch: switchesCMD, dimmer: dimmersCMD, cLight: cLightsCMD, tstat: tstatsCMD, lock: locksCMD, garage: garagesCMD, shade: shadesCMD]
 	def lvl = cmd.dimmer == "set" && dimmersLVL ? dimmersLVL as int : 0
@@ -3226,7 +3253,7 @@ def getURLs(){
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private textAppName() { return "Ask Alexa" }	
 private textVersion() {
-    def version = "SmartApp Version: 2.1.7 (10/06/2016)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
+    def version = "SmartApp Version: 2.1.7 (10/07/2016)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
     return "${version}${lambdaVersion}"
 }
 private versionInt(){ return 217 }
