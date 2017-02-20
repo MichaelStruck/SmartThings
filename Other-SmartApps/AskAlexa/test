@@ -8,7 +8,7 @@
  *
  *	Version 2.2.1 (2/18/17) Bug fixes, added additional security for doors/locks (thanks @Cherokee180c for the suggestion), implement ST color names, started building structure for better follow ups,
  *  created a new option for 'consolidation' of certain conditions within the voice reports (as suggested by @jseaton). Added framework for more IFTTT conversational commands (coming soon).
- *  Version 2.2.2 (2/19/17) Added loop options for colored lights using the latest community DTH from OSRAM (thanks @bbmcgee). Added options in control macros for colored lights that can only be controlled by temperature (Kelvin)
+ *  Version 2.2.2 (2/19/17) Added loop options for colored lights using the latest community DTH for OSRAM lights(thanks @bbmcgee). Added options in control macros for colored lights that can only be controlled by temperature (Kelvin)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -669,7 +669,7 @@ def pageSTDevices(){
             input "dimmers", "capability.switchLevel", title: "Control These Dimmers...", multiple: true, required: false , submitOnChange:true
             if (dimmers) input "dimmersCMD", "enum", title: "Command To Send To Dimmers", options:["on":"Turn on","off":"Turn off","set":"Set level", "toggle":"Toggle the dimmers' on/off state","decrease": "Decrease current brightness","increase": "Increase current brightness" ], multiple: false, required: false, submitOnChange:true
             if (dimmersCMD == "set" && dimmers) input "dimmersLVL", "number", title: "Dimmers Level", description: "Set dimmer level", required: false, defaultValue: 0
-            if (dimmersCMD ==~ /decrease|increase/ && dimmers) input "dimmersUpDown", number, title: "Amount of change", description: "Set the amount your want to ${dimmersCMD}", required: false, defaultValue: 0
+            if (dimmersCMD ==~ /decrease|increase/ && dimmers) input "dimmersUpDown", number, title: "Amount of change", description: "Set the amount your want to ${dimmersCMD}", required: false, defaultValue: 20
         }
         section ("Colored lights (Hue/Saturation)", hideWhenEmpty: true){
             input "cLights", "capability.colorControl", title: "Control These Colored Lights...", multiple: true, required: false, submitOnChange:true
@@ -680,18 +680,18 @@ def pageSTDevices(){
                     input "hueUserDefined", "number", title: "Colored Lights Hue", description: "Set colored light hue (0 to 100)", required: false, defaultValue: 0
                     input "satUserDefined", "number", title: "Colored Lights Saturation", description: "Set colored lights saturation (0 to 100)", required: false, defaultValue: 0
                 }
-                input "cLightsLVL", "number", title: "Colored Light Level", description: "Set level, otherwise default color lightness will be used", required: false,defaultValue: 0
+                input "cLightsLVL", "number", title: "Colored Light Brightness Level", description: "Set level, otherwise default color lightness will be used", required: false,defaultValue: 0
             }
-             if (cLightsCMD ==~ /decrease|increase/ && cLights) input "cLightsUpDown", number, title: "Amount of change", description: "Set the amount your want to ${cLightsCMD}", required: false, defaultValue: 0
+             if (cLightsCMD ==~ /decrease|increase/ && cLights) input "cLightsUpDown", number, title: "Amount of change", description: "Set the amount your want to ${cLightsCMD}", required: false, defaultValue: 20
         }
-        section ("Colored lights (Kelvin)", hideWhenEmpty: true){
-            input "cLightsK", "capability.colorTemperature", title: "Control These Colored Lights...", multiple: true, required: false, submitOnChange:true
-            if (cLightsK) input "cLightsKCMD", "enum", title: "Command To Send To Colored Lights", options: parent.cLightsKCTLOptions(), multiple: false, required: false, submitOnChange:true
+        section ("Temperature (Kelvin) lights", hideWhenEmpty: true){
+            input "cLightsK", "capability.colorTemperature", title: "Control These Lights...", multiple: true, required: false, submitOnChange:true
+            if (cLightsK) input "cLightsKCMD", "enum", title: "Command To Send To Lights", options: parent.cLightsKCTLOptions(), multiple: false, required: false, submitOnChange:true
             if (cLightsKCMD == "set" && cLightsK) {
             	input "cLightsKEL", "number", title: "Enter a Kelvin Temperature", description: "Between 2700 and 6500", required: false, defaultValue:2700
-            	input "cLightsKLVL", "number", title: "Colored Light Level", description: "Set level, otherwise current level will be used", required: false,defaultValue:0
+            	input "cLightsKLVL", "number", title: "Brightness Level", description: "Set level, otherwise current level will be used", required: false,defaultValue:0
             }
-            if (cLightsKCMD ==~ /decrease|increase/ && cLightsK) input "cLightsKUpDown", "number", title: "Amount of change", description: "Set the amount your want to ${cLightsKCMD}", required: false, defaultValue: 0
+            if (cLightsKCMD ==~ /decrease|increase/ && cLightsK) input "cLightsKUpDown", "number", title: "Amount of change", description: "Set the amount your want to ${cLightsKCMD}", required: false, defaultValue: 20
         }
         section ("Thermostats", hideWhenEmpty: true){
             input "tstats", "capability.thermostat", title: "Control These Thermostats...", multiple: true, required: false, submitOnChange:true
@@ -1963,8 +1963,8 @@ def controlHandler(){
             if (cLightsKEL || cLightsKLVL) {
             	def kelvin = !cLightsKEL|| cLightsKEL < 2700 ? 2700 : cLightsKEL >6500 ? 6500 : cLightsKEL as int
                 def level = !cLightsKLVL || cLightsKLVL < 0 ? 0 : cLightsKLVL >100 ? 100 : cLightsKLVL as int
-            	if (cLightsKEL)  cLightsK?.setColorTemperature(kelvin) 
-                if (cLightsKLVL>0) cLightsK?.setLevel(level)
+            	if (cLightsKEL) cLightsK?.setColorTemperature(kelvin) 
+                if (level>0) cLightsK?.setLevel(level)
             }
         }
         else if (cmd.cLightK ==~/increase|decrease/) cLightsK.each {upDownChild(it, cmd.cLightK, cLightsKUpDown as int, "level")}
