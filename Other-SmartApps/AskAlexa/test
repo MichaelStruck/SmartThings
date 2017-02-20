@@ -7,8 +7,8 @@
  *  Version information prior to 2.2.1 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *	Version 2.2.1 (2/18/17) Bug fixes, added additional security for doors/locks (thanks @Cherokee180c for the suggestion), implement ST color names, started building structure for better follow ups,
- *  created a new option for 'consolidation' of certain conditions within the voice reports (as suggested by @jseaton). Added framework for more IFTTT conversational commands (coming soon).
- *  Version 2.2.2 (2/19/17) Added loop options for colored lights using the latest community DTH for OSRAM lights(thanks @bbmcgee). Added options in control macros for colored lights that can only be controlled by temperature (Kelvin)
+ *	created a new option for 'consolidation' of certain conditions within the voice reports (as suggested by @jseaton). Added framework for more IFTTT conversational commands (coming soon).
+ *	Version 2.2.2 (2/19/17) Added loop options for colored lights using the latest community DTH for OSRAM lights(thanks @bbmcgee). Added options in control macros for colored lights that can only be controlled by temperature (Kelvin)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -688,8 +688,8 @@ def pageSTDevices(){
             input "cLightsK", "capability.colorTemperature", title: "Control These Lights...", multiple: true, required: false, submitOnChange:true
             if (cLightsK) input "cLightsKCMD", "enum", title: "Command To Send To Lights", options: parent.cLightsKCTLOptions(), multiple: false, required: false, submitOnChange:true
             if (cLightsKCMD == "set" && cLightsK) {
-            	input "cLightsKEL", "number", title: "Enter a Kelvin Temperature", description: "Between 2700 and 6500", required: false, defaultValue:2700
-            	input "cLightsKLVL", "number", title: "Brightness Level", description: "Set level, otherwise current level will be used", required: false,defaultValue:0
+            	input "cLightsKEL", "enum", title: "Choose a Kelvin Temperature", options: kelvinOptions(), required: false, multiple: false
+            	input "cLightsKLVL", "number", title: "Brightness Level", description: "Set level, otherwise current level will be used", required: false,defaultValue:100
             }
             if (cLightsKCMD ==~ /decrease|increase/ && cLightsK) input "cLightsKUpDown", "number", title: "Amount of change", description: "Set the amount your want to ${cLightsKCMD}", required: false, defaultValue: 20
         }
@@ -2308,6 +2308,7 @@ def cLightsCTLOptions(){
 def cLightsKCTLOptions(){
 	return ["on":"Turn on","off":"Turn off","set":"Set temperature and level", "toggle":"Toggle the lights' on/off state","decrease": "Decrease current brightness","increase": "Increase current brightness"]
 }
+def kelvinOptions(){ return [2700: "Soft White(2700K)", 3500: "Moonlight(3500K)", 4500: "Cool White(4500K)", 6500: "Daylight White(6500K)"] } 
 def imgURL() { return "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/" }
 def getList(items){
 	def result = "", itemCount=items.size() as int
@@ -2555,8 +2556,7 @@ def getDeviceDesc(){
 	def cLvl = cmd.cLight == "set" && cLightsLVL ? cLightsLVL as int : 0
     def kLvl = cmd.cLightK == "set" && cLightsKLVL ? cLightsKLVL as int : 0
 	def clr = cmd.cLight == "set" && cLightsCLR ? cLightsCLR  : ""
-    def kTemp = cmd.cLightK == "set" && cLightsKEL ? cLightsKEL as int: 0
-    kTemp = kTemp < 2700 ? 2700 : kTemp >6500 ? 6500 : kTemp
+    def kTemp = cmd.cLightK == "set" && cLightsKEL ? cLightsKEL: ""
     def tLvl = tstats ? tstatLVL : 0
     def dimUpDn = cmd.dimmer==~/increase|decrease/ && dimmersUpDown ? dimmersUpDown as int : 0
     def clUpDn = cmd.cLight ==~/increase|decrease/ && cLightsUpDown? cLightsUpDown as int : 0
@@ -2586,7 +2586,7 @@ def getDeviceDesc(){
         result += result && cLightsK && cmd.cLightK ? "\n" : ""
         result += cLightsK && cmd.cLightK && cmd.cLightK != "set" && cmd.cLightK !="increase" && cmd.cLightK !="decrease" ? "${cLightsK} set to ${cmd.cLightK}": ""
         result += cLightsK && cmd.cLightK && cmd.cLightK == "set" ? "${cLightsK} set to " : ""
-        result += cLightsK && cmd.cLightK && cmd.cLightK == "set" ? "${kTemp} degrees Kelvin and " : ""
+        result += cLightsK && cmd.cLightK && cmd.cLightK == "set" ? "${kTemp}K and " : ""
         result += cLightsK && cmd.cLightK && cmd.cLightK == "set" && kLvl >0 ? "${kLvl}%" : ""
         result += cLightsK && cmd.cLightK && cmd.cLightK == "set" && kTemp && (kLvl == 0 || !kLvl)? "Current Brightness" : ""
         result += cLightsK && cmd.cLightK && cmd.cLightK ==~/increase|decrease/ && klUpDn>0 ? "${cLightsK} ${cmd.cLightK} brightness by ${klUpDn}%" : ""	
@@ -3044,6 +3044,7 @@ private setColoredLights(switches, color, level, type){
 		satLevel = satLevel > 100 ? 100 : satLevel < 0 ? 0 : satLevel
 	}
     def newValue = [hue: hueColor as int, saturation: satLevel as int] 
+ 	if (parent.osramCMD) switches?.loopOff()
     switches?.setColor(newValue)
     switches?.setLevel(newLevel as int)
 }
