@@ -2,7 +2,7 @@
  *  Alexa Helper-Child
  *
  *  Copyright © 2017 Michael Struck
- *  Version 3.0.0 2/19/17
+ *  Version 3.0.0 2/20/17
  * 
  *  Version 2.9.9e - Minor GUI changes to accomodate new mobile app structure
  *  Version 3.0.0 - Added OSRAM loop funciton (thanks @bbmcgee)
@@ -840,7 +840,8 @@ private setColoredLights(switches, color, level, type){
 		satLevel = satLevel > 100 ? 100 : satLevel < 0 ? 0 : satLevel
 	}
     def newValue = [hue: hueColor as int, saturation: satLevel as int, level: level as int]
-	switches?.setColor(newValue)
+	if (parent.cLightOSRAM) switches?.loopOff()
+    switches?.setColor(newValue)
 }
 def songOptions(slot) {
     if (speaker) {
@@ -1032,5 +1033,5 @@ private parseDate(time, type){
     new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", formattedDate).format("${type}", timeZone(formattedDate))
 }
 //Version
-private def textVersion() {return "Child App Version: 3.0.0 (02/19/2017)"}
+private def textVersion() {return "Child App Version: 3.0.0 (02/20/2017)"}
 private def versionInt() {return 300}
