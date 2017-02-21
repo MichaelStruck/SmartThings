@@ -1,14 +1,14 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.2.2 - 2/19/17 Copyright © 2017 Michael Struck
+ *  Version 2.2.2 - 2/20/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; Barry Burke for Weather Underground Integration; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.2.1 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *	Version 2.2.1 (2/18/17) Bug fixes, added additional security for doors/locks (thanks @Cherokee180c for the suggestion), implement ST color names, started building structure for better follow ups,
  *	created a new option for 'consolidation' of certain conditions within the voice reports (as suggested by @jseaton). Added framework for more IFTTT conversational commands (coming soon).
- *	Version 2.2.2 (2/19/17) Added loop options for colored lights using the latest community DTH for OSRAM lights(thanks @bbmcgee). Added options in control macros for colored lights that can only be controlled by temperature (Kelvin)
+ *	Version 2.2.2 (2/20/17) Added loop options for colored lights using the latest community DTH for OSRAM lights(thanks @bbmcgee). Added options for lights that can only be controlled by Kelvin temperature
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -58,9 +58,10 @@ preferences {
                 page name:"pageContCommands"
                 page name:"pageMsgQueue"
             page name:"pageDefaultValue"
+            page name:"pageCustomColor"
             page name:"pageCustomDevices"
             page name:"pageLimitValue"
-            page name:"pageGlobalVariables"   
+            page name:"pageGlobalVariables" 
         page name:"pageAbout"
 	//Child Pages
     page name:"mainPageChild"
@@ -98,7 +99,7 @@ def mainPageParent() {
             }
         }
         section("Items to interface to Alexa") {
-            href "pageSwitches", title: "Switches/Dimmers/Colored Lights", description:getDesc(switchesSel() || dimmersSel() || cLightsSel()), state: switchesSel() || dimmersSel() || cLightsSel() ? "complete" : null, image:imgURL() + "power.png"
+            href "pageSwitches", title: "Switches/Dimmers/Colored Lights", description:getDesc(switchesSel() || dimmersSel() || cLightsSel() || cLightsKSel()), state: switchesSel() || dimmersSel() || cLightsSel() || cLightsKSel() ? "complete" : null, image:imgURL() + "power.png"
             href "pageDoors", title: "Doors/Windows/Locks", description: getDesc(doorsSel() || locksSel() || ocSensorsSel() || shadesSel()), state: doorsSel() || locksSel() || ocSensorsSel() || shadesSel() ? "complete" : null, image: imgURL() + "lock.png"
             href "pageTemps", title: "Thermostats/Temperature/Humidity", description:getDesc(tstatsSel() || tempsSel() || humidSel()), state: tstatsSel() || tempsSel() || humidSel() ? "complete" : null, image: imgURL() + "temp.png"
             href "pageSpeakers", title: "Connected Speakers", description: getDesc(speakersSel()), state: speakersSel() ? "complete" : null, image:imgURL() + "speaker.png"     
@@ -119,21 +120,20 @@ def pageSwitches(){
         section("Choose the devices to interface", hideWhenEmpty: true) {
             input "switches", "capability.switch", title: "Choose Switches (On/Off/Toggle/Status)", multiple: true, required: false
             input "dimmers", "capability.switchLevel", title: "Choose Dimmers (On/Off/Toggle/Level/Status)", multiple: true, required: false
-            input "cLights", "capability.colorControl", title: "Choose Colored Lights (On/Off/Toggle/Level/Color/Status)", multiple: true, required: false, submitOnChange: true
-        	
+            input "cLights", "capability.colorControl", title: "Choose Colored Lights (On/Off/Toggle/Level/Color/Status)", multiple: true, required: false
+            input "cLightsK", "capability.colorTemperature", title: "Choose Temperature (Kelvin) Lights (On/Off/Toggle/Level/Temperature/Status)", multiple: true, required: false, submitOnChange: true
         }
         if (deviceAlias){
             section("Devices that can have aliases", hideWhenEmpty: true) {
                 input "switchesAlias", "capability.switch", title: "Choose Switches", multiple: true, required: false
                 input "dimmersAlias", "capability.switchLevel", title: "Choose Dimmers", multiple: true, required: false
-                input "cLightsAlias", "capability.colorControl", title: "Choose Colored Lights", multiple: true, required: false, submitOnChange: true
+                input "cLightsAlias", "capability.colorControl", title: "Choose Colored Lights", multiple: true, required: false
+                input "cLightsKAlias", "capability.colorTemperature", title: "Choose Temperature (Kelvin) Lights", multiple: true, required: false, submitOnChange: true
             }
         }
-        if (cLightsSel()) {
-            section("Custom color"){
-                input "customName", "text", title: "Custom Color Name", required: false
-                input "customHue", "number", title: "Custom Color Hue", required: false
-                input "customSat", "number", title: "Custom Color Saturation", required: false
+        if (cLightsKSel()){
+        	section ("Notes on Temperature (Kelvin) Lights"){
+            	paragraph "The following color temperatures are valid:\nSoft White, Warm White, Cool White, Daylight White"
             }
         }
 	}
@@ -294,7 +294,7 @@ def pageAliasAddFinal(){
         if (state.aliasList.find {it.aliasName.toLowerCase()==aliasName.toLowerCase()} || getDeviceList().find{it.name==aliasName.toLowerCase()})result ="The alias name, '${aliasName}', is already in use. Please choose another name unqiue to the Ask Alexa application."
 		else if (!aliasName || !aliasType || !aliasDevice) result="You did not enter all of the proper alias parameters. Go back and ensure all fields are filled in."
 		else {
-			def devType = [Switch:"switch", Dimmer:"level", "Colored Light":"color", "Door Control":"door", "Window Shade":"shade", "Open/Close Sensor":"contact", "Temperature Sensor":"temperature", Lock:"lock",
+			def devType = [Switch:"switch", Dimmer:"level", "Colored Light":"color", "Temperature (Kelvin) Light": "kTemp", "Door Control":"door", "Window Shade":"shade", "Open/Close Sensor":"contact", "Temperature Sensor":"temperature", Lock:"lock",
             	Thermostat:"thermostat", "Humidity Sensor":"humidity", Speaker:"music", "Acceleration Sensor":"acceleration", "Water Sensor":"water", "Motion Sensor":"motion", "Presence Sensor":"presence"][aliasType]?:aliasType
 			result = "Alias Name: ${aliasName}\nAlias Device Type: ${devType}\nDevice: ${aliasDevice}"
             state.aliasList<<["aliasName":aliasName,"aliasType":devType,"aliasDevice":"${aliasDevice}", "aliasTypeFull": aliasType, "aliasNameLC":aliasName.toLowerCase()]
@@ -383,6 +383,9 @@ def pageSettings(){
             if (!state.accessToken) paragraph "**You must enable OAuth via the IDE to setup this app**"
             else href url:"${getApiServerUrl()}/api/smartapps/installations/${app.id}/setup?access_token=${state.accessToken}", style:"embedded", required:false, title:"Setup Variables", description: "For Amazon developer sites", image: imgURL() + "amazon.png"
         	href "pageGlobalVariables", title: "Text Field Variables", description: none, state: (voiceTempVar || voiceHumidVar || voicePresenceVar ? "complete" : null)
+            if (cLightsSel()){
+            	href "pageCustomColor", title: "Custom Color Setup", description: none, state: (customName && customHue && customSat ? "complete" : null)
+        	}
         }
         section("Security"){
             href "pageConfirmation", title: "Revoke/Reset Access Token", description: "Tap to confirm this action", image: imgURL() + "warning.png"
@@ -494,6 +497,15 @@ def pageGlobalVariables(){
         }
         section ("People"){ input "voicePresenceVar", "capability.presenceSensor", title: "Presence Sensor Variable (%people%)", multiple: true, required: false }
     }
+}
+def pageCustomColor(){
+	dynamicPage(name: "pageCustomColor", title: "Custom Color Setup", uninstall: false){
+        section {
+            input "customName", "text", title: "Custom Color Name", required: false
+            input "customHue", "number", title: "Custom Color Hue", required: false
+            input "customSat", "number", title: "Custom Color Saturation", required: false
+        }
+	}
 }
 def pageConfirmation(){
 	dynamicPage(name: "pageConfirmation", title: "Revoke/Reset Access Token Confirmation", uninstall: false){
@@ -1016,7 +1028,7 @@ def processDevice() {
 	def dev = params.Device.toLowerCase() 	//Label of device
 	def op = params.Operator				//Operation to perform
     def numVal = params.Num     			//Number for dimmer/PIN type settings
-    def param = params.Param				//Other parameter (color)
+    def param = params.Param.toLowerCase()	//Other parameter (color)
     if (dev =~ /message|queue/) msgQueueReply(op) else processDeviceAction(dev, op, numVal, param, false)
 }
 def processDeviceAction(dev, op, numVal, param, followup){        
@@ -1111,7 +1123,7 @@ def msgQueueReply(op){
 //List Request
 def processList(){
 	log.debug "-List command received-"
-	def listType = params.Type	//Help type
+	def listType = params.Type.toLowerCase()	//Help type
     log.debug "List Type: " + listType
     String outputTxt = ""
     def devices, aliasType=""
@@ -1136,6 +1148,7 @@ def processList(){
     if (listType=~/shade/) { outputTxt = shades && shades.size()>1 ? "#window shades#" : shades && shades.size()==1 ? "@window shade@" :"%window shades%"; devices = shades; aliasType="shade" }
     if (listType=~/lock/) { outputTxt = locks && locks.size()>1 ? "#locks#" : locks && locks.size()==1 ? "@lock@" :"%locks%"; devices=locks; aliasType="lock" }	
     if (listType=~/colored light/) { outputTxt = cLights && cLights.size()>1 ? "#colored lights#": cLights && cLights.size()==1 ? "@colored light@" : "%colored lights%"; devices=cLights; aliasType="color" }
+    if (listType=~/temperature light|kelvin/) { outputTxt = cLightsK && cLightsK.size()>1 ? "#temperature lights#": cLightsK && cLightsK.size()==1 ? "@temperature light@" : "%temperature lights%"; devices=cLightsK; aliasType="kTemp" }
     if (listType=~/switch/) { outputTxt = switches? "You can turn on, off or toggle the following switches: " +  getList(switches) + ". " : "%switches%" ; aliasType="switch" }
     if (listType=~/routine/) { outputTxt= listRoutines && listRoutines.size()>1 ? "#routines#":listRoutines && listRoutines.size()==1 ? "@routine@" : "%routines%"; devices=listRoutines }
     if (listType=~/water/) { outputTxt= water && water.size()>1 ? "#water sensors#" : water && water.size()==1 ?  "@water sensor@" : "%water sensors%" ; devices=water; aliasType="water" }
@@ -1412,13 +1425,14 @@ def getReply(devices, type, STdeviceName, op, num, param){
 				}
                 else result += ". "
             }
-            else if (type ==~ /level|color|switch/) {
+            else if (type ==~ /level|color|switch|kTemp/) {
                 def onOffStatus = STdevice.currentValue("switch")
                 result = "The ${STdeviceName} is ${onOffStatus}"
                 if (otherStatus) { 
                 	def level = STdevice.currentValue("level"), power = STdevice.currentValue("power")
                     result += onOffStatus == "on" && level ? ", and it's set to ${level}%" : ""
                     result += onOffStatus=="on" && power > 0 ? ", and is currently drawing ${power} watts of power. " : ". "
+                    result += onOffStatus=="on" && type == "kTemp" ? "This light is set to " + STdevice.currentValue("colorTemperature") + " degrees Kelvin. " : ""
             	}
                 else result += ". "
             }
@@ -1570,25 +1584,25 @@ def getReply(devices, type, STdeviceName, op, num, param){
                     }
             	}
             }
-            if (type ==~ /color|level|switch/){
+            if (type ==~ /color|level|switch|kTemp/){
                 num = num < 0 ? 0 : num >99 ? 100 : num
                 def overRideMsg = "" 
                 if (op == "maximum") num = 100
-                if ((op ==~/increase|raise|up|decrease|down|lower|brighten|dim/) && (type == "color" || type == "level")){ 
+                if ((op ==~/increase|raise|up|decrease|down|lower|brighten|dim/) && (type ==~ /color|level|kTemp/)){ 
                      def newValues = upDown(STdevice, type, op, num, STdeviceName)
                      num = newValues.newLevel
                      op= num > 0 ? "on" : "off"
                      overRideMsg = newValues.msg
                 }
-                if (op ==~/low|medium|high/ && type ==~ /color|level/){
+                if (op ==~/low|medium|high/ && type ==~ /color|level|kTemp/){
                 	if (op=="low" && dimmerLow) num = dimmerLow else if (op=="low" && dimmerLow=="") num =0 
                     if (op=="medium" && dimmerMed) num = dimmerMed else if (op=="medium" && !dimmerMed) num = 0 
                     if (op=="high" && dimmerHigh) num = dimmerHigh else if (op=="high" && !dimmerhigh) num = 0 
                     if (num>0) overRideMsg = "I am turning the ${STdeviceName} to ${op}, or a value of ${num}%. "
                     if (num==0) overRideMsg = "You don't have a default value set up for the '${op}' level. I am not making any changes to the ${STdeviceName}. %1%"
                 }
-                if ((type == "switch") || (type ==~ /color|level/ && num==0 )){
-                    if (type ==~ /color|level/ && num==0 && op=="undefined" && param=="undefined") op="off"
+                if ((type == "switch") || (type ==~ /color|level|kTemp/ && num==0 )){
+                    if (type ==~ /color|level|kTemp/ && num==0 && op=="undefined" && param=="undefined") op="off"
                 	if (op==~/on|off/){
                 		STdevice."$op"() 
                         result = overRideMsg ? overRideMsg: "I am turning the ${STdeviceName} ${op}. "
@@ -1599,7 +1613,7 @@ def getReply(devices, type, STdeviceName, op, num, param){
                         result = "I am toggling the ${STdeviceName} from '${oldstate}' to '${newstate}'. "
                     }
             	}
-                if (type ==~ /color|level/ && num > 0) {
+                if (type ==~ /color|level|kTemp/ && num > 0) {
                 	STdevice.setLevel(num)
                     result = overRideMsg ? overRideMsg : num==100 ? "I am setting the ${STdeviceName} to its maximum value. " : "I am setting the ${STdeviceName} to ${num}%. "                    
 				}
@@ -1613,6 +1627,15 @@ def getReply(devices, type, STdeviceName, op, num, param){
                         result = "I am setting the color of the ${STdeviceName} to ${param}"
                         result += num>0 ? ", at a brightness level of ${num}%. " : ". "
                 	}
+                }
+                if (type == "kTemp" && param !="undefined" && supportedCaps.name.contains("Color Temperature")){
+                	def kelvin = param=="soft white" ? 2700 : param=="warm white" ? 3500 : param=="cool white" ? 4500 : param=="daylight white" ? 6500 : 9999
+                    if (kelvin <9999){
+                    	STdevice?.setColorTemperature(kelvin)
+                    	result = "I am setting the temperature of the ${STdeviceName} to ${param}, or ${kelvin} degrees Kelvin"
+                    	result += num>0 ? ", at a brightness level of ${num}%. " : ". "
+                    }
+                    else result = "I didn't understand the temperature you wanted to set the ${STdeviceName}. Valid temperatures are soft white, warm white, cool white and daylight white. "
                 }
             	if (!result){
                 	if (type=="switch") result = "For the ${STdeviceName} switch, be sure to give an 'on', 'off' or 'toggle' command. %1%"
@@ -1637,7 +1660,7 @@ def getReply(devices, type, STdeviceName, op, num, param){
                 	if (sonosCMD && sonosMemoryCount){
                         def memCount = sonosMemoryCount as int, song = ""
         				for (int i=1; i<memCount+1; i++){ 
-                        	 if (settings."sonosSlot${i}Name" && settings."sonosSlot${i}Music" && settings."sonosSlot${i}Name".replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase() == param.toLowerCase()) {
+                        	 if (settings."sonosSlot${i}Name" && settings."sonosSlot${i}Music" && settings."sonosSlot${i}Name".replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase() == param) {
                              	song = settings."sonosSlot${i}Music"
                                 break
                              }
@@ -1962,7 +1985,7 @@ def controlHandler(){
     	if (cmd.cLightK == "set"){
             if (cLightsKEL || cLightsKLVL) {
                 def level = !cLightsKLVL || cLightsKLVL < 0 ? 0 : cLightsKLVL >100 ? 100 : cLightsKLVL as int
-            	if (cLightsKEL) cLightsK?.setColorTemperature(cLightsKEL) 
+                if (cLightsKEL) cLightsK?.setColorTemperature(cLightsKEL as int) 
                 if (level>0) cLightsK?.setLevel(level)
             }
         }
@@ -2307,7 +2330,7 @@ def cLightsCTLOptions(){
 def cLightsKCTLOptions(){
 	return ["on":"Turn on","off":"Turn off","set":"Set temperature and level", "toggle":"Toggle the lights' on/off state","decrease": "Decrease current brightness","increase": "Increase current brightness"]
 }
-def kelvinOptions(){ return [2700: "Soft White(2700K)", 3500: "Moonlight(3500K)", 4500: "Cool White(4500K)", 6500: "Daylight White(6500K)"] } 
+def kelvinOptions(){ return [2700: "Soft White (2700K)", 3500: "Warm White (3500K)", 4500: "Cool White (4500K)", 6500: "Daylight White (6500K)"] } 
 def imgURL() { return "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/" }
 def getList(items){
 	def result = "", itemCount=items.size() as int
@@ -3051,6 +3074,7 @@ private setColoredLights(switches, color, level, type){
 private switchesSel() { return switches || (deviceAlias && switchesAlias) }
 private dimmersSel() { return dimmers || (deviceAlias && dimmersAlias) }
 private cLightsSel() { return cLights || (deviceAlias && cLightsAlias) }
+private cLightsKSel() { return cLightsK || (deviceAlias && cLightsKAlias) }
 private doorsSel() { return doors || (deviceAlias && doorsAlias) }
 private locksSel() { return locks || (deviceAlias && locksAlias) }
 private ocSensorsSel() { return ocSensors || (deviceAlias && ocSensorsAlias) }
@@ -3229,6 +3253,7 @@ def mapDevices(isAlias){
 	if (settings."switches${ext}") result << [devices: settings."switches${ext}", type : "switch",fullListName:"Switch"]
 	if (settings."dimmers${ext}") result << [devices: settings."dimmers${ext}", type : "level",fullListName:"Dimmer"]
 	if (settings."cLights${ext}") result << [devices: settings."cLights${ext}", type : "color",fullListName:"Colored Light"]
+    if (settings."cLightsK${ext}") result << [devices: settings."cLightsK${ext}", type : "kTemp", fullListName:"Temperature (Kelvin) Light"]
 	if (settings."doors${ext}") result << [devices: settings."doors${ext}", type : "door",fullListName:"Door Control"]
 	if (settings."shades${ext}") result << [devices: settings."shades${ext}", type : "shade",fullListName:"Window Shade"]
 	if (settings."locks${ext}") result << [devices: settings."locks${ext}", type : "lock",fullListName:"Lock"]
@@ -3245,7 +3270,7 @@ def mapDevices(isAlias){
 }
 def upDown(device, type, op, num, deviceName){
     def numChange, newLevel, currLevel, defMove, txtRsp = ""
-    if (type=="color" || type=="level") { defMove = lightAmt as int ?: 0 ; currLevel = device.currentValue("switch")=="on" ? device.currentValue("level") as int : 0 } 
+    if (type==~/color|level|kTemp/) { defMove = lightAmt as int ?: 0 ; currLevel = device.currentValue("switch")=="on" ? device.currentValue("level") as int : 0 } 
     if (type=="music") { defMove = speakerAmt as int ?: 0 ;currLevel = device.currentValue("level") as int }
     if (type=="thermostat") { defMove=tstatAmt as int ?: 0 ; currLevel =device.currentValue("temperature") as int }
     if (op ==~/increase|raise|up|brighten/)  numChange = num == 0 ? defMove : num > 0 ? num : 0
@@ -3393,7 +3418,8 @@ def fillTypeList(){
     	"temperature sensors","modes","routines","smart home monitor","SHM","security","temperature","door","doors", "humidity", "humidity sensor", "humidity sensors","presence", "presence sensors", "motion", 
         "motion sensor", "motion sensors", "door sensor", "door sensors", "window sensor", "window sensors", "open close sensors","colored light", "events","macro", "macros", "group", "groups", "voice reports", 
         "voice report", "device group", "device groups","control macro", "control macros","control", "controls","macro group","macro groups","device macros","device macro","device group macro","device group macros",
-        "core","core trigger","core macro","core macros","core triggers","sensor", "sensors","shades", "window shades","shade", "window shade","acceleration", "acceleration sensor", "acceleration sensors", "alias","aliases"] 
+        "core","core trigger","core macro","core macros","core triggers","sensor", "sensors","shades", "window shades","shade", "window shade","acceleration", "acceleration sensor", "acceleration sensors", "alias","aliases",
+        "temperature light","temperature lights","kelvin light","kelvin lights"] 
 }
 def getURLs(){
 	def mName = params.mName, url = formatURL("${getApiServerUrl()}/api/smartapps/installations/${app.id}/m?Macro=${mName}&access_token=${state.accessToken}")
@@ -3406,7 +3432,7 @@ def getURLs(){
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private textAppName() { return "Ask Alexa" }	
 private textVersion() {
-    def version = "SmartApp Version: 2.2.2 (02/19/2017)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
+    def version = "SmartApp Version: 2.2.2 (02/20/2017)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
     return "${version}${lambdaVersion}"
 }
 private versionInt(){ return 222 }
@@ -3441,9 +3467,15 @@ private cheat(){
     if (cLightsSel()) { 
     	result += "<h2><u>Colored Lights (Valid Commands: <b>On, Off, Toggle, Level {number}, color {color name} low, medium, high, up, down, increase, decrease</b>)</u></h2>"
         cLights.each{ result += it.label +"<br><br>" } 
-    	result +="<u>Available Colors{color name]</u><br>" + getList(STColors().name) + "<br>"
+    	result +="<u>Available Colors {color name}</u><br>" + getList(STColors().name) + "<br>"
     }
     if (getCheatDisplayList("color")) { result += "<br><u>Aliases</u><br>"; result += getCheatDisplayList("color") +"<br>" }
+    if (cLightsKSel()) { 
+    	result += "<h2><u>Temperature (Kelvin) Lights (Valid Commands: <b>On, Off, Toggle, Level {number}, Temperature {name} low, medium, high, up, down, increase, decrease</b>)</u></h2>"
+        cLightsK.each{ result += it.label +"<br><br>" } 
+    	result +="<u>Available Temperatures {name}</u><br>Soft White, Warm White, Cool White, Daylight White<br>"
+    }
+    if (getCheatDisplayList("kTemp")) { result += "<br><u>Aliases</u><br>"; result += getCheatDisplayList("kTemp") +"<br>" }
     if (doorsSel()) { result += "<h2><u>Doors (Valid Commands: <b>Open, Close, Status</b>)</u></h2>"; doors.each{ result += it.label +"<br>" } }
     if (doorsSel() && pwNeeded && doorPW) {result += "<br>* Append '<i>Password ${password}</i>'  to activate your doors<br>" }
     if (getCheatDisplayList("door") && deviceAlias) { result += "<br><u>Aliases</u><br>"; result += getCheatDisplayList("door") +"<br>" }
