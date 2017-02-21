@@ -5,7 +5,7 @@
  *  Version 3.0.0 2/20/17
  * 
  *  Version 2.9.9e - Minor GUI changes to accomodate new mobile app structure
- *  Version 3.0.0 - Added OSRAM loop funciton (thanks @bbmcgee)
+ *  Version 3.0.0 - Added OSRAM loop/pulse function (thanks @bbmcgee)
  *  See https://github.com/MichaelStruck/SmartThings/blob/master/Other-SmartApps/AlexaHelper/version%20history.md for additional version history
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -668,7 +668,7 @@ def voiceReport(){
 //Common Methods-------------
 def cLightCTLOptions(){
 	def options=["on":"Turn on","off":"Turn off","set":"Set color and level", "toggle":"Toggle the lights' on/off state"]
-    if (parent.cLightOSRAM) options +=["loopOn":"Turn on color loop","loopOff":"Turn off color loop" ]
+    if (parent.cLightOSRAM) options +=["loopOn":"Turn on color loop","loopOff":"Turn off color loop","pulseOn":"Turn on pulse","pulseOff":"Turn off pulse" ]
     return options
 }
 private String convertToHex(ipAddress, port){
@@ -772,12 +772,14 @@ def getDeviceDesc(type){
         result += dimmers && cmd.dimmer != "set" ? "${dimmers} set to ${cmd.dimmer}" : ""
         result += dimmers && cmd.dimmer == "set" ? "${dimmers} set to ${lvl}%" : ""	
         result += result && cLights ? "\n" : ""
-    	result += cLights && cmd.cLight != "set" && cmd.cLight != "loopOn" && cmd.cLight != "loopOff" ? "${cLights} set to ${cmd.cLight}":""
+    	result += cLights && cmd.cLight != "set" && cmd.cLight != "loopOn" && cmd.cLight != "loopOff" && cmd.cLight!="pulseOn" && cmd.cLight!="pulseOff" ? "${cLights} set to ${cmd.cLight}":""
         result += cLights && cmd.cLight == "set" ? "${cLights} set to " : ""
         result += cLights && cmd.cLight == "set" && clr ? "${clr} and " : ""
         result += cLights && cmd.cLight == "set" ? "${cLvl}%" : ""
         result += cLights && cmd.cLight == "loopOn" ? "${cLights} turn on color loop" : ""
         result += cLights && cmd.cLight == "loopOff" ? "${cLights} turn off color loop" : ""
+        result += cLights && cmd.cLight == "pulseOn" ? "${cLights} turn on pulse" : ""
+        result += cLights && cmd.cLight == "pulseOff" ? "${cLights} turn off pulse" : ""
         result += result && tstats ? "\n" : ""
         result += tstats && cmd.tstat && tLvl ? "${tstats} set to ${cmd.tstat} : ${tLvl}" : ""
         result += result && locks ? "\n":""
