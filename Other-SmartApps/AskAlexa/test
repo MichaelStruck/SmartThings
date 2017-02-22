@@ -407,9 +407,18 @@ def pageMsgQueue(){
         section (" "){
             input "msgQueue", "bool", title: "Enable Message Queue", defaultValue: false, submitOnChange: true
             if (msgQueue) input "msgQueueOrder", "enum", title: "Message Play Back Order", options:[0:"Oldest to newest", 1:"Newest to oldest"], defaultValue: 0
-            if (msgQueue) input "msgQueueNotify", "bool", title: "Notify When Messages Are Present", defaultValue: false
+            if (msgQueue) input "msgQueueNotify", "bool", title: "Notify When Messages Are Present (Alexa)", defaultValue: false
+            //if (msgQueue) input "msgQueueNotifyExt", "bool", title: "Notify When Messages Arrive (External)", defaultValue: false, submitOnChange: true
             if (msgQueue) input "msgQueueDelete", "bool", title: "Allow SmartApps To Delete Messages", defaultValue: false   
-    	}
+		}    		
+		/* ----Coming soon----
+        if (msgQueue && msgQueueNotifyExt) {
+			section ("External Message Notification Devices"){
+            	input "mqSpeaker", "capability.musicPlayer", title: "Choose Speakers", multiple: true, required: false, submitOnChange: true
+            	if (mqSpeaker) input "mqVolume", "number", title: "Speaker Volume", description: "0-100%", required: false
+            	input "mqSynth", "capability.speechSynthesis", title: "Choose Voice Synthesis Devices", multiple: true, required: false, hideWhenEmpty: true	
+			}
+		}*/
     }
 }
 def pageDefaultValue(){
@@ -575,7 +584,7 @@ def pageGroup() {
 		section { paragraph "Device Group Settings", image: imgURL() + "folder.png" }
         section (" ") {
             input "groupType", "enum", title: "Group Type...", options: [["colorControl": "Colored Light (On/Off/Toggle/Level/Color)"],["switchLevel":"Dimmer (On/Off/Toggle/Level)"],["doorControl": "Door (Open/Close)"],["lock":"Lock (Lock/Unlock)"],
-            	["switch":"Switch (On/Off/Toggle)"],["colorTemperature":"Temperature (Kelvin) Light (On/Off/Toggle/Temperature/Color)"],["thermostat":"Thermostat (Mode/Off/Setpoint)"],["windowShade": "Window Shades (Open/Close)"]],required: false, multiple: false, submitOnChange:true
+            	["switch":"Switch (On/Off/Toggle)"],["colorTemperature":"Temperature (Kelvin) Light (On/Off/Toggle/Level/Temperature)"],["thermostat":"Thermostat (Mode/Off/Setpoint)"],["windowShade": "Window Shades (Open/Close)"]],required: false, multiple: false, submitOnChange:true
     		if (groupType) input "groupDevice${groupType}", "capability.${groupType}", title: "Choose devices...", required: false, multiple: true, submitOnChange:true
         	if (((groupType == "doorControl" && parent.pwNeeded) || (groupType=="lock" && parent.pwNeeded)) && settings."groupDevice${groupType}" ){
         		input "usePW", "bool", title: "Require PIN For Actions", defaultValue: false
@@ -669,7 +678,7 @@ def pageOutputAudio(){
         	input "ttsMsg", "text", title: "Speak Message", required: false, capitalization: "sentences"
             input "ttsSpeaker", "capability.musicPlayer", title: "Choose Speakers", multiple: true, required: false, submitOnChange: true
             if (ttsSpeaker) input "ttsVolume", "number", title: "Speaker Volume", description: "0-100%", required: false
-            input "ttsSynth", "capability.speechSynthesis", title: "Choose Voice Synthesis Devices", multiple: true, required: false
+            input "ttsSynth", "capability.speechSynthesis", title: "Choose Voice Synthesis Devices", multiple: true, required: false, hideWhenEmpty: true
 		}
 	}
 }
@@ -1239,12 +1248,29 @@ def processMacroGroup(macroList, msg, append, noMsg, macLabel,macFeed,macFeedDat
 //Macro Processing
 def processMacro() {
     log.debug "-Macro command received-"
-	def mac = params.Macro 		//Macro name
-    def mNum = params.Num		//Number variable-Typically delay to run
-    def cmd = params.Cmd		//Group Command
-    def param = params.Param	//Parameter
-    def mPW = params.MPW		//Macro Password
-    processMacroAction(mac, mNum, cmd, param, mPW, false)
+	def mac = params.Macro.toLowerCase() 	//Macro name
+    def mNum = params.Num					//Number variable-Typically delay to run
+    def cmd = params.Cmd					//Group Command
+    def param = params.Param				//Parameter
+    def mPW = params.MPW					//Macro Password
+    //New code for Macro Alias
+    String outputTxt = ""
+    def counter = 1, macAlias, count = 0
+    count += getChildApps().count {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
+	while (!count && counter < 3) {
+    	count += getChildApps().count {it.settings."macAlias${counter}".toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
+        if (count==1) macAlias = getChildApps().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}.label
+        counter ++
+    }
+    if (count == 1){
+    	if (macAlias) mac = macAlias
+        else mac = getChildApps().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}.label
+    }
+    log.debug mac
+    if (count > 1) outputTxt ="You have duplicate macros named '${mac}'. Please check your SmartApp to fix this conflict. %1%"
+    if (!count) outputTxt = "I could not find a macro named '${mac}'. %1%"
+    if (outputTxt) sendJSON(outputTxt)
+    else processMacroAction(mac, mNum, cmd, param, mPW, false)
 }
 def processMacroAction(mac, mNum, cmd, param, mPW, followup){
     log.debug "Macro Name: " + mac
@@ -1267,10 +1293,10 @@ def processMacroAction(mac, mNum, cmd, param, mPW, followup){
         def hueColor = Math.round(getColorData.h / 3.6), satLevel = getColorData.s
         colorData = [hue: hueColor as int, saturation: satLevel as int] 
     }
-	def count = getChildApps().count {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac.toLowerCase()}
+	def count = getChildApps().count {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
     if (!err){
         if (count == 1){
-            def macProceed= true, child = getChildApps().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac.toLowerCase()}
+            def macProceed= true, child = getChildApps().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
             if (child.usePW && pwNeeded && password && mPW != password && ((child.macroType == "Group" && child.groupType == "lock") || child.macroType == "GroupM" ||
             	(child.macroType == "Group" && child.groupType == "doorControl") || child.macroType == "Control" || child.macroType == "CoRE")){
                 macProceed = false
@@ -1539,7 +1565,7 @@ def getReply(devices, type, STdeviceName, op, num, param){
                     def ecobeeCustomRegEx = MyEcobeeCMD && ecobeeCMD ? getEcobeeCustomRegEx(STdevice) : null
                     if ((param==~/heat|heating|cool|cooling|auto|automatic|eco|AC|comfort|home|away|sleep|resume program/ || (ecobeeCustomRegEx && param =~ /${ecobeeCustomRegEx}/)) && num == 0 && op=="undefined") op="on" 
                     if (op ==~/on|off/) {
-                        if (param == "undefined" && op == "on") result="You must designate 'heating mode' or 'cooling mode' when turning the ${STdeviceName} on. "
+                        if (param == "undefined" && op == "on") result="You must designate 'heating mode' or 'cooling mode' when turning the ${STdeviceName} on. %1%"
                         if (param =~/heat/) {result="I am setting the ${STdeviceName} to 'heating' mode. "; STdevice.heat()}
                         if (param =~/cool|AC/) {result="I am setting the ${STdeviceName} to 'cooling' mode. "; STdevice.cool()}
                         if (param =~/auto/) {result="I am setting the ${STdeviceName} to 'auto' mode. Please note, to properly set the temperature in 'auto' mode, you must specify the heating or cooling setpoints separately. " ; STdevice.auto()}
@@ -1582,8 +1608,8 @@ def getReply(devices, type, STdeviceName, op, num, param){
                             result="I am setting the cooling setpoint of the ${STdeviceName} to ${num} degrees. "
                             STdevice.setCoolingSetpoint(num)
                         }
-                        if (param != "undefined" && tstatHighLimit && num >= tstatHighLimit) result += "This is the maximum temperature I can set for this device. "
-                        if (param != "undefined" && tstatLowLimit && num <= tstatLowLimit) result += "This is the minimum temperature I can set for this device. "
+                        if (param != "undefined" && tstatHighLimit && num >= tstatHighLimit) result += "This is the maximum temperature I can set for this device. %1%"
+                        if (param != "undefined" && tstatLowLimit && num <= tstatLowLimit) result += "This is the minimum temperature I can set for this device. %1%"
                     }
             	}
             }
@@ -1638,7 +1664,7 @@ def getReply(devices, type, STdeviceName, op, num, param){
                     	result = "I am setting the temperature of the ${STdeviceName} to ${param}, or ${kelvin} degrees Kelvin"
                     	result += num>0 ? ", at a brightness level of ${num}%. " : ". "
                     }
-                    else result = "I didn't understand the temperature you wanted to set the ${STdeviceName}. Valid temperatures are soft white, warm white, cool white and daylight white. "
+                    else result = "I didn't understand the temperature you wanted to set the ${STdeviceName}. Valid temperatures are soft white, warm white, cool white and daylight white. %1%"
                 }
             	if (!result){
                 	if (type=="switch") result = "For the ${STdeviceName} switch, be sure to give an 'on', 'off' or 'toggle' command. %1%"
@@ -1682,7 +1708,7 @@ def getReply(devices, type, STdeviceName, op, num, param){
             	else if (op=="previous track") { STdevice.previousTrack(); result = "I am playing the next track on the ${STdeviceName}. " }
                 else result = "I didn't understand what you wanted me to do with the ${STdeviceName}. %1%"
                 if (num > 0) { STdevice.setLevel(num); result = "I am setting the volume of the ${STdeviceName} to ${num}%. " }
-                if (speakerHighLimit && num == speakerHighLimit) result += "This is the maximum volume level you have set up. "
+                if (speakerHighLimit && num == speakerHighLimit) result += "This is the maximum volume level you have set up. %1%"
                 if (op=="maximum" && !speakerHighLimit) result = "You have not set a maximum volume level in the SmartApp. %1%"
             }
 			if (type == "door"){              
@@ -1793,7 +1819,7 @@ def groupResults(num, op, colorData, param, mNum){
                 else if (voicePost && !noAck)  result = replaceVoiceVar(voicePost,"") 
                 else result = " "
             }
-            else if (groupType=="colorTemperature" && param) {
+            else if (groupType=="colorTemperature" && param !="undefined") {
                 def kelvin = param=="soft white" ? 2700 : param=="warm white" ? 3500 : param=="cool white" ? 4500 : param=="daylight white" ? 6500 : 9999
                 if (kelvin <9999){
 					settings."groupDevice${groupType}"?.setColorTemperature(kelvin)
@@ -1803,7 +1829,7 @@ def groupResults(num, op, colorData, param, mNum){
                         result += ". "
 					}
                 }
-                //else result = "I didn't understand the temperature you wanted to set the ${STdeviceName}. Valid temperatures are soft white, warm white, cool white and daylight white. "
+                else if (kelvin ==9999) result = "I didn't understand the temperature you wanted to set the '${app.label}' device group. Valid temperatures are soft white, warm white, cool white and daylight white. %1%"
                 else if (voicePost && !noAck)  result = replaceVoiceVar(voicePost,"") 
                 else result = " "
             }
@@ -1829,7 +1855,8 @@ def groupResults(num, op, colorData, param, mNum){
                 else result = "The default increase or decrease value is set to zero within the SmartApp. I am taking no action. %1%"
             }
             else if (groupType=="switchLevel") result = "For a dimmer group, be sure to use an 'on', 'off', 'toggle' or brightness level setting. %1%" 
-            else if (groupType=="colorControl") result = "For a colored light group, be sure to give me an 'on', 'off', 'toggle', brightness level or color command. %1%" 
+            else if (groupType=="colorControl") result = "For a colored light group, be sure to give me an 'on', 'off', 'toggle', brightness level or color command. %1%"
+            else if (groupType=="colorTemperature") result = "For a temperature control light group, be sure to give me an 'on', 'off', 'toggle', brightness level or temperature command. %1%"
         }
         else if (groupType=="lock"){
             noun=settings."groupDevice${groupType}".size()==1 ? "device" : "devices"
@@ -3238,7 +3265,6 @@ def getDeviceAliasList(aliasType){
 }
 private List<Map> STColors() {
     if (customName) return [customColor(), *colorUtil.ALL] else return [*colorUtil.ALL]
-    log.debug customColor()
 }
 private Map customColor(){
     if (customName && (customHue > -1 && customerHue < 101) && (customSat > -1 && customerSat < 101)) return [name: customName, rgb: "#000000", h: customHue * 3.6, s: customSat, l:100]
