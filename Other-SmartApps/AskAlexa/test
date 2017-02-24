@@ -1,14 +1,13 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.2.2 - 2/21/17 Copyright © 2017 Michael Struck
+ *  Version 2.2.2 - 2/23/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; Barry Burke for Weather Underground Integration; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
- *  Version information prior to 2.2.1 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
+ *  Version information prior to 2.2.2 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
- *	Version 2.2.1 (2/18/17) Bug fixes, added additional security for doors/locks (thanks @Cherokee180c for the suggestion), implement ST color names, started building structure for better follow ups,
- *	created a new option for 'consolidation' of certain conditions within the voice reports (as suggested by @jseaton). Added framework for more IFTTT conversational commands (coming soon).
- *	Version 2.2.2 (2/21/17) Syntax issues; added loop/pulse options for colored lights using the latest community DTH for OSRAM lights(thanks @bbmcgee). Added options for lights that can only be controlled by Kelvin temperature
+ *	Version 2.2.2 (2/23/17) Syntax issues (thanks larry-fuqua); added loop/pulse options for colored lights using the latest community DTH for OSRAM lights(thanks @bbmcgee). Added options for lights that can only be controlled by Kelvin temperature
+ *  Added increase/decrease commands to Control macro thermostat control.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -546,6 +545,7 @@ def mainPageChild(){
     dynamicPage(name: "mainPageChild", title: "Voice Macro Settings", install: true, uninstall: true) {
     	section {
             label title:"Voice Macro Name", required: true, image: imgURL() + "speak.png"
+            href "pageMacroAliases", title: "Macro Aliases", description: macroAliasDesc(), state: macroAliasState()
             input "macroType", "enum", title: "Macro Type...", options: [["Control":"Control (Run/Execute)"],["CoRE":"CoRE Trigger (Run/Execute)"],["Group":"Device Group (On/Off/Toggle, Lock/Unlock, etc.)"],["GroupM":"Macro Group (Run/Execute)"],["Voice":"Voice Reporting (Run/Execute) "]], required: false, multiple: false, submitOnChange:true
             def fullMacroName=[GroupM: "Macro Group",CoRE:"CoRE Trigger", Control:"Control", Group:"Device Group", Voice:"Voice Reporting"][macroType] ?: macroType
             if (macroType) {
@@ -577,6 +577,13 @@ page(name: "timeIntervalInput", title: "Only during a certain time") {
 		input "timeStart", "time", title: "Starting", required: false
 		input "timeEnd", "time", title: "Ending", required: false
 	}
+}
+page(name: "pageMacroAliases", title: "Enter alias names for this macro"){
+	section {
+    	for (int i = 1; i<macAliasCount()+1; i++){
+        	input "macAlias${i}", "text", title: "Macro Alias Name ${i}", required: false
+		}
+    }
 }
 //Device Macro----------------------------------------------------
 def pageGroup() {
@@ -719,14 +726,10 @@ def pageSTDevices(){
         }
         section ("Thermostats", hideWhenEmpty: true){
             input "tstats", "capability.thermostat", title: "Control These Thermostats...", multiple: true, required: false, submitOnChange:true
-            if (tstats) {
-            	def tstatOptions=["heat":"Set heating temperature","cool":"Set cooling temperature"]
-                if (parent.nestCMD) tstatOptions += ["away":"Nest 'Away' Presence","home":"Nest 'Home' Presence"]
-                if (parent.ecobeeCMD) tstatOptions += ["away":"Ecobee 'Away' Climate","home":"Ecobee 'Home' Climate","sleep":"Ecobee 'Sleep' Climate","resume program":"Ecobee 'Resume Program'"]
-                if (parent.MyEcobeeCMD) getEcobeeCustomList(tstats).each { tstatOptions += ["${it}":"Ecobee '${it}' Climate"] }
-                input "tstatsCMD", "enum", title: "Command To Send To Thermostats", options :tstatOptions , multiple: false, required: false, submitOnChange:true
-            }
-            if (tstatsCMD =="heat" || tstatsCMD =="cool") input "tstatLVL", "number", title: "Temperature Level", description: "Set temperature level", required: false
+            if (tstats) input "tstatsCMD", "enum", title: "Command To Send To Thermostats", options: parent.tStatCTLOptions() , multiple: false, required: false, submitOnChange:true
+            if (tstatsCMD ==~/heat|cool/) input "tstatLVL", "number", title: "Temperature Level", description: "Set temperature level", required: false
+            if (tstatsCMD =~/increase|decrease/) input "tstatUpDown", "number", title: "Amount of change", description: "Set the amount of change in the setpoint (positive numbers only)", required: false, defaultValue: 5
+        	
         }
         section ("Locks", hideWhenEmpty: true){
             input "locks","capability.lock", title: "Control These Locks...", multiple: true, required: false, submitOnChange:true
@@ -1037,10 +1040,10 @@ def clearFollowup(evt){
 	state.cmdFollowup=""
 }
 def processDevice() {    
-	def dev = params.Device.toLowerCase() 	//Label of device
-	def op = params.Operator				//Operation to perform
-    def numVal = params.Num     			//Number for dimmer/PIN type settings
-    def param = params.Param.toLowerCase()	//Other parameter (color)
+	def dev = params.Device.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") 	//Label of device
+	def op = params.Operator												//Operation to perform
+    def numVal = params.Num     											//Number for dimmer/PIN type settings
+    def param = params.Param.toLowerCase()									//Other parameter (color)
     if (dev =~ /message|queue/) msgQueueReply(op) else processDeviceAction(dev, op, numVal, param, false)
 }
 def processDeviceAction(dev, op, numVal, param, followup){        
@@ -1052,10 +1055,10 @@ def processDeviceAction(dev, op, numVal, param, followup){
 	def num = numVal == "undefined" || numVal =="?" ? 0 : numVal as int
 	String outputTxt = ""
 	def deviceList, count = 0, aliasDeviceType, aliasDeviceObj, aliasDeviceList, aliasDeviceName
-	getDeviceList().each{if (it.name==dev.replaceAll("[^a-zA-Z0-9 ]", "")) {deviceList=it; count++}}
+	getDeviceList().each{if (it.name==dev) {deviceList=it; count++}}
 	if (mapDevices(true) && deviceAlias && !count && !deviceList){
 		aliasDeviceList = state.aliasList.each { 
-			if (it.aliasNameLC==dev.replaceAll("[^a-zA-Z0-9 ]", "")) {
+			if (it.aliasNameLC==dev) {
 				aliasDeviceType = it.aliasType
 				aliasDeviceName = it.aliasDevice
 				count++ 
@@ -1248,27 +1251,26 @@ def processMacroGroup(macroList, msg, append, noMsg, macLabel,macFeed,macFeedDat
 //Macro Processing
 def processMacro() {
     log.debug "-Macro command received-"
-	def mac = params.Macro.toLowerCase() 	//Macro name
-    def mNum = params.Num					//Number variable-Typically delay to run
-    def cmd = params.Cmd					//Group Command
-    def param = params.Param				//Parameter
-    def mPW = params.MPW					//Macro Password
-    //New code for Macro Alias
+	def mac = params.Macro.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") 	//Macro name
+    def mNum = params.Num													//Number variable-Typically delay to run
+    def cmd = params.Cmd													//Group Command
+    def param = params.Param												//Parameter
+    def mPW = params.MPW													//Macro Password
+    //------------------------------------------------------
     String outputTxt = ""
     def counter = 1, macAlias, count = 0
     count += getChildApps().count {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
-	while (!count && counter < 3) {
-    	count += getChildApps().count {it.settings."macAlias${counter}".toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
-        if (count==1) macAlias = getChildApps().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}.label
+	while (!count && counter < macAliasCount()+1) {
+        log.debug getChildApps().find {it."macAlias${counter}".toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}.label.toLowerCase()
+        if (count==1) macAlias = getChildApps().find {it."macAlias${counter}".toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}.label.toLowerCase()
         counter ++
     }
     if (count == 1){
     	if (macAlias) mac = macAlias
-        else mac = getChildApps().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}.label
+        else mac = getChildApps().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}.label.toLowerCase()
     }
-    log.debug mac
-    if (count > 1) outputTxt ="You have duplicate macros named '${mac}'. Please check your SmartApp to fix this conflict. %1%"
-    if (!count) outputTxt = "I could not find a macro named '${mac}'. %1%"
+    if (count > 1) outputTxt ="You have duplicate macros or aliases named '${mac}'. Please check your SmartApp to fix this conflict. %1%"
+    if (!count) outputTxt = "I could not find a macro or alias named '${mac}'. %1%"
     if (outputTxt) sendJSON(outputTxt)
     else processMacroAction(mac, mNum, cmd, param, mPW, false)
 }
@@ -1286,43 +1288,38 @@ def processMacroAction(mac, mNum, cmd, param, mPW, followup){
         if (cmd=="low" && dimmerLow) num = dimmerLow else if (cmd=="low" && !dimmerLow) err=true 
 		if (cmd=="medium" && dimmerMed) num = dimmerMed else if (cmd=="medium" && !dimmerMed) err=true 
 		if (cmd=="high" && dimmerHigh) num = dimmerHigh else if (cmd=="high" &&!dimmerhigh) err=true
-        if (err) outputTxt = "You don't have a default value set up for the ${outputTxt} level. I am not making any adjustments. "
+        if (err) outputTxt = "You don't have a default value set up for the ${outputTxt} level. I am not making any adjustments. %1%"
     }
     def getColorData = STColors().find {it.name.toLowerCase()==param}
     if (getColorData){
         def hueColor = Math.round(getColorData.h / 3.6), satLevel = getColorData.s
         colorData = [hue: hueColor as int, saturation: satLevel as int] 
     }
-	def count = getChildApps().count {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
     if (!err){
-        if (count == 1){
-            def macProceed= true, child = getChildApps().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
-            if (child.usePW && pwNeeded && password && mPW != password && ((child.macroType == "Group" && child.groupType == "lock") || child.macroType == "GroupM" ||
-            	(child.macroType == "Group" && child.groupType == "doorControl") || child.macroType == "Control" || child.macroType == "CoRE")){
-                macProceed = false
-                def pwExtra = mPW=="undefined" ? "a" : "the proper"
-                if (child.macroType == "Group" && child.groupType == "lock") outputTxt = "To lock or unlock a group, you must use ${pwExtra} password. %P%"
-				if (child.macroType == "Group" && child.groupType == "doorControl") outputTxt = "To open or close a group, you must use ${pwExtra} password. %P%"
-                if (child.macroType == "CoRE") outputTxt = "To activate a Core Trigger, you must use ${pwExtra} password. %P%"
-                if (child.macroType == "Control") outputTxt = "To activate a Control Macro, you must use ${pwExtra} password. %P%"             
-				if (child.macroType == "GroupM") outputTxt = "To activate a Group Macro, you must use ${pwExtra} password. %P%" 
-                state.cmdFollowup=[return: "macroAction", mac:mac, mNum:mNum, cmd:cmd, param:param, mPW:0 ]
-            }
-            if (child.macroType != "Group" && child.macroType != "GroupM" && cmd=="list" && macProceed) { outputTxt = "You can not use the list command with this type of macro. %1%"; macProceed = false }
-            else if (child.macroType == "GroupM" && cmd=="list" && macProceed) {
-                def gMacros= child.groupMacros.size()==1 ? "macro" : "macros"
-                outputTxt="You have the following ${gMacros} within the '${child.label}' macro group: " + getList(child.groupMacros) +". "
-                macProceed = false
-            }
-            if (macProceed){
-            	playContMsg = child.overRideMsg ? false : true
-            	def fullMacroName = [GroupM: "Macro Group",CoRE: "CoRE Trigger", Control:"Control Macro", Group:"Device Group", Voice:"Voice Report"][child.macroType] ?: child.macroType
-            	if (child.macroType != "GroupM") outputTxt = child.getOkToRun() ? child.macroResults(num, cmd, colorData, param, mNum) : "You have restrictions within the ${fullMacroName} named, '${child.label}', that prevent it from running. Check your settings and try again. %1%"
-            	else outputTxt = processMacroGroup(child.groupMacros, child.voicePost, child.addPost, child.noAck, child.label, child.noteFeed, child.noteFeedData)   
-        	}
+		def macProceed= true, child = getChildApps().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
+		if (child.usePW && pwNeeded && password && mPW != password && ((child.macroType == "Group" && child.groupType == "lock") || child.macroType == "GroupM" ||
+			(child.macroType == "Group" && child.groupType == "doorControl") || child.macroType == "Control" || child.macroType == "CoRE")){
+			macProceed = false
+			def pwExtra = mPW=="undefined" ? "a" : "the proper"
+			if (child.macroType == "Group" && child.groupType == "lock") outputTxt = "To lock or unlock a group, you must use ${pwExtra} password. %P%"
+			if (child.macroType == "Group" && child.groupType == "doorControl") outputTxt = "To open or close a group, you must use ${pwExtra} password. %P%"
+			if (child.macroType == "CoRE") outputTxt = "To activate a Core Trigger, you must use ${pwExtra} password. %P%"
+			if (child.macroType == "Control") outputTxt = "To activate a Control Macro, you must use ${pwExtra} password. %P%"             
+			if (child.macroType == "GroupM") outputTxt = "To activate a Group Macro, you must use ${pwExtra} password. %P%" 
+			state.cmdFollowup=[return: "macroAction", mac:mac, mNum:mNum, cmd:cmd, param:param, mPW:0 ]
 		}
-        if (count > 1) outputTxt ="You have duplicate macros named '${mac}'. Please check your SmartApp to fix this conflict. %1%"
-        if (!count) outputTxt = "I could not find a macro named '${mac}'. %1%" 
+		if (child.macroType != "Group" && child.macroType != "GroupM" && cmd=="list" && macProceed) { outputTxt = "You can not use the list command with this type of macro. %1%"; macProceed = false }
+		else if (child.macroType == "GroupM" && cmd=="list" && macProceed) {
+			def gMacros= child.groupMacros.size()==1 ? "macro" : "macros"
+			outputTxt="You have the following ${gMacros} within the '${child.label}' macro group: " + getList(child.groupMacros) +". "
+			macProceed = false
+		}
+		if (macProceed){
+			playContMsg = child.overRideMsg ? false : true
+			def fullMacroName = [GroupM: "Macro Group",CoRE: "CoRE Trigger", Control:"Control Macro", Group:"Device Group", Voice:"Voice Report"][child.macroType] ?: child.macroType
+			if (child.macroType != "GroupM") outputTxt = child.getOkToRun() ? child.macroResults(num, cmd, colorData, param, mNum) : "You have restrictions within the ${fullMacroName} named, '${child.label}', that prevent it from running. Check your settings and try again. %1%"
+			else outputTxt = processMacroGroup(child.groupMacros, child.voicePost, child.addPost, child.noAck, child.label, child.noteFeed, child.noteFeedData)   
+        }
     }
     if (outputTxt && !outputTxt.endsWith("%") && !outputTxt.endsWith(" ")) outputTxt += " "
     if (outputTxt && !outputTxt.endsWith("%") && playContMsg) outputTxt += "%4%"
@@ -1450,7 +1447,7 @@ def getReply(devices, type, STdeviceName, op, num, param){
                 result = "The relative humidity at the ${STdeviceName} is ${STdevice.currentValue(type)}%"
                 if (otherStatus) {
                     def temp =roundValue(STdevice.currentValue("temperature"))
-                    result += temp ? ", and the temperature is ${temp} degrees." : ". "
+                    result += temp ? ", and the temperature is ${temp} degrees. " : ". "
 				}
                 else result += ". "
             }
@@ -2043,6 +2040,7 @@ def controlHandler(){
         	def tLevel = tstatLVL < 0 ?  0 : tstatLVL > 100 ? 100 : tstatLVL as int
     		cmd.tstat == "heat" ? tstats?.setHeatingSetpoint(tLevel) : tstats?.setCoolingSetpoint(tLevel)
         }
+        else if (cmd.tstat=~/increase|decrease/) tstats.each {upDownChild(it, cmd.tstat, tstatUpDown as int, "temperature")}
         def ecobeeCustomRegEx = parent.MyEcobeeCMD && parent.ecobeeCMD ? getEcobeeCustomRegEx(tstats) : null 
 		if (cmd.tstat =~ /home|away|sleep|resume program/ || (ecobeeCustomRegEx && cmd.tstat =~ /${ecobeeCustomRegEx}/)) tstats?."${cmd.tstat}"() 
 	}
@@ -2364,18 +2362,26 @@ def waterReport(){
 }
 //Parent Code Access (from Child)-----------------------------------------------------------
 def getOkToRun(){ def result = (!runMode || runMode.contains(location.mode)) && getDayOk(runDay) && getTimeOk(timeStart,timeEnd) && getPeopleOk(runPeople,runPresAll) }
-//Common Code (Child and Parent)		
-def battOptions() { return  [5:"<5%",10:"<10%",20:"<20%",30:"<30%",40:"<40%",50:"<50%",60:"<60%",70:"<70%",80:"<80%",90:"<90%",101:"Always play battery level"] }
+def cLightsKCTLOptions(){
+	return ["on":"Turn on","off":"Turn off","set":"Set temperature and level", "toggle":"Toggle the lights' on/off state","decrease": "Decrease current brightness","increase": "Increase current brightness"]
+}
 def cLightsCTLOptions(){
 	def options=["on":"Turn on","off":"Turn off","set":"Set color and level", "toggle":"Toggle the lights' on/off state","decrease": "Decrease current brightness","increase": "Increase current brightness"]
     if (osramCMD) options +=["loopOn":"Turn on color loop","loopOff":"Turn off color loop","pulseOn":"Turn on pulse","pulseOff":"Turn off pulse" ]
     return options
 }
-def cLightsKCTLOptions(){
-	return ["on":"Turn on","off":"Turn off","set":"Set temperature and level", "toggle":"Toggle the lights' on/off state","decrease": "Decrease current brightness","increase": "Increase current brightness"]
+def tStatCTLOptions(){
+	def tstatOptions=["heat":"Set heating temperature","cool":"Set cooling temperature","increaseHeat":"Increase current heating setpoint","decreaseHeat":"Decrease current heating setpoint","increaseCool":"Increase current cooling setpoint", "decreaseCool":"Decrease current cooling setpoint"]
+	if (nestCMD) tstatOptions += ["away":"Nest 'Away' Presence","home":"Nest 'Home' Presence"]
+	if (ecobeeCMD) tstatOptions += ["away":"Ecobee 'Away' Climate","home":"Ecobee 'Home' Climate","sleep":"Ecobee 'Sleep' Climate","resume program":"Ecobee 'Resume Program'"]
+	if (MyEcobeeCMD) getEcobeeCustomList(tstats).each { tstatOptions += ["${it}":"Ecobee '${it}' Climate"] }
+	return tstatOptions
 }
+//Common Code (Child and Parent)		
+def battOptions() { return  [5:"<5%",10:"<10%",20:"<20%",30:"<30%",40:"<40%",50:"<50%",60:"<60%",70:"<70%",80:"<80%",90:"<90%",101:"Always play battery level"] }
 def kelvinOptions(){ return [2700: "Soft White (2700K)", 3500: "Warm White (3500K)", 4500: "Cool White (4500K)", 6500: "Daylight White (6500K)"] } 
 def imgURL() { return "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/" }
+def macAliasCount() { return 3 }
 def getList(items){
 	def result = "", itemCount=items.size() as int
 	items.each{ result += it; itemCount --
@@ -2418,12 +2424,24 @@ def upDownChild(device, op, num, type){
     log.debug "Type:" + type
     def numChange, newLevel, currLevel, defMove
     if (type=="level") defMove = parent.lightAmt as int ?: 0 ; currLevel = device.currentValue("switch")=="on" ? device.currentValue("level") as int : 0
-    if (op ==~/increase|raise|up|brighten/)  numChange = num == 0 ? defMove : num > 0 ? num : 0
-    if (op ==~/decrease|down|lower|dim/) numChange = num == 0 ? -defMove : num > 0 ? -num  : 0
+    if (type=="temperature"){
+    	try{
+        	if (parent.nestCMD) nestCmdPrep(device)
+        	if (op=~/Cool/) currLevel = device.currentValue("coolingSetpoint")
+        	if (op=~/Heat/) currLevel = device.currentValue("heatingSetpoint")    
+    	}
+        catch (e) { log.debug "There was an error reading the thermostat. Ensure you have the proper mode set on the thermostat for the setpoint you are attempting to set." }
+    }
+    if (op =~/increase|raise|up|brighten/)  numChange = num == 0 ? defMove : num > 0 ? num : 0
+    if (op =~/decrease|down|lower|dim/) numChange = num == 0 ? -defMove : num > 0 ? -num  : 0
     newLevel = currLevel + numChange; newLevel = newLevel > 100 ? 100 : newLevel < 0 ? 0 : newLevel
     if (type=="level"){
     	if (defMove>0) device.setLevel(newLevel)
     	if (newLevel==0) device.off()
+    }
+    if (type=="temperature"){
+        if (op=~/Cool/) device.setCoolingSetpoint(newLevel)
+        if (op=~/Heat/) device.setHeatingSetpoint(newLevel)       
     }
 }
 private getDayOk(dayList) {
@@ -2455,6 +2473,22 @@ def getTimeLabel(start, end){
     else if (start) timeLabel = "Start at " + timeParse("${start}", "h:mm a")
     else if (end) timeLabel = "End at " + timeParse("${end}", "h:mm a")
 	return timeLabel	
+}
+def macroAliasDesc(){
+	def result =""
+	for (int i= 1; i<macAliasCount()+1; i++){
+		result += settings."macAlias${i}" ? settings."macAlias${i}" : ""
+		result += (result && settings."macAlias${i+1}") ? "\n" : ""
+	}
+    result = result ? "Alias Names currently configured; Tap to edit:\n"+result :"Tap to add alias names to this macro"
+    return result
+}
+def macroAliasState(){
+	def count = 0
+    for (int i= 1; i<macAliasCount()+1; i++){
+    	if (settings."macAlias${i}") count ++
+    }
+    return count ? "complete" : null
 }
 def macroTypeDesc(){
 	def desc = "", PIN = (macroType ==~/CoRE|Control|GroupM/ || (macroType == "Group" && groupType == "lock") || (macroType == "Group" && groupType == "doorControl") || desc) && usePW ? " - PIN Required" : ""
@@ -2627,6 +2661,7 @@ def getDeviceDesc(){
     def dimUpDn = cmd.dimmer==~/increase|decrease/ && dimmersUpDown ? dimmersUpDown as int : 0
     def clUpDn = cmd.cLight ==~/increase|decrease/ && cLightsUpDown? cLightsUpDown as int : 0
     def klUpDn = cmd.cLightK ==~/increase|decrease/ && cLightsKUpDown? cLightsKUpDown as int : 0
+    def tUpDn = cmd.tstat =~/increase|decrease/ && tstatUpDown ? tstatUpDown as int : 0
     lvl = lvl < 0 ? lvl = 0 : lvl >100 ? 100 : lvl
     tLvl = tLvl < 0 ? 0 : tLvl >100 ? 100 : tLvl
     cLvl = cLvl < 0 ? 0 : cLvl >100 ? 100 : cLvl
@@ -2634,6 +2669,7 @@ def getDeviceDesc(){
     dimUpDn = dimUpDn <0 ? 0 : dimUpDn>100 ? 100: dimUpDn
     clUpDn == clUpDn <0 ? 0 : clUpDn>100 ? 100: clUpDn
     klUpDn == klUpDn <0 ? 0 : klUpDn>100 ? 100: klUpDn
+	tUpDn == tUpDn <0 ? 0 : tUpDn>100 ? 100: tUpDn
     if (switches || dimmers || cLights || cLightsK || tstats || locks || garages || shades) {
     	result = switches && cmd.switch ? "${switches} set to ${cmd.switch}" : ""
         result += result && dimmers && cmd.dimmer ? "\n" : ""
@@ -2658,8 +2694,13 @@ def getDeviceDesc(){
         result += cLightsK && cmd.cLightK && cmd.cLightK == "set" && kLvl >0 ? "${kLvl}%" : ""
         result += cLightsK && cmd.cLightK && cmd.cLightK == "set" && kTemp && (kLvl == 0 || !kLvl)? "Current Brightness" : ""
         result += cLightsK && cmd.cLightK && cmd.cLightK ==~/increase|decrease/ && klUpDn>0 ? "${cLightsK} ${cmd.cLightK} brightness by ${klUpDn}%" : ""	
-        result += result && tstats && tLvl ? "\n" : ""
-        result += tstats && cmd.tstat && tLvl ? "${tstats} set to ${cmd.tstat} : ${tLvl}" : ""
+        result += result && tstats && (tLvl || tUpDn) ? "\n" : ""
+        result += tstats && cmd.tstat ==~/heat|cool/ && tLvl ? "${tstats} set to ${cmd.tstat}: ${tLvl} degrees" : ""
+        result += tstats && cmd.tstat =="increaseCool" && tUpDn ? "${tstats} increase cooling setpoint: ${tUpDn} degrees" : ""
+        result += tstats && cmd.tstat =="decreaseCool" && tUpDn ? "${tstats} decrease cooling setpoint: ${tUpDn} degrees" : ""
+        result += tstats && cmd.tstat =="increaseHeat" && tUpDn ? "${tstats} increase heating setpoint: ${tUpDn} degrees" : ""
+        result += tstats && cmd.tstat =="decreaseHeat" && tUpDn ? "${tstats} decrease heating setpoint: ${tUpDn} degrees" : ""
+        if (parent.nestCMD || ecobeeCMD || (ecobeeCMD && MyEcobeeCMD)  ) result += tstats && cmd.tstat && cmd.tstat =~/heat|cool|increase|decrease/ ? "": "${tstats} set to: ${cmd.tstat}"	
         result += result && locks && cmd.lock ? "\n":""
         result += locks && cmd.lock ? "${locks} set to ${cmd.lock}" : ""
         result += result && garages && cmd.garage ? "\n" : ""
@@ -3445,12 +3486,15 @@ def setupData(){
     result += "<br><b>LIST_OF_MACROS</b><br><br>"
     if (childApps.size()){
         def MACROS=[]
-        childApps.each { MACROS << it.label.replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase()}       
+        childApps.each { 
+        	MACROS << it.label.replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase()
+			for (int i = 1; i<macAliasCount()+1; i++){ if (it."macAlias${i}") MACROS << it."macAlias${i}" }
+		}       
         duplicates = MACROS.findAll{MACROS.count(it)>1}.unique()
         if (duplicates.size()){ 
             result += "<b>**NOTICE:</b>The following duplicate(s) are only listed once below in LIST_OF_MACROS:<br><br>"
             duplicates.each{result +="* " + it +" *<br><br>"}
-            result += "Be sure to have unique names for each macro and only use each name once within the parent app.**<br><br>" 	
+            result += "Be sure to have unique names for each macro (and macro alias) and only use each name once within the parent app.**<br><br>" 	
         }
         MACROS.unique().each {result += it + "<br>" }
     }
@@ -3477,7 +3521,7 @@ def getURLs(){
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private textAppName() { return "Ask Alexa" }	
 private textVersion() {
-    def version = "SmartApp Version: 2.2.2 (02/21/2017)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
+    def version = "SmartApp Version: 2.2.2 (02/23/2017)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
     return "${version}${lambdaVersion}"
 }
 private versionInt(){ return 222 }
@@ -3568,7 +3612,19 @@ private cheat(){
     if (listSHM && pwNeeded && shmPW) {result += "<br>* Append '<i>Password ${password}</i>' to change your Smart Home Monitor status<br>" }
     if (listRoutines) { result += "<h2><u>SmartThings Routines (Valid Command: <b>Run {Routine}</b>)</u></h2>"; listRoutines.each{ result += it +"<br>" } }
     if (listRoutines && pwNeeded && routinesPW) {result += "<br>* Append '<i>Password ${password}</i>' to activate your routines<br>" }
-    if (childApps.size()) { result += "<h2><u>Ask Alexa Macros (Valid Command: <b>Run {Macro}</b>)</u></h2>"; childApps.each { result += it.label + "<br>"} }
+    if (childApps.size()) { 
+    	result += "<h2><u>Ask Alexa Macros (Valid Command: <b>Run {Macro}</b>)</u></h2>"
+        childApps.each { 
+        	result += it.label
+        	def aliases = ""
+            for (int i = 1; i<macAliasCount()+1; i++){
+            	if (it."macAlias${i}") aliases += it."macAlias${i}"
+                if (it."macAlias${i+1}") aliases += ", "
+        	}
+            if (aliases) result += " (Aliases: " + aliases +")"
+            result += "<br>"
+		} 
+    }
     if (pwNeeded) {result += "<br>* Append '<i>Password ${password}</i>' if a macro is set up to use a password<br>" }
     displayData(result)
 }
