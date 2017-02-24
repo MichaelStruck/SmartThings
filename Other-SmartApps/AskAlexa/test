@@ -2372,7 +2372,7 @@ def cLightsCTLOptions(){
 def tStatCTLOptions(){
 	def tstatOptions=["heat":"Set heating temperature","cool":"Set cooling temperature","increaseHeat":"Increase current heating setpoint","decreaseHeat":"Decrease current heating setpoint","increaseCool":"Increase current cooling setpoint", "decreaseCool":"Decrease current cooling setpoint"]
 	if (nestCMD) tstatOptions += ["away":"Nest 'Away' Presence","present":"Nest 'Home' Presence"]
-	if (ecobeeCMD) tstatOptions += ["away":"Ecobee 'Away' Climate","home":"Ecobee 'Home' Climate","sleep":"Ecobee 'Sleep' Climate","resume program":"Ecobee 'Resume Program'"]
+	if (ecobeeCMD) tstatOptions += ["away":"Ecobee 'Away' Climate","home":"Ecobee 'Home' Climate","sleep":"Ecobee 'Sleep' Climate","resumeProgram":"Ecobee 'Resume Program'"]
 	if (MyEcobeeCMD) getEcobeeCustomList(tstats).each { tstatOptions += ["${it}":"Ecobee '${it}' Climate"] }
 	return tstatOptions
 }
@@ -2699,7 +2699,7 @@ def getDeviceDesc(){
         result += tstats && cmd.tstat =="decreaseCool" && tUpDn ? "${tstats} decrease cooling setpoint: ${tUpDn} degrees" : ""
         result += tstats && cmd.tstat =="increaseHeat" && tUpDn ? "${tstats} increase heating setpoint: ${tUpDn} degrees" : ""
         result += tstats && cmd.tstat =="decreaseHeat" && tUpDn ? "${tstats} decrease heating setpoint: ${tUpDn} degrees" : ""
-        if (tstats && parent.nestCMD || ecobeeCMD || (ecobeeCMD && MyEcobeeCMD)) result += cmd.tstat && cmd.tstat =~/heat|cool|increase|decrease/ ? "": "${tstats} set to: ${cmd.tstat}"	
+        if (tstats && (parent.nestCMD || parent.ecobeeCMD || (parent.ecobeeCMD && parent.MyEcobeeCMD))) result += cmd.tstat && cmd.tstat =~/heat|cool|increase|decrease/ ? "": "${tstats} set to: ${cmd.tstat}"	
         result += result && locks && cmd.lock ? "\n":""
         result += locks && cmd.lock ? "${locks} set to ${cmd.lock}" : ""
         result += result && garages && cmd.garage ? "\n" : ""
