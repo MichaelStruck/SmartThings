@@ -1574,7 +1574,7 @@ def getReply(devices, type, STdeviceName, op, num, param){
                             else result ="There was an error setting your climate. %1%"
                         }
                         if (param =="resume program" && ecobeeCMD && !MyEcobeeCMD) {result = "I am resuming the climate program of the ${STdeviceName}. "; STdevice.resumeProgram()}  
-                        if (param =="resume program" && MyEcobeeCMD) {result = "I am resuming the climate program of the ${STdeviceName}. "; STdevice.resumeThisTstat()}  
+                        if (param =="resume program" && ecobeeCMD && MyEcobeeCMD) {result = "I am resuming the climate program of the ${STdeviceName}. "; STdevice.resumeThisTstat()}  
                         if (op =="off") { result = "I am turning the ${STdeviceName} ${op}. "; STdevice.off() }
                         if (stelproCMD && param==~/eco|comfort/) { result="I am setting the ${STdeviceName} to '${param}' mode. "; STdevice.setThermostatMode("${param}") } 
                     }
@@ -1906,13 +1906,9 @@ def groupResults(num, op, colorData, param, mNum){
                     }
                 }
                 if ((param=="resume program") && parent.ecobeeCMD && !parent.MyEcobeeCMD) {   
-                    result="I am resuming the climate program of the ${noun}."
-                    settings."groupDevice${groupType}"?.resumeProgram()
-                }
-                if ((param=="resume program") && parent.MyEcobeeCMD) {  
-					result="I am resuming the climate program of the ${noun}." 
-					settings."groupDevice${groupType}"?.resumeThisTstat() 
-				} 
+                    result="I am resuming the climate program of the ${noun}. "
+                    parent.MyEcobeeCMD ? settings."groupDevice${groupType}"?.resumeThisTstat() : settings."groupDevice${groupType}"?.resumeProgram()
+                } 
             }
             else if (op ==~/increase|raise|up|decrease|down|lower/) result = "Increase and decrease commands are not yet compatible with thermostat group macros. %1%" //need to add this soon
             else {
@@ -2041,7 +2037,7 @@ def controlHandler(){
         }
         else if (cmd.tstat=~/increase|decrease/) tstats.each {upDownChild(it, cmd.tstat, tstatUpDown as int, "temperature")}
         def ecobeeCustomRegEx = parent.MyEcobeeCMD && parent.ecobeeCMD ? getEcobeeCustomRegEx(tstats) : null 
-		if (cmd.tstat =~ /present|away|sleep|resume program/ || (ecobeeCustomRegEx && cmd.tstat =~ /${ecobeeCustomRegEx}/)) tstats?."${cmd.tstat}"() 
+		if (cmd.tstat =~ /present|away|sleep|resumeProgram/ || (ecobeeCustomRegEx && cmd.tstat =~ /${ecobeeCustomRegEx}/)) tstats?."${cmd.tstat}"() 
 	}
     if (garages && cmd.garage) garages?."${cmd.garage}"()
     if (shades && cmd.shade) shades?."${cmd.shade}"()
