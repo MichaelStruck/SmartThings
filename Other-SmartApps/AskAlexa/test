@@ -1,13 +1,13 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.2.2 - 2/23/17 Copyright © 2017 Michael Struck
+ *  Version 2.2.2 - 2/24/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; Barry Burke for Weather Underground Integration; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.2.2 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
- *	Version 2.2.2 (2/23/17) Syntax issues (thanks larry-fuqua); added loop/pulse options for colored lights using the latest community DTH for OSRAM lights(thanks @bbmcgee). Added options for lights that can only be controlled by Kelvin temperature
- *  Added increase/decrease commands to Control macro thermostat control.
+ *	Version 2.2.2 (2/24/17) Syntax issues (thanks larry-fuqua); added loop/pulse options for colored lights using the latest community DTH for OSRAM lights(thanks @bbmcgee). Added options for lights that can only be controlled by Kelvin temperature
+ *  Added increase/decrease commands to Control macro thermostat control; fixed Nest Present command
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -1261,7 +1261,6 @@ def processMacro() {
     def counter = 1, macAlias, count = 0
     count += getChildApps().count {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
 	while (!count && counter < macAliasCount()+1) {
-        log.debug getChildApps().find {it."macAlias${counter}".toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}.label.toLowerCase()
         if (count==1) macAlias = getChildApps().find {it."macAlias${counter}".toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}.label.toLowerCase()
         counter ++
     }
@@ -1301,11 +1300,11 @@ def processMacroAction(mac, mNum, cmd, param, mPW, followup){
 			(child.macroType == "Group" && child.groupType == "doorControl") || child.macroType == "Control" || child.macroType == "CoRE")){
 			macProceed = false
 			def pwExtra = mPW=="undefined" ? "a" : "the proper"
-			if (child.macroType == "Group" && child.groupType == "lock") outputTxt = "To lock or unlock a group, you must use ${pwExtra} password. %P%"
-			if (child.macroType == "Group" && child.groupType == "doorControl") outputTxt = "To open or close a group, you must use ${pwExtra} password. %P%"
-			if (child.macroType == "CoRE") outputTxt = "To activate a Core Trigger, you must use ${pwExtra} password. %P%"
-			if (child.macroType == "Control") outputTxt = "To activate a Control Macro, you must use ${pwExtra} password. %P%"             
-			if (child.macroType == "GroupM") outputTxt = "To activate a Group Macro, you must use ${pwExtra} password. %P%" 
+			if (child.macroType == "Group" && child.groupType == "lock") outputTxt = "To lock or unlock this group, you must use ${pwExtra} password. %P%"
+			if (child.macroType == "Group" && child.groupType == "doorControl") outputTxt = "To open or close this group, you must use ${pwExtra} password. %P%"
+			if (child.macroType == "CoRE") outputTxt = "To activate this Core Trigger, you must use ${pwExtra} password. %P%"
+			if (child.macroType == "Control") outputTxt = "To activate this Control Macro, you must use ${pwExtra} password. %P%"             
+			if (child.macroType == "GroupM") outputTxt = "To activate this Group Macro, you must use ${pwExtra} password. %P%" 
 			state.cmdFollowup=[return: "macroAction", mac:mac, mNum:mNum, cmd:cmd, param:param, mPW:0 ]
 		}
 		if (child.macroType != "Group" && child.macroType != "GroupM" && cmd=="list" && macProceed) { outputTxt = "You can not use the list command with this type of macro. %1%"; macProceed = false }
@@ -1566,7 +1565,7 @@ def getReply(devices, type, STdeviceName, op, num, param){
                         if (param =~/heat/) {result="I am setting the ${STdeviceName} to 'heating' mode. "; STdevice.heat()}
                         if (param =~/cool|AC/) {result="I am setting the ${STdeviceName} to 'cooling' mode. "; STdevice.cool()}
                         if (param =~/auto/) {result="I am setting the ${STdeviceName} to 'auto' mode. Please note, to properly set the temperature in 'auto' mode, you must specify the heating or cooling setpoints separately. " ; STdevice.auto()}
-                        if (param =="home" && nestCMD) {result = "I am setting the ${STdeviceName} to 'home'. "; STdevice.present()} 
+                        if (param ==~/home|present/ && nestCMD) {result = "I am setting the ${STdeviceName} to 'home'. "; STdevice.present()} 
                         if (param =="away" && nestCMD) {result = "I am setting the ${STdeviceName} to 'away'. Please note that Nest thermostats will not respond to temperature changes while in 'away' status. "; STdevice.away()} 
                         if ((param ==~/home|away|sleep/ || (ecobeeCustomRegEx && param =~ /${ecobeeCustomRegEx}/)) && ecobeeCMD) {
                             result = "I am setting the ${STdeviceName} to '" + param + "'. "
@@ -1888,7 +1887,7 @@ def groupResults(num, op, colorData, param, mNum){
                 if (param =~/auto/) {result="I am setting the ${noun} to 'auto' mode. Please note, to properly set the temperature in 'auto' mode, you must specify the heating or cooling setpoints separately. " ; settings."groupDevice${groupType}"?.auto()}
                 if (op == "off") { result = "I am turning off the ${noun}. "; settings."groupDevice${groupType}"?.off() }
                 if (parent.stelproCMD && (param=="eco" || param=="comfort")){ result="I am setting the ${noun} to '${param}' mode. "; settings."groupDevice${groupType}"?.setThermostatMode("${param}") }
-                if (param=="home" && parent.nestCMD) { result="I am setting the ${noun} to 'home' mode. "; settings."groupDevice${groupType}"?.present() }
+                if (param==~/home|present/ && parent.nestCMD) { result="I am setting the ${noun} to 'home' mode. "; settings."groupDevice${groupType}"?.present() }
                 if (param=="away" && parent.nestCMD) { 
                     result="I am setting the ${noun} to 'away' mode. Please note that Nest thermostats will not accept temperature changes while in 'away' status. "
                     settings."groupDevice${groupType}"?.away()
@@ -2042,7 +2041,7 @@ def controlHandler(){
         }
         else if (cmd.tstat=~/increase|decrease/) tstats.each {upDownChild(it, cmd.tstat, tstatUpDown as int, "temperature")}
         def ecobeeCustomRegEx = parent.MyEcobeeCMD && parent.ecobeeCMD ? getEcobeeCustomRegEx(tstats) : null 
-		if (cmd.tstat =~ /home|away|sleep|resume program/ || (ecobeeCustomRegEx && cmd.tstat =~ /${ecobeeCustomRegEx}/)) tstats?."${cmd.tstat}"() 
+		if (cmd.tstat =~ /present|away|sleep|resume program/ || (ecobeeCustomRegEx && cmd.tstat =~ /${ecobeeCustomRegEx}/)) tstats?."${cmd.tstat}"() 
 	}
     if (garages && cmd.garage) garages?."${cmd.garage}"()
     if (shades && cmd.shade) shades?."${cmd.shade}"()
@@ -2372,7 +2371,7 @@ def cLightsCTLOptions(){
 }
 def tStatCTLOptions(){
 	def tstatOptions=["heat":"Set heating temperature","cool":"Set cooling temperature","increaseHeat":"Increase current heating setpoint","decreaseHeat":"Decrease current heating setpoint","increaseCool":"Increase current cooling setpoint", "decreaseCool":"Decrease current cooling setpoint"]
-	if (nestCMD) tstatOptions += ["away":"Nest 'Away' Presence","home":"Nest 'Home' Presence"]
+	if (nestCMD) tstatOptions += ["away":"Nest 'Away' Presence","present":"Nest 'Home' Presence"]
 	if (ecobeeCMD) tstatOptions += ["away":"Ecobee 'Away' Climate","home":"Ecobee 'Home' Climate","sleep":"Ecobee 'Sleep' Climate","resume program":"Ecobee 'Resume Program'"]
 	if (MyEcobeeCMD) getEcobeeCustomList(tstats).each { tstatOptions += ["${it}":"Ecobee '${it}' Climate"] }
 	return tstatOptions
@@ -2700,7 +2699,7 @@ def getDeviceDesc(){
         result += tstats && cmd.tstat =="decreaseCool" && tUpDn ? "${tstats} decrease cooling setpoint: ${tUpDn} degrees" : ""
         result += tstats && cmd.tstat =="increaseHeat" && tUpDn ? "${tstats} increase heating setpoint: ${tUpDn} degrees" : ""
         result += tstats && cmd.tstat =="decreaseHeat" && tUpDn ? "${tstats} decrease heating setpoint: ${tUpDn} degrees" : ""
-        if (parent.nestCMD || ecobeeCMD || (ecobeeCMD && MyEcobeeCMD)  ) result += tstats && cmd.tstat && cmd.tstat =~/heat|cool|increase|decrease/ ? "": "${tstats} set to: ${cmd.tstat}"	
+        if (tstats && parent.nestCMD || ecobeeCMD || (ecobeeCMD && MyEcobeeCMD)) result += cmd.tstat && cmd.tstat =~/heat|cool|increase|decrease/ ? "": "${tstats} set to: ${cmd.tstat}"	
         result += result && locks && cmd.lock ? "\n":""
         result += locks && cmd.lock ? "${locks} set to ${cmd.lock}" : ""
         result += result && garages && cmd.garage ? "\n" : ""
@@ -3445,6 +3444,7 @@ def setupData(){
     result += "<br><b>LIST_OF_PARAMS</b><br><br>"
     def PARAMS=["heat","cool","heating","cooling","auto","automatic","AC"]
     if (tstatsSel() && stelproCMD) PARAMS<< "eco"<<"comfort"
+    if (tstatsSel() && nestCMD) PARAMS<<"present"
     if (tstatsSel() && (nestCMD || ecobeeCMD)) PARAMS<<"home"<<"away"
     if (tstatsSel() && ecobeeCMD) PARAMS<<"sleep"<<"resume program"
 	if (tstats && MyEcobeeCMD){  getEcobeeCustomList(tstats).each { PARAMS<<"${it}" } }     
@@ -3521,7 +3521,7 @@ def getURLs(){
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private textAppName() { return "Ask Alexa" }	
 private textVersion() {
-    def version = "SmartApp Version: 2.2.2 (02/23/2017)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
+    def version = "SmartApp Version: 2.2.2 (02/24/2017)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : ""
     return "${version}${lambdaVersion}"
 }
 private versionInt(){ return 222 }
@@ -3577,7 +3577,8 @@ private cheat(){
     if (getCheatDisplayList("shade") && deviceAlias) { result += "<br><u>Aliases</u><br>"; result += getCheatDisplayList("shade") +"<br>" }
     if (tstatsSel()) { result += "<h2><u>Thermostats (Valid Commands: <b>{Temperature setpoint}, Status"
     	if (stelproCMD) result += ", Eco, Comfort"
-        if (nestCMD || ecobeeCMD) result += ", Home, Away"
+        if (nestCMD) result += ", Present (or 'Home'), Away"
+        if (ecobeeCMD) result += ", Home, Away"
         if (nestCMD && nestMGRCMD) result += ", Report"
         if (ecobeeCMD) result += ", Sleep, Resume Program"
         if (ecobeeCMD && MyEcobeeCMD) result += ", Get Tips {level}, Play Tips, Erase Tips"
