@@ -38,7 +38,12 @@ def mainPage() {
         }   
         section ("Message queue options"){ input "msgQueueOrder", "enum", title: "Message Play Back Order (Alexa)", options:[0:"Oldest to newest", 1:"Newest to oldest"], defaultValue: 0 }
         section ("Real-time notification options"){
-            input "msgQueueNotifyLightsOn", "capability.switch", title: "Turn On Lights When Messages Present", required:false, multiple:false, submitOnChange: true
+            input "msgQueueNotifyLightsOn", "capability.switch", title: "Turn On Lights When Messages Present", required:false, multiple:true, submitOnChange: true
+            input "msgQueueNotifycLightsOn", "capability.colorControl", title: "Turn On/Set Colored Lights When Messages Present", required:false, multiple:true, submitOnChange: true
+            if (msgQueueNotifycLightsOn) {
+            	input "msgQueueNotifyColor", "enum", title: "Set Color of Message Notification", options: parent.STColors().name, multiple:false, required:false
+            	input "msgQueueNotifyLevel", "number", title: "Set Level of Message Notification", defaultValue:50, required:false
+            }
             if (msgQueueNotifyLightsOn) input "msgQueueNotifyLightsOff", "bool", title: "Turn Off Lights When Message Queue Empty", defaultValue: false
             input "msgQueueNotifyOther","bool", title: "Notify When Messages Arrive (SMS/Push)", defaultValue: false, submitOnChange: true
             input "msgQueueNotifyExt", "bool", title: "Notify When Messages Arrive (External Speakers/Synth)", defaultValue: false, submitOnChange: true
@@ -93,6 +98,10 @@ def msgHandler(date, descriptionText, unit, value) {
     	sendMSG(mqSMS, mqMsg , mqPush, mqContacts)
 	}
     if (msgQueueNotifyLightsOn) msgQueueNotifyLightsOn?.on()
+    if (msgQueueNotifycLightsOn && (msgQueueNotifyColor || msgQueueNotifyLevel)) {
+        def level = !msgQueueNotifyLevel || msgQueueNotifyLevel < 0 ? 50 : msgQueueNotifyLevel >100 ? 100 : msgQueueNotifyLevel as int
+        msgQueueNotifyColor ? parent.setColoredLights(msgQueueNotifycLightsOn, msgQueueNotifyColor, msgQueueNotifyLevel) : msgQueueNotifycLightsOn?.setLevel(level)
+	}
 }
 def msgDeleteHandler(unit, value){
 	if (state.msgQueue && state.msgQueue.size()>0){
@@ -100,6 +109,7 @@ def msgDeleteHandler(unit, value){
 			log.debug value + " is being asked to delete messages from the ${app.label} message queue."
 			state.msgQueue.removeAll{it.appName==value && it.id==unit}
             if (msgQueueNotifyLightsOn && msgQueueNotifyLightsOff && !state.msgQueue) msgQueueNotifyLightsOn?.off()
+            if (msgQueueNotifycLightsOn && msgQueueNotifyLightsOff && !state.msgQueue) msgQueueNotifycLightsOn?.off()
 		}
 		else log.debug "Incorrect delete parameters sent to ${app.label} message queue. Nothing was deleted"
 	} 
@@ -131,6 +141,7 @@ def msgQueueReply(cmd){
 		state.msgQueue =[]
 		result="I have deleted all of the messages from the ${app.label} message queue. %M%"
         if (msgQueueNotifyLightsOn && msgQueueNotifyLightsOff) msgQueueNotifyLightsOn?.off()
+        if (msgQueueNotifycLightsOn && msgQueueNotifyLightsOff) msgQueueNotifycLightsOn?.off()
 	}
 	else result="For the ${app.label} message queue, be sure to give a 'play' or 'delete' command. %1%"
     return result 
@@ -161,6 +172,7 @@ def MQGUI(){
 def qDelete() { 
 	state.msgQueue =[] 
 	if (msgQueueNotifyLightsOn && msgQueueNotifyLightsOff) msgQueueNotifyLightsOn?.off()
+    if (msgQueueNotifycLightsOn && msgQueueNotifyLightsOff) msgQueueNotifycLightsOn?.off()
 }
 //Version/Copyright/Information/Help
 private versionInt(){ return 100 }
