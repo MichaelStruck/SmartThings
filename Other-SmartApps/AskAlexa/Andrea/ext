@@ -1,0 +1,168 @@
+/**
+ *  Ask Alexa Message Queue Extension
+ *
+ *  Copyright © 2017 Michael Struck
+ *  Version 1.0.0 3/28/17
+ * 
+ *  Version 1.0.0 - Initial release
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *  for the specific language governing permissions and limitations under the License.
+ *
+ */
+definition(
+    name: "Ask Alexa Message Queue",
+    namespace: "MichaelStruck",
+    author: "Michael Struck",
+    description: "Extension Application of Ask Alexa. Do not install directly from the Marketplace",
+    category: "My Apps",
+    parent: "MichaelStruck:Ask Alexa",
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa-message-queue.src/ext.png",
+    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa-message-queue.src/ext@2x.png",
+    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa-message-queue.src/ext@2x.png",
+    )
+preferences {
+    page name:"mainPage"
+}
+//Show main page
+def mainPage() {
+	dynamicPage(name: "mainPage", title:"Ask Alexa Message Queue Options", install: true, uninstall: true) {
+        section {
+        	label title:"Message Queue Name (Required)", required: true, image: imgURL() + "mailbox.png"
+        }   
+        section ("Message queue options"){ input "msgQueueOrder", "enum", title: "Message Play Back Order (Alexa)", options:[0:"Oldest to newest", 1:"Newest to oldest"], defaultValue: 0 }
+        section ("Real-time notification options"){
+            input "msgQueueNotifyLightsOn", "capability.switch", title: "Turn On Lights When Messages Present", required:false, multiple:false, submitOnChange: true
+            if (msgQueueNotifyLightsOn) input "msgQueueNotifyLightsOff", "bool", title: "Turn Off Lights When Message Queue Empty", defaultValue: false
+            input "msgQueueNotifyOther","bool", title: "Notify When Messages Arrive (SMS/Push)", defaultValue: false, submitOnChange: true
+            input "msgQueueNotifyExt", "bool", title: "Notify When Messages Arrive (External Speakers/Synth)", defaultValue: false, submitOnChange: true
+		}
+        if (msgQueueNotifyExt) {
+			section ("Message notification - external speakers / synth"){
+            	input "mqSpeaker", "capability.musicPlayer", title: "Choose Speakers", multiple: true, required: false, submitOnChange: true
+            	if (mqSpeaker) input "mqVolume", "number", title: "Speaker Volume", description: "0-100%", required: false
+            	input "mqSynth", "capability.speechSynthesis", title: "Choose Voice Synthesis Devices", multiple: true, required: false, hideWhenEmpty: true
+                if (mqSpeaker) input "mqAlertType", "enum", title:"Notification Type...", options:[0: "Notification and Message", 1: "Notification Only", 2: "Message Only"], defaultValue:0
+			}
+		}
+        if (msgQueueNotifyOther){
+        	section ("Message notification - SMS / push"){
+            	input ("mqContacts", "contact", title: "Send Notifications To...", required: false) {
+					input "mqSMS", "phone", title: "Send SMS Message To (Phone Number)...", required: false
+					input "mqPush", "bool", title: "Send Push Message", defaultValue: false
+            	}
+            }
+        }
+        section("Tap below to remove all schedules and application"){
+        }
+	}
+}
+def installed() {
+    initialize()
+}
+def updated() {
+	unsubscribe() 
+    initialize()
+}
+def initialize() {
+
+}
+//Main Handlers
+def msgHandler(date, descriptionText, unit, value) {
+    if (!state.msgQueue) state.msgQueue=[]
+    log.debug "New message added to the ${app.label} message queue from: " + value
+	state.msgQueue<<["date":date.getTime(),"appName":value,"msg":descriptionText,"id":unit] 
+    if (msgQueueNotifyExt && (mqSpeaker || mqSynth)) {
+    	if (mqSpeaker && mqVolume) {
+        	def msgTxt=(!mqAlertType || mqAlertType==1) ? "New message received in the ${app.label} message queue from : " + value : ""
+            if (!mqAlertType || mqAlertType==2 ) msgTxt += ": "+ descriptionText
+            mqSpeaker?.setLevel(mqVolume as int)
+        	def msg = textToSpeech (msgTxt, true)
+        	mqSpeaker?.playTrack (msg.uri)
+        }
+        if (mqSynth) mqSynth?.speak(msgTxt)
+    }
+    if (mqPush || mqSMS || mqContacts){
+    	def mqMsg = "New message received by Ask Alexa from : " + value + ": "+ evt.descriptionText + "for the ${app.label} message queue."
+    	sendMSG(mqSMS, mqMsg , mqPush, mqContacts)
+	}
+    if (msgQueueNotifyLightsOn) msgQueueNotifyLightsOn?.on()
+}
+def msgDeleteHandler(unit, value){
+	if (state.msgQueue && state.msgQueue.size()>0){
+		if (unit && value){
+			log.debug value + " is being asked to delete messages from the ${app.label} message queue."
+			state.msgQueue.removeAll{it.appName==value && it.id==unit}
+            if (msgQueueNotifyLightsOn && msgQueueNotifyLightsOff && !state.msgQueue) msgQueueNotifyLightsOn?.off()
+		}
+		else log.debug "Incorrect delete parameters sent to ${app.label} message queue. Nothing was deleted"
+	} 
+	else log.debug "The ${app.label} message queue is empty. No messages were deleted."
+}
+//Message Queue Reply
+def msgQueueReply(cmd){
+	log.debug "-'${app.label}' Message Queue Response-"
+    log.debug "Message Queue Command: " + cmd
+    String result = ""
+	def msgCount = state.msgQueue ? state.msgQueue.size() : 0, msgS= msgCount==0 || msgCount>1 ? " messages" : " message"
+	if (cmd =~/play|undefined/){
+      	if (msgCount==0) result = "You don't have any messages in the ${app.label} queue. %M%"
+        else {
+        	result = "You have " + msgCount + msgS + " in the ${app.label} queue: "
+            state.msgQueue.sort({it.date})
+            state.msgQueue.reverse(msgQueueOrder as int? true : false)
+            state.msgQueue.each{
+            	def today = new Date(now()).format("EEEE, MMMM d, yyyy", location.timeZone)
+                def msgDay = new Date(it.date).format("EEEE, MMMM d, yyyy", location.timeZone)
+                def voiceDay = today == msgDay ? "Today" : "On " + msgDay 
+                def msgTime = new Date(it.date).format("h:mm aa", location.timeZone)
+            	result += "${voiceDay} at ${msgTime}, '${it.appName}' posted the message: '${it.msg}'. "
+			}
+			result +="%M%"
+		}
+	}
+	else if (cmd =~ /clear|delete|erase/) {
+		state.msgQueue =[]
+		result="I have deleted all of the messages from the ${app.label} message queue. %M%"
+        if (msgQueueNotifyLightsOn && msgQueueNotifyLightsOff) msgQueueNotifyLightsOn?.off()
+	}
+	else result="For the ${app.label} message queue, be sure to give a 'play' or 'delete' command. %1%"
+    return result 
+}
+//Child Common modules
+def imgURL() { return "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/" }
+def sendMSG(num, msg, push, recipients){
+    if (location.contactBookEnabled && recipients) sendNotificationToContacts(msg, recipients)
+    else {
+    	if (num) {sendSmsMessage(num,"${msg}")}
+    	if (push) {sendPushMessage("${msg}")}
+    }
+}
+def qSize(){return state.msgQueue ? state.msgQueue.size(): 0}
+def MQGUI(){
+    def msgRpt = ""
+	state.msgQueue.sort({it.date})
+	state.msgQueue.reverse(msgQueueOrder as int? true : false)
+	state.msgQueue.each{
+		def today = new Date(now()).format("EEEE, MMMM d, yyyy", location.timeZone)
+		def msgDay = new Date(it.date).format("EEEE, MMMM d, yyyy", location.timeZone)
+		def voiceDay = today == msgDay ? "Today" : msgDay 
+		def msgTime = new Date(it.date).format("h:mm aa", location.timeZone)
+		msgRpt += "● ${voiceDay} at ${msgTime} From: '${it.appName}' : '${it.msg}'\n"
+	}
+    return msgRpt
+}
+def qDelete() { 
+	state.msgQueue =[] 
+	if (msgQueueNotifyLightsOn && msgQueueNotifyLightsOff) msgQueueNotifyLightsOn?.off()
+}
+//Version/Copyright/Information/Help
+private versionInt(){ return 100 }
+private def textAppName() { return "Ask Alexa Message Queue" }	
+private def textVersion() { return "Message Queue Version: 1.0.0 (03/28/2017)" }
