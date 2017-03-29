@@ -3419,7 +3419,7 @@ def msgPMQ(date,descriptionText,unit,value){
             if (mqSynth) mqSynth?.speak(msgTxt)
         }
         if (mqPush || mqSMS || mqContacts){
-            def mqMsg = "New message received by Ask Alexa in primary message queue from : " + evt.value + ": "+ evt.descriptionText
+            def mqMsg = "New message received by Ask Alexa in primary message queue from : " + value + ": "+ descriptionText
             sendMSG(mqSMS, mqMsg , mqPush, mqContacts)
         }
         if (msgQueueNotifyLightsOn) msgQueueNotifyLightsOn?.on()
