@@ -100,7 +100,7 @@ def msgHandler(date, descriptionText, unit, value) {
     if (msgQueueNotifyLightsOn) msgQueueNotifyLightsOn?.on()
     if (msgQueueNotifycLightsOn && (msgQueueNotifyColor || msgQueueNotifyLevel)) {
         def level = !msgQueueNotifyLevel || msgQueueNotifyLevel < 0 ? 50 : msgQueueNotifyLevel >100 ? 100 : msgQueueNotifyLevel as int
-        msgQueueNotifyColor ? setColoredLights(msgQueueNotifycLightsOn, msgQueueNotifyColor, msgQueueNotifyLevel) : msgQueueNotifycLightsOn?.setLevel(level)
+        msgQueueNotifyColor ? parent.setColoredLights(msgQueueNotifycLightsOn, msgQueueNotifyColor, msgQueueNotifyLevel) : msgQueueNotifycLightsOn?.setLevel(level)
 	}
 }
 def msgDeleteHandler(unit, value){
@@ -173,23 +173,6 @@ def qDelete() {
 	state.msgQueue =[] 
 	if (msgQueueNotifyLightsOn && msgQueueNotifyLightsOff) msgQueueNotifyLightsOn?.off()
     if (msgQueueNotifycLightsOn && msgQueueNotifyLightsOff) msgQueueNotifycLightsOn?.off()
-}
-private setColoredLights(switches, color, level){
-    def getColorData = parent.STColors().find {it.name==color}
-    def hueColor = getColorData ?  Math.round(getColorData.h / 3.6) : 0, satLevel = getColorData ? getColorData.s:0, newLevel = level>0 ? level : getColorData.l 
-    if (color == "Custom-User Defined"){
-		hueColor = hueUserDefined ?  hueUserDefined  : 0
-		satLevel = satUserDefined ? satUserDefined : 0
-		hueColor = hueColor > 100 ? 100 : hueColor < 0 ? 0 : hueColor
-		satLevel = satLevel > 100 ? 100 : satLevel < 0 ? 0 : satLevel
-	}
-    def newValue = [hue: hueColor as int, saturation: satLevel as int] 
- 	if (parent.osramCMD){
-    	try {  switches?.loopOff() } 
-    	catch (e) { log.warn "You have attempted a command that is not compatible with the the device handler you are using. Try to turn off the Osram functions in Settings>Device Specific Commands"  }  
-    }
-    switches?.setColor(newValue)
-    switches?.setLevel(newLevel as int)
 }
 //Version/Copyright/Information/Help
 private versionInt(){ return 100 }
