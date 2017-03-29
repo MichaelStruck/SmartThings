@@ -885,8 +885,8 @@ def pagePresenceReport(){
             input "voicePresence", "capability.presenceSensor", title: "Presence Sensors To Report Their Status...", multiple: true, required: false, submitOnChange: true 
             if (voicePresence) input "voicePresRepType", "enum", title: "Presence Sensor Report Type", options:[0:"Each device reports status (Default)",
             	1:"Summary report (If all present/away)",2:"Sensors that are 'present' only", 3:"Sensors that are 'not present' only"], defaultValue: 0, required:false
-            if (voicePresence)input "voicePresentEvt", "bool",title: "Report Time Of Last Arrival", defaultValue: false 
-            if (voicePresence)input "voiceGoneEvt", "bool",title: "Report Time Of Last Departure", defaultValue: false 
+            if (voicePresence) input "voicePresentEvt", "bool",title: "Report Time Of Last Arrival", defaultValue: false 
+            if (voicePresence) input "voiceGoneEvt", "bool",title: "Report Time Of Last Departure", defaultValue: false 
         }
     }
 }
@@ -895,15 +895,19 @@ def pageSwitchReport(){
         section { paragraph "Switch/Dimmer Report", image: imgURL() + "power.png" }
         section("Switch report", hideWhenEmpty: true) {
             input "voiceSwitch", "capability.switch", title: "Switches To Report Their Status...", multiple: true, required: false, submitOnChange: true
-            if (voiceSwitch) input "voiceSwitchAll", "bool", title: "Consolidate Report When All Switches Are On / Off", defaultValue: false
-            if (voiceSwitch) input "voiceOnSwitchOnly", "bool", title: "Report Only Switches That Are On", defaultValue: false
-            if (voiceSwitch)input "voiceOnSwitchEvt", "bool",title: "Report Time Of Last On Event", defaultValue: false 
+            if (voiceSwitch) {
+            	input "voiceSwitchAll", "bool", title: "Consolidate Report When All Switches Are On / Off", defaultValue: false
+            	input "voiceOnSwitchOnly", "bool", title: "Report Only Switches That Are On", defaultValue: false
+				input "voiceOnSwitchEvt", "bool",title: "Report Time Of Last On Event", defaultValue: false 
+        	}
         }
         section("Dimmer report", hideWhenEmpty: true) {
             input "voiceDimmer", "capability.switchLevel", title: "Dimmers To Report Their Status...", multiple: true, required: false, submitOnChange: true
-            if (voiceDimmer) input "voiceDimmerAll", "bool", title: "Consolidate Report When All Dimmers Are On / Off", defaultValue: false
-            if (voiceDimmer) input "voiceOnDimmerOnly", "bool", title: "Report Only Dimmers That Are On", defaultValue: false
-            if (voiceDimmer)input "voiceOnDimmerEvt", "bool",title: "Report Time Of Last On Event", defaultValue: false
+            if (voiceDimmer) {
+            	input "voiceDimmerAll", "bool", title: "Consolidate Report When All Dimmers Are On / Off", defaultValue: false
+				input "voiceOnDimmerOnly", "bool", title: "Report Only Dimmers That Are On", defaultValue: false
+				input "voiceOnDimmerEvt", "bool",title: "Report Time Of Last On Event", defaultValue: false
+        	}
         }
     }
 }
