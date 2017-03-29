@@ -2,7 +2,7 @@
  *  Ask Alexa Message Queue Extension
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.0 3/28/17
+ *  Version 1.0.0 3/29/17
  * 
  *  Version 1.0.0 - Initial release
  *
@@ -94,7 +94,7 @@ def msgHandler(date, descriptionText, unit, value) {
         if (mqSynth) mqSynth?.speak(msgTxt)
     }
     if (mqPush || mqSMS || mqContacts){
-    	def mqMsg = "New message received by Ask Alexa from : " + value + ": "+ evt.descriptionText + "for the ${app.label} message queue."
+    	def mqMsg = "New message received by Ask Alexa from : " + value + ": "+ descriptionText + "for the ${app.label} message queue."
     	sendMSG(mqSMS, mqMsg , mqPush, mqContacts)
 	}
     if (msgQueueNotifyLightsOn) msgQueueNotifyLightsOn?.on()
@@ -177,4 +177,4 @@ def qDelete() {
 //Version/Copyright/Information/Help
 private versionInt(){ return 100 }
 private def textAppName() { return "Ask Alexa Message Queue" }	
-private def textVersion() { return "Message Queue Version: 1.0.0 (03/28/2017)" }
+private def textVersion() { return "Message Queue Version: 1.0.0 (03/29/2017)" }
