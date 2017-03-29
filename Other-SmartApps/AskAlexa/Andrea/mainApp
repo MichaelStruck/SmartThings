@@ -141,8 +141,7 @@ def pageMQGUI(){
             section ("Primary Message Queue") { paragraph msgRpt }
         }
         msgQueueGUI.each{qID->
-            def qNameRun = getAAMQ().find{it.id == qID}
-            def msgCount = 0
+            def qNameRun = getAAMQ().find{it.id == qID}, msgCount = 0
             if (qNameRun) {
                 msgCount += qNameRun.qSize()
                 if (msgCount) {
@@ -473,7 +472,7 @@ def pagePriQueue(){
             	input "msgQueueNotifyLevel", "number", title: "Set Level of Message Notification", defaultValue:50, required:false
             }
             if (msgQueueNotifyLightsOn || msgQueueNotifycLightsOn) input "msgQueueNotifyLightsOff", "bool", title: "Turn Off Lights When Message Queue Empty", defaultValue: false
-            input "msgQueueNotifyOther","bool", title: "Notify When Messages Arrive (SMS/Push)", defaultValue: false, submitOnChange: true
+            input "msgQueueNotifyOther", "bool", title: "Notify When Messages Arrive (SMS/Push/Feed)", defaultValue: false, submitOnChange: true
             input "msgQueueNotifyExt", "bool", title: "Notify When Messages Arrive (External Speakers/Synth)", defaultValue: false, submitOnChange: true
 		}
         if (msgQueueNotifyExt) {
@@ -485,11 +484,12 @@ def pagePriQueue(){
 			}
 		}
         if (msgQueueNotifyOther){
-        	section ("Message notification - SMS / push"){
+        	section ("Message notification - SMS / push /feed"){
             	input ("mqContacts", "contact", title: "Send Notifications To...", required: false) {
 					input "mqSMS", "phone", title: "Send SMS Message To (Phone Number)...", required: false
 					input "mqPush", "bool", title: "Send Push Message", defaultValue: false
             	}
+                input "mqFeed", "bool", title: "Post To Notification Feed", defaultValue: false, submitOnChange: true
             }
         }
     }
@@ -2533,6 +2533,20 @@ private getEcobeeCustomList(myEcobeeGroup){
 	}
 	return myEcobeeList 
 }
+def sendMSG(num, msg, push, recipients){
+    if (location.contactBookEnabled && recipients) sendNotificationToContacts(msg, recipients)
+    else {
+    	if (num) {sendSmsMessage(num,"${msg}")}
+    	if (push) {sendPushMessage("${msg}")}
+    }
+}
+def timeDate(dateNum){
+	def today = new Date(now()).format("EEEE, MMMM d, yyyy", location.timeZone)
+	def msgDay = new Date(dateNum).format("EEEE, MMMM d, yyyy", location.timeZone)
+    def voiceDay = today == msgDay ? "Today" : msgDay
+    def msgTime = new Date(dateNum).format("h:mm aa", location.timeZone)
+    return ["msgTime": msgTime, "msgDay": voiceDay]
+}
 //Common Code(Child)-----------------------------------------------------------
 private currWeatherSel() { return voiceWeatherTemp || voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip }
 private foreWeatherSel() { return voiceWeatherToday || voiceWeatherTonight || voiceWeatherTomorrow}
@@ -3248,13 +3262,6 @@ private tideInfo() {
     return msg		
 }
 //Various Functions-----------------------------------------------------------
-def sendMSG(num, msg, push, recipients){
-    if (location.contactBookEnabled && recipients) sendNotificationToContacts(msg, recipients)
-    else {
-    	if (num) {sendSmsMessage(num,"${msg}")}
-    	if (push) {sendPushMessage("${msg}")}
-    }
-}
 def toggleState(swDevices){ swDevices.each{ it.currentValue("switch")=="off" ? it.on() : it.off() } }
 private setColoredLights(switches, color, level){
     def getColorData = parent ? parent.STColors().find {it.name==color} : STColors().find {it.name==color} 
@@ -3314,13 +3321,6 @@ private songLocations(){
     if (!state.songLoc) state.songLoc=[]
     if (speakers) getSongs(speakers)
     if (deviceAlias && speakersAlias) getSongs(speakersAlias)
-}
-def timeDate(dateNum){
-	def today = new Date(now()).format("EEEE, MMMM d, yyyy", location.timeZone)
-	def msgDay = new Date(dateNum).format("EEEE, MMMM d, yyyy", location.timeZone)
-    def voiceDay = today == msgDay ? "Today" : msgDay
-    def msgTime = new Date(dateNum).format("h:mm aa", location.timeZone)
-    return ["msgTime": msgTime, "msgDay": voiceDay]
 }
 def getSongs(device){
 	def memCount = sonosMemoryCount as int
@@ -3422,6 +3422,7 @@ def msgPMQ(date,descriptionText,unit,value){
             def mqMsg = "New message received by Ask Alexa in primary message queue from : " + value + ": "+ descriptionText
             sendMSG(mqSMS, mqMsg , mqPush, mqContacts)
         }
+        if (mqFeed) sendNotificationEvent("New message received by Ask Alexa in primary message queue from : " + value + ": "+ descriptionText)
         if (msgQueueNotifyLightsOn) msgQueueNotifyLightsOn?.on()
         if (msgQueueNotifycLightsOn && (msgQueueNotifyColor || msgQueueNotifyLevel)) {
         	def level = !msgQueueNotifyLevel || msgQueueNotifyLevel < 0 ? 50 : msgQueueNotifyLevel >100 ? 100 : msgQueueNotifyLevel as int
