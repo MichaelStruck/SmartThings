@@ -1,12 +1,12 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.2.4 - 3/28/17 Copyright © 2017 Michael Struck
+ *  Version 2.2.4 - 3/29/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; Barry Burke for Weather Underground Integration; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.2.4 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
- *  Version 2.2.4 (3/28/17) Framework changes for extensions (new one: additional message queues), added additional notifications to message queues, change SHM model to conform with new SmartThings naming standard, new icon for custom color
+ *  Version 2.2.4 (3/29/17) Framework changes for extensions (new one: additional message queues), added additional notifications to message queues, change SHM model to conform with new SmartThings naming standard, new icon for custom color
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -477,7 +477,7 @@ def pagePriQueue(){
             input "msgQueueNotifyExt", "bool", title: "Notify When Messages Arrive (External Speakers/Synth)", defaultValue: false, submitOnChange: true
 		}
         if (msgQueueNotifyExt) {
-			section ("Message notification - external speakers / synth"){
+			section ("Message notification - External speakers / synth"){
             	input "mqSpeaker", "capability.musicPlayer", title: "Choose Speakers", multiple: true, required: false, submitOnChange: true
             	if (mqSpeaker) input "mqVolume", "number", title: "Speaker Volume", description: "0-100%", required: false
             	input "mqSynth", "capability.speechSynthesis", title: "Choose Voice Synthesis Devices", multiple: true, required: false, hideWhenEmpty: true
@@ -496,7 +496,7 @@ def pagePriQueue(){
 }
 def pageMsgQue() {
     dynamicPage(name: "pageMsgQue", install: false, uninstall: false) {
-        section{ paragraph "Message queues", image: imgURL() + "mailbox.png" }
+        section{ paragraph "Message Queues", image: imgURL() + "mailbox.png" }
         section ("Global message queue options"){ 
         	input "msgQueueGUI", "enum", title: "Message Queues Displayed On Main Menu (When Messages Are Present)" , options: getMQListID(true), multiple:true, required:false 
             input "msgQueueDelete", "enum", title: "Allow External SmartApps To Delete Messages From These Queues", options: getMQListID(true), multiple:true, required:false
@@ -505,7 +505,7 @@ def pageMsgQue() {
         }
         def children = getAAMQ(), duplicates = children.label.findAll{children.label.count(it)>1}.unique(), aaMQVer=""
         if (children.size()) children.each { aaMQVer=it.versionInt()}
-        section ("Message Queues"){ 
+        section ("Message queues"){ 
         	if (duplicates) paragraph "You have two or more message queues with the same name. Please ensure each queue has a unique name and also does not conflict with device or macro names as well. ", image: imgURL() + "caution.png" 
             if (children.size() && (aaMQVer < mqReq())) paragraph "You are using an outdated version of the message queue extension. Please update the software and try again.", image: imgURL() + "caution.png" 
             href "pagePriQueue", title: "Primary Message Queue", description: "", state:"complete"
@@ -1326,7 +1326,7 @@ def msgQueueReply(cmd,queue){
     if (validQueue) result=validQueue.msgQueueReply(cmd)
     else {
         def msgCount = state.msgQueue ? state.msgQueue.size() : 0, msgS= msgCount==0 || msgCount>1 ? " messages" : " message"
-        if (cmd =~/play|undefined/){
+        if (cmd =~/play|open|undefined/){
             if (msgCount==0) result = "You don't have any messages in the primary message queue. %M%"
             else {
                 result = "You have " + msgCount + msgS + " in your primary message queue: "
@@ -2125,7 +2125,7 @@ def controlHandler(){
     	if (cmd.cLight == "set"){
             if (cLightsCLR || cLightsLVL) {
             	def level = !cLightsLVL || cLightsLVL < 0 ? 0 : cLightsLVL >100 ? 100 : cLightsLVL as int
-            	cLightsCLR ? setColoredLights(cLights, cLightsCLR, level) : cLights?.setLevel(level)
+            	cLightsCLR ? parent.setColoredLights(cLights, cLightsCLR, level) : cLights?.setLevel(level)
         	}
         }
         else if (cmd.cLight ==~/increase|decrease/) cLights.each {upDownChild(it, cmd.cLight, cLightsUpDown as int, "level")}
@@ -3253,7 +3253,7 @@ def sendMSG(num, msg, push, recipients){
 }
 def toggleState(swDevices){ swDevices.each{ it.currentValue("switch")=="off" ? it.on() : it.off() } }
 private setColoredLights(switches, color, level){
-    def getColorData = parent.STColors().find {it.name==color}
+    def getColorData = parent ? parent.STColors().find {it.name==color} : STColors().find {it.name==color} 
     def hueColor = getColorData ?  Math.round(getColorData.h / 3.6) : 0, satLevel = getColorData ? getColorData.s:0, newLevel = level>0 ? level : getColorData.l 
     if (color == "Custom-User Defined"){
 		hueColor = hueUserDefined ?  hueUserDefined  : 0
@@ -3262,7 +3262,8 @@ private setColoredLights(switches, color, level){
 		satLevel = satLevel > 100 ? 100 : satLevel < 0 ? 0 : satLevel
 	}
     def newValue = [hue: hueColor as int, saturation: satLevel as int] 
- 	if (parent.osramCMD){
+    def isOsram = parent ? parent.osramCMD : osramCMD
+    if (isOsram){
     	try {  switches?.loopOff() } 
     	catch (e) { log.warn "You have attempted a command that is not compatible with the the device handler you are using. Try to turn off the Osram functions in Settings>Device Specific Commands"  }  
     }
@@ -3356,7 +3357,7 @@ def memoryDesc(){
 }
 def getMacroList(type){
     def macChildren = getAskAlexa(), mqChildren=getAAMQ(), result=[]
-    if (type =="all") macChildreneach{ if (it.macroType !="GroupM" && it.macroType!="Group") result << ["${it.label}": "${it.label} (${it.macroType})"] }
+    if (type =="all") macChildren.each{ if (it.macroType !="GroupM" && it.macroType!="Group") result << ["${it.label}": "${it.label} (${it.macroType})"] }
     if (type == "flash"){
     	macChildren.each{ if (it.macroType =="GroupM" || it.macroType=="Voice") result << ["${it.label}%M%":"${it.label} (${it.macroType=="GroupM"?"Macro Group":"Voice"})"] }
     	result<<["undefined%Q%": "Primary Message Queue Contents"]
@@ -3573,7 +3574,7 @@ def tstatVoc(){
     return result
 }
 def ecobeeVOC(){return ["erase","delete","clear","reset","get","restart","repeat","replay","play","give","load","reload"]}
-def msgVoc(){ return ["play","erase","delete","clear"]}
+def msgVoc(){ return ["play","open","erase","delete","clear"]}
 def upDown(device, type, op, num, deviceName){
     def numChange, newLevel, currLevel, defMove, txtRsp = ""
     if (type==~/color|level|kTemp/) { defMove = lightAmt as int ?: 0 ; currLevel = device.currentValue("switch")=="on" ? device.currentValue("level") as int : 0 } 
@@ -3850,7 +3851,7 @@ private cheat(){
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private textAppName() { return "Ask Alexa" }	
 private textVersion() {  
-    def version = "SmartApp Version: 2.2.4 (03/28/2017)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : "", aaMQVer =""
+    def version = "SmartApp Version: 2.2.4 (03/29/2017)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : "", aaMQVer =""
     if (getAAMQ().size()) getAAMQ().each { aaMQVer="\n"+it.textVersion() }
     return "${version}${aaMQVer}${lambdaVersion}"
 }
