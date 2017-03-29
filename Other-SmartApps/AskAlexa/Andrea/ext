@@ -85,11 +85,11 @@ def msgHandler(date, descriptionText, unit, value) {
 	state.msgQueue<<["date":date.getTime(),"appName":value,"msg":descriptionText,"id":unit] 
     if (msgQueueNotifyExt && (mqSpeaker || mqSynth)) {
     	if (mqSpeaker && mqVolume) {
-        	def msgTxt=(!mqAlertType || mqAlertType==1) ? "New message received in the ${app.label} message queue from : " + value : ""
-            if (!mqAlertType || mqAlertType==2 ) msgTxt += ": "+ descriptionText
+        	def msgTxt= !mqAlertType ||mqAlertType as int ==0 || mqAlertType as int ==1 ? "New message received in primary message queue from : " + value : ""
+			if (!mqAlertType || mqAlertType as int ==0 || mqAlertType as int==2 ) msgTxt += msgTxt ? ": "+ descriptionText : descriptionText
             mqSpeaker?.setLevel(mqVolume as int)
-        	def msg = textToSpeech (msgTxt, true)
-        	mqSpeaker?.playTrack (msg.uri)
+            def msg = textToSpeech (msgTxt, true)
+            mqSpeaker?.playTrack (msg.uri)
         }
         if (mqSynth) mqSynth?.speak(msgTxt)
     }
