@@ -2,7 +2,7 @@
  *  Ask Alexa Message Queue Extension
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.0 3/29/17
+ *  Version 1.0.0 3/30/17
  * 
  *  Version 1.0.0 - Initial release
  *
@@ -37,36 +37,29 @@ def mainPage() {
         	label title:"Message Queue Name (Required)", required: true, image: parent.imgURL() + "mailbox.png"
         }   
         section ("Message queue options"){ input "msgQueueOrder", "enum", title: "Message Play Back Order (Alexa)", options:[0:"Oldest to newest", 1:"Newest to oldest"], defaultValue: 0 }
-        section ("Real-time notification options"){
+        section ("Message Notification - Visual", hideable: true, hidden:!(msgQueueNotifyLightsOn || msgQueueNotifycLightsOn)){
             input "msgQueueNotifyLightsOn", "capability.switch", title: "Turn On Lights When Messages Present", required:false, multiple:true, submitOnChange: true
             input "msgQueueNotifycLightsOn", "capability.colorControl", title: "Turn On/Set Colored Lights When Messages Present", required:false, multiple:true, submitOnChange: true
             if (msgQueueNotifycLightsOn) {
             	input "msgQueueNotifyColor", "enum", title: "Set Color of Message Notification", options: parent.STColors().name, multiple:false, required:false
             	input "msgQueueNotifyLevel", "number", title: "Set Level of Message Notification", defaultValue:50, required:false
             }
-            if (msgQueueNotifyLightsOn) input "msgQueueNotifyLightsOff", "bool", title: "Turn Off Lights When Message Queue Empty", defaultValue: false
-            input "msgQueueNotifyOther","bool", title: "Notify When Messages Arrive (SMS/Push/Feed)", defaultValue: false, submitOnChange: true
-            input "msgQueueNotifyExt", "bool", title: "Notify When Messages Arrive (External Speakers/Synth)", defaultValue: false, submitOnChange: true
+            if (msgQueueNotifyLightsOn || msgQueueNotifycLightsOn) input "msgQueueNotifyLightsOff", "bool", title: "Turn Off Lights When Message Queue Empty", defaultValue: false
 		}
-        if (msgQueueNotifyExt) {
-			section ("Message notification - External speakers / synth"){
-            	input "mqSpeaker", "capability.musicPlayer", title: "Choose Speakers", multiple: true, required: false, submitOnChange: true
-            	if (mqSpeaker) input "mqVolume", "number", title: "Speaker Volume", description: "0-100%", required: false
-            	input "mqSynth", "capability.speechSynthesis", title: "Choose Voice Synthesis Devices", multiple: true, required: false, hideWhenEmpty: true
-                if (mqSpeaker) input "mqAlertType", "enum", title:"Notification Type...", options:[0: "Notification and Message", 1: "Notification Only", 2: "Message Only"], defaultValue:0
-			}
+		section ("Message notification - External speakers / synth", hideable: true, hidden: !(mqSpeaker||mqSynth)){
+        	input "mqSpeaker", "capability.musicPlayer", title: "Choose Speakers", multiple: true, required: false, submitOnChange: true
+            if (mqSpeaker) input "mqVolume", "number", title: "Speaker Volume", description: "0-100%", required: false
+            input "mqSynth", "capability.speechSynthesis", title: "Choose Voice Synthesis Devices", multiple: true, required: false, hideWhenEmpty: true
+            if (mqSpeaker) input "mqAlertType", "enum", title:"Notification Type...", options:[0: "Notification and Message", 1: "Notification Only", 2: "Message Only"], defaultValue:0
 		}
-        if (msgQueueNotifyOther){
-        	section ("Message notification - SMS / push / feed"){
-            	input ("mqContacts", "contact", title: "Send Notifications To...", required: false) {
-					input "mqSMS", "phone", title: "Send SMS Message To (Phone Number)...", required: false
-					input "mqPush", "bool", title: "Send Push Message", defaultValue: false
-            	}
-                input "mqFeed", "bool", title: "Post To Notification Feed", defaultValue: false, submitOnChange: true
+        section ("Message notification - SMS / push / feed", hideable: true, hidden:!(mqContacts||mqSMS||mqPush||mqFeed)){
+        	input ("mqContacts", "contact", title: "Send Notifications To...", required: false) {
+				input "mqSMS", "phone", title: "Send SMS Message To (Phone Number)...", required: false
+				input "mqPush", "bool", title: "Send Push Message", defaultValue: false
             }
+        	input "mqFeed", "bool", title: "Post To Notification Feed", defaultValue: false
         }
-        section("Tap below to remove all schedules and application"){
-        }
+        section("Tap below to remove this message queue"){ }
 	}
 }
 def installed() {
@@ -80,20 +73,18 @@ def initialize() { }
 //Main Handlers
 def msgHandler(date, descriptionText, unit, value) {
     if (!state.msgQueue) state.msgQueue=[]
-    log.debug "New message added to the ${app.label} message queue from: " + value
+    log.debug "New message added to the '${app.label}' message queue from: " + value
 	state.msgQueue<<["date":date.getTime(),"appName":value,"msg":descriptionText,"id":unit] 
-    if (msgQueueNotifyExt && (mqSpeaker || mqSynth)) {
-    	if (mqSpeaker && mqVolume) {
-        	def msgTxt= !mqAlertType ||mqAlertType as int ==0 || mqAlertType as int ==1 ? "New message received in primary message queue from : " + value : ""
-			if (!mqAlertType || mqAlertType as int ==0 || mqAlertType as int==2 ) msgTxt += msgTxt ? ": "+ descriptionText : descriptionText
-            mqSpeaker?.setLevel(mqVolume as int)
-            def msg = textToSpeech (msgTxt, true)
-            mqSpeaker?.playTrack (msg.uri)
-        }
-        if (mqSynth) mqSynth?.speak(msgTxt)
-    }
+    if (mqSpeaker && mqVolume) {
+    	def msgTxt= !mqAlertType ||mqAlertType as int ==0 || mqAlertType as int ==1 ? "New message received in primary message queue from : " + value : ""
+		if (!mqAlertType || mqAlertType as int ==0 || mqAlertType as int==2 ) msgTxt += msgTxt ? ": "+ descriptionText : descriptionText
+        mqSpeaker?.setLevel(mqVolume as int)
+        def msg = textToSpeech (msgTxt, true)
+        mqSpeaker?.playTrack (msg.uri)
+	}
+    if (mqSynth) mqSynth?.speak(msgTxt)
     if (mqPush || mqSMS || mqContacts){
-    	def mqMsg = "New message received by Ask Alexa from : " + value + ": "+ descriptionText + "for the '${app.label}' message queue."
+    	def mqMsg = "New message received by Ask Alexa in the '${app.label}' message queue from : " + value + ": "+ descriptionText
     	parent.sendMSG(mqSMS, mqMsg , mqPush, mqContacts)
 	}
     if (mqFeed) sendNotificationEvent("New message received by Ask Alexa in the '${app.label}' message queue from : " + value + ": "+ descriptionText)
@@ -106,7 +97,7 @@ def msgHandler(date, descriptionText, unit, value) {
 def msgDeleteHandler(unit, value){
 	if (state.msgQueue && state.msgQueue.size()>0){
 		if (unit && value){
-			log.debug value + " is being asked to delete messages from the '${app.label}' message queue."
+			log.debug value + " is requesting to delete messages from the '${app.label}' message queue."
 			state.msgQueue.removeAll{it.appName==value && it.id==unit}
             if (msgQueueNotifyLightsOn && msgQueueNotifyLightsOff && !state.msgQueue) msgQueueNotifyLightsOn?.off()
             if (msgQueueNotifycLightsOn && msgQueueNotifyLightsOff && !state.msgQueue) msgQueueNotifycLightsOn?.off()
@@ -121,7 +112,7 @@ def msgQueueReply(cmd){
     log.debug "Message Queue Command: " + cmd
     String result = ""
 	def msgCount = state.msgQueue ? state.msgQueue.size() : 0, msgS= msgCount==0 || msgCount>1 ? " messages" : " message"
-	if (cmd =~/play|undefined/){
+	if (cmd =~/play|open|undefined/){
       	if (msgCount==0) result = "You don't have any messages in the '${app.label}' queue. %M%"
         else {
         	result = "You have " + msgCount + msgS + " in the ${app.label} queue: "
@@ -163,4 +154,4 @@ def qDelete() {
 //Version/Copyright/Information/Help
 private versionInt(){ return 100 }
 private def textAppName() { return "Ask Alexa Message Queue" }	
-private def textVersion() { return "Message Queue Version: 1.0.0 (03/29/2017)" }
+private def textVersion() { return "Message Queue Version: 1.0.0 (03/30/2017)" }
