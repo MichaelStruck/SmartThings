@@ -1,12 +1,12 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.2.4 - 3/29/17 Copyright © 2017 Michael Struck
+ *  Version 2.2.4 - 3/30/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; Barry Burke for Weather Underground Integration; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.2.4 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
- *  Version 2.2.4 (3/29/17) Framework changes for extensions (new one: additional message queues), added additional notifications to message queues, change SHM model to conform with new SmartThings naming standard, new icon for custom color
+ *  Version 2.2.4 (3/30/17) Framework changes for extensions (new one: additional message queues), added additional notifications to message queues, change SHM model to conform with new SmartThings naming standard, new icon for custom color
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -110,7 +110,7 @@ def mainPageParent() {
             href "pageHomeControl", title: "Modes/SHM/Routines", description:getDesc(listModes || listRoutine || listSHM), state: (listModes|| listRoutines|| listSHM ? "complete" : null), image: imgURL() + "modes.png"
             if (deviceAlias && mapDevices(true)) href "pageAliasMain", title: "Device Aliases", description:getDesc(state.aliasList), state: (state.aliasList ?"complete":null), image: imgURL() + "alias.png"     
         }
-        section("Ask Alexa Extensions") {href "pageExtensions", title: "Ask Alexa Extensions", description: "Tap to add/edit Ask Alexa Extensions", state: (macroCount || mqCount ? "complete" : null), image: imgURL() + "add.png" }
+        section("Ask Alexa Extensions") {href "pageExtensions", title: "Ask Alexa Extensions", description: "Tap to add/edit Ask Alexa extensions", state: (macroCount || mqCount ? "complete" : null), image: imgURL() + "add.png" }
         section("Options") {
 			href "pageSettings", title: "Settings", description: "Tap to configure app settings, get setup information or to reset the access token", image: imgURL() + "settings.png"
 			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get version information, license, instructions or to remove the application", image: imgURL() + "info.png"
@@ -119,11 +119,11 @@ def mainPageParent() {
 }
 def pageExtensions(){
     dynamicPage(name: "pageExtensions", install: false, uninstall: false) {
-    	def macChildren = getAskAlexa(), macroCount = macChildren.size(), mqChildren=getAAMQ(), mqCount = mqChildren.size()
+    	def macroCount = getAskAlexa().size(), mqCount = getAAMQ().size()
         section { paragraph "Ask Alexa Extensions", image: imgURL() + "add.png" }
         section(" "){ 
         	href "pageMacros", title: "Macros", description: macroDesc(macroCount), state: (macroCount ? "complete" : null), image: imgURL() + "speak.png" 
-     		href "pageMsgQue", title: "Message Queues", description: mqDesc(mqCount), state: "complete", image: imgURL() + "mailbox.png" 
+     		href "pageMsgQue", title: "Message Queues", description: mqDesc(mqCount), state: "complete", image: imgURL() + "mailbox.png"
 		}
     }
 }
@@ -158,7 +158,7 @@ def pageMQGUI(){
 }
 def pageMsgDelete(){
     dynamicPage(name: "pageMsgDelete", install: false, uninstall: false) {
-    if(msgQueueGUI.contains("Primary Message Queue")){state.msgQueue=[]}
+    if(msgQueueGUI.contains("Primary Message Queue")) qDelete()
     msgQueueGUI.each{qID->
         def qNameRun = getAAMQ().find{it.id == qID}
         if (qNameRun) { qNameRun.qDelete() }
@@ -464,7 +464,7 @@ def pagePriQueue(){
         section ("Primary message queue options"){
             input "msgQueueOrder", "enum", title: "Message Play Back Order (Alexa)", options:[0:"Oldest to newest", 1:"Newest to oldest"], defaultValue: 0
 		}
-        section ("Primary message queue real-time notification options"){
+        section ("Message Notification - Visual", hideable: true, hidden:!(msgQueueNotifyLightsOn || msgQueueNotifycLightsOn)){
             input "msgQueueNotifyLightsOn", "capability.switch", title: "Turn On Lights When Messages Present", required:false, multiple:true, submitOnChange: true
             input "msgQueueNotifycLightsOn", "capability.colorControl", title: "Turn On/Set Colored Lights When Messages Present", required:false, multiple:true, submitOnChange: true
             if (msgQueueNotifycLightsOn) {
@@ -472,25 +472,19 @@ def pagePriQueue(){
             	input "msgQueueNotifyLevel", "number", title: "Set Level of Message Notification", defaultValue:50, required:false
             }
             if (msgQueueNotifyLightsOn || msgQueueNotifycLightsOn) input "msgQueueNotifyLightsOff", "bool", title: "Turn Off Lights When Message Queue Empty", defaultValue: false
-            input "msgQueueNotifyOther", "bool", title: "Notify When Messages Arrive (SMS/Push/Feed)", defaultValue: false, submitOnChange: true
-            input "msgQueueNotifyExt", "bool", title: "Notify When Messages Arrive (External Speakers/Synth)", defaultValue: false, submitOnChange: true
 		}
-        if (msgQueueNotifyExt) {
-			section ("Message notification - External speakers / synth"){
-            	input "mqSpeaker", "capability.musicPlayer", title: "Choose Speakers", multiple: true, required: false, submitOnChange: true
-            	if (mqSpeaker) input "mqVolume", "number", title: "Speaker Volume", description: "0-100%", required: false
-            	input "mqSynth", "capability.speechSynthesis", title: "Choose Voice Synthesis Devices", multiple: true, required: false, hideWhenEmpty: true
-                if (mqSpeaker) input "mqAlertType", "enum", title:"Notification Type...", options:[0: "Notification and Message", 1: "Notification Only", 2: "Message Only"], defaultValue:0
-			}
+		section ("Message notification - External speakers / synth", hideable: true, hidden: !(mqSpeaker||mqSynth)){
+        	input "mqSpeaker", "capability.musicPlayer", title: "Choose Speakers", multiple: true, required: false, submitOnChange: true
+            if (mqSpeaker) input "mqVolume", "number", title: "Speaker Volume", description: "0-100%", required: false
+            input "mqSynth", "capability.speechSynthesis", title: "Choose Voice Synthesis Devices", multiple: true, required: false, hideWhenEmpty: true
+            if (mqSpeaker) input "mqAlertType", "enum", title:"Notification Type...", options:[0: "Notification and Message", 1: "Notification Only", 2: "Message Only"], defaultValue:0
 		}
-        if (msgQueueNotifyOther){
-        	section ("Message notification - SMS / push /feed"){
-            	input ("mqContacts", "contact", title: "Send Notifications To...", required: false) {
-					input "mqSMS", "phone", title: "Send SMS Message To (Phone Number)...", required: false
-					input "mqPush", "bool", title: "Send Push Message", defaultValue: false
-            	}
-                input "mqFeed", "bool", title: "Post To Notification Feed", defaultValue: false, submitOnChange: true
+        section ("Message notification - SMS / push / feed", hideable: true, hidden:!(mqContacts||mqSMS||mqPush||mqFeed)){
+        	input ("mqContacts", "contact", title: "Send Notifications To...", required: false) {
+				input "mqSMS", "phone", title: "Send SMS Message To (Phone Number)...", required: false
+				input "mqPush", "bool", title: "Send Push Message", defaultValue: false
             }
+        	input "mqFeed", "bool", title: "Post To Notification Feed", defaultValue: false
         }
     }
 }
@@ -505,7 +499,8 @@ def pageMsgQue() {
         }
         def children = getAAMQ(), duplicates = children.label.findAll{children.label.count(it)>1}.unique(), aaMQVer=""
         if (children.size()) children.each { aaMQVer=it.versionInt()}
-        section ("Message queues"){ 
+        def mqCount = children.size() ? children.size() + 1 + " messsage queues configured" : "One message queue configured"
+        section ("${mqCount}"){ 
         	if (duplicates) paragraph "You have two or more message queues with the same name. Please ensure each queue has a unique name and also does not conflict with device or macro names as well. ", image: imgURL() + "caution.png" 
             if (children.size() && (aaMQVer < mqReq())) paragraph "You are using an outdated version of the message queue extension. Please update the software and try again.", image: imgURL() + "caution.png" 
             href "pagePriQueue", title: "Primary Message Queue", description: "", state:"complete"
@@ -1057,8 +1052,6 @@ def initialize() {
         subscribe(location, "AskAlexaMsgQueue", msgHandler)
         subscribe(location, "AskAlexaMsgQueueDelete", msgDeleteHandler)
         if (sonosCMD && sonosMemoryCount) songLocations()
-        if (msgQueueNotifyLightsOn && msgQueueNotifyLightsOff && !state.msgQueue) msgQueueNotifyLightsOn?.off()
-        if (msgQueueNotifycLightsOn && msgQueueNotifyLightsOff && !state.msgQueue) msgQueueNotifycLightsOn?.off()
         sendLocationEvent(name: "askAlexaMQ", value: "refresh", data: [queues: getMQListID(false)] , isStateChange: true, descriptionText: "Ask Alexa message queue list refresh")
 	}
     else{
@@ -3282,6 +3275,11 @@ private setColoredLights(switches, color, level){
     switches?.setLevel(newLevel as int)
 }
 //Common Code (Parent)---------------------------------
+def qDelete(){
+	state.msgQueue=[]
+	if (msgQueueNotifyLightsOn && msgQueueNotifyLightsOff) msgQueueNotifyLightsOn?.off()
+    if (msgQueueNotifycLightsOn && msgQueueNotifyLightsOff) msgQueueNotifycLightsOn?.off()
+}
 private switchesSel() { return switches || (deviceAlias && switchesAlias) }
 private dimmersSel() { return dimmers || (deviceAlias && dimmersAlias) }
 private cLightsSel() { return cLights || (deviceAlias && cLightsAlias) }
@@ -3408,20 +3406,18 @@ def msgPMQ(date,descriptionText,unit,value){
     else {
     	log.debug "New message added to primary message queue from: " + value
         state.msgQueue<<["date":date.getTime(),"appName":value,"msg":descriptionText,"id":unit] 
-		if (msgQueueNotifyExt && (mqSpeaker || mqSynth)) {
-            if (mqSpeaker && mqVolume) {
-                def msgTxt= !mqAlertType ||mqAlertType as int ==0 || mqAlertType as int ==1 ? "New message received in primary message queue from : " + value : ""
-                if (!mqAlertType || mqAlertType as int ==0 || mqAlertType as int==2 ) msgTxt += msgTxt ? ": "+ descriptionText : descriptionText
-                mqSpeaker?.setLevel(mqVolume as int)
-                def msg = textToSpeech (msgTxt, true)
-                mqSpeaker?.playTrack (msg.uri)
-            }
-            if (mqSynth) mqSynth?.speak(msgTxt)
-        }
-        if (mqPush || mqSMS || mqContacts){
-            def mqMsg = "New message received by Ask Alexa in primary message queue from : " + value + ": "+ descriptionText
+        if (mqSpeaker && mqVolume) {
+        	def msgTxt= !mqAlertType ||mqAlertType as int ==0 || mqAlertType as int ==1 ? "New message received in primary message queue from : " + value : ""
+            if (!mqAlertType || mqAlertType as int ==0 || mqAlertType as int==2 ) msgTxt += msgTxt ? ": "+ descriptionText : descriptionText
+            mqSpeaker?.setLevel(mqVolume as int)
+            def msg = textToSpeech (msgTxt, true)
+            mqSpeaker?.playTrack (msg.uri)
+		}
+        if (mqSynth) mqSynth?.speak(msgTxt)
+		if (mqPush || mqSMS || mqContacts){
+        	def mqMsg = "New message received by Ask Alexa in primary message queue from : " + value + ": "+ descriptionText
             sendMSG(mqSMS, mqMsg , mqPush, mqContacts)
-        }
+		}
         if (mqFeed) sendNotificationEvent("New message received by Ask Alexa in primary message queue from : " + value + ": "+ descriptionText)
         if (msgQueueNotifyLightsOn) msgQueueNotifyLightsOn?.on()
         if (msgQueueNotifycLightsOn && (msgQueueNotifyColor || msgQueueNotifyLevel)) {
@@ -3433,7 +3429,7 @@ def msgPMQ(date,descriptionText,unit,value){
 def msgDeletePMQ(unit,value){
 	if (state.msgQueue && state.msgQueue.size()>0){
 		if (unit && value){
-			log.debug value + " is being asked to delete messages from the primary message queue."
+			log.debug value + " is requesting to delete messages from the primary message queue."
 			state.msgQueue.removeAll{it.appName==value && it.id==unit}
             if (msgQueueNotifyLightsOn && msgQueueNotifyLightsOff && !state.msgQueue) msgQueueNotifyLightsOn?.off()
             if (msgQueueNotifycLightsOn && msgQueueNotifyLightsOff && !state.msgQueue) msgQueueNotifycLightsOn?.off()
@@ -3482,7 +3478,7 @@ def OAuthToken(){
 		log.debug "Creating new Access Token"
 	} catch (e) { log.error "Access Token not defined. OAuth may not be enabled. Go to the SmartApp IDE settings to enable OAuth." }
 }
-def macroDesc(count){def results = count ? count==1 ? "One Macro Configured" : count + " Macros Configured" : "No Macros Configured\nTap to create new macro"}
+def macroDesc(count){def results = count ? count==1 ? "One Macro Configured" : count + " Macros Configured" : "No Macros Configured\nTap to create a new macro"}
 def mqDesc(count){def results = count ? count==1 ? "Primary + One Addition Message Queue Configured" :  "Primary + " + count + " Message Queues Configured" : "Primary Messsage Queue"}
 def getDesc(param){ return param  ? "Status: CONFIGURED - Tap to edit/view" : "Status: UNCONFIGURED - Tap to configure" }
 def getAliasList(){
@@ -3856,7 +3852,7 @@ private cheat(){
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private textAppName() { return "Ask Alexa" }	
 private textVersion() {  
-    def version = "SmartApp Version: 2.2.4 (03/29/2017)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : "", aaMQVer =""
+    def version = "SmartApp Version: 2.2.4 (03/30/2017)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : "", aaMQVer =""
     if (getAAMQ().size()) getAAMQ().each { aaMQVer="\n"+it.textVersion() }
     return "${version}${aaMQVer}${lambdaVersion}"
 }
