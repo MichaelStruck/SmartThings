@@ -1,9 +1,10 @@
 /**
  *  Ask Alexa Test App
  *
- *  Version - 1.0.0 3/23/17
+ *  Version - 1.0.1
  * 
- *  Version 1.0.0 - Initial release
+ *  Version 1.0.0 (3/23/17) - Initial release
+ *  Version 1.0.1 (4/6/17) - Added the remove button back in 
  *
  * 
  *  Copyright 2017 Michael Struck 
@@ -43,13 +44,19 @@ def mainPage(){
             input "msg", "text" , title: "Message to send to the queues above", required: false , capitalization: "sentences"
             input "delete", "bool", title: "Turn this on to perform delete routine when DONE pressed", defaultValue: false
 		}
+        section ("Help"){
+        	paragraph "The action (send or delete) will occur when clicking <DONE> at the top of the page. Unit values are not needed if you are not performing a delete function."
+        }
+        section([title:"Options", mobileOnly:true]) {
+			href "pageAbout", title: "About ${textAppName()}", description: "Tap to get application version, license, instructions or to remove the application",
+            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/img/info.png"
+		}
 	}
 }
-
 def pageAbout() {
 	dynamicPage(name: "pageAbout" , uninstall: true) {
     	section {
-        paragraph "${textAppName()}\n${textCopyright()}"
+        paragraph "${textAppName()}\n${textCopyright()}", image: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png"
         }
         section ("SmartApp Versions") {
 			paragraph textVersion()
@@ -97,7 +104,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def version = "Parent App Version 1.0.0 (03/20/2017)"
+    def version = "Version 1.0.1 (04/06/2017)"
     return "${version}"
 }
 
