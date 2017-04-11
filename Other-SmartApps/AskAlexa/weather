@@ -2,7 +2,7 @@
  *  Ask Alexa Weather Report Extension
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.0 4/8/17
+ *  Version 1.0.0 4/11/17
  * 
  *  Version 1.0.0 - Initial release
  *
@@ -57,6 +57,11 @@ def mainPage() {
             paragraph "Please Note:\nYour SmartThings location is currently set to: ${location.zipCode}. If you leave the area above blank the report will use your SmartThings location. " +
             	"Enter a zip code above if you want to report on a different location.\n\nData obtained from Weather Underground."
 		}
+        section ("Output options"){
+            input "noteFeed", "bool", title: "Post To Notification Feed When Triggered", defaultValue: false, submitOnChange: true
+            if (noteFeed) input "noteFeedData", "bool", title: "Include SmartApp's Response To Alexa", defaultValue: false
+            if (parent.contMacro) input "overRideMsg", "bool", title: "Override Continuation Commands (Except Errors)" , defaultValue: false
+        }
         section("Tap below to remove this message queue"){ }
 	}
 }
@@ -89,11 +94,11 @@ def updated() {
     initialize()
 }
 def initialize() {
-
+	sendLocationEvent(name: "askAlexa", value: "refresh", data: [macros: parent.getCoREMacroList()] , isStateChange: true, descriptionText: "Ask Alexa extension list refresh")
 }
 //Main Handlers
 def getOutput(){
-	String outputTxt = ""
+	String outputTxt = "", feedData = ""
 	if (currWeatherSel() || foreWeatherSel() || voiceSunset || voiceSunrise || voiceMoon || voiceTide ){
 		if (location.timeZone || zipCode){
 			Map cond = getWeatherFeature("conditions", zipCode)
@@ -110,12 +115,16 @@ def getOutput(){
 				outputTxt += foreWeatherSel() || voiceSunset || voiceSunrise ? getWeatherForecast() : ""
 				outputTxt += voiceMoon ? getMoonInfo() : ""
 				outputTxt += voiceTide ? tideInfo(): ""
-				if (outputTxt) outputTxt += "%4%"
+				def playContMsg = overRideMsg ? false : true 
             }
 		}
 	else outputTxt += "Please set the location of your hub with the SmartThings mobile app, or enter a zip code to receive weather reports. %1%"
 	} 
     else outputTxt +="You don't have any weather reporting options set up within the '${app.label}'. %1%"
+    if (outputTxt && !outputTxt.endsWith("%") && !outputTxt.endsWith(" ")) outputTxt += " "
+    outputTxt += (outputTxt && !outputTxt.endsWith("%") && playContMsg) ? "%4%" : (outputTxt && !outputTxt.endsWith("%") && !playContMsg) ? "   " : ""
+    if (noteFeed && noteFeedData) feedData=outputTxt.endsWith("%") ? ' Data sent to Alexa: "' + outputTxt.take(outputTxt.length()-3) + '"' : ' Data sent to Alexa: "' + outputTxt + '"'
+    if (noteFeed) parent.sendNotificationEvent("Ask Alexa triggered extension: '${app.label}'. ${feedData}")
 	return outputTxt
 }
 //Child Common modules
@@ -504,4 +513,4 @@ private tideInfo() {
 //Version/Copyright/Information/Help
 private versionInt(){ return 100 }
 private def textAppName() { return "Ask Alexa Weather Report" }	
-private def textVersion() { return "Weather Report Version: 1.0.0 (04/08/2017)" }
+private def textVersion() { return "Weather Report Version: 1.0.0 (04/11/2017)" }
