@@ -230,9 +230,9 @@ def getOutput(){
         outputTxt += voiceDoorSensors || voiceDoorControls || voiceDoorLocks ? doorWindowReport() : ""
         outputTxt += voiceWindowShades ? shadeReport() : ""
         if (voiceTemperature && (voiceTemperature.size() == 1 || !voiceTempAvg)) outputTxt += reportStatus(voiceTemperature, "temperature")
-        else if (voiceTemperature && voiceTemperature.size() > 1 && voiceTempAvg) outputTxt += "The average of the monitored temperature devices is: " + getAverage(voiceTemperature, "temperature") + " degrees. "
+        else if (voiceTemperature && voiceTemperature.size() > 1 && voiceTempAvg) outputTxt += "The average of the monitored temperature devices is: " + parent.getAverage(voiceTemperature, "temperature") + " degrees. "
         if (voiceHumidity && (voiceHumidity.size() == 1 || !voiceHumidAvg)) outputTxt += reportStatus(voiceHumidity, "humidity")
-        else if (voiceHumidity  && voiceHumidity.size() > 1 && voiceHumidAvg) outputTxt += "The average of the monitored humidity devices is " + getAverage(voiceHumidity, "humidity") + "%. "
+        else if (voiceHumidity  && voiceHumidity.size() > 1 && voiceHumidAvg) outputTxt += "The average of the monitored humidity devices is " + parent.getAverage(voiceHumidity, "humidity") + "%. "
         if (voiceTempSettingSummary && voiceTempSettingsType && voiceTempSettingsType !="autoAll") outputTxt += voiceTempSettings ? thermostatSummary(): ""
         else outputTxt += (voiceTempSettings && voiceTempSettingsType) ? reportStatus(voiceTempSettings, voiceTempSettingsType) : ""
         outputTxt += voiceSpeaker ? speakerReport() : ""
@@ -334,7 +334,7 @@ def reportStatus(deviceList, type){
 			if (type=="level" && deviceName.latestValue("switch")=="on") result += "The ${deviceName} is on, and set to ${deviceName.latestValue(type) as int}%. "
             else if (type=="level" && deviceName.latestValue("switch")=="off") result += "The ${deviceName} is off. "
             else {
-                def n = type=="temperature" ? roundValue(deviceName.latestValue(type)) : deviceName.latestValue(type)
+                def n = type=="temperature" ? parent.roundValue(deviceName.latestValue(type)) : deviceName.latestValue(type)
                 result += "The ${deviceName} is ${n}${appd}. "
 			}
         }
