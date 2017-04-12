@@ -2,7 +2,7 @@
  *  Ask Alexa Weather Report Extension
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.0 4/11/17
+ *  Version 1.0.0 4/12/17
  * 
  *  Version 1.0.0 - Initial release
  *
@@ -151,7 +151,7 @@ private getWeatherReport(){
 	def cond = conditions.current_observation        
 	if (voiceWeatherTemp){
         sb << 'The current temperature is '
-        temp = isMetric ? roundValue(cond.temp_c) : Math.round(cond.temp_f)
+        temp = isMetric ? parent.roundValue(cond.temp_c) : Math.round(cond.temp_f)
 		sb << temp + ' degrees with ' + cond.weather
         if (cond.weather =~/Overcast|Clear|Cloudy/) sb << " skies. "
         else if (cond.weather =~/Unknown|storm/) sb << " conditions. "
@@ -173,8 +173,8 @@ private getWeatherReport(){
         else sb << "steady at " + pressure + ". "
 	}
     if (voiceWeatherDew){
-        temp = isMetric ? roundValue(cond.dewpoint_c) : Math.round(cond.dewpoint_f)
-        def flTemp = isMetric ? roundValue(cond.feelslike_c) : Math.round(cond.feelslike_f.toFloat())
+        temp = isMetric ? parent.roundValue(cond.dewpoint_c) : Math.round(cond.dewpoint_f)
+        def flTemp = isMetric ? parent.roundValue(cond.feelslike_c) : Math.round(cond.feelslike_f.toFloat())
         if (temp == flTemp) sb << "The dewpoint and 'feels like' temperature are both ${temp} degrees. "
         else sb << "The dewpoint is ${temp} degrees, and the 'feels like' temperature is ${flTemp} degrees. "
 	}
@@ -513,4 +513,4 @@ private tideInfo() {
 //Version/Copyright/Information/Help
 private versionInt(){ return 100 }
 private def textAppName() { return "Ask Alexa Weather Report" }	
-private def textVersion() { return "Weather Report Version: 1.0.0 (04/11/2017)" }
+private def textVersion() { return "Weather Report Version: 1.0.0 (04/12/2017)" }
