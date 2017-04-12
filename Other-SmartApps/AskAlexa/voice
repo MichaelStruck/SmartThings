@@ -2,7 +2,7 @@
  *  Ask Alexa Voice Report Extension
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.0 4/11/17
+ *  Version 1.0.0 4/12/17
  * 
  *  Version 1.0.0 - Initial release
  *
@@ -44,7 +44,7 @@ def mainPage() {
         section {
         	label title:"Voice Report Name (Required)", required: true, image: parent.imgURL() + "voice.png"
         }
-        section ("Voice Report Items") {
+        section ("Voice report items") {
             input "voicePre", "text", title: "Pre Message Before Device Report", description: "Use variables like %time%, %day%, %date% here.", required: false, capitalization: "sentences"
             href "pageSwitchReport", title: "Switch/Dimmer Report", description: reportSwitches(), state: (voiceSwitch || voiceDimmer ? "complete" : null), image: parent.imgURL() + "power.png"
             href "pageDoorReport", title: "Door/Window/Lock Report", description: reportDoors(), state: (voiceDoorSensors || voiceDoorControls || voiceDoorLocks || voiceWindowShades ? "complete": null), image: parent.imgURL() + "lock.png"
@@ -252,7 +252,7 @@ def getOutput(){
 	catch(e){ outputTxt = "There was an error processing the report. Please try again. If this error continues, please contact the author of Ask Alexa. %1%" }
     def playContMsg = overRideMsg ? false : true
     if (!outputTxt && !allowNullRpt) outputTxt = "The voice report, '${app.label}', did not produce any output. Please check the configuration of the report within the SmartApp. %1%"  
-    if ((parent.advReportOutput && voiceRepFilter) || voicePre || voicePost) outputTxt = parent.replaceVoiceVar(outputTxt,"",voiceRepFilter)
+    if ((parent.advReportOutput && voiceRepFilter) || voicePre || voicePost) outputTxt = parent.replaceVoiceVar(outputTxt,"",voiceRepFilter,"Voice",app.label)
     if (outputTxt && !outputTxt.endsWith("%") && !outputTxt.endsWith(" ")) outputTxt += " "
     outputTxt += (outputTxt && !outputTxt.endsWith("%") && playContMsg) ? "%4%" : (outputTxt && !outputTxt.endsWith("%") && !playContMsg) ? "   " : ""
     if (noteFeed && noteFeedData) feedData=outputTxt.endsWith("%") ? ' Data sent to Alexa: "' + outputTxt.take(outputTxt.length()-3) + '"' : ' Data sent to Alexa: "' + outputTxt + '"'
@@ -628,4 +628,4 @@ def speakerDesc(){
 //Version/Copyright/Information/Help
 private versionInt(){ return 100 }
 private def textAppName() { return "Ask Alexa Voice Report" }	
-private def textVersion() { return "Voice Report Version: 1.0.0 (04/11/2017)" }
+private def textVersion() { return "Voice Report Version: 1.0.0 (04/12/2017)" }
