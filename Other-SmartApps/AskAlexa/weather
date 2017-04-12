@@ -37,6 +37,7 @@ def mainPage() {
 	dynamicPage(name: "mainPage", title: "Ask Alexa Weather Report Options", install: true, uninstall: true){
         section {
         	label title:"Weather Report Name (Required)", required: true, image: parent.imgURL() + "weather.png"
+            href "pageExtAliases", title: "Weather Report Aliases", description: extAliasDesc(), state: extAliasState()
         }
         section("Weather reporting") {
         	 href "pageWeatherCurrent", title: "Current Weather Report Options", description: none, state: (currWeatherSel() ? "complete" : null)	
@@ -64,6 +65,13 @@ def mainPage() {
         }
         section("Tap below to remove this message queue"){ }
 	}
+}
+page(name: "pageExtAliases", title: "Enter alias names for this weather report"){
+	section {
+    	for (int i = 1; i < extAliasCount()+1; i++){
+        	input "extAlias${i}", "text", title: "Weather Report Alias Name ${i}", required: false
+		}
+    }
 }
 def pageWeatherCurrent(){
 	dynamicPage(name: "pageWeatherCurrent", install: false, uninstall: false) {
@@ -130,6 +138,23 @@ def getOutput(){
 //Child Common modules
 private currWeatherSel() { return voiceWeatherTemp || voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip }
 private foreWeatherSel() { return voiceWeatherToday || voiceWeatherTonight || voiceWeatherTomorrow}
+def extAliasCount() { return 3 }
+def extAliasDesc(){
+	def result =""
+	for (int i= 1; i<extAliasCount()+1; i++){
+		result += settings."extAlias${i}" ? settings."extAlias${i}" : ""
+		result += (result && settings."extAlias${i+1}") ? "\n" : ""
+	}
+    result = result ? "Alias Names currently configured; Tap to edit:\n"+result :"Tap to add alias names to this weather report"
+    return result
+}
+def extAliasState(){
+	def count = 0
+    for (int i= 1; i<extAliasCount()+1; i++){
+    	if (settings."extAlias${i}") count ++
+    }
+    return count ? "complete" : null
+}
 def weatherDesc(){ 
 	def result = currWeatherSel() ? "Current weather" : ""
 	if (result && foreWeatherSel()) result +=", "
