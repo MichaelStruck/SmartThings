@@ -43,6 +43,7 @@ def mainPage() {
 	dynamicPage(name: "mainPage", title: "Ask Alexa Voice Report Options", install: true, uninstall: true){
         section {
         	label title:"Voice Report Name (Required)", required: true, image: parent.imgURL() + "voice.png"
+            href "pageExtAliases", title: "Voice Report Aliases", description: extAliasDesc(), state: extAliasState()
         }
         section ("Voice report items") {
             input "voicePre", "text", title: "Pre Message Before Device Report", description: "Use variables like %time%, %day%, %date% here.", required: false, capitalization: "sentences"
@@ -70,6 +71,13 @@ def mainPage() {
     	}
         section("Tap below to remove this message queue"){ }
 	}
+}
+page(name: "pageExtAliases", title: "Enter alias names for this voice report"){
+	section {
+    	for (int i = 1; i < extAliasCount()+1; i++){
+        	input "extAlias${i}", "text", title: "Voice Report Alias Name ${i}", required: false
+		}
+    }
 }
 def pagePresenceReport(){
 	dynamicPage(name: "pagePresenceReport", install: false, uninstall: false){
@@ -260,6 +268,23 @@ def getOutput(){
     return outputTxt
 }
 //Child Common modules
+def extAliasCount() { return 3 }
+def extAliasDesc(){
+	def result =""
+	for (int i= 1; i<extAliasCount()+1; i++){
+		result += settings."extAlias${i}" ? settings."extAlias${i}" : ""
+		result += (result && settings."extAlias${i+1}") ? "\n" : ""
+	}
+    result = result ? "Alias Names currently configured; Tap to edit:\n"+result :"Tap to add alias names to this voice report"
+    return result
+}
+def extAliasState(){
+	def count = 0
+    for (int i= 1; i<extAliasCount()+1; i++){
+    	if (settings."extAlias${i}") count ++
+    }
+    return count ? "complete" : null
+}
 private getLastEvt(devGroup, evtTxt, searchVal, devTxt){
     def devEvt, evtLog=[],  lastEvt="I could not find any ${evtTxt} events in the log. "
 	devGroup.each{ deviceName-> devEvt= deviceName.events()
