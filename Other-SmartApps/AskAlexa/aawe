@@ -1275,16 +1275,37 @@ def processMacro() {
     wrCount = getWR().count {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
     vrCount = getVR().count {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
     count = macCount + wrCount + vrCount
-    if (!count) {   
-        for (int i = 1; i<macAliasCount()+1; i++){ 
-        	children.each{
+    if (!count) {    
+        getAskAlexa().each{
+        	for (int i = 1; i<macAliasCount()+1; i++){
             	if (it."macAlias${i}" && it."macAlias${i}".toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "")==mac) {
                 	macAlias = it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "")
-                	count ++
+                	macCount ++
         		}
         	}	   
     	}
     }
+    if (!count && !macCount) {    
+        getWR().each{
+        	for (int i = 1; i<it.extAliasCount()+1; i++){
+            	if (it."extAlias${i}" && it."extAlias${i}".toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "")==mac) {
+                	macAlias = it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "")
+                	wrCount ++
+        		}
+        	}	   
+    	}
+    }
+    if (!count && !macCount && !wrCount) {    
+        getVR().each{
+        	for (int i = 1; i<it.extAliasCount()+1; i++){
+            	if (it."extAlias${i}" && it."extAlias${i}".toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "")==mac) {
+                	macAlias = it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "")
+                	vrCount ++
+        		}
+        	}	   
+    	}
+    }
+    count = macCount + wrCount + vrCount
     if (count == 1 && macAlias) mac = macAlias
     if (count > 1) outputTxt ="You have duplicate macros, aliases, or weather reports named '${mac}'. Please check your SmartApp to fix this conflict. %1%"
     if (!count) outputTxt = "I could not find a macro, alias or any extension named '${mac}'. %1%"
