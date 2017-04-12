@@ -1,13 +1,13 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.2.5 - 4/11/17 Copyright © 2017 Michael Struck
+ *  Version 2.2.5 - 4/12/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; Barry Burke for Weather Underground Integration; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.2.4 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *  Version 2.2.4a (4/6/17) Framework changes for extensions (new one: additional message queues), added additional notifications to message queues, change SHM model to conform with new SmartThings naming standard, new icon for custom color
- *  Version 2.2.5 (4/11/17) Moved Weather Reporting to an extension. Considerably sped up the execution of Ask Alexa! Added message queues and Weather Reports to list command. Created default Kelvin page. 
+ *  Version 2.2.5 (4/12/17) Moved Weather Reporting to an extension. Considerably sped up the execution of Ask Alexa! Added message queues and Weather Reports to list command. Created default Kelvin page. 
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -397,7 +397,7 @@ def pageAliasDelFinal(){
 def pageVoiceRPT() {
     dynamicPage(name: "pageVoiceRPT", install: false, uninstall: false) {
         section{ paragraph "Voice Reports", image: imgURL() + "voice.png" }
-        section ("Voice Report Global Options"){
+        section ("Voice reports global options"){
         	input "advReportOutput", "bool", title: "Advanced Voice Report Filters", defaultValue: false, submitOnChange: true
         }
         def children = getVR(), vrCount = children.size(), duplicates = children.label.findAll{children.label.count(it)>1}.unique(), aaVRVer
@@ -648,6 +648,10 @@ def pageGlobalVariables(){
             if ((voiceTempVar && voiceTempVar.size()>1) || (voiceHumidVar && voiceHumidVar.size()>1)) paragraph "Please note: When multiple temperature/humidity devices are selected above, the variable output will be an average of the device readings"
         }
         section ("People"){ input "voicePresenceVar", "capability.presenceSensor", title: "Presence Sensor Variable (%people%)", multiple: true, required: false }
+        section ("Built in variables"){
+        	paragraph "The following variables are built in:\n\n%time% - Time the variable is called\n%day% - Day of the week\n%date% - Full date\n" +
+            	"%macro% - Macro/Extension name\n%mtype% - Macro/Extension type\n%dtype% - Device group type\n%dtypes% - Device group type (plural)\n%delay% - Control/CoRE macro delay"
+        }
         if (getWR().size()){
         	section ("Weather Report"){
             	def list= "The following variables can be used to add weather reporting to any text field:\n\n", itemCount=getWR().size() as int
@@ -1813,8 +1817,8 @@ def groupResults(num, op, colorData, param, mNum){
         String valueWord, proNoun = settings."groupDevice${groupType}".size()==1 ? "its" : "their"
         if (op == "list") result = "The following ${noun} ${verb} in the '${app.label}' device group: "+ getList(settings."groupDevice${groupType}") +". "
         else if (groupType=="switch"){
-            if (op ==~/on|off/) { settings."groupDevice${groupType}"?."$op"();result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost,"","") : noAck ? " " : "I am turning ${op} the ${noun} in the group named '${app.label}'. " }
-            else if (op == "toggle") { toggleState(settings."groupDevice${groupType}");result = voicePost && !noAck? parent.replaceVoiceVar(voicePost,"","") : noAck ? " " : "I am toggling the ${noun} in the group named '${app.label}'. " } 
+            if (op ==~/on|off/) { settings."groupDevice${groupType}"?."$op"();result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost,"","",macroType,app.label) : noAck ? " " : "I am turning ${op} the ${noun} in the group named '${app.label}'. " }
+            else if (op == "toggle") { toggleState(settings."groupDevice${groupType}");result = voicePost && !noAck? parent.replaceVoiceVar(voicePost,"","",macroType,app.label) : noAck ? " " : "I am toggling the ${noun} in the group named '${app.label}'. " } 
             else result = "For a switch group, be sure to give an 'on', 'off' or 'toggle' command. %1%"
         }
         else if (groupType==~/switchLevel|colorControl|colorTemperature/){
@@ -1824,10 +1828,10 @@ def groupResults(num, op, colorData, param, mNum){
             else if (op==~/low|medium|high/ && groupType==~/colorControl|colorTemperature/ && !colorData ) { valueWord="${op}, or a value of ${num}%"; op ="undefined" }
             else valueWord = "${num}%"
             if (num==0 && op=="undefined" && param=="undefined" && mNum!="undefined") op="off"
-            if (op ==~/on|off/){ settings."groupDevice${groupType}"?."$op"();result = voicePost ? parent.replaceVoiceVar(voicePost,"","") : noAck ? " " :  "I am turning ${op} the ${noun} in the group named '${app.label}'. "}
-            else if (op == "toggle") { toggleState(settings."groupDevice${groupType}");result = voicePost ? parent.replaceVoiceVar(voicePost,"","") : noAck ? " " : "I am toggling the ${noun} in the group named '${app.label}'. " }
-            else if (groupType=="switchLevel" && num > 0 && op =="undefined") { settings."groupDevice${groupType}"?.setLevel(num); result = voicePost ? parent.replaceVoiceVar(voicePost,"","") : noAck ? " " : "I am setting the ${noun} in the group named '${app.label}' to ${valueWord}. " }
-            else if (groupType==~/colorControl|colorTemperature/ && num > 0 && !colorData && op =="undefined") { settings."groupDevice${groupType}"?.setLevel(num); result = voicePost && !noAck  ? parent.replaceVoiceVar(voicePost,"","") :  noAck ? " " :"I am setting the ${noun} in the '${app.label}' group to ${valueWord}. " }
+            if (op ==~/on|off/){ settings."groupDevice${groupType}"?."$op"();result = voicePost ? parent.replaceVoiceVar(voicePost,"","",macroType,app.label) : noAck ? " " :  "I am turning ${op} the ${noun} in the group named '${app.label}'. "}
+            else if (op == "toggle") { toggleState(settings."groupDevice${groupType}");result = voicePost ? parent.replaceVoiceVar(voicePost,"","",macroType,app.label) : noAck ? " " : "I am toggling the ${noun} in the group named '${app.label}'. " }
+            else if (groupType=="switchLevel" && num > 0 && op =="undefined") { settings."groupDevice${groupType}"?.setLevel(num); result = voicePost ? parent.replaceVoiceVar(voicePost,"","",macroType,app.label) : noAck ? " " : "I am setting the ${noun} in the group named '${app.label}' to ${valueWord}. " }
+            else if (groupType==~/colorControl|colorTemperature/ && num > 0 && !colorData && op =="undefined") { settings."groupDevice${groupType}"?.setLevel(num); result = voicePost && !noAck  ? parent.replaceVoiceVar(voicePost,"","",macroType,app.label) :  noAck ? " " :"I am setting the ${noun} in the '${app.label}' group to ${valueWord}. " }
             else if (groupType=="colorControl" && colorData && param) {
                 colorData = [hue:colorData.hue, saturation: colorData.saturation]
                 settings."groupDevice${groupType}"?.setColor(colorData)
@@ -1837,7 +1841,7 @@ def groupResults(num, op, colorData, param, mNum){
                     result += num ==100 ? " and ${proNoun} maximum brightness" : num>0 ? ", at a brightness level of ${num}%" : ""
                     result += ". "
                 }
-                else if (voicePost && !noAck)  result = parent.replaceVoiceVar(voicePost,"","") 
+                else if (voicePost && !noAck)  result = parent.replaceVoiceVar(voicePost,"","",macroType,app.label) 
                 else result = " "
             }
             else if (groupType=="colorTemperature" && param !="undefined") {
@@ -1853,7 +1857,7 @@ def groupResults(num, op, colorData, param, mNum){
 					}
                 }
                 else if (kelvin ==9999) result = "I didn't understand the temperature you wanted to set the '${app.label}' device group. Valid temperatures are soft white, warm white, cool white and daylight white. %1%"
-                else if (voicePost && !noAck)  result = parent.replaceVoiceVar(voicePost,"","") 
+                else if (voicePost && !noAck)  result = parent.replaceVoiceVar(voicePost,"","",macroType,app.label) 
                 else result = " "
             }
             else if (op ==~/increase|raise|up|brighten|decrease|down|lower|dim/){
@@ -1885,7 +1889,7 @@ def groupResults(num, op, colorData, param, mNum){
             noun=settings."groupDevice${groupType}".size()==1 ? "device" : "devices"
             if (op ==~ /lock|unlock/){         
                 settings."groupDevice${groupType}"?."$op"()
-                result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost,"","") : noAck ? " " : "I am ${op}ing the ${noun} in the group named '${app.label}'. " 
+                result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost,"","",macroType,app.label) : noAck ? " " : "I am ${op}ing the ${noun} in the group named '${app.label}'. " 
             }
             else result = "For a lock group, you must use a 'lock' or 'unlock' command. %1%" 
         }
@@ -1893,7 +1897,7 @@ def groupResults(num, op, colorData, param, mNum){
             if (op ==~ /open|close/){
                 settings."groupDevice${groupType}"?."$op"()
                 def condition = op=="close" ? "closing" : "opening"
-                result = voicePost && !noAck  ? parent.replaceVoiceVar(voicePost,"","") : noAck ? " " :  "I am ${condition} the ${noun} in the group named '${app.label}'. "
+                result = voicePost && !noAck  ? parent.replaceVoiceVar(voicePost,"","",macroType,app.label) : noAck ? " " :  "I am ${condition} the ${noun} in the group named '${app.label}'. "
             }
             else result = "For a ${grpType} group, you must use an 'open' or 'close' command. %1%"
         }
@@ -1958,7 +1962,7 @@ def groupResults(num, op, colorData, param, mNum){
                 if (param !="undefined" && parent.getTstatLimits().lo && num <= parent.getTstatLimits().lo) result += "This is the minimum temperature I can set for this device group. "
             }
         }
-        result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost,"","") : noAck ? " " : result
+        result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost,"","",macroType,app.label) : noAck ? " " : result
 	}
     catch(e) { result = "There was a problem controlling the device group named '${app.label}'. Be sure it is configured correctly within the SmartApp. %1%" }
     return result
@@ -1977,7 +1981,7 @@ def CoREResults(sDelay){
 	if (!state.scheduled) {
 		if (!delay || delay == 0) CoREHandler() 
 		else if (delay < 9999) { runIn(delay*60, CoREHandler, [overwrite: true]) ; state.scheduled=true}
-		if (delay < 9999) result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost, delay,"") : noAck ? " " : result
+		if (delay < 9999) result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost, delay,"",macroType,app.label) : noAck ? " " : result
 	}
 	else result = "The CORE macro, '${app.label}', is already scheduled to run. You must cancel the execution or wait until it runs before you can run it again. %1%"
 	return result
@@ -2009,7 +2013,7 @@ def controlResults(sDelay){
     			sendLocationEvent(name: "askAlexaMacro", value: app.label, data: data, displayed: true, isStateChange: true, descriptionText: "Ask Alexa started '${app.label}' macro timer for ${delay} minute(s).")	
             	runIn(delay*60, controlHandler, [overwrite: true]) ; state.scheduled=true
             }
-            if (delay < 9999) result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost, delay,"") : noAck ? "" : result
+            if (delay < 9999) result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost, delay,"",macroType,app.label) : noAck ? "" : result
 		}
         else result = "The control macro, '${app.label}', is already scheduled to run. You must cancel the execution or wait until it runs before you can run it again. %1%"
     }
@@ -2344,19 +2348,19 @@ def getHTTPDesc(){
     else if (extInt == "1" && param.ip && param.port && param.cmd) result += "http://${param.ip}:${param.port}/${param.cmd}"
     return result ? result : "Status: UNCONFIGURED - Tap to configure"
 }
-private replaceVoiceVar(msg, delay, filter) {
+private replaceVoiceVar(msg, delay, filter, type, name) {
 	def df = new java.text.SimpleDateFormat("EEEE")
 	location.timeZone ? df.setTimeZone(location.timeZone) : df.setTimeZone(TimeZone.getTimeZone("America/New_York"))
 	def day = df.format(new Date()), time = parseDate("","h:mm a"), month = parseDate("","MMMM"), year = parseDate("","yyyy"), dayNum = parseDate("","d")
     def varList = getVariableList(), temp = varList.temp != "undefined device" ? roundValue(varList.temp) + " degrees" : varList.temp
     def humid = varList.humid, people = varList.people
-    def fullMacroType=[GroupM: "Extension Group", Control:"Control Macro", Group:"Device Group"][macroType] ?: macroType
+    def fullMacroType=[GroupM: "Extension Group", Control:"Control Macro", Group:"Device Group", Voice:"Voice Report"][type] ?: type
 	def fullDeviceType=[colorControl: "Colored Light",switchLevel:"Dimmer" ,doorControl:"Door",lock:"Lock",switch:"Switch",thermostat:"Thermostat"][groupType] ?: groupType
     def delayMin = delay ? delay + " minutes" : "No delay specified"
     msg = macroType=="Group" ? msg.replace('%dtype%', "${fullDeviceType}") : msg.replace('%dtype%', "")
     msg = macroType=="Group" && groupType =="switch" ? msg.replace('%dtypes%', "switches") :  macroType=="Group" && groupType !="switch" ? msg.replace('%dtypes%', "${fullDeviceType}s") : msg.replace('%dtypes%', "")
     msg = msg.replace('%mtype%', "${fullMacroType}")
-    msg = msg.replace('%macro%', "${app.label}")
+    msg = msg.replace('%macro%', "${name}")
     msg = msg.replace('%day%', day)
     msg = msg.replace('%date%', "${month} ${dayNum}, ${year}")
     msg = msg.replace('%time%', "${time}")
@@ -3002,14 +3006,14 @@ private cheat(){
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private textAppName() { return "Ask Alexa" }	
 private textVersion() {  
-    def version = "SmartApp Version: 2.2.5 (04/11/2017)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : "", aaMQVer ="", aaWRVer ="", aaVRVer=""
+    def version = "SmartApp Version: 2.2.5 (04/12/2017)", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : "", aaMQVer ="", aaWRVer ="", aaVRVer=""
     if (getAAMQ().size()) getAAMQ().each { aaMQVer="\n"+it.textVersion() }
     if (getWR().size()) getWR().each { aaWRVer="\n"+it.textVersion() }
-    if (getWR().size()) getVR().each { aaVRVer="\n"+it.textVersion() }
+    if (getVR().size()) getVR().each { aaVRVer="\n"+it.textVersion() }
     return "${version}${aaMQVer}${aaVRVer}${aaWRVer}${lambdaVersion}"
 }
 private versionInt(){ return 225 }
-private LambdaReq() { return 125 }
+private LambdaReq() { return 124 }
 private mqReq() { return 101 }
 private wrReq()  { return 100 }
 private vrReq()  { return 100 }
