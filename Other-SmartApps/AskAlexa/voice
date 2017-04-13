@@ -2,7 +2,7 @@
  *  Ask Alexa Voice Report Extension
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.0 4/12/17
+ *  Version 1.0.0 4/13/17
  * 
  *  Version 1.0.0 - Initial release
  *
@@ -37,6 +37,7 @@ preferences {
     	page name:"pageSwitchReport"
         page name:"pagePresenceReport"
         page name:"pageSpeakerReport"
+        page name:"pageOtherReports"
 }
 //Show main page
 def mainPage() {
@@ -55,6 +56,7 @@ def mainPage() {
             href "pageOtherReport", title: "Other Sensors Report", description: reportSensors(), state: (voiceWater|| voiceMotion|| voicePower || voiceAccel  ? "complete" :null), image: parent.imgURL() + "sensor.png"
             href "pageHomeReport", title: "Mode and Smart Home Monitor Report", description: reportDescMSHM(), state: (voiceMode|| voiceSHM? "complete": null), image: parent.imgURL() + "modes.png"
             href "pageBatteryReport",title: "Battery Report", description: batteryDesc(), state: (voiceBattery ? "complete" : null), image: parent.imgURL() + "battery.png"
+            href "pageOtherReports", title: "Include Other Reports", description: otherDesc(), state: (otherReportsList ? "complete" : null), image: parent.imgURL() + "add.png"
             input "voicePost", "text", title: "Post Message After Device Report", description: "Use variables like %time%, %day%, %date% here.", required: false, capitalization: "sentences"
         	input "allowNullRpt", "bool", title: "Allow For Empty Report (For Extension Groups)", defaultValue: false
         }
@@ -205,6 +207,14 @@ def pageHomeReport(){
         }
     }
 }
+def pageOtherReports(){
+    dynamicPage(name: "pageOtherReports", install: false, uninstall: false){
+        section { paragraph "Include Other Reports", image: parent.imgURL() + "add.png" }
+        section(" "){
+             input "otherReportsList", "enum", title: "Include The Following Reports", required: false, defaultValue: 20, options: parent.getMacroList("other", "${app.label}"), multiple: true
+        }
+    }
+}
 //---------------------------------------------------------------
 def installed() {
     initialize()
@@ -255,6 +265,7 @@ def getOutput(){
         	outputTxt += voiceSHM ? "The current Smart Home Monitor status is '${currSHM}'. " : ""
         }
         outputTxt += voiceBattery && batteryReport() ? batteryReport() : ""
+        if (otherReportsList) outputTxt +=parent.processVRWR(otherReportsList)
         outputTxt += voicePost ? voicePost : ""
 	}
 	catch(e){ outputTxt = "There was an error processing the report. Please try again. If this error continues, please contact the author of Ask Alexa. %1%" }
@@ -262,9 +273,9 @@ def getOutput(){
     if (!outputTxt && !allowNullRpt) outputTxt = "The voice report, '${app.label}', did not produce any output. Please check the configuration of the report within the SmartApp. %1%"  
     if ((parent.advReportOutput && voiceRepFilter) || voicePre || voicePost) outputTxt = parent.replaceVoiceVar(outputTxt,"",voiceRepFilter,"Voice",app.label)
     if (outputTxt && !outputTxt.endsWith("%") && !outputTxt.endsWith(" ")) outputTxt += " "
-    outputTxt += (outputTxt && !outputTxt.endsWith("%") && playContMsg) ? "%4%" : (outputTxt && !outputTxt.endsWith("%") && !playContMsg) ? "   " : ""
-    if (noteFeed && noteFeedData) feedData=outputTxt.endsWith("%") ? ' Data sent to Alexa: "' + outputTxt.take(outputTxt.length()-3) + '"' : ' Data sent to Alexa: "' + outputTxt + '"'
-    if (noteFeed) parent.sendNotificationEvent("Ask Alexa triggered extension: '${app.label}'. ${feedData}")
+    outputTxt += (outputTxt && !outputTxt.endsWith("%") && playContMsg) ? "%4%" : (outputTxt && !outputTxt.endsWith("%") && !playContMsg) ? " " : ""
+    if (noteFeed && noteFeedData) feedData=outputTxt.endsWith("%") ? ' Data sent to Alexa: "' + outputTxt[0..-4] + '"' : ' Data sent to Alexa: "' + outputTxt + '"'
+    if (noteFeed) sendNotificationEvent("Ask Alexa triggered voice report extension: '${app.label}'. ${feedData}")
     return outputTxt
 }
 //Child Common modules
@@ -650,7 +661,8 @@ def speakerDesc(){
     if (voiceSpeaker) result += voiceSpeaker.size()>1 ? " report status" : " reports status" 
 	return result
 }
+def otherDesc(){ return otherReportsList ? "Includes the following reports:\n" + parent.getList(otherReportsList) : "Status: UNCONFIGURED - Tap to configure" }
 //Version/Copyright/Information/Help
 private versionInt(){ return 100 }
 private def textAppName() { return "Ask Alexa Voice Report" }	
-private def textVersion() { return "Voice Report Version: 1.0.0 (04/12/2017)" }
+private def textVersion() { return "Voice Report Version: 1.0.0 (04/13/2017)" }
