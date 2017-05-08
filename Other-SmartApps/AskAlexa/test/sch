@@ -1,0 +1,483 @@
+/**
+ *  Ask Alexa Scheduler Extension
+ *
+ *  Copyright © 2017 Michael Struck
+ *  Version 1.0.0 5/7/17
+ * 
+ *  Version 1.0.0 (5/7/17) - Initial release
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *  for the specific language governing permissions and limitations under the License.
+ *
+ */
+definition(
+    name: "Ask Alexa Scheduler",
+    namespace: "MichaelStruck",
+    author: "Michael Struck",
+    description: "Extension Application of Ask Alexa. Do not install directly from the Marketplace",
+    category: "My Apps",
+    parent: "MichaelStruck:Ask Alexa",
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/ext.png",
+    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/ext@2x.png",
+    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/ext@2x.png",
+    )
+preferences {
+    page name:"mainPage"
+    page name:"toggleStatus"
+    page name:"pageMQ"
+}
+//Show main page
+def mainPage() {
+	dynamicPage(name: "mainPage", title:"Ask Alexa Scheduler Options", install: true, uninstall: true) {
+        section { label title:"Schedule Name (Required)", required: true, image: parent.imgURL() + "schedule.png" }
+        section ("Status"){
+            if (state.status==null) state.status=true
+            def imageFile=state.status ? parent.imgURL() +"on.png" : parent.imgURL() +"off.png" 
+            def dateTime= schEnd() ?  "${schYearEnd}-${schMonthEnd}-${schDayEnd}${schTimeEnd[10..27]}" : null
+            def schStatus = getStatus()
+            if (schStatus=~/Incomplete|Invalid|Expired/) {
+            	paragraph "This schedule: ${schStatus}", image: parent.imgURL() +"warning.png"
+            	if (schStatus=="Invalid") paragraph "You entered a date that is invalid, such as a month with only 30 days or February 29th outside of a leap year. Please correct this to proceed."
+            	else if (schStatus=="Expired" && schType=="single") paragraph "The trigger date has already passed. Please correct this to proceed."
+                else if (schStatus=="Expired" && schType=="complex") paragraph "The end date has already passed. Please correct this to proceed."
+                else if (schStatus=~/Invalid start/) paragraph "Your end time/date is before the start time/date. Please correct this to proceed."
+            }
+            else href "toggleStatus", title: "This schedule: ${schStatus}", description: "Tap to toggle status", image: imageFile
+        }
+        section ("Schedule Settings"){ input "schType", "enum", title: "Type Of Schedule", options:schTypes(), required: false, defaultValue: 0, submitOnChange: true }
+        if (schType=="single"){
+			section ("One-time event date"){	
+            	def imageFile=(checkDate("end").expired || checkDate("end").warning) ?  parent.imgURL()+"caution.png" : null
+            	href "pageEndDate", title: "Time / Date", description: endDateDesc(), state: (schEnd() ? "complete" : null), image: imageFile , submitOnChange: true
+                if (schEnd()) input "deleteExpired", "bool", title: "Auto Delete This Schedule After Event Time/Date", defaultValue: false, submitOnChange: true
+            }
+        }
+        else if (schType==~/simple|complex/) {
+        	section("Recurring options"){ 
+                input "schReType", "enum", title: "Recurrence Interval", required: false, options: reType(), submitOnChange: true
+                if (schReType=="custom") input "schComplexTime", "number", title: "Recurrence Time (Minutes)", range:"0..*", required: false
+                input "schCount","number", title: "Maximum Number Of Recurrences", range:"1..*", required:false, description: "Leave blank to allow to run continuously", submitOnChange: true
+                if (schCount) input "deleteExpired", "bool", title: "Auto Delete This Schedule After Count Reaches Maximum", defaultValue: false, submitOnChange: true
+            }
+        	if (schType =="complex"){
+            	section("Recurrence start and end time/date (optional)"){
+                	def imageFileStart= checkDate("start").warning ?  parent.imgURL()+"caution.png" : null
+                    def imageFileEnd=(checkDate("end").expired || checkDate("end").warning) ?  parent.imgURL()+"caution.png" : null
+                	href "pageStartDate", title: "Start Time / Date", description: startDateDesc(), state: (schStart() ? "complete" : null), image: imageFileStart
+                	href "pageEndDate", title: "End Time / Date", description: endDateDesc(), state: (schEnd() ? "complete" : null)	, image: imageFileEnd
+                    if (schEnd()) input "deleteExpired", "bool", title: "Auto Delete This Schedule After End Time/Date", defaultValue: false, submitOnChange: true
+                }
+            }
+        }
+        else if (schType=="custom"){
+        	section("Custom Cron Expression"){
+            	href "pageCronExpression", title: "Cron Expression", description: cronDesc() , state: cronValidate() ? "complete" : null
+                input "schCount","number", title: "Maximum Number Of Recurrences", range:"1..*", required:false, description: "Leave blank to allow to run within other limits (if any)", submitOnChange: true
+            	if (schCount) input "deleteExpired", "bool", title: "Auto Delete This Schedule After Count Reaches Maximum", defaultValue: false, submitOnChange: true
+            }	
+        }
+        section("Scheduled action"){
+            input "schAction", "enum", title: "Action To Take...", options: actionList(), submitOnChange: true, required: false
+            if (schAction=="msg") {
+                input "schMsgTxt", "text", title: "Message To Send", required: false, capitalization: "sentences", submitOnChange: true
+                href "pageMQ", title: "Message Queue Options", description: mqDesc(), state: schMsgQue ? "complete" : null  
+           	}
+            if (schAction =="VR"){
+                input "schVR", "enum", title: "Choose Voice Report", options: parent.getMacroList("schedV",""), required:false, submitOnChange: true
+            	href "pageMQ", title: "Message Queue Options", description: mqDesc(), state: schMsgQue ? "complete" : null
+            }
+            if (schAction =="WR"){
+                input "schWR", "enum", title: "Choose Weather Report", options: parent.getMacroList("schedW",""), required:false, submitOnChange: true
+            	href "pageMQ", title: "Message Queue Options", description: mqDesc(), state: schMsgQue ? "complete" : null
+                input "schWeather", "bool", title: "Turn On Weather Advisory Notification Feature", defaultValue:false, submitOnChange: true
+            }
+            if (schAction =="purge"){
+            	input "schMsgQue", "enum", title: "Message Queue(s) To Purge...", options: parent.getMQListID(true), multiple:true, required: false, submitOnChange: true
+                if (schMsgQue) paragraph "Please note: Purging message queues will run without output or notification"
+            }
+            if (schAction =="macro"){
+            	input "schMacro", "enum", title: "Macro To Run", options: parent.getMacroList("schedM",""), required: false, submitOnChange: true
+                if (schMacro) paragraph "Please note: Macros will run without output or notification"
+			}
+		}
+		if (schType && schAction && schAction !="macro" && schAction !="purge"){
+			section("Other options"){
+				input "schAppendPre", "text", title: "Append Text To Beginning Of Output", capitalization: "sentences", required:false, description: "You may use variables like %time% and %date%"
+				input "schAppendPost", "text", title: "Append Additional Text To End Of Output", capitalization: "sentences", required:false, description: "You may use variables like %time% and %date%"
+            }
+        }
+        if (schType ==~/complex|custom/){
+        	section("Complex schedule restrictions", hideable: true, hidden: !(runDay || timeStart || timeEnd || runMode || runPeople)) {            
+				input "runDay", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only Certain Days Of The Week...",  multiple: true, required: false, image: parent.imgURL() + "calendar.png", submitOnChange: true
+				href "timeIntervalInput", title: "Only During Certain Times...", description: parent.getTimeLabel(timeStart, timeEnd), state: (timeStart || timeEnd ? "complete":null), image: parent.imgURL() + "clock.png", submitOnChange: true
+				input "runMode", "mode", title: "Only In The Following Modes...", multiple: true, required: false, image: parent.imgURL() + "modes.png", submitOnChange: true
+                input "runPeople", "capability.presenceSensor", title: "Only When Present...", multiple: true, required: false, submitOnChange: true, image: parent.imgURL() + "people.png"
+				if (runPeople && runPeople.size()>1) input "runPresAll", "bool", title: "Off=Any Present; On=All Present", defaultValue: false
+            }
+		}
+		if ((schType =="single") ||  (schType =="simple" && schReType) || (schType =="complex" && schReType) || (schType=="custom" && cronValidate)) { 
+            section ("Help"){
+            	if (schType =="single"){
+            		def extraTxtEnd1 = deleteExpired ? " In addition, this schedule will auto delete 2 minutes after the expiration time.":""
+					paragraph "This schedule will trigger at the time and date you specify above. After that, the schedule will expire. ${extraTxtEnd1}"
+        		}	
+                else if (schType =="simple" && schReType){
+                    def extraTxtEnd1 = schCount && deleteExpired ? " This schedule will auto delete 2 minutes after the maximum count is reached.":""
+                    paragraph "This schedule will begin the recurrence interval you specified as soon as you tap \"Done\" above (if the status is \"On\"). Please note that if you are re-editing this schedule the old "+
+                        "recurrence interval (and the current run count) will be reset upon tapping \"Done\" and the new schedule will be established.${extraTxtEnd1}"
+                }
+                else if (schType =="complex" && schReType){
+                    def extraTxtStart = schStart() ? "after the \"Start Date\" you entered above" : "as soon as you tap \"Done\" above"
+                    def extraTxtEnd1 = schEnd() ? "the time you specified in the \"End Date\" ": "you stop it "
+                    if (schCount) extraTxtEnd1 +="or until you reach the maxium recurrence count of ${schCount}"
+                    def extraTxtEnd2 = (schEnd() || schCount) && deleteExpired ? " This schedule will auto delete 2 minutes after the maximum count (if set) or the \"End Time/Date\" is reached.":""
+                    def restrictions = runDay || timeStart || timeEnd || runMode || runPeople ? " and only within the parameters set in the restrictions area.": "."
+                    paragraph "This schedule will begin the recurrence interval ${extraTxtStart} (if the status is \"On\"). The action will continue to recur until ${extraTxtEnd1}${restrictions}${extraTxtEnd2}"
+                }
+                else if (schType=="custom" && cronValidate){
+                    def extraTxtEnd1 = schCount ? " or until you reach the maxium recurrence count of ${schCount}":""
+                    def extraTxtEnd2 = schCount ? " Please note that if you are re-editing this schedule the current run count will be reset upon tapping \"Done\".":""
+                    def restrictions = runDay || timeStart || timeEnd || runMode || runPeople ? " and only within the parameters set in the restrictions area.": "."
+                    def extraTxtEnd3 = schCount && deleteExpired ? " This schedule will auto delete 2 minutes after the maximum count is reached.":""
+                    paragraph "This custom schedule will recur at the interval in your cron expression${extraTxtEnd1}${restrictions}${extraTxtEnd2}" +
+                        " For short recurrence cron intervals SmartThings may start the first occurance after a random time before repeating the subsequent intervals.${extraTxtEnd3}"
+                }
+        	}
+        }
+        section("Tap below to remove this schedule"){ }
+	}
+}
+page(name: "timeIntervalInput", title: "Only during a certain time") {
+	section {
+		input "timeStart", "time", title: "Starting", required: false
+		input "timeEnd", "time", title: "Ending", required: false
+	}
+}
+page(name: "pageEndDate", title: "Enter the full time and date"){
+	section {
+		input "schTimeEnd", "time", title: "Time Of Day", required: false
+        input "schMonthEnd", "enum", title: "Month", options: monthList(), required: false
+        input "schDayEnd", "number", title: "Day", range: "1..31", description: "Enter a day of the month between 1 and 31", required: false
+        input "schYearEnd", "number", title: "Year", range: "2017..2022", description: "Enter a year between 2017 and 2022", required: false
+	}
+}
+page(name: "pageStartDate", title: "Enter the full time and date"){
+	section {
+        input "schTimeStart", "time", title: "Time Of Day", required: false
+        input "schMonthStart", "enum", title: "Month", options: monthList(), required: false
+        input "schDayStart", "number", title: "Day", range: "1..31", description: "Enter a day of the month between 1 and 31", required: false
+        input "schYearStart", "number", title: "Year", range: "2017..2022", description: "Enter a year between 2017 and 2022", required: false
+	}
+}
+page(name: "pageCronExpression", title: "Enter your cron parameters"){
+	section {
+    	input "cronSec", "text", title: "Second Parameter", required: false, description: "0-59 and * wildcards allowed", defaultValue: "0"
+    	input "cronMin", "text", title: "Minutes Parameter", required: false, description: "0-59 and , - * / wildcards allowed", defaultValue: "0"
+        input "cronHour", "text", title: "Hours Parameter", required: false, description: "0-23 and , - * / wildcards allowed", defaultValue:"1/1"
+        input "cronDayMon", "text", title: "Day-Of-Month Parameter", required: false, description: "1-31 and , - * ? / L W wildcards allowed",  defaultValue:"*"
+        input "cronMon", "text", title: "Month Parameter", required: false, description: "1-12 or JAN-DEC and , - * /  wildcards allowed", defaultValue:"*"
+        input "cronDayWeek", "text", title: "Day-Of-The-Week Parameter", required: false, description: "1-7 or SUN-SAT and , - * ? / L wildcards allowed", defaultValue:"?"
+        input "cronYear", "number", title:"Year Parameter (Optional)", range:"2017..2020", required: false, description: "2017-2020 and , - * / wildcards allowed"
+    }
+}
+def pageMQ(){
+    dynamicPage(name:"pageMQ", title: "Enter Message Queue information"){
+        section {
+            input "schMsgQue", "enum", title: "Message Queue Recipient(s)...", options: parent.getMQListID(true), multiple:true, required: false, submitOnChange: true
+            input "schMQNotify", "bool", title: "Notify Only Mode (Not Stored In Queue)", defaultValue: false, submitOnChange: true
+            if (!schMQNotify) input "schMQExpire", "number", title: "Message Expires (Minutes)", range: "1..*", required: false, submitOnChange: true
+            if (!schMQNotify && !schMQExpire) input "schMQOverwrite", "bool", title: "Overwrite Other Scheduler Messages", defaultValue: false
+        }
+    }
+}
+def toggleStatus(){
+	state.status = state.status ? false : true
+    mainPage()
+}
+def installed() {
+    initialize()
+}
+def updated() {
+	unsubscribe()
+    unschedule()
+    initialize()
+}
+def initialize() {
+	state.runCount = 0
+    if (getStatus()==~/On|Off/){
+        if (schType=="single"){
+        	def dateTime="${schYearEnd}-${schMonthEnd}-${schDayEnd}${schTimeEnd[10..27]}"
+        	runOnce (dateTime, doAction)
+    	}
+        if (schType=="simple") createSchd()	
+    	if (schType=="complex") { 
+    		def dateTimeStart, dateTimeEnd
+            if (schStart()){
+            	 dateTimeStart="${schYearStart}-${schMonthStart}-${schDayStart}${schTimeStart[10..27]}"
+                 if (!checkDate("start").expired) runOnce (dateTimeStart, schRecur)
+                 else createSchd()
+            }
+            else createSchd()
+            if (schEnd()){
+            	 dateTimeEnd="${schYearEnd}-${schMonthEnd}-${schDayEnd}${schTimeEnd[10..27]}"
+                 if (!checkDate("end").expired) runOnce (dateTimeEnd, unschRecur)
+                 else unschedule()
+            }
+    	}
+        if (schType=="custom") {
+        	if (cronValidate) schedule (cronDesc(), doAction)
+        }
+	}
+}
+//Main Handlers
+def doAction(evt){
+    if (getStatus()=="On" && ((schType==~/complex|custom/ && getOkToRun()) || schType==~/simple|single/) ){
+		def outputTxt
+        if (schAction=="msg") {
+        	outputTxt = schAppendPre ? parent.replaceVoiceVar(schAppendPre, "", "", "Scheduler", app.label) + " ": ""
+            outputTxt += schAppendPost ? schMsgTxt + parent.replaceVoiceVar(schAppendPost, "", "", "Scheduler", app.label) : schMsgTxt
+            sendMsg(outputTxt)
+        }
+        if (schAction=="macro") parent.processMacroAction(schMacro.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", ""), 0, "undefined", "undefined", "undefined", false)
+        if (schActiontype=="VR") {
+        	outputTxt = schAppendPre ? parent.replaceVoiceVar(schAppendPre, "", "", "Scheduler", app.label) + " ": ""
+            outputTxt += parent.processOtherRpt(schVR)
+            if (outputTxt.endsWith("%")) result = result[0..-4]
+            outputTxt += schAppendPost ? parent.replaceVoiceVar(schAppendPost, "", "", "Scheduler", app.label): ""
+        	sendMsg(outputTxt)
+        }
+        if (schAction=="WR") {
+        	outputTxt = schAppendPre ? parent.replaceVoiceVar(schAppendPre, "", "", "Scheduler", app.label)+ " ": ""
+        	outputTxt += processOtherRpt(schWR)
+            if (outputTxt.endsWith("%")) result = result[0..-4]
+            outputTxt += schAppendPost ? parent.replaceVoiceVar(schAppendPost, "", "", "Scheduler", app.label): ""
+            if ((schWeather && outputTxt.contains("ALERT!")) || !schWeather) sendMsg(outputTxt)
+        }
+        if (schAction=="purge") {
+        	if (schMsgQue.contains("Primary Message Queue")) parent.qDelete()
+            parent.childQDelete(schMsgQue)
+        }
+        log.info  "Schedule '${app.label}' was triggered."
+        if (schCount){
+            def currCount=state.runCount as int
+            currCount ++
+            state.runCount = currCount
+    	}
+	}
+    else log.warn "Schedule '${app.label}' did not run because it is off, invalid, expired, has used up its allocated run counts, or had restrictions placed on it."
+    if (checkDate("endTrue").expired || getStatus()=="Expired") unschRecur(evt)   
+}
+def schRecur(evt){ createSchd() }
+def unschRecur(evt){ 
+	unschedule() 
+	log.info "The schedule, '${app.label}', has expired."
+    if (deleteExpired) {
+    	log.info "Scheduling the deletion of schedule, '${app.label}'. You have two minutes to cancel this. Simply edit the schedule via the SmartApp and press 'Done' to cancel the deletion."
+    	runIn(120, deleteMe)
+    }
+}
+def deleteMe(){
+	parent.deleteChild(app.id)
+}
+//Create recurring schedules
+def createSchd(){	
+    if(schReType ==~/1|5|10|15|30|60|180|360|720/){
+    	def min =schReType as int
+    	if (min< 60) runEveryXMinutes(min, doAction)
+    	else runEveryXHours(min/60 as int, doAction)
+	}
+    else {
+    	def hour=new Date(now()).format("HH", location.timeZone) as int, minutes=new Date(now()).format("mm", location.timeZone), month=new Date(now()).format("MM", location.timeZone), day =new Date(now()).format("dd", location.timeZone)
+        if (schReType=="day") { schedule("0 ${minutes} ${hour} 1/1 * ?", doAction) }
+        else if (schReType=="month") { schedule("0 ${minutes} ${hour} ${day} 1/1 ?", doAction) }
+        else if (schReType=="year") { schedule("0 ${minutes} ${hour} ${day} ${month} ? *", doAction) }
+    }
+}
+//Actions
+def sendMsg(msgTxt){
+	def expireMin=schMQExpire ? schMQExpire as int : 0, expireSec=expireMin*60
+    def overWrite =!schMQNotify && !schMQExpire && schMQOverwrite
+    sendLocationEvent(
+    	name: "AskAlexaMsgQueue", 
+        value: "Ask Alexa Schedule, '${app.label}'",
+        unit: "${app.id}",
+        isStateChange: true, 
+        descriptionText: msgTxt, 
+        data:[
+        	queues:schMsgQue,
+            overwrite: overWrite,
+            notifyOnly: schMQNotify,
+            expires: expireSec
+        ]
+    )
+}
+//Called from parent app
+def getSchdDesc(){
+	def result ="The schedule, '${app.label}', ", mqCount = schMsgQue?.size()>1 ? "queues" : "queue", schStatus = getStatus()
+    def monthEnd=monthList()[schMonthEnd]?:schMonthEnd, monthStart=monthList()[schMonthStart]?:schMonthStart,reType= reType()[schReType]?:schReType
+    if (schStatus==~/On|Off/) result += schType=="single" ? "is a single occurance event " : schType=="simple" ? "is a simple recurrence " : schType=="complex" ? "is a complex recurrence event " : "is a custom cron schedule "
+    if (schStatus=="On"){
+        if (schType=="single") result += "and is schedule to run at ${parent.timeParse("${schTimeEnd}", "h:mm a")} on ${monthEnd} ${schDayEnd}, ${schYearEnd}. At this time, "
+        else if (schType=="simple") result +=  "at an interval of ${reType.toLowerCase()}. When the schedule triggers, "
+        else if (schType=="complex"){
+            if (schStart()) result += "that starts at ${parent.timeParse("${schTimeStart}", "h:mm a")} on ${monthStart} ${schDayStart}, ${schYearStart}, "
+            result += schStart() && schEnd() ? "and " : !schStart() && schEnd() ? "that " : ""
+            result += schEnd() ? "ends at ${parent.timeParse("${schTimeEnd}", "h:mm a")} on ${monthEnd} ${schDayEnd}, ${schYearEnd}, " : ""
+            result += "at an interval of ${reType.toLowerCase()}. When the schedule triggers, "
+        }
+        else if (schType=="custom") result +="that recurs based on a cron expression you entered. When the schedule triggers, "
+        result += schAction=="macro" ? "a the macro, '${schMacro}' will run. " : ""
+        result += schAction=="msg" ? "a text message will be sent to the message ${mqCount}. " : ""
+        result += schAction=="VR" ? "a voice report will be sent to the message ${mqCount}. ":""
+        result += schAction=="WR" ? "a weather report will be sent to the message ${mqCount}. ":""
+        result += schAction=="WR" && schWeather ? "The weather advisory feature is turned on for this report, and will only notify when the report is an advisory. " : ""
+        result += schAction=="purge" ? "the message ${schMsgQue} will purge. ":""
+        if (schType=="complex" && (runDay || timeStart || timeEnd || runMode || runPeople)) result += "In addition, this schedule has restrictions applied that will limit when it recurs. "
+    	if (schType==~/simple|complex/ && schCount) result +="Finally, there is a maximum number of times this schedule will run. Right now you have used ${state.runCount} of ${schCount}. "
+    }
+    else if (schStatus=="Off") result += "and is currently off. "
+    else if (schStatus=="Incomplete") result += "is a incomplete. Use your smartapp to complete the configuration of this schedule. "
+    else if (schStatus=="Invalid") result += "is invalid as it has a date associated with it that is incorrect. Use your smart app to complete the configuration of this schedule. "
+    else if (schStatus=="Expired" && schCount && state.runCount < schCount) result += "expired at ${parent.timeParse("${schTimeStart}", "h:mm a")} on ${monthEnd} ${schDayEnd}, ${schYearEnd}. "
+    else if (schStatus=="Expired" && schCount && state.runCount >= schCount) result += "expired after reaching the maximum run count of ${schCount}. "
+    else if (schStatus=~/Invalid start/) result += "is invalid because your end time and date is before the start time and date. Please correct this within your Ask Alexa SmartApp. "
+	if (deleteExpired) result += "Please note: This schedule will auto-delete when it expires. "
+    result +="%2%"
+    return result
+}
+def toggle(){
+	def schStatus = getStatus(), result
+    if (schStatus==~/On|Off/) {
+    	state.status = state.status ? false : true
+        result = "I have toggled the status of the schedule, '${app.label}', to ${state.status ? "on" : "off"}. %4%"
+	}
+    else result = "I am unable to change the status of the schedule as it is expired, invalid or incomplete. Use the Ask Alexa SmartApp to fix the schedule. %1%"
+}
+def onOff(cmd){
+	String result = cmd=="on" && state.status  ? "The schedule, '${app.label}', is already on. %1%":  cmd=="off" && !state.status ? "The schedule, '${app.label}', is already off. %1%" : ""
+    if (!result) {
+    	state.status = cmd=="on"
+        result = "I have turned ${cmd} the schedule, '${app.label}'. %4%"
+    }
+    return result
+}
+def getShortDesc(){
+	def result, monthEnd=monthList()[schMonthEnd]?:schMonthEnd, monthStart=monthList()[schMonthStart]?:schMonthStart,reType= reType()[schReType]?:schReType
+	if (schType=="single")result ="at ${parent.timeParse("${schTimeEnd}", "h:mm a")} on ${monthEnd} ${schDayEnd}, ${schYearEnd}"
+    if (schType==~/simple|complex/) result =  "at an interval of ${reType.toLowerCase()} "
+    if (schType=="complex" && (schStart() || schEnd())){
+        if (schStart()) result += "starting ${parent.timeParse("${schTimeStart}", "h:mm a")} on ${monthStart} ${schDayStart}, ${schYearStart} "
+		result += schEnd() ? "and ends at ${parent.timeParse("${schTimeEnd}", "h:mm a")} on ${monthEnd} ${schDayEnd}, ${schYearEnd}" : ""
+	}
+    if (schType=="custom"){
+    	result ="on a cron expression of ${cronSec} ${cronMin} ${cronHour} ${cronDayMon} ${cronMon} ${cronDayWeek}"
+        if (cronYear) result +=" ${cronYear}"
+	} 
+    if (getStatus()=="Expired" && schCount && state.runCount >= schCount) result = "after reaching the maximum run count of ${schCount}. "
+    return result
+}
+def getExtras(){
+	def result = (schType ==~/complex|custom/ && (runDay || timeStart || timeEnd || runMode || runPeople)) ? "®" : ""
+    result += ((schType==~/simple|complex/) && schCount) ? "©" : ""
+    if (deleteExpired) result +="ª"
+    result = result ?"(${result})" : ""
+    return result
+}
+//Common Code
+def getOkToRun(){ def result = (!runMode || runMode.contains(location.mode)) && parent.getDayOk(runDay) && parent.getTimeOk(timeStart,timeEnd) && parent.getPeopleOk(runPeople,runPresAll) }
+def checkDate(type){
+	def result=true, warning=false, expired = false, dateOrder=true
+    if (type=="end" || type=="endTrue"){
+        if (!schEnd()) result = false
+        else{
+            def day=schDayEnd as int, month = schMonthEnd as int, year = schYearEnd as int, dateTime="${schYearEnd}-${schMonthEnd}-${schDayEnd}${schTimeEnd[10..27]}"
+            if (day == 31 && month ==~/2|4|6|9|11/) { result = false; warning=true}
+            if ((day >28 && month ==2 && year  !=2020) || (day >29 && month ==2 && year ==2020))  { result = false; warning=true}
+            if (now() > (new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", dateTime).getTime())+30000) expired = true
+            if (type=="endTrue" && now() > (new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", dateTime).getTime())) expired = true 
+    	}
+    }
+    else if (type=="start"){
+    	if (!schStart()) result = false
+        else{
+            def day=schDayStart as int, month = schMonthStart as int, year = schYearStart as int, dateTime="${schYearStart}-${schMonthStart}-${schDayStart}${schTimeStart[10..27]}"
+            if (day == 31 && month ==~/2|4|6|9|11/) { result = false; warning=true}
+            if ((day >28 && month ==2 && year  !=2020) || (day >29 && month ==2 && year ==2020))  { result = false; warning=true}
+            if (now() > new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", dateTime).getTime()) expired = true
+        }
+    }
+    return ["result":result, "warning":warning, "expired":expired]
+}
+def monthList(){ return ["1": "January", "2":"February", "3":"March", "4":"April", "5":"May", "6":"June", "7":"July", "8":"August", "9":"September", "10":"October", "11":"November", "12":"December"] }	
+def actionList(){ return ["msg":"Send Free-Text To Message Queue(s)", "macro":"Run Macro (Control, CoRE or Extension Group)","VR":"Play Voice Report", "WR":"Play Weather Report/Advisories","purge":"Purge Message Queue(s)"] }
+def reType(){
+	return ["1":"Every minute", "5":"Every 5 minutes", "10":"Every 10 minutes", "15": "Every 15 minutes", "30": "Every 1/2 hour", "60": "Every hour", "180": "Every 3 hours", "360": "Every 6 hours",
+    	"720": "Every 12 hours", "day": "Daily", "month": "Monthly", "year": "Annually"]   	
+}
+def schTypes(){ return ["single":"One-Time Event", "simple":"Simple Recurring (Starts Immediately)", "complex":"Complex Recurring (Restrictions/Limits)","custom":"Custom Cron Schedule (Advanced)"] }
+def getStatus(){
+	def schStatus = state.status ? "On" : "Off", dateTime
+    if (app.label && schType && checkAction()){
+        if ((schType=="simple" && !schReType) || (schType=="single" && !schEnd()) || (schType=="complex" &&!schReType) ||  (schType =="custom" && !cronValidate()))  schStatus = "Incomplete"  
+        if (schType ==~/single|complex/) {
+            if (checkDate("end").warning || checkDate("start").warning) schStatus="Invalid"
+            else if (checkDate("end").expired) schStatus="Expired"
+        }
+        if (schType=="complex" && schStart() && schEnd()){
+            def start = "${schYearStart}-${schMonthStart}-${schDayStart}${schTimeStart[10..27]}", end="${schYearEnd}-${schMonthEnd}-${schDayEnd}${schTimeEnd[10..27]}"
+            if (new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", start).getTime() > new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", end).getTime()){
+                schStatus="Invalid start/end date combination"
+            }     
+        } 
+        if (schType !="single" && (schCount && state.runCount >= schCount)) schStatus="Expired"
+	}
+	else schStatus = "Incomplete"
+    return schStatus
+}
+def schStart(){ return (schTimeStart && schMonthStart && schDayStart && schYearStart) }
+def schEnd(){ return (schTimeEnd && schMonthEnd && schDayEnd && schYearEnd) }
+def checkAction(){ return (!schAction || (schAction=="msg" && (!schMsgTxt || !schMsgQue)) || (schAction=="VR" && (!schVR || !schMsgQue)) || (schAction=="WR" && (!schWR || !schMsgQue))|| (schAction =="purge" && !schMsgQue) || (schAction =="macro" && !schMacro)) ?  false : true }
+def endDateDesc(){
+	def monthEnd=monthList()[schMonthEnd]?:schMonthEnd, result
+    if (!schEnd()) result = "Tap to enter time and date"
+    else if (!checkDate("end").expired && !checkDate("end").warning) result= "${parent.timeParse("${schTimeEnd}", "h:mm a")} on ${monthEnd} ${schDayEnd}, ${schYearEnd}" 
+    else if (checkDate("end").warning) result = "Invalid date - Tap to edit"
+    else if (checkDate("end").expired) result = "Expired date - Tap to edit"
+    return result
+}
+def startDateDesc(){
+	def monthStart=monthList()[schMonthStart]?:schMonthStart, result
+    if (!schStart()) result = "Tap to enter time and date"
+    else if (!checkDate("start").warning) result= "${parent.timeParse("${schTimeStart}", "h:mm a")} on ${monthStart} ${schDayStart}, ${schYearStart}" 
+    else if (checkDate("start").warning) result = "Invalid date - Tap to edit"
+    return result
+}
+def mqDesc(){
+    def result = "Tap to add/edit the message queue options"
+    if (schMsgQue){
+    	result = schMsgQue.size()>1 ? "Message Queues: ${parent.getList(schMsgQue)}" :  "Message Queue: ${parent.getList(schMsgQue)}" 
+        result += schMQNotify ? "\nNotification Mode Only" : ""
+        result += schMQExpire ? "\nExpires in ${schMQExpire} seconds" : ""
+        result += schMQOverwrite ? "\nOverwrite all previous scheduler messages" : ""
+	}
+    return result
+}
+def cronDesc(){
+	def result ="Tap to enter your cron parameters"
+    if (cronValidate()) {
+    	result = "${cronSec} ${cronMin} ${cronHour} ${cronDayMon} ${cronMon} ${cronDayWeek}"
+        if (cronYear) result +=" ${cronYear}"
+    }
+	return result	
+}
+def cronValidate(){ return cronSec && cronMin && cronHour && cronDayMon && cronMon && cronDayWeek }	
+//Versions
+private versionInt(){ return 100 }
+private def textAppName() { return "Ask Alexa Scheduler" }	
+private def textVersion() { return "Scheduler Version: 1.0.0 (05/07/2017)" }
