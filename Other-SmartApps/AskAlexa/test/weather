@@ -1,10 +1,12 @@
 /**
  *  Ask Alexa Weather Report Extension
+ *  Special thanks to Barry Burke for Weather Underground Integration
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.0 4/12/17
+ *  Version 1.0.1 5/5/17
  * 
  *  Version 1.0.0 - Initial release
+ *  Version 1.0.1 - Updated icon
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -23,9 +25,9 @@ definition(
     description: "Extension Application of Ask Alexa. Do not install directly from the Marketplace",
     category: "My Apps",
     parent: "MichaelStruck:Ask Alexa",
-    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa-message-queue.src/ext.png",
-    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa-message-queue.src/ext@2x.png",
-    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa-message-queue.src/ext@2x.png",
+    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/ext.png",
+    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/ext@2x.png",
+    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/ext@2x.png",
     )
 preferences {
     page name:"mainPage"
@@ -50,7 +52,7 @@ def mainPage() {
         section ("Other Weather Underground information"){
         	input "voiceMoon", "bool", title: "Lunar Rise/Set/Phases", defaultValue:false
             input "voiceTide", "bool", title: "Tide Information", defaultValue: false
-            if (currWeatherSel() || foreWeatherSel()) input "voiceWeatherWarnFull", "bool", title: "Give Full Weather Advisories (If Present)", defaultValue: false
+            input "voiceWeatherWarnFull", "bool", title: "Give Full Weather Advisories (If Present)", defaultValue: false
         }
         section ("Location") {
         	if (currWeatherSel() || foreWeatherSel() || voiceSunset || voiceSunrise || voiceMoon || voiceTide) input "voiceWeatherLoc", "bool", title: "Speak Location Of Weather Report/Forecast", defaultValue: false
@@ -353,8 +355,7 @@ def weatherAlerts(){
     if ((advisories == null) || advisories.response.containsKey('error')) return "There was an error in the weather alerts data received Weather Underground. "
 	def alerts = advisories.alerts
     if ((alerts != null) && (alerts.size() > 0)) {
-		if ( alerts.size() == 1 ) msg += 'There is one active advisory for this area. '
-        else msg += "There are ${alerts.size()} active advisories for this area. "
+		msg += alerts.size() == 1 ? "ALERT! There is one active advisory for this area. " : "ALERT! There are ${alerts.size()} active advisories for this area. "
         def warn
         if (voiceWeatherWarnFull) {
 			if (alerts[0].date_epoch == 'NA') {
@@ -523,6 +524,6 @@ private tideInfo() {
     return msg		
 }
 //Version/Copyright/Information/Help
-private versionInt(){ return 100 }
+private versionInt(){ return 101 }
 private def textAppName() { return "Ask Alexa Weather Report" }	
-private def textVersion() { return "Weather Report Version: 1.0.0 (04/12/2017)" }
+private def textVersion() { return "Weather Report Version: 1.0.1 (05/05/2017)" }
