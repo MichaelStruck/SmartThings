@@ -1,10 +1,11 @@
 /**
  *  Ask Alexa Test App
  *
- *  Version - 1.0.1
+ *  Version - 1.0.2
  * 
  *  Version 1.0.0 (3/23/17) - Initial release
  *  Version 1.0.1 (4/6/17) - Added the remove button back in 
+ *  Version 1.0.2 (5/15/17) - Added in 'overwrite', 'notifyOnly' and 'expirations' functions
  *
  * 
  *  Copyright 2017 Michael Struck 
@@ -41,8 +42,11 @@ def mainPage(){
 		section {
             input "listOfMQs", "enum", title: "This is a list of the Ask Alexa Message Queues", options: state.askAlexaMQ, multiple: true, required: false
             input "unit", "text", title: "Unit value", required: false
-            input "msg", "text" , title: "Message to send to the queues above", required: false , capitalization: "sentences"
-            input "delete", "bool", title: "Turn this on to perform delete routine when DONE pressed", defaultValue: false
+            input "msg", "text" , title: "Message to send to the queues above (When DONE tapped)", required: false , capitalization: "sentences"
+            input "delete", "bool", title: "Turn this on to perform delete routine when DONE tapped", defaultValue: false, submitOnChange: true
+            input "expire", "number", title: "Expire in how many minutes? (Optional)", range: "1..*", required: false
+            if (!delete) input "overwrite", "bool", title: "Turn this on to perform the overwrite routine when DONE tapped", defaultValue: false 
+            input "notify", "bool", title: "Turn on \"notifyOnly\" parameter", defaultValue:false
 		}
         section ("Help"){
         	paragraph "The action (send or delete) will occur when clicking <DONE> at the top of the page. Unit values are not needed if you are not performing a delete function."
@@ -83,8 +87,9 @@ def updated() {
 
 def initialize() {
 	subscribe(location, "askAlexaMQ", askAlexaMQHandler)
-    if (!delete) sendLocationEvent(name: "AskAlexaMsgQueue", value: "Test App", unit: unit, isStateChange: true, descriptionText: msg, data: [queues:listOfMQs])
-    else sendLocationEvent(name: "AskAlexaMsgQueueDelete", value: "Test App", isStateChange: true, unit: unit, data: [queues:listOfMQs])
+    def exMin = expire ? expire as int : 0
+    def exSec=exMin * 60
+	sendLocationEvent(name: "AskAlexaMsgQueue", value: "Test App", unit: unit, isStateChange: true, descriptionText: msg, data: [queues:listOfMQs, overwrite:true ,expires:exSec, notifyOnly:notify])
 }
 //Common Code
 def askAlexaMQHandler(evt) {
@@ -95,8 +100,6 @@ def askAlexaMQHandler(evt) {
             break
 	}
 }
-
-
 //Version/Copyright/Information/Help
 
 private def textAppName() {
@@ -104,7 +107,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def version = "Version 1.0.1 (04/06/2017)"
+    def version = "Version 1.0.2 (05/15/2017)"
     return "${version}"
 }
 
