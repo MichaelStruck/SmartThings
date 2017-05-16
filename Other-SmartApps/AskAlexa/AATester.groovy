@@ -89,7 +89,7 @@ def initialize() {
 	subscribe(location, "askAlexaMQ", askAlexaMQHandler)
     def exMin = expire ? expire as int : 0
     def exSec=exMin * 60
-	sendLocationEvent(name: "AskAlexaMsgQueue", value: "Test App", unit: unit, isStateChange: true, descriptionText: msg, data: [queues:listOfMQs, overwrite:true ,expires:exSec, notifyOnly:notify])
+    sendLocationEvent(name: "AskAlexaMsgQueue", value: "Test App", unit: unit,  isStateChange: true, descriptionText: msg, data: [queues:listOfMQs, overwrite:overwrite ,expires:exSec, notifyOnly:notify])
 }
 //Common Code
 def askAlexaMQHandler(evt) {
