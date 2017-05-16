@@ -1,14 +1,14 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.2.6 - 5/7/17 Copyright © 2017 Michael Struck
+ *  Version 2.2.6 - 5/15/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.2.4 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *  Version 2.2.4b (4/6/17) Framework changes for extensions (new one: additional message queues), added additional notifications to message queues, change SHM model to conform with new SmartThings naming standard, new icon for custom color
  *  Version 2.2.5a (4/23/17) Moved Weather/Voice reporting to an extension. Considerably sped up the execution of Ask Alexa! Created default Kelvin settings. Added "overwrite:[true/false]" parameter to message queue functions. Changed Nest to NST Manager
- *  Version 2.2.6 (5/7/17) Added Scheduler Extension, code fixes, added "expires:[seconds]" to message queue parameters that developers can use when publishing to Ask Alexa, added "%random#% to the list of variables in text fields
+ *  Version 2.2.6 (5/15/17) Added Scheduler Extension, code fixes, added "expires:[seconds]" to message queue parameters that developers can use when publishing to Ask Alexa, added "%random#% to the list of variables in text fields
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -199,15 +199,15 @@ def pageSchdList() {
         	getSCHD().each{
                 def status = it.getStatus(), result, imageFile= status =="On" ? imgURL() + "on.png" : imgURL() + "off.png"
 				if (status =~/Expired|Invalid|Incomplete/) imageFile=imgURL() +"warning.png"
-                if (status==~/On|Off/) result = "${it.label}${it.getExtras()}: Runs ${it.getShortDesc()}"
-                else if (status =="Expired") result ="${it.label}${it.getExtras()}: ${status} ${it.getShortDesc()}"
-                else result ="${it.label}${it.getExtras()}: ${status}"
+                if (status==~/On|Off/) result = "${it.label}: Runs ${it.getShortDesc()}"
+                else if (status =="Expired") result ="${it.label}: ${status} ${it.getShortDesc()}"
+                else result ="${it.label}: ${status}"
                 paragraph result, image: imageFile  
 			}
         }
         section ("Help"){
         	paragraph "To change the on/off status of a schedule, either edit the schedule on the previous screen, or simple say: \"Alexa, tell ${invocationName} to turn {on/off} the {schedule name}\".\n\nIf you have "+
-            	"an expired or invalid schedule you will need to edit that schedule via the mobile app.\n\n©=Count limit set\n®=Restrictions set\nª=Auto delete when expires"
+            	"an expired or invalid schedule you will need to edit that schedule via the mobile app."
         }
     }
 }
@@ -2794,7 +2794,7 @@ def getCoREMacroList(){
 }
 def getMQListID(withPMQ){
 	def outputMQlist = withPMQ ? ["Primary Message Queue":"Primary Message Queue"]:[]
-    getAAMQ().each{ outputMQlist +=["${it.id}" : "${it.label}"] }
+    getAAMQ().each{ outputMQlist +=["${it.id}":"${it.label}"] }
     return outputMQlist
 }
 def getVariableList(){
@@ -3244,7 +3244,7 @@ private wrReq()  { return 101 }
 private vrReq()  { return 101 }
 private schReq()  { return 100 }
 private versionLong(){ return "2.2.6" }
-private versionDate(){ return "05/07/17" }
+private versionDate(){ return "05/15/17" }
 private textCopyright() {return "Copyright © 2017 Michael Struck" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
