@@ -3,10 +3,10 @@
  *  Special thanks to Barry Burke for Weather Underground Integration
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.1 5/5/17
+ *  Version 1.0.1 5/20/17
  * 
  *  Version 1.0.0 - Initial release
- *  Version 1.0.1 - Updated icon
+ *  Version 1.0.1 - Updated icon, added restrictions
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -65,7 +65,21 @@ def mainPage() {
             if (noteFeed) input "noteFeedData", "bool", title: "Include SmartApp's Response To Alexa", defaultValue: false
             if (parent.contMacro) input "overRideMsg", "bool", title: "Override Continuation Commands (Except Errors)" , defaultValue: false
         }
+        section("Restrictions", hideable: true, hidden: !(runDay || timeStart || timeEnd || runMode || runPeople)) {            
+			input "runDay", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only Certain Days Of The Week...",  multiple: true, required: false, image: parent.imgURL() + "calendar.png", submitOnChange: true
+			href "timeIntervalInput", title: "Only During Certain Times...", description: parent.getTimeLabel(timeStart, timeEnd), state: (timeStart || timeEnd ? "complete":null), image: parent.imgURL() + "clock.png", submitOnChange: true
+			input "runMode", "mode", title: "Only In The Following Modes...", multiple: true, required: false, image: parent.imgURL() + "modes.png", submitOnChange: true
+            input "runPeople", "capability.presenceSensor", title: "Only When Present...", multiple: true, required: false, submitOnChange: true, image: parent.imgURL() + "people.png"
+			if (runPeople && runPeople.size()>1) input "runPresAll", "bool", title: "Off=Any Present; On=All Present", defaultValue: false
+            input "muteRestrictions", "bool", title: "Mute Restriction Messages In Extension Group", defaultValue: false
+        }
         section("Tap below to remove this message queue"){ }
+	}
+}
+page(name: "timeIntervalInput", title: "Only during a certain time") {
+	section {
+		input "timeStart", "time", title: "Starting", required: false
+		input "timeEnd", "time", title: "Ending", required: false
 	}
 }
 page(name: "pageExtAliases", title: "Enter alias names for this weather report"){
@@ -155,6 +169,7 @@ def extAliasState(){
     return count ? "complete" : null
 }
 //Child Common modules
+def getOkToRun(){ def result = (!runMode || runMode.contains(location.mode)) && parent.getDayOk(runDay) && parent.getTimeOk(timeStart,timeEnd) && parent.getPeopleOk(runPeople,runPresAll) }
 private currWeatherSel() { return voiceWeatherTemp || voiceWeatherHumid || voiceWeatherDew || voiceWeatherSolar || voiceWeatherVisiblity || voiceWeatherPrecip }
 private foreWeatherSel() { return voiceWeatherToday || voiceWeatherTonight || voiceWeatherTomorrow}
 def extAliasCount() { return 3 }
@@ -526,4 +541,4 @@ private tideInfo() {
 //Version/Copyright/Information/Help
 private versionInt(){ return 101 }
 private def textAppName() { return "Ask Alexa Weather Report" }	
-private def textVersion() { return "Weather Report Version: 1.0.1 (05/05/2017)" }
+private def textVersion() { return "Weather Report Version: 1.0.1 (05/20/2017)" }
