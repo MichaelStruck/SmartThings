@@ -1,14 +1,14 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.2.6 - 5/15/17 Copyright © 2017 Michael Struck
+ *  Version 2.2.6 - 5/21/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.2.4 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *  Version 2.2.4b (4/6/17) Framework changes for extensions (new one: additional message queues), added additional notifications to message queues, change SHM model to conform with new SmartThings naming standard, new icon for custom color
  *  Version 2.2.5a (4/23/17) Moved Weather/Voice reporting to an extension. Considerably sped up the execution of Ask Alexa! Created default Kelvin settings. Added "overwrite:[true/false]" parameter to message queue functions. Changed Nest to NST Manager
- *  Version 2.2.6 (5/15/17) Added Scheduler Extension, code fixes, added "expires:[seconds]" to message queue parameters that developers can use when publishing to Ask Alexa, added "%random#% to the list of variables in text fields
+ *  Version 2.2.6 (5/21/17) Added Schedules Extension, code fixes, added "expires:[seconds]" to message queue parameters that developers can use when publishing to Ask Alexa, added "%random#% to the list of variables in text fields
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -124,7 +124,7 @@ def pageExtensions(){
             if (duplicates) paragraph "You have two or more extension names that are the same. Please ensure each extension has a unique name and also does not conflict with device or other extension names.", image: imgURL() + "caution.png" 
         	href "pageMacros", title: "Macros", description: macroDesc(macroCount), state: (macroCount ? "complete" : null), image: imgURL() + "speak.png" 
      		href "pageMsgQue", title: "Message Queues", description: mqDesc(mqCount), state: "complete", image: imgURL() + "mailbox.png"
-            href "pageSchdr", title: "Scheduler",  description: schDesc(schCount), state: (schCount ? "complete" : null), image: imgURL() + "schedule.png"
+            href "pageSchdr", title: "Schedules",  description: schDesc(schCount), state: (schCount ? "complete" : null), image: imgURL() + "schedule.png"
             href "pageVoiceRPT", title: "Voice Reports",  description:voiceDesc(vrCount), state: (vrCount ? "complete" : null), image: imgURL() + "voice.png"
             href "pageWeather", title: "Weather Reports",  description:weathDesc(wrCount), state: (wrCount ? "complete" : null), image: imgURL() + "weather.png"
 		}
@@ -172,29 +172,29 @@ def pageMsgDelete(){
 }
 def pageSchdr() {
     dynamicPage(name: "pageSchdr", install: false, uninstall: false) {
-        section{ paragraph "Scheduler", image: imgURL() + "schedule.png" }
+        section{ paragraph "Schedules", image: imgURL() + "schedule.png" }
         def children = getSCHD(), schCount=children.size(), duplicates = children.label.findAll{children.label.count(it)>1}.unique(), aaSCVer=""
         if (schCount){
         	children.each { aaSCVer=it.versionInt()} 
-            section ("Schedular options"){ 
+            section ("Schedule option"){ 
             	href "pageSchdList", title: "Tap For Schedule Status List", description: ""
         	}
         }
         if (duplicates || (schCount && (aaSCVer < schReq()))){
         	section ("Warning"){
             	if (duplicates) paragraph "You have two or more schedules with the same name. Please ensure each schedule has a unique name and also does not conflict with device or other extension names as well. ", image: imgURL() + "caution.png" 
-        		if (schCount && (aaSCVer < schReq())) paragraph "You are using an outdated version of the scheduler extension. Please update the software and try again.", image: imgURL() + "caution.png" 
+        		if (schCount && (aaSCVer < schReq())) paragraph "You are using an outdated version of the schedules extension. Please update the software and try again.", image: imgURL() + "caution.png" 
         	}
         }
 		if (schCount) section(schCount==1 ? "One schedule configured" : schCount + "schedules configured" ){}
         section(" "){
-        	app(name: "childSCHD", appName: "Ask Alexa Scheduler", namespace: "MichaelStruck", title: "Create A New Schedule...", description: "Tap to create a new schedule", multiple: true, image: imgURL() + "add.png")
+        	app(name: "childSCHD", appName: "Ask Alexa Schedule", namespace: "MichaelStruck", title: "Create A New Schedule...", description: "Tap to create a new schedule", multiple: true, image: imgURL() + "add.png")
         }
 	}
 }
 def pageSchdList() {
     dynamicPage(name: "pageSchdList", install: false, uninstall: false) {
-		section{ paragraph "Scheduler List", image: imgURL() + "schedule.png" }
+		section{ paragraph "Schedule List", image: imgURL() + "schedule.png" }
         section(" "){
         	getSCHD().each{
                 def status = it.getStatus(), result, imageFile= status =="On" ? imgURL() + "on.png" : imgURL() + "off.png"
@@ -536,8 +536,13 @@ def pagePriQueue(){
         section{ paragraph "Primary Message Queue", image: imgURL() + "mailbox.png" }
         section ("Primary message queue options"){
             input "msgQueueOrder", "enum", title: "Message Play Back Order (Alexa)", options:[0:"Oldest to newest", 1:"Newest to oldest"], defaultValue: 0
+            input "msgQueueDateSuppress", "bool", title: "Remove Time/Date From Message Review", defaultValue: false
 		}
-        section ("Message notification - Audio", hideable: true, hidden: !(mqSpeaker||mqSynth)){
+        section ("Message notification - Alexa", hideable: true, hidden: true){
+			input "msgQueueNotifyAlexa", "bool", title: "Alexa Notifications (Audio and Visual)", defaultValue: false
+            paragraph "This function is not yet available - Coming soon!"            
+        }
+        section ("Message notification - audio", hideable: true, hidden: !(mqSpeaker||mqSynth)){
         	input "mqSpeaker", "capability.musicPlayer", title: "Choose Speakers", multiple: true, required: false, submitOnChange: true
             if (mqSpeaker) input "mqVolume", "number", title: "Speaker Volume", description: "0-100%", range:"0..100", required: false
             input "mqSynth", "capability.speechSynthesis", title: "Choose Voice Synthesis Devices", multiple: true, required: false, hideWhenEmpty: true
@@ -545,7 +550,7 @@ def pagePriQueue(){
 			if (mqSpeaker && mqAlertType == "3") input "mqAlertSound", "enum", title: "Sound Effect", required: mqAlertType == "3" ? true : false, options: soundFXList()
             if (mqSpeaker || mqSynth) input "restrictAudio", "bool", title: "Apply Restrictions To Audio Notification", defaultValue: false, submitOnChange: true
 		}
-        section ("Message Notification - Visual", hideable: true, hidden:!(msgQueueNotifyLightsOn || msgQueueNotifycLightsOn)){
+        section ("Message Notification - visual", hideable: true, hidden:!(msgQueueNotifyLightsOn || msgQueueNotifycLightsOn)){
             input "msgQueueNotifyLightsOn", "capability.switch", title: "Turn On Lights When Messages Present", required:false, multiple:true, submitOnChange: true
             input "msgQueueNotifycLightsOn", "capability.colorControl", title: "Turn On/Set Colored Lights When Messages Present", required:false, multiple:true, submitOnChange: true
             if (msgQueueNotifycLightsOn) {
@@ -557,7 +562,7 @@ def pagePriQueue(){
 				input "restrictVisual", "bool", title: "Apply Restrictions To Visual Notification", defaultValue: false, submitOnChange: true
             }
 		}
-        section ("Message notification - Mobile", hideable: true, hidden:!(mqContacts||mqSMS||mqPush||mqFeed)){
+        section ("Message notification - mobile", hideable: true, hidden:!(mqContacts||mqSMS||mqPush||mqFeed)){
         	input ("mqContacts", "contact", title: "Send Notifications To...", required: false, submitOnChange: true) {
 				input "mqSMS", "phone", title: "Send SMS Message To (Phone Number)...", required: false, submitOnChange: true
 				input "mqPush", "bool", title: "Send Push Message", defaultValue: false, submitOnChange: true
@@ -986,7 +991,7 @@ def installed() { initialize() }
 def updated() { initialize() }
 def childUninstalled() {
 	sendLocationEvent(name: "askAlexa", value: "refresh", data: [macros: parent ? parent.getCoREMacroList() : getCoREMacroList()] , isStateChange: true, descriptionText: "Ask Alexa macro list refresh")
-	sendLocationEvent(name: "askAlexaMQ", value: "refresh", data: [queues: getMQListID(false)] , isStateChange: true, descriptionText: "Ask Alexa message queue list refresh")
+    mqRefresh()
 }
 def initialize() {
 	if (!parent){
@@ -994,8 +999,9 @@ def initialize() {
         subscribe(location, "CoRE", coreHandler)
         subscribe(location, "AskAlexaMsgQueue", msgHandler)
         subscribe(location, "AskAlexaMsgQueueDelete", msgDeleteHandler)
+        subscribe(location, "AskAlexaMQRefresh", mqRefresh)
         if (sonosCMD && sonosMemoryCount) songLocations()
-        sendLocationEvent(name: "askAlexaMQ", value: "refresh", data: [queues: getMQListID(false)] , isStateChange: true, descriptionText: "Ask Alexa message queue list refresh")
+        mqRefresh()
 	}
     else{
     	unschedule()
@@ -1323,8 +1329,8 @@ def msgQueueReply(cmd,queue){
                 state.msgQueue.sort({it.date})
                 if (msgQueueOrder) state.msgQueue.reverse(msgQueueOrder as int? true : false)
                 state.msgQueue.each{
-                	def msgData= timeDate(it.date)
-                    result += "${msgData.msgDay} at ${msgData.msgTime}, '${it.appName}' posted the message: '${it.msg}'. "
+                	def msgData= timeDate(it.date), msgTimeDate = msgQueueDateSuppress || it.suppressTimeDate ? "" : "${msgData.msgDay} at ${msgData.msgTime}, "
+                    result += "${msgTimeDate}'${it.appName}' posted the message: '${it.msg}'. "
                 }
                 result +="%M%"
             }
@@ -1340,20 +1346,28 @@ def msgQueueReply(cmd,queue){
 //Weather Report Reply
 def processWeatherReport(rpt){
     log.debug "Weather Report Name: " + rpt
-    def wr = getWR().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == rpt}, outputTxt = wr.getOutput()
-    def data = outputTxt ? [alexaOutput: outputTxt[0..-4]] : [alexaOutput: "No Output"]
-    sendLocationEvent(name: "askAlexaMacro", value: wr.label, data: data, displayed: true, isStateChange: true, descriptionText: "Ask Alexa activated '${wr.label}' weather report.")
+    def wr = getWR().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == rpt}, outputTxt
+    if (wr.getOkToRun()){
+    	 outputTxt = wr.getOutput() 
+         def data = outputTxt ? [alexaOutput: outputTxt[0..-4]] : [alexaOutput: "No Output"]
+    	 sendLocationEvent(name: "askAlexaMacro", value: wr.label, data: data, displayed: true, isStateChange: true, descriptionText: "Ask Alexa activated '${wr.label}' weather report.")
+    }
+    else outputTxt = wr.muteRestrictions ? "" : "You have restrictions on '${wr.label}' that prevented it from running. %1%"
     return outputTxt
 }
 //Voice Report Reply
 def processVoiceReport(rpt){
     log.debug "Voice Report Name: " + rpt
-    def vr = getVR().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == rpt}, outputTxt = vr.getOutput()
-	def data = outputTxt ? [alexaOutput: outputTxt[0..-4]] : [alexaOutput: "No Output"]
-    sendLocationEvent(name: "askAlexaMacro", value: vr.label, data: data, displayed: true, isStateChange: true, descriptionText: "Ask Alexa activated '${vr.label}' voice report.")
+    def vr = getVR().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == rpt}, outputTxt
+    if (vr.getOkToRun()){
+    	 outputTxt = vr.getOutput() 
+         def data = outputTxt ? [alexaOutput: outputTxt[0..-4]] : [alexaOutput: "No Output"]
+    	 sendLocationEvent(name: "askAlexaMacro", value: vr.label, data: data, displayed: true, isStateChange: true, descriptionText: "Ask Alexa activated '${vr.label}' voice report.")
+    }
+    else outputTxt = vr.muteRestrictions ? "" : "You have restrictions on '${vr.label}' that prevented it from running. %1%"  
     return outputTxt
 }
-//Scheduler Reply
+//Schedule Reply
 def processSchedule(schedule,cmd){
     log.debug "Schedule Name: " + schedule
     log.debug "Schedule Command: " + cmd
@@ -2244,6 +2258,7 @@ def tStatCTLOptions(){
 	return tstatOptions
 }
 //Common Code (Child and Parent)
+def mqRefresh(evt){ sendLocationEvent(name: "askAlexaMQ", value: "refresh", data: [queues: getMQListID(false)] , isStateChange: true, descriptionText: "Ask Alexa message queue list refresh") }
 def childQDelete(qList){
 	qList.each{qID->
         def qNameRun = getAAMQ().find{it.id == qID}
@@ -2265,7 +2280,7 @@ def kelvinOptions(){ return ["${parent.kSoftWhite}" : "Soft White (${parent.kSof
 def imgURL() { return "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/" }
 def getAskAlexa(){ return findAllChildAppsByNamespaceAndName("MichaelStruck", "Ask Alexa") }
 def getAAMQ() { return findAllChildAppsByNamespaceAndName("MichaelStruck", "Ask Alexa Message Queue") }
-def getSCHD() { return findAllChildAppsByNamespaceAndName("MichaelStruck", "Ask Alexa Scheduler") }
+def getSCHD() { return findAllChildAppsByNamespaceAndName("MichaelStruck", "Ask Alexa Schedule") }
 def getWR() { return findAllChildAppsByNamespaceAndName("MichaelStruck", "Ask Alexa Weather Report") }
 def getVR() { return findAllChildAppsByNamespaceAndName("MichaelStruck", "Ask Alexa Voice Report") }
 def macAliasCount() { return 3 }
@@ -2695,15 +2710,16 @@ def msgHandler(evt) {
     def overwrite = evt.jsonData && evt.jsonData?.overwrite ? true : false
     def expires = evt.jsonData && evt.jsonData?.expires ? evt.jsonData.expires as int  : 0
     def notifyOnly = evt.jsonData && evt.jsonData?.notifyOnly ? true : false
+    def suppressTimeDate = evt.jsonData && evt.jsonData?.suppressTimeDate ? true : false
     def expiration = expires && expires !=0 ?  now() + (expires*1000) : 0
     if (selQueues.size()) {
 		selQueues.each{qID->
 			def qNameRun = getAAMQ().find{it.id == qID}
-            if (qNameRun) qNameRun.msgHandler(evt.date, evt.descriptionText, evt.unit, evt.value, overwrite, expiration, notifyOnly)
-            else if (qID=="Primary Message Queue") msgPMQ (evt.date, evt.descriptionText, evt.unit, evt.value, overwrite, expiration, notifyOnly)
+            if (qNameRun) qNameRun.msgHandler(evt.date, evt.descriptionText, evt.unit, evt.value, overwrite, expiration, notifyOnly, suppressTimeDate)
+            else if (qID=="Primary Message Queue") msgPMQ (evt.date, evt.descriptionText, evt.unit, evt.value, overwrite, expiration, notifyOnly, suppressTimeDate)
         }
     }
-    else msgPMQ (evt.date, evt.descriptionText, evt.unit, evt.value, overwrite, expiration, notifyOnly)
+    else msgPMQ (evt.date, evt.descriptionText, evt.unit, evt.value, overwrite, expiration, notifyOnly, suppressTimeDate)
 }
 def msgDeleteHandler(evt){
     def selQueues = evt.jsonData && evt.jsonData?.queues ? evt.jsonData.queues  : []
@@ -2718,19 +2734,19 @@ def msgDeleteHandler(evt){
     }
     else msgDeletePMQ(evt.unit, evt.value)
 }
-def msgPMQ(date,descriptionText,unit,value,overwrite, expires, notifyOnly){
-	if (!state.msgQueue) state.msgQueue=[]
+def msgPMQ(date,descriptionText,unit,value,overwrite, expires, notifyOnly, suppressTimeDate){
+    if (!state.msgQueue) state.msgQueue=[]
 	if (msgQueueForward){
     	msgQueueForward.each{qID->
 			def qNameRun = getAAMQ().find{it.id == qID}
-            if (qNameRun) qNameRun.msgHandler(date, descriptionText + " - This message was forwarded from the primary message queue.", unit, value, overwrite, expires);
+            if (qNameRun) qNameRun.msgHandler(date, descriptionText + " - This message was forwarded from the primary message queue.", unit, value, overwrite, expires, notifyOnly, suppressTimeDate);
         }
     }
     else {
         if (overwrite && msgQueueDelete && msgQueueDelete.contains("Primary Message Queue")) msgDeletePMQ(unit, value)
         else if (overwrite && (!msgQueueDelete || !msgQueueDelete.contains("Primary Message Queue"))) log.debug "An overwrite command was issued from '${value}', however, the option to allow deletions was not enabled for the Primary Message Queue."
         if (!notifyOnly) log.debug "New message added to primary message queue from: " + value
-        if (!notifyOnly) state.msgQueue<<["date":date.getTime(),"appName":value,"msg":descriptionText,"id":unit, "expires": expires] 
+        if (!notifyOnly) state.msgQueue<<["date":date.getTime(),"appName":value,"msg":descriptionText,"id":unit, "expires": expires, "suppressTimeDate": suppressTimeDate] 
         if (mqSpeaker && mqVolume && ((restrictAudio && getOkToRun())||!restrictAudio)) {
         	def msg
             if (mqAlertType ==~/0|1|2/) {
@@ -3244,7 +3260,7 @@ private wrReq()  { return 101 }
 private vrReq()  { return 101 }
 private schReq()  { return 100 }
 private versionLong(){ return "2.2.6" }
-private versionDate(){ return "05/15/17" }
+private versionDate(){ return "05/21/17" }
 private textCopyright() {return "Copyright © 2017 Michael Struck" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
