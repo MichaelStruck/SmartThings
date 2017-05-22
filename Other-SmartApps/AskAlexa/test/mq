@@ -2,11 +2,12 @@
  *  Ask Alexa Message Queue Extension
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.2 5/5/17
+ *  Version 1.0.2 5/19/17
  * 
  *  Version 1.0.0 (3/31/17) - Initial release
  *  Version 1.0.1 (4/12/17) - Refresh macro list after update from child app (for partner integration)
- *  Version 1.0.2 (5/5/17) - Added "overwrite:[true/false]" and "notifyOnly:[true/false] parameters to message queue functions, added sound effects alerting
+ *  Version 1.0.2 (5/19/17) - Added "overwrite:[true/false]" and "notifyOnly:[true/false] parameters to message queue functions, 
+ *  added sound effects alerting, Alexa notification placeholder, option to suppress time/date from Message Queue playback
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -38,8 +39,15 @@ def mainPage() {
         section {
         	label title:"Message Queue Name (Required)", required: true, image: parent.imgURL() + "mailbox.png"
         }   
-        section ("Message queue options"){ input "msgQueueOrder", "enum", title: "Message Play Back Order (Alexa)", options:[0:"Oldest to newest", 1:"Newest to oldest"], defaultValue: 0 }
-        section ("Message notification - Audio", hideable: true, hidden: !(mqSpeaker||mqSynth)){
+        section ("Message queue options"){ 
+        	input "msgQueueOrder", "enum", title: "Message Play Back Order (Alexa)", options:[0:"Oldest to newest", 1:"Newest to oldest"], defaultValue: 0 
+            input "msgQueueDateSuppress", "bool", title: "Remove Time/Date From Message Review", defaultValue: false
+        }
+        section ("Message notification - Alexa", hideable: true, hidden: true){
+			input "msgQueueNotifyAlexa", "bool", title: "Alexa Notifications (Audio and Visual)", defaultValue: false
+            paragraph "This function is not yet available - Coming soon!"            
+        }
+        section ("Message notification - audio", hideable: true, hidden: !(mqSpeaker||mqSynth)){
         	input "mqSpeaker", "capability.musicPlayer", title: "Choose Speakers", multiple: true, required: false, submitOnChange: true
             if (mqSpeaker) input "mqVolume", "number", title: "Speaker Volume", description: "0-100%", required: false, range: "0..100"
             input "mqSynth", "capability.speechSynthesis", title: "Choose Voice Synthesis Devices", multiple: true, required: false, hideWhenEmpty: true, submitOnChange: true
@@ -96,12 +104,12 @@ def initialize() {
 	sendLocationEvent(name: "askAlexaMQ", value: "refresh", data: [queues: parent.getMQListID(false)] , isStateChange: true, descriptionText: "Ask Alexa message queue list refresh")
 }
 //Main Handlers
-def msgHandler(date, descriptionText, unit, value, overwrite, expires, notifyOnly) {
+def msgHandler(date, descriptionText, unit, value, overwrite, expires, notifyOnly, suppressTimeDate) {
     if (!state.msgQueue) state.msgQueue=[]
     if (overwrite && parent.msgQueueDelete && parent.msgQueueDelete.contains(app.id)) msgDeleteHandler(unit, value)
     else if (overwrite) log.debug "An overwrite command was issued from '${value}', however, the option to allow deletions was not enabled for the '${app.label}' queue."
     if (!notifyOnly) log.debug "New message added to the '${app.label}' message queue from: " + value
-	if (!notifyOnly) state.msgQueue<<["date":date.getTime(),"appName":value,"msg":descriptionText,"id":unit,"expires":expires] 
+	if (!notifyOnly) state.msgQueue<<["date":date.getTime(),"appName":value,"msg":descriptionText,"id":unit,"expires":expires,"suppressTimeDate": suppressTimeDate] 
     if (mqSpeaker && mqVolume && ((restrictAudio && getOkToRun())||!restrictAudio)) {
         def msg
         if (mqAlertType ==~/0|1|2/) {
@@ -151,8 +159,8 @@ def msgQueueReply(cmd){
             state.msgQueue.sort({it.date})
             state.msgQueue.reverse(msgQueueOrder as int? true : false)
             state.msgQueue.each{
-            	def msgData= parent.timeDate(it.date)
-            	result += "${msgData.msgDay} at ${msgData.msgTime}, '${it.appName}' posted the message: '${it.msg}'. "
+            	def msgData= parent.timeDate(it.date), msgTimeDate = msgQueueDateSuppress || it.suppressTimeDate ? "" : "${msgData.msgDay} at ${msgData.msgTime}, "
+            	result += "${msgTimeDate}'${it.appName}' posted the message: '${it.msg}'. "
 			}
 			result +="%M%"
 		}
@@ -196,4 +204,4 @@ def getOkToRun(){ def result = (!runMode || runMode.contains(location.mode)) && 
 //Version/Copyright/Information/Help
 private versionInt(){ return 102 }
 private def textAppName() { return "Ask Alexa Message Queue" }	
-private def textVersion() { return "Message Queue Version: 1.0.2 (05/05/2017)" }
+private def textVersion() { return "Message Queue Version: 1.0.2 (05/19/2017)" }
