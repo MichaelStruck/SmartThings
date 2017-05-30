@@ -2,11 +2,11 @@
  *  Ask Alexa Message Queue Extension
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.2 5/19/17
+ *  Version 1.0.2 5/30/17
  * 
  *  Version 1.0.0 (3/31/17) - Initial release
  *  Version 1.0.1 (4/12/17) - Refresh macro list after update from child app (for partner integration)
- *  Version 1.0.2 (5/19/17) - Added "overwrite:[true/false]" and "notifyOnly:[true/false] parameters to message queue functions, 
+ *  Version 1.0.2 (5/30/17) - Added "overwrite:[true/false]" and "notifyOnly:[true/false] parameters to message queue functions, 
  *  added sound effects alerting, Alexa notification placeholder, option to suppress time/date from Message Queue playback
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -49,12 +49,14 @@ def mainPage() {
         }
         section ("Message notification - audio", hideable: true, hidden: !(mqSpeaker||mqSynth)){
         	input "mqSpeaker", "capability.musicPlayer", title: "Choose Speakers", multiple: true, required: false, submitOnChange: true
-            if (mqSpeaker) input "mqVolume", "number", title: "Speaker Volume", description: "0-100%", required: false, range: "0..100"
-            input "mqSynth", "capability.speechSynthesis", title: "Choose Voice Synthesis Devices", multiple: true, required: false, hideWhenEmpty: true, submitOnChange: true
-            if (mqSpeaker) input "mqAlertType", "enum", title:"Notification Type...", options:[0: "Notification and Message", 1: "Notification Only", 2: "Message Only", 3:"Notification Sound Effect"], defaultValue:0 , submitOnChange: true
-			if (mqSpeaker && mqAlertType == "3") input "mqAlertSound", "enum", title: "Sound Effect", required: mqAlertType == "3" ? true : false, options: parent.soundFXList()
+            if (mqSpeaker) input "mqVolume", "number", title: "Speaker Volume", description: "0-100%", range:"0..100", required: false
+            input "mqSynth", "capability.speechSynthesis", title: "Choose Voice Synthesis Devices", multiple: true, required: false, hideWhenEmpty: true
+            if (mqSpeaker) input "mqAlertType", "enum", title:"Notification Type...",options:[0: "Verbal Notification and Message", 1: "Verbal Notification Only", 2: "Message Only", 3:"Notification Sound Effect"], defaultValue:0 , submitOnChange: true
+			if (mqSpeaker && mqAlertType != "3") input "mqAppendSound", "bool", title: "Prepend Sound To Verbal Notification", defaultValue: false, submitOnChange: true
+            if (mqSpeaker && (mqAlertType == "3" || mqAppendSound)) input "mqAlertSound", "enum", title: "Sound Effect", required: mqAlertType == "3" ? true : false, options: parent.soundFXList(), submitOnChange: true
+            if (mqSpeaker && (mqAlertType == "3" || mqAppendSound) && mqAlertSound=="custom") input "mqAlertCustom", "text", title:"URL/Location Of Custom Sound (Less Than 10 Seconds)...", required: false
             if (mqSpeaker || mqSynth) input "restrictAudio", "bool", title: "Apply Restrictions To Audio Notification", defaultValue: false, submitOnChange: true
-        }
+		}
         section ("Message notification - visual", hideable: true, hidden:!(msgQueueNotifyLightsOn || msgQueueNotifycLightsOn)){
             input "msgQueueNotifyLightsOn", "capability.switch", title: "Turn On Lights When Messages Present", required:false, multiple:true, submitOnChange: true
             input "msgQueueNotifycLightsOn", "capability.colorControl", title: "Turn On/Set Colored Lights When Messages Present", required:false, multiple:true, submitOnChange: true
@@ -111,15 +113,17 @@ def msgHandler(date, descriptionText, unit, value, overwrite, expires, notifyOnl
     if (!notifyOnly) log.debug "New message added to the '${app.label}' message queue from: " + value
 	if (!notifyOnly) state.msgQueue<<["date":date.getTime(),"appName":value,"msg":descriptionText,"id":unit,"expires":expires,"suppressTimeDate": suppressTimeDate] 
     if (mqSpeaker && mqVolume && ((restrictAudio && getOkToRun())||!restrictAudio)) {
-        def msg
-        if (mqAlertType ==~/0|1|2/) {
-        	def msgTxt= !mqAlertType ||mqAlertType as int ==0 || mqAlertType as int ==1 ? "New message received in the the '${app.label}' message queue from : " + value : ""
-			if (!mqAlertType || mqAlertType ==~/0|2/ ) msgTxt += msgTxt ? ": "+ descriptionText : descriptionText
-			msg = textToSpeech (msgTxt, true)
-        }
-        else if (mqAlertType =="3") msg=[uri: "${mqAlertSound}", duration: "10"]
-        mqSpeaker?.setLevel(mqVolume as int)
-        mqSpeaker?.playTrack (msg.uri)
+		def msgVoice, msgSFX
+		if (mqAlertType ==~/0|1|2/) {
+			def msgTxt= !mqAlertType ||mqAlertType as int ==0 || mqAlertType as int ==1 ? "New message received in primary message queue from : " + value : ""
+			if (!mqAlertType || mqAlertType ==~/0|2/) msgTxt += msgTxt ? ": "+ descriptionText : descriptionText
+			msgVoice = textToSpeech (msgTxt, true)
+		}
+		if (mqAlertType == "3" || mqAppendSound) msgSFX = parent.sfxLookup(mqAlertSound)
+		mqSpeaker?.setLevel(mqVolume as int)            
+		if (mqAlertType != "3" && !mqAppendSound) mqSpeaker?.playTrack (msgVoice.uri)
+		if (mqAlertType == "3") mqSpeaker?.playTrack (msgSFX.uri)
+		if (mqAlertType != "3" && mqAppendSound)  mqSpeaker?.playSoundAndTrack(msgSFX.uri,msgSFX.duration,msgVoice.uri)
 	}
     if (mqSynth && ((restrictAudio && getOkToRun())||!restrictAudio)) mqSynth?.speak(msgTxt)
     if (mqPush || mqSMS || mqContacts && ((restrictMobile && getOkToRun())||!restrictMobile)){
@@ -204,4 +208,4 @@ def getOkToRun(){ def result = (!runMode || runMode.contains(location.mode)) && 
 //Version/Copyright/Information/Help
 private versionInt(){ return 102 }
 private def textAppName() { return "Ask Alexa Message Queue" }	
-private def textVersion() { return "Message Queue Version: 1.0.2 (05/19/2017)" }
+private def textVersion() { return "Message Queue Version: 1.0.2 (05/30/2017)" }
