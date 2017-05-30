@@ -3,7 +3,7 @@
  *  Special thanks to Barry Burke for Weather Underground Integration
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.1 5/20/17
+ *  Version 1.0.1 5/29/17
  * 
  *  Version 1.0.0 - Initial release
  *  Version 1.0.1 - Updated icon, added restrictions
@@ -58,7 +58,7 @@ def mainPage() {
         	if (currWeatherSel() || foreWeatherSel() || voiceSunset || voiceSunrise || voiceMoon || voiceTide) input "voiceWeatherLoc", "bool", title: "Speak Location Of Weather Report/Forecast", defaultValue: false
             input "zipCode", "text", title: "Zip Code", required: false
             paragraph "Please Note:\nYour SmartThings location is currently set to: ${location.zipCode}. If you leave the area above blank the report will use your SmartThings location. " +
-            	"Enter a zip code above if you want to report on a different location.\n\nData obtained from Weather Underground."
+            	"Enter a zip code above if you want to report on a different location.\n\nData obtained from Weather Underground.", image: parent.imgURL() + "info.png"
 		}
         section ("Output options"){
             input "noteFeed", "bool", title: "Post To Notification Feed When Triggered", defaultValue: false, submitOnChange: true
@@ -541,4 +541,4 @@ private tideInfo() {
 //Version/Copyright/Information/Help
 private versionInt(){ return 101 }
 private def textAppName() { return "Ask Alexa Weather Report" }	
-private def textVersion() { return "Weather Report Version: 1.0.1 (05/20/2017)" }
+private def textVersion() { return "Weather Report Version: 1.0.1 (05/29/2017)" }
