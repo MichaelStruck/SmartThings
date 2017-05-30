@@ -2,9 +2,9 @@
  *  Ask Alexa Schedules Extension
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.0 5/21/17
+ *  Version 1.0.0 5/29/17
  * 
- *  Version 1.0.0 (5/21/17) - Initial release
+ *  Version 1.0.0 (5/29/17) - Initial release
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -55,7 +55,7 @@ def mainPage() {
             }
             else href "toggleStatus", title: "This schedule: ${schStatus}", description: "Tap to toggle status", image: imageFile
         }
-        section ("Schedule Settings"){ input "schType", "enum", title: "Type Of Schedule", options:schTypes(), required: false, defaultValue: 0, submitOnChange: true }
+        section ("Schedule Settings"){ input "schType", "enum", title: "Type Of Schedule", options:schTypes(), required: false, submitOnChange: true }
         if (schType=="single"){
 			section ("One-time event date"){	
             	def imageFile=(checkDate("end").expired || checkDate("end").warning) ?  parent.imgURL()+"caution.png" : null
@@ -72,7 +72,7 @@ def mainPage() {
             }
         	if (schType =="complex"){
             	section("Recurrence start and end time/date (optional)"){
-                	def imageFileStart= checkDate("start").warning ?  parent.imgURL()+"caution.png" : null
+                	def imageFileStart= checkDate("start").warning || checkDate("start").expired ?  parent.imgURL()+"caution.png" : null
                     def imageFileEnd=(checkDate("end").expired || checkDate("end").warning) ?  parent.imgURL()+"caution.png" : null
                 	href "pageStartDate", title: "Start Time / Date", description: startDateDesc(), state: (schStart() ? "complete" : null), image: imageFileStart
                     paragraph "Please note, the action will trigger (and schedule subsequent recurrences) based on the start time/date. " +
@@ -276,12 +276,12 @@ def initialize() {
 	state.runCount = 0
     state.runDate = ""
     state.reminderInterval=false
+    state.deleteSch = false
     fillStartTime()
     if (getStatus()==~/On|Off/){
         if (schType=="single"){
         	def dateTime="${schYearEnd}-${schMonthEnd}-${schDayEnd}${schTimeEnd[10..27]}"
         	runOnce (dateTime, doAction)
-            log.debug checkDate("remind")
             if (remindersOK() && checkDate("remind").result) scheduleRemindTime()
     	}
         if (schType=="simple" || (schType=="complex" && (!schStart() || (schStart() && checkDate("start").expired)))) {
@@ -419,12 +419,8 @@ def doReminderInt(){
 def unschRecur(){ 
 	unschedule() 
 	log.info "The schedule, '${app.label}', has expired."
-    if (deleteExpired) {
-    	log.info "Scheduling the deletion of schedule, '${app.label}'. You have two minutes to cancel this. Simply edit the schedule via the SmartApp and press 'Done' to cancel the deletion."
-    	runIn(120, deleteMe)
-    }
+    if (deleteExpired) delete()
 }
-def deleteMe(){ parent.deleteChild(app.id) }
 //Create recurring schedules
 def createSchd(){	
     if(schReType ==~/1|5|10|15|30|60|180|360|720/){
@@ -568,12 +564,13 @@ def getSchdDesc(){
     	if (schType==~/simple|complex/ && schCount) result +="Finally, there is a maximum number of times this schedule will run. Right now you have used ${state.runCount} of ${schCount}. "
     }
     else if (schStatus=="Off") result += "and is currently off. "
-    else if (schStatus=="Incomplete") result += "is a incomplete. Use your smartapp to complete the configuration of this schedule. "
+    else if (schStatus=="Incomplete") result += "is incomplete. Use your SmartApp to complete the configuration of this schedule. "
     else if (schStatus=="Invalid") result += "is invalid as it has a date associated with it that is incorrect. Use your smart app to complete the configuration of this schedule. "
     else if (schStatus=="Expired" && ((schCount && state.runCount < schCount) || schType=="single")) result += "expired at ${parent.timeParse("${schTimeStart}", "h:mm a")} on ${monthEnd} ${schDayEnd}, ${schYearEnd}. "
     else if (schStatus=="Expired" && schCount && state.runCount >= schCount) result += "expired after reaching the maximum run count of ${schCount}. "
     else if (schStatus=~/Invalid start/) result += "is invalid because your end time and date is before the start time and date. Please correct this within your Ask Alexa SmartApp. "
-	if (deleteExpired) result += "Please note: This schedule will auto-delete when it expires. "
+	if (deleteExpired && !state.deleteSch) result += "Please note: This schedule will auto-delete when it expires. "
+    if (state.deleteSch) result += "Please note: This schedule is going to be deletes soon unless you cancel that action. "
     result +="%2%"
     return result
 }
@@ -621,6 +618,24 @@ def getShortDesc(){
     if ((runDay || timeStart || timeEnd || runMode || runPeople) &&  (schType==~/complex|custom/)) result +="Restrictions applied that may affect recurrance. "
     if (deleteExpired) result += "Will auto-delete when it expires. "
     return result
+}
+def deleteSch(){
+    def deleteTime = parent.schDeleteTime ? parent.schDeleteTime as int : 2
+    def result = "Scheduling the deletion of, '${app.label}'. You have ${deleteTime} minutes to cancel this command. Simply edit the schedule via the SmartApp and press 'Done' to cancel the deletion, or say 'cancel ${app.label} deletion.'. "
+    log.info result
+    state.deleteSch = true
+    runIn(deleteTime*60, deleteMe)
+    return result + "%2%"
+}
+def deleteMe(){ parent.deleteChild(app.id) }
+def notDeleteSch(){
+	def result = "The schedule, '${app.label}', is not slated for deletion. No action is being taken. %1%"
+    if (state.deleteSch){
+    	result = "I am unscheduling, '${app.label}', from deletion. %2%"
+        unschedule(deleteMe)
+        state.deleteSch = false
+    }
+	return result
 }
 //Common Code
 def dayInd(num){
@@ -741,19 +756,20 @@ def schRemind(){
     return result
 }
 def checkAction(){ return (!schAction || (schAction=="msg" && (!schMsgTxt  || !schMsgQue)) || (schAction=="VR" && (!schVR || !schMsgQue)) || (schAction=="WR" && (!schWR || !schMsgQue))|| (schAction =="purge" && !schMsgQue) || (schAction =="macro" && !schMacro)) ?  false : true }
+def startDateDesc(){
+	def monthStart=monthList()[schMonthStart]?:schMonthStart, result
+    if (!schStart()) result = "Tap to enter time and date"
+    else if (!checkDate("start").warning && !checkDate("start").expired) result= "${parent.timeParse("${schTimeStart}", "h:mm a")} on ${monthStart} ${schDayStart}, ${schYearStart}" 
+    else if (checkDate("start").warning) result = "Invalid date - Tap to edit"
+    else if (checkDate("start").expired) result = "Expired date - Tap to edit"
+    return result
+}
 def endDateDesc(){
 	def monthEnd=monthList()[schMonthEnd]?:schMonthEnd, result
     if (!schEnd()) result = "Tap to enter time and date"
     else if (!checkDate("end").expired && !checkDate("end").warning) result= "${parent.timeParse("${schTimeEnd}", "h:mm a")} on ${monthEnd} ${schDayEnd}, ${schYearEnd}" 
     else if (checkDate("end").warning) result = "Invalid date - Tap to edit"
     else if (checkDate("end").expired) result = "Expired date - Tap to edit"
-    return result
-}
-def startDateDesc(){
-	def monthStart=monthList()[schMonthStart]?:schMonthStart, result
-    if (!schStart()) result = "Tap to enter time and date"
-    else if (!checkDate("start").warning) result= "${parent.timeParse("${schTimeStart}", "h:mm a")} on ${monthStart} ${schDayStart}, ${schYearStart}" 
-    else if (checkDate("start").warning) result = "Invalid date - Tap to edit"
     return result
 }
 def remindDesc(){
@@ -834,4 +850,4 @@ def translateMQid(mqIDList){
 //Versions
 private versionInt(){ return 100 }
 private def textAppName() { return "Ask Alexa Schedules" }	
-private def textVersion() { return "Schedules Version: 1.0.0 (05/21/2017)" }
+private def textVersion() { return "Schedules Version: 1.0.0 (05/29/2017)" }
