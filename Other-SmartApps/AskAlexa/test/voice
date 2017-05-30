@@ -2,7 +2,7 @@
  *  Ask Alexa Voice Report Extension
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.1 5/20/17
+ *  Version 1.0.1 5/29/17
  * 
  *  Version 1.0.0 - Initial release
  *  Version 1.0.1 - Updated icon, added restricitions
@@ -226,7 +226,7 @@ def pageOtherReports(){
     dynamicPage(name: "pageOtherReports", install: false, uninstall: false){
         section { paragraph "Include Other Reports", image: parent.imgURL() + "add.png" }
         section(" "){
-             input "otherReportsList", "enum", title: "Include The Following Reports", required: false, defaultValue: 20, options: parent.getMacroList("other", "${app.label}"), multiple: true
+             input "otherReportsList", "enum", title: "Include The Following Reports", required: false, options: parent.getMacroList("other", "${app.label}"), multiple: true
         }
     }
 }
@@ -672,4 +672,4 @@ def getDesc(type){
 //Version/Copyright/Information/Help
 private versionInt(){ return 101 }
 private def textAppName() { return "Ask Alexa Voice Report" }	
-private def textVersion() { return "Voice Report Version: 1.0.1 (05/20/2017)" }
+private def textVersion() { return "Voice Report Version: 1.0.1 (05/29/2017)" }
