@@ -2,9 +2,9 @@
  *  Ask Alexa Schedules Extension
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.0 5/29/17
+ *  Version 1.0.0 5/31/17
  * 
- *  Version 1.0.0 (5/29/17) - Initial release
+ *  Version 1.0.0 (5/31/17) - Initial release
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -250,6 +250,7 @@ def pageReminder(){
             else href "pageCronExpressionRemind", title: "Cron Expression Reminder", description: cronDescRemind() , state: cronValidateRemind() ? "complete" : null, image: state.cronCheckRemind ? null :parent.imgURL()+"caution.png"
             
             input "schRemindText", "text", title: "Reminder Text", required: false, description: "If blank, a default will be used", capitalization: "sentences"
+			input "schRemindFollow", "bool", title: "Reminder Utilizes Action's Status/Restrictions", defaultValue: false        
         }
         section ("Reminder message queue${extraTxt}", hideable:true, hidden: hidden ){
 			input "schMsgQueRemind", "enum", title: "Message Queue Recipient(s)...", options: parent.getMQListID(true), multiple:true, required: false, submitOnChange: true
@@ -297,6 +298,7 @@ def initialize() {
                 runOnce (new Date(remindTime).format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", location.timeZone), remindFirstTime)
     		}
             else if (schTimingRemind=="99" && remindersOK() && schRemind()) runOnce ("20${state.startTimeDate.Year}-${state.startTimeDate.Month}-${state.startTimeDate.Day}${schTimeStart[10..27]}", remindFirstTime)
+        	else if (checkDate("remind").warning) scheduleRemindTime()
         }
 		if (schType=="complex" && schEnd()){
             if (!checkDate("end").expired) runOnce ("${schYearEnd}-${schMonthEnd}-${schDayEnd}${schTimeEnd[10..27]}", unschRecur)
@@ -378,8 +380,8 @@ def doPrimaryReminder(){
         def day = new Date(epDate).format("dd", location.timeZone)
         def year = new Date(epDate).format("yy", location.timeZone)
         state.runDate = "${month}/${day}/${year}"
-        if (schRemindInterval=="None" || (schTimingRemind as int) >14 || ((schTimingRemind as int) <15 && schRemindInterval=="None") ) {
-            def reminderTxt = schRemindText ? parent.replaceVoiceVar(schRemindText, "", "", "Schedules", app.label) : "This is a reminder that the schedule, '${app.label}, will run on ${state.runDate} at ${parent.timeParse("${state.startTimeDate.Epoch}", "h:mm a")}. "
+        if (schRemindInterval=="None" || (schTimingRemind as int) >14 || ((schTimingRemind as int) <15 && schRemindInterval=="None") ) {      
+			def reminderTxt = schRemindText ? parent.replaceVoiceVar(schRemindText, "", "", "Schedules", app.label) : "This is a reminder that the schedule, '${app.label}, will run on ${state.runDate} at ${parent.parseDate("${state.startTimeDate.Epoch}", "h:mm a")}. " 
             sendReminder(reminderTxt)
         }
         else {
@@ -393,11 +395,11 @@ def doPrimaryReminder(){
     }
 }
 def progressiveReminderWeek(){
-	def reminderTxt = schRemindText ? parent.replaceVoiceVar(schRemindText, "", "", "Schedules", app.label) : "This is a reminder that the schedule, '${app.label}, will run next ${state.startTimeDate.DayFull} at ${parent.timeParse("${state.startTimeDate.Epoch}", "h:mm a")}. "
+	def reminderTxt = schRemindText ? parent.replaceVoiceVar(schRemindText, "", "", "Schedules", app.label) : "This is a reminder that the schedule, '${app.label}, will run next ${state.startTimeDate.DayFull} at ${parent.parseDate("${state.startTimeDate.Epoch}", "h:mm a")}. "
     sendReminder(reminderTxt)
 }
 def progressiveReminderDay(){
-	def reminderTxt = schRemindText ? parent.replaceVoiceVar(schRemindText, "", "", "Schedules", app.label) : "This is a reminder that the schedule, '${app.label}, will run in tomorrow at ${parent.timeParse("${state.startTimeDate.Epoch}", "h:mm a")}. "
+	def reminderTxt = schRemindText ? parent.replaceVoiceVar(schRemindText, "", "", "Schedules", app.label) : "This is a reminder that the schedule, '${app.label}, will run in tomorrow at ${parent.parseDate("${state.startTimeDate.Epoch}", "h:mm a")}. "
     sendReminder(reminderTxt)
 }
 def progressiveReminderHour(){
@@ -410,7 +412,7 @@ def progressiveReminderQtrHr(){
 }
 def doReminderInt(){
 	if (state.reminderInterval){
-    	def reminderTxt = schRemindText ? parent.replaceVoiceVar(schRemindText, "", "", "Schedules", app.label) : "This is a reminder that the schedule, '${app.label}, will run on ${state.runDate} at ${parent.timeParse("${state.startTimeDate.Epoch}", "h:mm a")}. "
+    	def reminderTxt = schRemindText ? parent.replaceVoiceVar(schRemindText, "", "", "Schedules", app.label) : "This is a reminder that the schedule, '${app.label}, will run on ${state.runDate} at ${parent.parseDate("${state.startTimeDate.Epoch}", "h:mm a")}. "
     	sendReminder(reminderTxt)
         def runInMin = schRemindInterval=="Hourly" ? 3600 : 86400
     	runIn (runInMin, doReminderInt)
@@ -519,23 +521,26 @@ def sendMsg(msgTxt){
     )
 }
 def sendReminder(msgTxt){
-	def expireMin=schMQExpireRemind ? schMQExpireRemind as int : 0, expireSec=expireMin*60
-    def overWrite =!schMQNotifyRemind && !schMQExpireRemind && schMQOverwriteRemind
-    def remindMQ = schMsgQueRemind ?: schMsgQue
-    sendLocationEvent(
-    	name: "AskAlexaMsgQueue", 
-        value: "Ask Alexa Schedule Reminder, '${app.label}'",
-        unit: "${app.id}",
-        isStateChange: true, 
-        descriptionText: msgTxt, 
-        data:[
-        	queues:remindMQ,
-            overwrite:overWrite,
-            notifyOnly:schMQNotifyRemind,
-            expires:expireSec,
-            suppressTimeDate:schSuppressTDRemind
-        ]
-    )
+	if (!schRemindFollow || (schRemindFollow && (getStatus()=="On" && ((schType==~/complex|custom/ && getOkToRun()) || schType==~/simple|single/)))){
+        def expireMin=schMQExpireRemind ? schMQExpireRemind as int : 0, expireSec=expireMin*60
+        def overWrite =!schMQNotifyRemind && !schMQExpireRemind && schMQOverwriteRemind
+        def remindMQ = schMsgQueRemind ?: schMsgQue
+        sendLocationEvent(
+            name: "AskAlexaMsgQueue", 
+            value: "Ask Alexa Schedule Reminder, '${app.label}'",
+            unit: "${app.id}",
+            isStateChange: true, 
+            descriptionText: msgTxt, 
+            data:[
+                queues:remindMQ,
+                overwrite:overWrite,
+                notifyOnly:schMQNotifyRemind,
+                expires:expireSec,
+                suppressTimeDate:schSuppressTDRemind
+            ]
+        )
+	}
+    else log.warn "Reminders for the schedule '${app.label}' did not output because the main schedule is off, invalid, expired, has used up its allocated run counts, or had restrictions placed on it."
 }
 //Called from parent app
 def getSchdDesc(){
@@ -550,7 +555,7 @@ def getSchdDesc(){
             def starts = "This schedule started"
             if (schStart() && !checkDate("start").expired) starts=" This schedule will begin"
             result += "that runs ${reType.toLowerCase()}${DOW}. ${starts} ${sTOD} on ${state.startTimeDate.Month}/${state.startTimeDate.Day}/${state.startTimeDate.Year}, "
-            result += schEnd() ? "and will end after ${parent.timeParse("${schTimeEnd}", "h:mm a")} on  ${schMonthEnd}/${schDayEnd}/${schYearEnd.toString()[2..3]}. " : ""
+            result += schEnd() ? "and will end after ${parent.timeParse("${schTimeEnd}", "h:mm a")} on ${schMonthEnd}/${schDayEnd}/${schYearEnd.toString()[2..3]}. " : ""
             result += "At the scheduled time, "
         }
         else if (schType=="custom") result +="that recurs based on a cron expression you entered. When the schedule triggers, "
@@ -657,7 +662,7 @@ def fillStartTime(){
     minutes=new Date(epDT).format("mm", location.timeZone)
     month=new Date(epDT).format("MM", location.timeZone)
     monthFull=new Date(epDT).format("MMMM", location.timeZone)
-    day =new Date(epDT).format("dd", location.timeZone)
+    day =new Date(epDT).format("d", location.timeZone)
     dayNum= new Date(epDT).format("u", location.timeZone) as int
     dayFull = new Date(epDT).format("EEEE", location.timeZone)
     year = new Date(epDT).format("yy", location.timeZone) 
@@ -699,6 +704,7 @@ def checkDate(type){
         	else if (schType=="complex" && schStart()) epDT=new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", "${schYearStart}-${schMonthStart}-${schDayStart}${epTime[10..27]}").getTime()
             if (epDT){
         		def epRemind = epDT-epDay
+                if (epRemind < now() && schType==~/complex/) warning = true
         		if (epRemind < now() && schType=="single") expired = true
                 if (schTimingRemind =="99" && !expired) epRemind = epDT - (60000 * 60 * 24 * 7) 
                 if (epRemind < now() && ((schType !="custom" && schReType =="Week") || schType=="single")) warning = true 
@@ -790,7 +796,9 @@ def remindDesc(){
                 result += schMQNotifyRemind ? "\nNotification Mode Only" : ""
                 result += schMQExpireRemind ? "\nExpires in ${schMQExpireRemind} seconds" : ""
                 result += schMQOverwriteRemind ? "\nOverwrite all previous reminder messages" : ""
-                result += schSuppressTDRemind ? "\nSuppress Time and Date from Alexa Playback" : ""
+                result += schSuppressTDRemind ? "\nSuppress time and date from Alexa playback" : ""
+            	result += schRemindFollow ? "\nReminders utlize action's status/restrictions" : ""
+                result += checkDate("remind").warning && schType==~/complex/ ? "\nYour first reminder time has already past. Subsequent reminders will be scheduled." : ""
             }
 		}
         else {
@@ -850,4 +858,4 @@ def translateMQid(mqIDList){
 //Versions
 private versionInt(){ return 100 }
 private def textAppName() { return "Ask Alexa Schedules" }	
-private def textVersion() { return "Schedules Version: 1.0.0 (05/29/2017)" }
+private def textVersion() { return "Schedules Version: 1.0.0 (05/31/2017)" }
