@@ -1,14 +1,15 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.2.6 - 5/30/17 Copyright © 2017 Michael Struck
+ *  Version 2.2.7 - 6/3/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.2.4 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *  Version 2.2.4b (4/6/17) Framework changes for extensions (new one: additional message queues), added additional notifications to message queues, change SHM model to conform with new SmartThings naming standard, new icon for custom color
  *  Version 2.2.5a (4/23/17) Moved Weather/Voice reporting to an extension. Considerably sped up the execution of Ask Alexa! Created default Kelvin settings. Added "overwrite:[true/false]" parameter to message queue functions. Changed Nest to NST Manager
- *  Version 2.2.6 (5/30/17) Added Schedules Extension, code fixes, added "expires:[seconds]" to message queue parameters that developers can use when publishing to Ask Alexa, added "%random#% to the list of variables in text fields
+ *  Version 2.2.6 (6/1/17) Added Schedules Extension, code fixes, added "expires:[seconds]" to message queue parameters that developers can use when publishing to Ask Alexa, added "%random#% to the list of variables in text fields
+ *	Version 2.2.7 (6/3/17) Fixed issue with Ecobee custom DTH and brief replies
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -1333,7 +1334,7 @@ def msgQueueReply(cmd,queue){
                 if (msgQueueOrder) state.msgQueue.reverse(msgQueueOrder as int? true : false)
                 state.msgQueue.each{
                 	def msgData= timeDate(it.date), msgTimeDate = msgQueueDateSuppress || it.suppressTimeDate ? "" : "${msgData.msgDay} at ${msgData.msgTime}, "
-                    result += "${msgTimeDate}'${it.appName}' posted the message: '${it.msg}'. "
+                    result += "${msgTimeDate}'${it.appName}' posted the message: '${it.msg}' "
                 }
                 result +="%M%"
             }
@@ -1690,7 +1691,7 @@ def getReply(devices, type, STdeviceName, op, num, param){
                             def previousTipNum= currentTipNum - 1                    
                             def tipNum = previousTipNum>0 && previousTipNum <6 ? (previousTipNum) as int : 1
                             def attribute="tip${tipNum}Text"
-                            if (STdevice.currentValue(attribute)) result = "My Ecobee's current tip number ${tipNum} is '" + STdevice.currentValue(attribute) + "'. "
+                            if (STdevice.currentValue(attribute)) result = "My Ecobee's current tip number ${tipNum} is '" + STdevice.currentValue(attribute) + "'. %2%"
                             else result ="Tip number is unavailable at this time for the ${STdeviceName}. Try erasing the tips, then issue the 'GET TIPS' command and try again. %1%"
                         }
                         else if (op==~/play|give/ || (op=="tip" && param=="undefined")) { 
@@ -1703,19 +1704,19 @@ def getReply(devices, type, STdeviceName, op, num, param){
                                 attribute="tip${tipNum}Text"
                             }                            
                             if (STdevice.currentValue(attribute)) { 
-                                result = "My Ecobee's current tip number ${tipNum} is '" + STdevice.currentValue(attribute) + "'. "
+                                result = "My Ecobee's current tip number ${tipNum} is '" + STdevice.currentValue(attribute) + "'. %2%"
                                 state.tipCount=state.tipCount+1
                             }
                             else result ="Tip number is unavailable at this time for the ${STdeviceName}. Try erasing the tips, then issue the 'GET TIPS' command and try again. %1%"
                         }
                         else if (op ==~/get|load|reload/) { 
                             def tipLevel = num>0 && num<5 ? num :1
-                            result = "I am loading level ${tipLevel} tips to ${STdeviceName}. "
+                            result = "I am loading level ${tipLevel} tips to ${STdeviceName}. %2%"
                             STdevice.getTips(tipLevel)
                             state.tipCount=1
                         } 
                         else if (op ==~/restart|erase|delete|clear|reset/) { 
-                            result = "I am resetting the tips from ${STdeviceName}. Be sure to ask for the 'GET TIP' command to reload your thermostat advice. "
+                            result = "I am resetting the tips from ${STdeviceName}. Be sure to ask for the 'GET TIP' command to reload your thermostat advice. %2%"
                             STdevice.resetTips()
                             state.tipCount=1
                         }
@@ -3265,14 +3266,14 @@ private textVersion() {
     if (getSCHD().size()) getSCHD().each { aaSCHVer="\n"+it.textVersion() }
     return "${version}${lambdaVersion}${aaMQVer}${aaSCHVer}${aaVRVer}${aaWRVer}${lambdaVersion}"
 }
-private versionInt(){ return 226 }
+private versionInt(){ return 227 }
 private LambdaReq() { return 125 }
 private mqReq() { return 102 }
 private wrReq()  { return 101 }
 private vrReq()  { return 101 }
 private schReq()  { return 100 }
-private versionLong(){ return "2.2.6" }
-private versionDate(){ return "05/30/17" }
+private versionLong(){ return "2.2.7" }
+private versionDate(){ return "06/03/17" }
 private textCopyright() {return "Copyright © 2017 Michael Struck" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
