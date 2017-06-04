@@ -1,15 +1,12 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.2.7 - 6/3/17 Copyright © 2017 Michael Struck
+ *  Version 2.2.7 - 6/4/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
- *  Version information prior to 2.2.4 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
+ *  Version information prior to 2.2.7 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
- *  Version 2.2.4b (4/6/17) Framework changes for extensions (new one: additional message queues), added additional notifications to message queues, change SHM model to conform with new SmartThings naming standard, new icon for custom color
- *  Version 2.2.5a (4/23/17) Moved Weather/Voice reporting to an extension. Considerably sped up the execution of Ask Alexa! Created default Kelvin settings. Added "overwrite:[true/false]" parameter to message queue functions. Changed Nest to NST Manager
- *  Version 2.2.6 (6/1/17) Added Schedules Extension, code fixes, added "expires:[seconds]" to message queue parameters that developers can use when publishing to Ask Alexa, added "%random#% to the list of variables in text fields
- *	Version 2.2.7 (6/3/17) Fixed issue with Ecobee custom DTH and brief replies
+ *  Version 2.2.7 (6/4/17) Fixed issue with Ecobee custom DTH and brief replies, added whisper mode to personalities
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -645,8 +642,21 @@ def pageContCommands(){
                 input "snarkName2", "text", title: "Random Snarky Name 2", description: "Silly", required: false
 			}
         }
-        section("Other options"){ input "invocationName", title: "Invocation Name (Only Used For Examples)", defaultValue: "SmartThings", required: false }
+        section("Other options"){ 
+        	input "whisperMode", "bool", title: "Enable Whisper Mode", defaultValue: false, submitOnChange: true
+            if (whisperMode) {
+            	href "timeIntervalInputWhisper",  title: "Whisper Only During These Times...", description: getTimeLabel(timeStartWhisper, timeEndWhisper), state: (timeStartWhisper || timeEndWhisper? "complete":null), image: imgURL() + "clock.png"
+            	input "runModeWhisper", "mode", title: "Whisper Only In The Following Modes...", multiple: true, required: false, image: imgURL() + "modes.png"
+            }
+            input "invocationName", title: "Invocation Name (Only Used For Examples)", defaultValue: "SmartThings", required: false 
+        }
     }
+}
+page(name: "timeIntervalInputWhisper", title: "Whisper Only During These Times...") {
+	section {
+		input "timeStartWhisper", "time", title: "Starting", required: false
+		input "timeEndWhisper", "time", title: "Ending", required: false
+	}
 }
 def pageCustomDevices(){
     dynamicPage(name: "pageCustomDevices", uninstall: false){
@@ -1049,7 +1059,8 @@ def processBegin(){
     contOption += contStatus ? "1" : "0"
     contOption += contAction ? "1" : "0"
     contOption += contMacro ? "1" : "0"
-    return ["OOD":OOD, "continue":contOption,"personality":persType, "SmartAppVer": versionLong(),"IName":invocationName,"pName":pName]
+    def enableWhisper = whisperMode && getTimeOk(timeStartWhisper,timeEndWhisper) && (!runModeWhisper || runModeWhisper.contains(location.mode))
+    return ["OOD":OOD, "continue":contOption,"personality":persType, "SmartAppVer": versionLong(),"IName":invocationName,"pName":pName,"whisper": enableWhisper ]
 }
 def sendJSON(outputTxt){
     if (outputTxt && msgQueueNotify && mqCounts(msgQueueNotify) && outputTxt[-3..-1] != "%M%") {
@@ -2337,7 +2348,9 @@ def timeDate(dateNum){
     def msgTime = new Date(dateNum).format("h:mm aa", location.timeZone)
     return ["msgTime": msgTime, "msgDay": voiceDay]
 }
-def soundFXList(){ return [1:"Radio Announcer", 2:"Dr. Evil", 3:"George Carlin", 4:"Hal", 5:"Worf",6:"Pac Man",7:"R2-D2",8:"Yoda",9:"AOL",10:"Message Tone 1","custom":"Custom-User Defined"] }
+def soundFXList(){ 
+	return [1:"Radio Announcer", 2:"Dr. Evil", 3:"George Carlin", 4:"Hal", 5:"Worf",6:"Pac Man",7:"R2-D2",8:"Yoda",9:"AOL",10:"Message Tone 1",11:"Message Tone 2",12:"Message Tone 3",13:"Message Tone 4","custom":"Custom-User Defined"] 
+}
 def sfxLookup(sfx){
 	def result 
     if (sfx=="1") result = [uri: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/media/checkyourmailbox.mp3", duration:"6"]
@@ -2350,6 +2363,9 @@ def sfxLookup(sfx){
     else if (sfx=="8") result = [uri: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/media/yoda-message-from-the-darkside.mp3", duration:"4"]
     else if (sfx=="9") result = [uri: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/media/youve-got-mail-sound.mp3", duration:"2"]
     else if (sfx=="10") result = [uri: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/media/Tone1.mp3", duration:"2"]
+    else if (sfx=="11") result = [uri: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/media/Tone2.mp3", duration:"4"]
+    else if (sfx=="12") result = [uri: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/media/Tone4.mp3", duration:"2"]
+    else if (sfx=="13") result = [uri: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/media/Tone4.mp3", duration:"3"]
     else if (sfx=="custom") result = [uri:"${mqAlertCustom}",duration:"10"]
  	return result   
 }
@@ -3273,7 +3289,7 @@ private wrReq()  { return 101 }
 private vrReq()  { return 101 }
 private schReq()  { return 100 }
 private versionLong(){ return "2.2.7" }
-private versionDate(){ return "06/03/17" }
+private versionDate(){ return "06/04/17" }
 private textCopyright() {return "Copyright © 2017 Michael Struck" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
