@@ -1,11 +1,12 @@
 /**
  *  Ask Alexa Test App
  *
- *  Version - 1.0.2
+ *  Version - 1.0.3
  * 
  *  Version 1.0.0 (3/23/17) - Initial release
  *  Version 1.0.1 (4/6/17) - Added the remove button back in 
  *  Version 1.0.2 (5/15/17) - Added in 'overwrite', 'notifyOnly' and 'expirations' functions
+ *  Version 1.0.3 (5/19/17) - Added 'suppressTimeDate" functions
  *
  * 
  *  Copyright 2017 Michael Struck 
@@ -47,6 +48,7 @@ def mainPage(){
             input "expire", "number", title: "Expire in how many minutes? (Optional)", range: "1..*", required: false
             if (!delete) input "overwrite", "bool", title: "Turn this on to perform the overwrite routine when DONE tapped", defaultValue: false 
             input "notify", "bool", title: "Turn on \"notifyOnly\" parameter", defaultValue:false
+            input "suppressTD", "bool", title: "Suppress Time/Date From Playback", defaultValue:false
 		}
         section ("Help"){
         	paragraph "The action (send or delete) will occur when clicking <DONE> at the top of the page. Unit values are not needed if you are not performing a delete function."
@@ -86,10 +88,15 @@ def updated() {
 }
 
 def initialize() {
-	subscribe(location, "askAlexaMQ", askAlexaMQHandler)
+    subscribe(location, "askAlexaMQ", askAlexaMQHandler)
     def exMin = expire ? expire as int : 0
     def exSec=exMin * 60
-    sendLocationEvent(name: "AskAlexaMsgQueue", value: "Test App", unit: unit,  isStateChange: true, descriptionText: msg, data: [queues:listOfMQs, overwrite:overwrite ,expires:exSec, notifyOnly:notify])
+    sendLocationEvent(name: "AskAlexaMsgQueue", value: "Test App", unit: unit,  isStateChange: true, descriptionText: msg, data: 
+    	[queues:listOfMQs, 
+        overwrite:overwrite,
+        expires:exSec, 
+        notifyOnly:notify,
+        suppressTimeDate:suppressTD])
 }
 //Common Code
 def askAlexaMQHandler(evt) {
@@ -107,7 +114,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def version = "Version 1.0.2 (05/15/2017)"
+    def version = "Version 1.0.3 (05/19/2017)"
     return "${version}"
 }
 
