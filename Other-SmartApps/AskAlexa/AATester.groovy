@@ -6,7 +6,7 @@
  *  Version 1.0.0 (3/23/17) - Initial release
  *  Version 1.0.1 (4/6/17) - Added the remove button back in 
  *  Version 1.0.2 (5/15/17) - Added in 'overwrite', 'notifyOnly' and 'expirations' functions
- *  Version 1.0.3 (5/19/17) - Added 'suppressTimeDate" functions
+ *  Version 1.0.3 (6/12/17) - Added 'suppressTimeDate" functions
  *
  * 
  *  Copyright 2017 Michael Struck 
@@ -91,12 +91,17 @@ def initialize() {
     subscribe(location, "askAlexaMQ", askAlexaMQHandler)
     def exMin = expire ? expire as int : 0
     def exSec=exMin * 60
-    sendLocationEvent(name: "AskAlexaMsgQueue", value: "Test App", unit: unit,  isStateChange: true, descriptionText: msg, data: 
-    	[queues:listOfMQs, 
-        overwrite:overwrite,
-        expires:exSec, 
-        notifyOnly:notify,
-        suppressTimeDate:suppressTD])
+    if (!delete) {
+        sendLocationEvent(name: "AskAlexaMsgQueue", value: "Test App", unit: unit,  isStateChange: true, descriptionText: msg, data: 
+            [queues:listOfMQs, 
+            overwrite:overwrite,
+            expires:exSec, 
+            notifyOnly:notify,
+            suppressTimeDate:suppressTD])
+	}
+    else {
+    	sendLocationEvent(name: "AskAlexaMsgQueueDelete", value: "Test App", isStateChange: true, unit: unit, data: [queues:listOfMQs])
+    }
 }
 //Common Code
 def askAlexaMQHandler(evt) {
@@ -114,7 +119,7 @@ private def textAppName() {
 }	
 
 private def textVersion() {
-    def version = "Version 1.0.3 (05/19/2017)"
+    def version = "Version 1.0.3 (06/12/2017)"
     return "${version}"
 }
 
