@@ -1097,8 +1097,8 @@ def sendJSON(outputTxt, icon){
     if (state.cmdFollowup && outputTxt && outputTxt[-3..-1] != "%P%") state.cmdFollowup=""
     if (state.cmdFollowup && outputTxt && outputTxt[-3..-1] == "%P%") runIn(30, clearFollowup)
     def showIcon = icon ? icon :"AskAlexa"
-    if (outputTxt.endsWith("%1%") || outputTxt.endsWith("%P%")) showIcon ="caution"
-    else if (outputTxt.endsWith("%2%") && !icon) showIcon ="info"
+    if (outputTxt[-3..-1] ==~/%1%|%P%/) showIcon ="caution"
+    else if (outputTxt[-3..-1] =="%2%" && !icon) showIcon ="info"
     return ["voiceOutput":outputTxt,"icon":showIcon]
 }
 def processFollowup(){
@@ -1701,7 +1701,7 @@ def getReply(devices, type, STdeviceName, op, num, param){
                 result += opMode ? ", and the thermostat's mode is: '${opMode}'. " : ". "
                 result += humidity ? " The relative humidity reading is ${humidity}%. " : ""
                 if (nestCMD && supportedCaps.name.contains("Presence Sensor")){
-                	result += " This thermostat's presence sensor is reading, "
+                	result += " This thermostat's presence sensor is reading: "
                     result += STdevice.currentValue("presence")=="present" ? "'Home'. " : "'Away'. "
                 }
                 if ((ecobeeCMD && !MyEcobeeCMD) && STdevice.currentValue('currentProgramId') =~ /home|away|sleep/ ) result += " This thermostat's comfort setting is set to ${STdevice.currentValue('currentProgramId')}. "
