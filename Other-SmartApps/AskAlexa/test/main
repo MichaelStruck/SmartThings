@@ -1,14 +1,14 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.2.8 - 6/19/17 Copyright © 2017 Michael Struck
+ *  Version 2.2.8 - 6/20/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.2.7 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *  Version 2.2.7a (6/15/17) Fixed issue with Ecobee custom DTH and brief replies, added whisper mode to personalities, added logging feature for added partner usage, added %age% text field variable, 
  *  WebCoRE connectivity, deprecated most messaging options within macros/extensions...will use Message Queue if demand is present
- *  Version 2.2.8 (6/19/17) Added dynamic icons to skill's card. Preparing for the Amazon Show.
+ *  Version 2.2.8 (6/20/17) Added dynamic icons to skill's card. Preparing for the Amazon Show.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -396,8 +396,7 @@ def pageAliasAddFinal(){
 			def devType = [Switch:"switch", Dimmer:"level", "Colored Light":"color", "Temperature (Kelvin) Light": "kTemp", "Door Control":"door", "Window Shade":"shade", "Open/Close Sensor":"contact", "Temperature Sensor":"temperature", Lock:"lock",
             	Thermostat:"thermostat", "Humidity Sensor":"humidity", Speaker:"music", "Acceleration Sensor":"acceleration", "Water Sensor":"water", "Motion Sensor":"motion", "Presence Sensor":"presence"][aliasType]?:aliasType
 			result = "Alias Name: ${aliasName}\nAlias Device Type: ${devType}\nDevice: ${aliasDevice}"
-            def aliasIcon =[switch:"power",level:"power",color:"power",kTemp:"power",contact:"sensor", temperature:"temp", thermostat:"tstat",humidity:"sensor", music:"speaker",acceleration:"sensor",motion:"sensor"][devType]?:devType
-            state.aliasList<<["aliasName":aliasName,"aliasType":devType,"aliasDevice":"${aliasDevice}", "aliasTypeFull": aliasType, "aliasNameLC":aliasName.toLowerCase(),"aliasIcon":aliasIcon]
+            state.aliasList<<["aliasName":aliasName,"aliasType":devType,"aliasDevice":"${aliasDevice}", "aliasTypeFull": aliasType, "aliasNameLC":aliasName.toLowerCase()]
 			success = true
         }
 		section { paragraph success ? "Successfully Added Alias" : "Error Adding Alias", image: success ? imgURL() + "check.png" : imgURL() + "caution.png" }
@@ -1155,14 +1154,13 @@ def processDeviceAction(dev, op, numVal, param, followup){
 	log.debug "Param: " + param
 	def num = numVal == "undefined" || numVal =="?" ? 0 : numVal as int
 	String outputTxt = ""
-	def deviceList, count = 0, aliasDeviceType, aliasDeviceObj, aliasDeviceList, aliasDeviceName, devIcon, aliasDeviceIcon
+	def deviceList, count = 0, aliasDeviceType, aliasDeviceObj, aliasDeviceList, aliasDeviceName, devIcon
 	getDeviceList().each{if (it.name==dev) {deviceList=it; count++}}
 	if (mapDevices(true) && deviceAlias && !count && !deviceList){
 		aliasDeviceList = state.aliasList.each { 
 			if (it.aliasNameLC==dev) {
 				aliasDeviceType = it.aliasType
 				aliasDeviceName = it.aliasDevice
-                aliasDeviceIcon = it.aliasIcon
 				count++ 
 			}
 		}
@@ -1177,7 +1175,7 @@ def processDeviceAction(dev, op, numVal, param, followup){
         def proceed = true
         def deviceObj=deviceList ? deviceList.devices.find{it.label.replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase() == dev} : aliasDeviceObj
 		def devType=deviceList ? deviceList.type : aliasDeviceType
-        devIcon=deviceList ? deviceList.icon : aliasDeviceIcon
+        devIcon=deviceList ? deviceList.type : aliasDeviceType
         if (devType =~/door|lock/ && (lockVoc().find{it==op} || doorVoc().find{it==op})) {
             def currentState = deviceObj.currentValue(devType)
             if ((devType == "door" && (currentState==op) || (currentState == "closed" && op=="close"))||(devType=="lock" && currentState == op + "ed")) outputTxt="The ${dev} is already ${currentState}. %3%" 
@@ -3032,22 +3030,22 @@ def optionCount(start, end){
 }
 def mapDevices(isAlias){
 	def result =[],  ext= isAlias ? "Alias": ""
-	if (settings."switches${ext}") result << [devices: settings."switches${ext}", type : "switch",fullListName:"Switch", cmd:switchVoc(), icon:"power"]
-	if (settings."dimmers${ext}") result << [devices: settings."dimmers${ext}", type : "level",fullListName:"Dimmer",cmd:levelVoc(), icon:"power"]
-	if (settings."cLights${ext}") result << [devices: settings."cLights${ext}", type : "color",fullListName:"Colored Light", cmd:colorVoc(), icon:"power"]
-    if (settings."cLightsK${ext}") result << [devices: settings."cLightsK${ext}", type : "kTemp", fullListName:"Temperature (Kelvin) Light", cmd:kTempVoc(), icon:"power"]
-	if (settings."doors${ext}") result << [devices: settings."doors${ext}", type : "door",fullListName:"Door Control", cmd:doorVoc(), icon:"door"]
-	if (settings."shades${ext}") result << [devices: settings."shades${ext}", type : "shade",fullListName:"Window Shade", cmd:shadeVoc(), icon:"shade"]
-	if (settings."locks${ext}") result << [devices: settings."locks${ext}", type : "lock",fullListName:"Lock", cmd:lockVoc(),icon:"lock"]
-	if (settings."tstats${ext}") result << [devices: settings."tstats${ext}", type : "thermostat",fullListName:"Thermostat",cmd:tstatVoc(), icon:"tstat"]
-	if (settings."speakers${ext}") result << [devices: settings."speakers${ext}", type : "music",fullListName:"Speaker", cmd:speakerVoc(), icon:"speaker"]
-	if (settings."temps${ext}") result << [devices: settings."temps${ext}", type : "temperature",fullListName:"Temperature Sensor", cmd: tempVoc(), icon:"temp"]
-	if (settings."humid${ext}") result << [devices: settings."humid${ext}", type : "humidity",fullListName:"Humidity Sensor", cmd: humidVoc(), icon:"temp"]
-	if (settings."ocSensors${ext}") result << [devices: settings."ocSensors${ext}", type : "contact",fullListName:"Open/Close Sensor", cmd: contactVoc(), icon:"sensor"]
-	if (settings."water${ext}") result << [devices: settings."water${ext}", type : "water",fullListName:"Water Sensor", cmd: waterVoc(), icon:"water"]
-	if (settings."motion${ext}") result << [devices: settings."motion${ext}", type : "motion",fullListName:"Motion Sensor", cmd: motionVoc(), icon:"sensor"]
-	if (settings."presence${ext}") result << [devices: settings."presence${ext}", type : "presence",fullListName:"Presence Sensor", cmd: presenceVoc(), icon:"presence"]
-	if (settings."acceleration${ext}") result << [devices: settings."acceleration${ext}", type : "acceleration",fullListName:"Acceleration Sensor", cmd: accelVoc(), icon:"sensor"]
+	if (settings."switches${ext}") result << [devices: settings."switches${ext}", type : "switch",fullListName:"Switch", cmd:switchVoc()]
+	if (settings."dimmers${ext}") result << [devices: settings."dimmers${ext}", type : "level",fullListName:"Dimmer",cmd:levelVoc()]
+	if (settings."cLights${ext}") result << [devices: settings."cLights${ext}", type : "color",fullListName:"Colored Light", cmd:colorVoc()]
+    if (settings."cLightsK${ext}") result << [devices: settings."cLightsK${ext}", type : "kTemp", fullListName:"Temperature (Kelvin) Light", cmd:kTempVoc()]
+	if (settings."doors${ext}") result << [devices: settings."doors${ext}", type : "door",fullListName:"Door Control", cmd:doorVoc()]
+	if (settings."shades${ext}") result << [devices: settings."shades${ext}", type : "shade",fullListName:"Window Shade", cmd:shadeVoc()]
+	if (settings."locks${ext}") result << [devices: settings."locks${ext}", type : "lock",fullListName:"Lock", cmd:lockVoc()]
+	if (settings."tstats${ext}") result << [devices: settings."tstats${ext}", type : "thermostat",fullListName:"Thermostat",cmd:tstatVoc()]
+	if (settings."speakers${ext}") result << [devices: settings."speakers${ext}", type : "music",fullListName:"Speaker", cmd:speakerVoc()]
+	if (settings."temps${ext}") result << [devices: settings."temps${ext}", type : "temperature",fullListName:"Temperature Sensor", cmd: tempVoc()]
+	if (settings."humid${ext}") result << [devices: settings."humid${ext}", type : "humidity",fullListName:"Humidity Sensor", cmd: humidVoc()]
+	if (settings."ocSensors${ext}") result << [devices: settings."ocSensors${ext}", type : "contact",fullListName:"Open/Close Sensor", cmd: contactVoc()]
+	if (settings."water${ext}") result << [devices: settings."water${ext}", type : "water",fullListName:"Water Sensor", cmd: waterVoc()]
+	if (settings."motion${ext}") result << [devices: settings."motion${ext}", type : "motion",fullListName:"Motion Sensor", cmd: motionVoc()]
+	if (settings."presence${ext}") result << [devices: settings."presence${ext}", type : "presence",fullListName:"Presence Sensor", cmd: presenceVoc()]
+	if (settings."acceleration${ext}") result << [devices: settings."acceleration${ext}", type : "acceleration",fullListName:"Acceleration Sensor", cmd: accelVoc()]
     return result
 }
 def basicVoc(){return ["status","event","events"]}
@@ -3403,7 +3401,7 @@ private wrReq()  { return 102 }
 private vrReq()  { return 102 }
 private schReq()  { return 102 }
 private versionLong(){ return "2.2.8" }
-private versionDate(){ return "06/19/17" }
+private versionDate(){ return "06/20/17" }
 private textCopyright() {return "Copyright © 2017 Michael Struck" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
