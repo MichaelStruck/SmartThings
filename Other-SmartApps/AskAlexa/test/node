@@ -98,7 +98,7 @@ exports.handler = function( event, context ) {
                     var Type = event.request.intent.slots.Type.value;
                     url += 'l?Type=' + Type;
                     process = true;
-                    cardName = "SmartThings Help";
+                    cardName = "SmartThings List Command";
                 }
                  else if (intentName == "MQOperation") {
                     var Queue = event.request.intent.slots.Queue.value;
