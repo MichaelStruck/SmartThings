@@ -1,7 +1,7 @@
 /**
  *  Ask Alexa - Lambda Code
  *
- *  Version 1.2.8 - 6/24/17 Copyright © 2017 Michael Struck
+ *  Version 1.2.8 - 6/29/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for code and assistance 
  *  
  *  Version 1.0.0 - Initial release
@@ -37,7 +37,7 @@
 'use strict';
 exports.handler = function( event, context ) {
     var versionTxt = '1.2.8';
-    var versionDate= '06/24/2017';
+    var versionDate= '06/29/2017';
     var versionNum = '128';
     var https = require( 'https' );
     // Paste app code here between the breaks------------------------------------------------
@@ -289,7 +289,7 @@ function output( text, context, card, complete, pName, whisper, speed, pitch, ic
         },
         card: {
             type: "Standard",
-            title: card,
+            title: "Ask Alexa - " + card,
             text: cardText,
             image: {
                 largeImageUrl: imgURL + icon +".png"
