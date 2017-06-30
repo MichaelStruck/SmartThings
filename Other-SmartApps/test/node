@@ -204,7 +204,7 @@ function amzRespose(type, context, IName, versionTxt, personality, STver, contOp
     var icon;
     if (type == "AMAZON.YesIntent") {
         icon ="ok";
-        output(getResponse("Yes",personality), context, "SmartThings Alexa Yes Command", false, pName, whisper, speed, pitch, icon); 
+        output(getResponse("Yes",personality), context, "Yes Command", false, pName, whisper, speed, pitch, icon); 
     }
     else if (type == "OutOfDate") {
         icon ="caution";
@@ -212,19 +212,19 @@ function amzRespose(type, context, IName, versionTxt, personality, STver, contOp
     }
     else if (type == "AMAZON.NoIntent") { 
         icon ="stop";
-        output(getResponse("No",personality), context, "SmartThings Alexa End Command", true, pName, whisper, speed, pitch, icon); 
+        output(getResponse("No",personality), context, "End Command", true, pName, whisper, speed, pitch, icon); 
     }
     else if (type == "AMAZON.StopIntent") { 
         icon ="stop";
-        output(getResponse("Stop",personality), context, "Amazon Stop", true, pName, whisper, speed, pitch, icon); 
+        output(getResponse("Stop",personality), context, "Stop", true, pName, whisper, speed, pitch, icon); 
     }
     else if (type == "AMAZON.CancelIntent") {
         icon ="stop";
-        output(getResponse("Cancel",personality), context, "Amazon Cancel", true, pName, whisper, speed, pitch, icon); 
+        output(getResponse("Cancel",personality), context, "Cancel", true, pName, whisper, speed, pitch, icon); 
     }
     else if (type == "LaunchRequest") { 
         icon = "questionmark";
-        output(getResponse("Launch", personality), context, "Ask Alexa Help", false, pName, whisper, speed, pitch, icon); 
+        output(getResponse("Launch", personality), context, "Help", false, pName, whisper, speed, pitch, icon); 
     }
     else if (type == "AMAZON.HelpIntent") {
         resText = "With the Ask Alexa SmartApp, you can integrate your SmartThings household with me; this will allow you to give me commands "+
@@ -234,13 +234,13 @@ function amzRespose(type, context, IName, versionTxt, personality, STver, contOp
         "For those who are curious, you are running SmartApp version " + STver + ", and version "+ versionTxt +" of the Lambda code, both written by Michael Struck. %2%";
         processedText = processOutput(resText, personality, contOptions);
         icon = "info";
-        output(processedText[0], context, "Ask Alexa Help", processedText[1], pName, whisper, speed, pitch, icon);
+        output(processedText[0], context, "Help", processedText[1], pName, whisper, speed, pitch, icon);
     }
     else if (type == "VersionOperation") {
         resText = "The Ask Alexa SmartApp was developed by Michael Struck to intergrate the SmartThings platform with the Amazon Echo. The SmartApp version is: "  +  STver + ". And the Amazon Lambda code version is: " + versionTxt + ". %2%";
         processedText = processOutput(resText, personality, contOptions);
         icon = "info";
-        output(processedText[0], context, "SmartThings Version Help", processedText[1], pName, whisper, speed, pitch, icon);
+        output(processedText[0], context, "Application Version Help", processedText[1], pName, whisper, speed, pitch, icon);
     }
 }
 
