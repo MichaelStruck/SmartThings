@@ -2176,7 +2176,7 @@ def WebCoREResults(sDelay,xParam){
 }
 def WebCoREHandler(){ 
 	state.scheduled = false
-    def data = state.xParam ? [xParam : state.xParam] : ""
+    def data = state.xParam ? [xParam : state.xParam] : null
     parent.webCoRE_execute(CoREName,data)
     state.xParam=""
 }
