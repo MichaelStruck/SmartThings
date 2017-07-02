@@ -2190,7 +2190,7 @@ def WebCoREResults(sDelay,xParam){
     state.xParam = (xParam !="undefined" && xParam!="?") ? xParam : ""
     def xParamLog = state.xParam ? " with the extra parameter: ${state.xParam}" : "", delay
     if (cDelay>0 || sDelay>0) delay = sDelay==0 ? cDelay as int : sDelay as int
-    if (!advWebCore || advWebCore && state.xParam){
+    if (!advWebCore || (advWebCore && state.xParam)){
         result = (!delay || delay == 0) ? "I am triggering the WEBCORE macro named '${app.label}'${xParamLog}. " : delay==1 ? "I'll trigger the '${app.label}' WEBCORE macro in ${delay} minute. " : "I'll trigger the '${app.label}' WEBCORE macro in ${delay} minutes. "
             if (sDelay == 9999) { 
             result = "I am cancelling all scheduled executions of the WEBCORE macro, '${app.label}'. "  
