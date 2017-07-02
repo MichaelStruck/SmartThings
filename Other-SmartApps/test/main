@@ -1,7 +1,7 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.2.9 - 7/1/17 Copyright © 2017 Michael Struck
+ *  Version 2.2.9 - 7/2/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.2.7 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
@@ -9,7 +9,7 @@
  *  Version 2.2.7a (6/15/17) Fixed issue with Ecobee custom DTH and brief replies, added whisper mode to personalities, added logging feature for added partner usage, added %age% text field variable, 
  *  WebCoRE connectivity, deprecated most messaging options within macros/extensions...will use Message Queue if demand is present
  *  Version 2.2.8 (6/26/17) Added dynamic icons to skill's card. Preparing for the Amazon Show. Added health status to additional attributes for devices.
- *  Version 2.2.9 (7/1/17) Added additional advanced features to the WebCoRE macro
+ *  Version 2.2.9 (7/2/17) Added additional advanced features to the WebCoRE macro
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -1488,7 +1488,7 @@ def processMacroAction(mac, mNum, cmd, param, mPW, followup,xParam){
     log.debug "mPW: " + mPW
     log.debug "xParam: " + xParam
     if (mNum == "0" && cmd=="undefined" && param == "undefined") cmd="off"
-    def num = mNum == "undefined" || mNum =="?" || !mNum  ? 0 : mNum as int
+    def num = mNum ==~ "undefined" || mNum =="?" || !mNum  ? 0 : mNum as int
     String outputTxt = ""
     def macroType="", colorData, err=false, playContMsg
     if (cmd ==~/low|medium|high/){
@@ -1983,8 +1983,9 @@ def displayData(display){
 def macroResults(num, cmd, colorData, param, mNum,xParam){ 
     String result="", feedData=""   
     if (macroType == "Control") result = controlResults(num)
-    if (macroType == "Group" && cmd!="status") result = groupResults(num, cmd, colorData, param, mNum)
-    else if (macroType == "Group" && cmd=="status") result = "You can not get the status of items in a device group. It is recommended you use a voice report for this functionality. %1%"
+    if (macroType == "Group") result = groupResults(num, cmd, colorData, param, mNum)
+    //if (macroType == "Group" && cmd!="status") result = groupResults(num, cmd, colorData, param, mNum)
+    //else if (macroType == "Group" && cmd=="status") result = "You can not get the status of items in a device group. It is recommended you use a voice report for this functionality. %1%"
 	if (macroType == "CoRE") result = WebCoREResults(num, xParam)
     else if (macroType =="Group") {
     	def data = result ? result.endsWith("%") ? [alexaOutput: result[0..-4]] : [alexaOutput: result] : [alexaOutput: "No Output"]
@@ -2006,12 +2007,12 @@ def groupResults(num, op, colorData, param, mNum){
         else if (groupType=="switch"){
             if (op ==~/on|off/) { settings."groupDevice${groupType}"?."$op"();result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost,"","",macroType,app.label,0,"") : noAck ? " " : "I am turning ${op} the ${noun} in the group named '${app.label}'. " }
             else if (op == "toggle") { toggleState(settings."groupDevice${groupType}");result = voicePost && !noAck? parent.replaceVoiceVar(voicePost,"","",macroType,app.label,0,"") : noAck ? " " : "I am toggling the ${noun} in the group named '${app.label}'. " } 
-            //else result = "For a switch group, be sure to give an 'on', 'off' or 'toggle' command. %1%"
-            else{
+            else if (op==~/undefined|status/) {
 				if (!settings."groupDevice${groupType}"?.currentValue("switch").contains("off")) result = "All of the switches in the device group, '${app.label}', are on. "
                 else if (!settings."groupDevice${groupType}"?.currentValue("switch").contains("on")) result = "All of the switches in the device group, '${app.label}', are off. "
                 else settings."groupDevice${groupType}".each{ result += "The ${it.label} is ${it.currentValue('switch')}. " }
             }
+            else result = "For a switch device group, be sure to give an 'on', 'off', 'toggle' or 'status' command. %1%" 
         }
         else if (groupType==~/switchLevel|colorControl|colorTemperature/){
             num = num < 0 ? 0 : num >99 ? 100 : num
@@ -2073,9 +2074,20 @@ def groupResults(num, op, colorData, param, mNum){
                 }
                 else result = "The default increase or decrease value is set to zero within the SmartApp. I am taking no action. %1%"
             }
-            else if (groupType=="switchLevel") result = "For a dimmer group, be sure to use an 'on', 'off', 'toggle' or brightness level setting. %1%" 
-            else if (groupType=="colorControl") result = "For a colored light group, be sure to give me an 'on', 'off', 'toggle', brightness level or color command. %1%"
-            else if (groupType=="colorTemperature") result = "For a temperature control light group, be sure to give me an 'on', 'off', 'toggle', brightness level or temperature command. %1%"
+            else if (op==~/undefined|status/){
+            	def grpCtl = groupType=="switchLevel" ? "dimmer" : groupType=="colorControl" ? "colored light" : "temperature control light"
+                if (!settings."groupDevice${groupType}"?.currentValue("switch").contains("off")) result = "All of the ${grpCtl}s in the device group, '${app.label}', are on. "
+                else if (!settings."groupDevice${groupType}"?.currentValue("switch").contains("on")) result = "All of the ${grpCtl}s in the device group, '${app.label}', are off. "
+                else settings."groupDevice${groupType}".each{ 
+                	result += "The ${it.label} is ${it.currentValue('switch')}"
+                    result += it.currentValue('switch')=="on" ? " and set to ${it.currentValue('level')}. " : ". "
+                }
+            }
+            else {
+                if (groupType=="switchLevel") result = "For a dimmer group, be sure to use an 'on', 'off', 'toggle', 'status' or brightness level setting. %1%" 
+                else if (groupType=="colorControl") result = "For a colored light group, be sure to give me an 'on', 'off', 'toggle', 'status', brightness level or color command. %1%"
+                else if (groupType=="colorTemperature") result = "For a temperature control light group, be sure to give me an 'on', 'off', 'toggle', 'status', brightness level or temperature command. %1%"
+        	}
         }
         else if (groupType=="lock"){
             noun=settings."groupDevice${groupType}".size()==1 ? "device" : "devices"
@@ -2083,11 +2095,12 @@ def groupResults(num, op, colorData, param, mNum){
                 settings."groupDevice${groupType}"?."$op"()
                 result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost,"","",macroType,app.label,0,"") : noAck ? " " : "I am ${op}ing the ${noun} in the group named '${app.label}'. " 
             }
-            else {
+            else if (op==~/undefined|status/) {
 				if (!settings."groupDevice${groupType}"?.currentValue("lock").contains("locked")) result = "All of the locks in the device group, '${app.label}', are unlocked. "
                 else if (!settings."groupDevice${groupType}"?.currentValue("lock").contains("unlocked")) result = "All of the locks in the device group, '${app.label}', are locked. "
                 else settings."groupDevice${groupType}".each{ result += "The ${it.label} is ${it.currentValue('lock')}. " }
             }
+            else result = "For a lock device group, you must use a 'lock', 'unlock' or 'status' command. %1%" 
         }
         else if (groupType==~/doorControl|windowShade/){
             if (op ==~ /open|close/){
@@ -2095,12 +2108,13 @@ def groupResults(num, op, colorData, param, mNum){
                 def condition = op=="close" ? "closing" : "opening"
                 result = voicePost && !noAck  ? parent.replaceVoiceVar(voicePost,"","",macroType,app.label,0,"") : noAck ? " " :  "I am ${condition} the ${noun} in the group named '${app.label}'. "
             }
-            else {
+            else if (op==~/undefined|status/) {
 				def grpCtl = groupType=="doorControl" ? "door" : "shade"
                 if (!settings."groupDevice${groupType}"?.currentValue("${grpCtl}").contains("open")) result = "All of the ${grpCtl}s in the device group, '${app.label}', are closed. "
                 else if (!settings."groupDevice${groupType}"?.currentValue("${grpCtl}").contains("closed")) result = "All of the ${grpCtl}s in the device group, '${app.label}', are open. "
                 else settings."groupDevice${groupType}".each{ result += "The ${it.label} is ${it.currentValue(grpCtl)}. " }
             }
+            else result = "For a ${grpCtl} device group, you must use an 'open', 'close' or 'status' command. %1%" 
         }
         else if (groupType=="thermostat"){
             noun=settings."groupDevice${groupType}".size()==1 ? "thermostat in the group named '${app.label}'" : "thermostats in the group named '${app.label}'"
@@ -2142,10 +2156,11 @@ def groupResults(num, op, colorData, param, mNum){
                     parent.MyEcobeeCMD ? settings."groupDevice${groupType}"?.resumeThisTstat() : settings."groupDevice${groupType}"?.resumeProgram()
                 } 
             }
-            else if (op ==~/increase|raise|up|decrease|down|lower/) result = "Increase and decrease commands are not yet compatible with thermostat group macros. %1%"
+            else if (op ==~/increase|raise|up|decrease|down|lower/) result = "Increase and decrease commands are not yet compatible with thermostat device group macros. %1%"
+            else if (op==~/undefined|status/ && param == "undefined") settings."groupDevice${groupType}".each{ result += "The ${it.label} is reading ${it.currentValue('temperature')} degrees. " }
             else {
                 param = tstatDefaultCool && param == "undefined" ? "cool" : tstatDefaultHeat && param == "undefined" ? "heat" : param
-                if (param == "undefined") result = "You must designate a 'heating' or 'cooling' parameter when setting the temperature of a thermostat group. %1%"
+                if (param == "undefined") result = "You must designate a 'heating' or 'cooling' parameter when setting the temperature of a thermostat device group. %1%"
                 if ((op =="maximum" && !parent.getTstatLimits().hi) || (op =="minimum" && !parent.getTstatLimits().lo)) {
                     result = "You do not have a ${op} thermostat setpoint defined within your SmartApp. %1%"
                     param = "undefined"
@@ -2181,9 +2196,10 @@ def WebCoREResults(sDelay,xParam){
 		unschedule() 
 	}
 	if (!state.scheduled) {
+    	def xParamVar = state.xParam
 		if (!delay || delay == 0) WebCoREHandler() 
 		else if (delay < 9999) { runIn(delay*60, WebCoREHandler, [overwrite: true]) ; state.scheduled=true }
-		if (delay < 9999) result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost, delay,"",macroType,app.label,0,state.xParam) : noAck ? " " : result
+		if (delay < 9999) result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost, delay,"",macroType,app.label, 0, xParamVar) : noAck ? " " : result
 	}
 	else result = "The WEBCORE macro, '${app.label}', is already scheduled to run. You must cancel the execution or wait until it runs before you can run it again. %1%"
 	return result
@@ -3391,7 +3407,7 @@ private wrReq()  { return 103 }
 private vrReq()  { return 104 }
 private schReq()  { return 103 }
 private versionLong(){ return "2.2.9" }
-private versionDate(){ return "07/01/17" }
+private versionDate(){ return "07/02/17" }
 private textCopyright() {return "Copyright © 2017 Michael Struck" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
