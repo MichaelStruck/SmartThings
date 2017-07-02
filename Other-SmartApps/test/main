@@ -864,6 +864,7 @@ def pageCoRE() {
         section("Advanced features"){
         	paragraph "You may pass additional parameters to the WebCoRE piston by adding these items to your developer slots and speaking them when executing the piston. "+
             	"Please see the documentation from more information.", image: parent.imgURL() + "info.png"
+        	input "advWebCore", "bool", title: "Require Additional Parameter To Run Macro", defaultValue: false
         }
         section("Custom acknowledgment"){
              if (!noAck) input "voicePost", "text", title: "Acknowledgment Message", description: "Enter a short statement to play after macro runs", required: false, capitalization: "sentences"
@@ -2189,19 +2190,22 @@ def WebCoREResults(sDelay,xParam){
     state.xParam = (xParam !="undefined" && xParam!="?") ? xParam : ""
     def xParamLog = state.xParam ? " with the extra parameter: ${state.xParam}" : "", delay
     if (cDelay>0 || sDelay>0) delay = sDelay==0 ? cDelay as int : sDelay as int
-	result = (!delay || delay == 0) ? "I am triggering the WEBCORE macro named '${app.label}'${xParamLog}. " : delay==1 ? "I'll trigger the '${app.label}' WEBCORE macro in ${delay} minute. " : "I'll trigger the '${app.label}' WEBCORE macro in ${delay} minutes. "
-		if (sDelay == 9999) { 
-		result = "I am cancelling all scheduled executions of the WEBCORE macro, '${app.label}'. "  
-		state.scheduled = false
-		unschedule() 
-	}
-	if (!state.scheduled) {
-    	def xParamVar = state.xParam
-		if (!delay || delay == 0) WebCoREHandler() 
-		else if (delay < 9999) { runIn(delay*60, WebCoREHandler, [overwrite: true]) ; state.scheduled=true }
-		if (delay < 9999) result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost, delay,"",macroType,app.label, 0, xParamVar) : noAck ? " " : result
-	}
-	else result = "The WEBCORE macro, '${app.label}', is already scheduled to run. You must cancel the execution or wait until it runs before you can run it again. %1%"
+    if (!advWebCore || advWebCore && state.xParam){
+        result = (!delay || delay == 0) ? "I am triggering the WEBCORE macro named '${app.label}'${xParamLog}. " : delay==1 ? "I'll trigger the '${app.label}' WEBCORE macro in ${delay} minute. " : "I'll trigger the '${app.label}' WEBCORE macro in ${delay} minutes. "
+            if (sDelay == 9999) { 
+            result = "I am cancelling all scheduled executions of the WEBCORE macro, '${app.label}'. "  
+            state.scheduled = false
+            unschedule() 
+        }
+        if (!state.scheduled) {
+            def xParamVar = state.xParam
+            if (!delay || delay == 0) WebCoREHandler() 
+            else if (delay < 9999) { runIn(delay*60, WebCoREHandler, [overwrite: true]) ; state.scheduled=true }
+            if (delay < 9999) result = voicePost && !noAck ? parent.replaceVoiceVar(voicePost, delay,"",macroType,app.label, 0, xParamVar) : noAck ? " " : result
+        }
+        else result = "The WEBCORE macro, '${app.label}', is already scheduled to run. You must cancel the execution or wait until it runs before you can run it again. %1%"
+    }
+    else result = "I did not hear the required additional parameter required to execute the macro, '${app.label}'. The execution was aborted. %1%"
 	return result
 }
 def WebCoREHandler(){ 
