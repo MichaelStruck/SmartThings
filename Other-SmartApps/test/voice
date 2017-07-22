@@ -621,7 +621,7 @@ def doorWindowReport(){
 }
 def batteryReport(){
     String result = ""
-    def batteryThresholdLevel = batteryThreshold as int, batList = voiceBattery.findAll{it.latestValue("battery")< batteryThresholdLevel}
+    def batteryThresholdLevel = batteryThreshold as int, batList = voiceBattery.findAll{it.currentValue("battery")< batteryThresholdLevel}
     if (batList) {
         for (deviceName in batList){	
 			if (deviceName.currentValue("battery")>1) result += "The '${deviceName}' battery is at ${deviceName.currentValue("battery")}%. "
