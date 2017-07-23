@@ -281,7 +281,7 @@ def pageTemps(){
             input "tstats", "capability.thermostat", title: "Choose Thermostats (Temperature Setpoint/Status)", multiple: true, required: false, submitOnChange:true 
             input "temps", "capability.temperatureMeasurement", title: "Choose Temperature Devices (Status)", multiple: true, required: false
         	input "humid", "capability.relativeHumidityMeasurement", title: "Choose Humidity Devices (Status)", multiple: true, required: false
-            input "fooBot", "capability.carbonDioxideMeasurement", title: "Choose FooBot Air Quality (Status)", multiple: true, required: false
+            input "fooBot", "capability.carbonDioxideMeasurement", title: "Choose FooBot Air Quality (Status)", multiple: true, required: false, submitOnChange:true 
         }
         if (deviceAlias){
             section("Devices that can have aliases", hideWhenEmpty: true) {
