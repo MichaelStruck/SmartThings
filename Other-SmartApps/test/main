@@ -1,13 +1,13 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.3.0 - 7/23/17 Copyright © 2017 Michael Struck
+ *  Version 2.3.0 - 7/21/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.2.9 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *  Version 2.2.9d (7/13/17) Added additional advanced features to the WebCoRE macro, begin adding code to allow external items to send to the message queue, updated the brief reply option.
- *  Version 2.3.0 (7/23/17) GUI optimizations-Removed device specific commands (under Settings) and move them to the device areas and grouped any device voice settings, added FooBot Air Quality Monitor options
+ *  Version 2.3.0 (7/21/17) GUI optimizations-Removed device specific commands (under Settings) and move them to the device areas and grouped any device voice settings
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -281,18 +281,16 @@ def pageTemps(){
             input "tstats", "capability.thermostat", title: "Choose Thermostats (Temperature Setpoint/Status)", multiple: true, required: false, submitOnChange:true 
             input "temps", "capability.temperatureMeasurement", title: "Choose Temperature Devices (Status)", multiple: true, required: false
         	input "humid", "capability.relativeHumidityMeasurement", title: "Choose Humidity Devices (Status)", multiple: true, required: false
-            input "fooBot", "capability.carbonDioxideMeasurement", title: "Choose FooBot Air Quality (Status)", multiple: true, required: false, submitOnChange:true 
         }
         if (deviceAlias){
             section("Devices that can have aliases", hideWhenEmpty: true) {
             	input "tstatsAlias", "capability.thermostat", title: "Choose Thermostats", multiple: true, required: false, submitOnChange:true
             	input "tempsAlias", "capability.temperatureMeasurement", title: "Choose Temperature Devices", multiple: true, required: false
         		input "humidAlias", "capability.relativeHumidityMeasurement", title: "Choose Humidity Devices", multiple: true, required: false
-                input "fooBotAlias", "capability.carbonDioxideMeasurement", title: "Choose FooBot Air Quality (Status)", multiple: true, required: false
             }
         }
         if (tstatsSel()){
-            section("Default Thermostat Commands"){
+        	section("Default Thermostat Commands"){
             	if (!tstatCool) input "tstatHeat", "bool", title: "Set Heating Setpoint By Default", defaultValue:false, submitOnChange:true
             	if (!tstatHeat) input "tstatCool", "bool", title: "Set Cooling Setpoint By Default", defaultValue:false, submitOnChange:true
     		}
@@ -302,14 +300,6 @@ def pageTemps(){
                 input "nestCMD", "bool", title: "Nest-Specific Thermostat Presence Commands (Home/Away)", defaultValue: false, submitOnChange: true
                 if (nestCMD) input "nestMGRCMD", "bool", title: "NST Manager Specific Reports (Report)", defaultValue: false
                 input "stelproCMD", "bool", title: "Stelpro Baseboard\nThermostat Modes (Eco/Comfort)", defaultValue:false
-            }
-    	}
-        if (fooBotSel()){
-        	section ("FooBot attributes in status"){
-            	input "fooBotTemp", "bool", title: "Include Temperature", defaultValue:false
-                input "fooBotHum", "bool", title: "Include Humidity", defaultValue:false
-                input "fooBotPart", "bool", title: "Include Particle Counts", defaultValue:false
-                input "fooBotVOC", "bool", title: "Include VOC Counts", defaultValue:false
             }
     	}
     }
@@ -1704,11 +1694,10 @@ def getReply(devices, type, STdeviceName, op, num, param){
                 def temp = roundValue(STdevice.currentValue(type))
                 result = "The temperature of the ${STdeviceName} is ${temp} degrees"
                 if (otherStatus) {
-                    def humidity = STdevice.currentValue("humidity"), wet=STdevice.currentValue("water") ,contact=STdevice.currentValue("contact"), pollution = STdevice.currentValue("pollution")
+                    def humidity = STdevice.currentValue("humidity"), wet=STdevice.currentValue("water") ,contact=STdevice.currentValue("contact")
                     result += humidity ? ", and the relative humidity is ${humidity}%. " : ". "
                     result += wet ? "Also, this device is a leak sensor, and it is currently ${wet}. " : ""
                     result += contact ? "This device is also a contact sensor sensor, and it is currently reading ${contact}. " : ""
-                	result += pollution ? "This device is also a pollution sensor, and currently it is reading ${STdevice.currentValue("GPIState")} at a value of ${pollution}%." : ""
                 }
                 else result += ". "
             }
@@ -2826,7 +2815,6 @@ private shadesSel() { return shades || (deviceAlias && shadesAlias) }
 private tstatsSel() { return tstats || (deviceAlias && tstatsAlias) }
 private tempsSel() { return temps || (deviceAlias && tempsAlias) }
 private humidSel() { return humid || (deviceAlias && humidAlias) }
-private fooBotSel() { return fooBot || (deviceAlias && fooBotAlias) }
 private speakersSel() { return speakers || (deviceAlias && speakersAlias) }
 private waterSel() { return water || (deviceAlias && waterAlias) }
 private presenceSel() { return presence || (deviceAlias && presenceAlias) }
@@ -3506,7 +3494,7 @@ private wrReq()  { return 104 }
 private vrReq()  { return 104 }
 private schReq()  { return 103 }
 private versionLong(){ return "2.3.0" }
-private versionDate(){ return "07/23/17" }
+private versionDate(){ return "07/21/17" }
 private textCopyright() {return "Copyright © 2017 Michael Struck" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
