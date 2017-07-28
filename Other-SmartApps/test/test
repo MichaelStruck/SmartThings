@@ -1711,7 +1711,7 @@ def getReply(devices, type, STdeviceName, op, num, param){
                 if (STdevice.currentValue("GPIState") || STdevice.currentValue(type)){
                     result = "The Foobot air quality monitor, '${STdeviceName}', is currently reading, '${STdevice.currentValue("GPIState")}', at a value of ${STdevice.currentValue(type)}%"
                     if (otherStatus){
-                    	result += ". The carbon dioxide reading is ${STdevice.currentCo2} parts per million, the volatile organic compounds is reading ${STdevice.currentVoc} parts per billion"
+                    	result += ". The carbon dioxide reading is ${STdevice.currentValue("carbonDioxide")} parts per million, the volatile organic compounds is reading ${STdevice.currentVoc} parts per billion"
                         result += ", the particulate matter reading is ${STdevice.currentParticle} µg/m³"
                     	result += STdevice.currentValue("humidity") ? ", and the relative humidity is ${STdevice.currentValue("humidity")}%" : ". " 
                     }
