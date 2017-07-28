@@ -38,7 +38,7 @@ metadata {
         attribute "particle", "number"
         attribute "voc", "number"
         attribute "GPIState", "String"
-        attribute "co2", "number"       
+        attribute "carbonDioxide", "number"       
 	}
 
 	simulator {
