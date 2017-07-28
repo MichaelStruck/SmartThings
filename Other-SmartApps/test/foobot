@@ -2,9 +2,9 @@
  *  Foobot Air Quality Monitor DTH
  *
  *  Copyright 2017 Michael Struck
- *  Version 2.0.0 7/26/17
+ *  Version 2.0.0 7/28/17
  *
- *  Version 2.0.0 Re-engineered release by Michael Struck to work with Ask Alexa
+ *  Version 2.0.0 Re-engineered release by Michael Struck to work with Ask Alexa. Added C/F adjustment, cleaned up code, used the standar 'carbonDioxide' variable instead of CO2
  *
  *  Uses code from Adam K (V2. Updated 6/2/2017 - Updated Region so it works in UK & US)
  *
@@ -19,18 +19,12 @@
  *
  */
  preferences {
-    input("username", "text", title: "Username", description: "Your Foobot username (usually an email address)")
-    input("uuid", "text", title: "UUID", description: "The UUID of the exact Foobot that you would like information for")
-    def myOptions = ["EU":"Europe API and °C", "US":"US API and °F"]
-	input "region", 
-    "enum", 
-    title: "Select your region",
-    defaultValue: "EU",
-    required: true, 
-    options: myOptions, 
-    displayDuringSetup: true
+        input("username", "text", title: "Username", description: "Your Foobot username (usually an email address)")
+        input("uuid", "text", title: "UUID", description: "The UUID of the exact Foobot that you would like information for")
+        def myOptions = ["EU", "US"]
+        input "region", "enum", title: "Select your region (For API access)", defaultValue: "EU", required: true, options: myOptions, displayDuringSetup: true
+        input "CF", "enum", title: "Select your temperature type", defaultValue: "°C", required: true, options: ["°C","°F"], displayDuringSetup: true
 }
- 
 metadata {
 	definition (name: "Foobot Air Quality Monitor", namespace: "MichaelStruck", author: "Michael Struck") {
 		capability "Polling"
@@ -65,8 +59,8 @@ metadata {
            		attributeState("GPIState", label:'${currentValue}')
             }
        }
-        valueTile("co2", "device.co2", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
-        	state "co2", label:'${currentValue} CO2 ppm', unit:"ppm"
+        valueTile("carbonDioxide", "device.carbonDioxide", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
+        	state "carbonDioxide", label:'${currentValue} CO2 ppm', unit:"ppm"
         }
         valueTile("voc", "device.voc", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
             state "voc", label:'${currentValue} VOC ppb', unit:"ppb"
@@ -83,24 +77,19 @@ metadata {
         standardTile("refresh", "device.refresh", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
             state "refresh", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
-
         standardTile("spacerlastUpdatedLeft", "spacerTile", decoration: "flat", width: 1, height: 1) {
  		}
-
         valueTile("lastUpdated", "device.lastUpdated", inactiveLabel: false, decoration: "flat", width: 4, height: 1) {
 			state "lastUpdated", label:'Last updated:\n${currentValue}'
 		}
-
         standardTile("spacerlastUpdatedRight", "spacerTile", decoration: "flat", width: 1, height: 1) {
  		}
-
         main "pollution"
-        details(["pollution","co2","voc","particle","humidity", "temperature", "refresh", "spacerlastUpdatedLeft", "lastUpdated", "spacerlastUpdatedRight"])
+        details(["pollution","carbonDioxide","voc","particle","humidity", "temperature", "refresh", "spacerlastUpdatedLeft", "lastUpdated", "spacerlastUpdatedRight"])
 	}
 }
-
 private getAPIKey() {
-    return "ENTER YOUR API INFORMATION HERE";
+    return "ADD YOUR API KEY HERE";
 }
 def parse(String description) {
 	log.debug "Parsing '${description}'"
@@ -113,11 +102,9 @@ def poll() {
     def start = new Date(Calendar.instance.time.time-1800000).format("yyyy-MM-dd'T'HH:MM':00'");
     def stop = new Date(Calendar.instance.time.time+1800000).format("yyyy-MM-dd'T'HH:MM':00'");
     
-    def accessToken = getAPIKey()
-    
+    def accessToken = getAPIKey()  
     def regionVar = ""
-    def params = ""
-    
+    def params = "" 
     if (region){
     	regionVar = region
     	if (regionVar == "EU")params = "https://api.foobot.io/v2/device/${settings.uuid}/datapoint/0/last/0/?api_key=${accessToken}"
@@ -145,12 +132,12 @@ def poll() {
             BigDecimal tmp = resp.data.datapoints[-1][2]
            	def tmpround = String.format("%5.2f",tmp)
             def temp = tmpround
-            if (regionVar == "US") temp = celsiusToFahrenheit(tmp) as Integer
+            if (CF == "°F") temp = celsiusToFahrenheit(tmp) as Integer
             sendEvent(name: "temperature", value: temp, unit: "°")
             log.debug "hum: ${resp.data.datapoints[-1][3]}"
             sendEvent(name: "humidity", value: resp.data.datapoints[-1][3] as Integer, unit: "%")
-            log.debug "co2: ${resp.data.datapoints[-1][4]}"
-            sendEvent(name: "co2", value: resp.data.datapoints[-1][4] as Integer, unit: "ppm")
+            log.debug "Carbon dioxide: ${resp.data.datapoints[-1][4]}"
+            sendEvent(name: "carbonDioxide", value: resp.data.datapoints[-1][4] as Integer, unit: "ppm")
             log.debug "voc: ${resp.data.datapoints[-1][5]}"
             sendEvent(name: "voc", value: resp.data.datapoints[-1][5] as Integer, unit: "ppb")
             log.debug "allpollu: ${resp.data.datapoints[-1][6]}"
