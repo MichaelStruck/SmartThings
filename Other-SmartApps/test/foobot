@@ -23,7 +23,7 @@
         input("uuid", "text", title: "UUID", description: "The UUID of the exact Foobot that you would like information for")
         def myOptions = ["EU", "US"]
         input "region", "enum", title: "Select your region (For API access)", defaultValue: "EU", required: true, options: myOptions, displayDuringSetup: true
-        input "CF", "enum", title: "Select your temperature type", defaultValue: "°C", required: true, options: ["°C","°F"], displayDuringSetup: true
+        input "CF", "enum", title: "Temperature units", defaultValue: "°C", required: true, options: ["°C","°F"], displayDuringSetup: true
 }
 metadata {
 	definition (name: "Foobot Air Quality Monitor", namespace: "MichaelStruck", author: "Michael Struck") {
