@@ -2,9 +2,9 @@
  *  Foobot Air Quality Monitor DTH
  *
  *  Copyright 2017 Michael Struck
- *  Version 2.0.0 7/28/17
+ *  Version 2.0.0 7/29/17
  *
- *  Version 2.0.0 Re-engineered release by Michael Struck to work with Ask Alexa. Added C/F adjustment, cleaned up code, used the standar 'carbonDioxide' variable instead of CO2
+ *  Version 2.0.0 Re-engineered release by Michael Struck to work with Ask Alexa. Added C/F adjustment, cleaned up code and interface, used the standard 'carbonDioxide' variable instead of CO2
  *
  *  Uses code from Adam K (V2. Updated 6/2/2017 - Updated Region so it works in UK & US)
  *
@@ -58,6 +58,9 @@ metadata {
             tileAttribute("device.GPIState", key: "SECONDARY_CONTROL") {
            		attributeState("GPIState", label:'${currentValue}')
             }
+            tileAttribute("lastUpdated", key: "MARQUEE") {
+           		attributeState("lastUpdated", label:'${currentValue}')
+            }
        }
         valueTile("carbonDioxide", "device.carbonDioxide", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
         	state "carbonDioxide", label:'${currentValue} CO2 ppm', unit:"ppm"
@@ -68,28 +71,44 @@ metadata {
         valueTile("particle", "device.particle", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
             state "particle", label:'${currentValue} µg/m³', unit:"µg/m³ PM2.5"
         }
+         valueTile("temperature", "device.temperature", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
+            state "temperature", label:'${currentValue}°', unit:"°", backgroundColors:[
+							// Celsius
+							[value: 0, color: "#153591"],
+							[value: 7, color: "#1e9cbb"],
+							[value: 15, color: "#90d2a7"],
+							[value: 23, color: "#44b621"],
+							[value: 28, color: "#f1d801"],
+							[value: 35, color: "#d04e00"],
+							[value: 37, color: "#bc2323"],
+							// Fahrenheit
+							[value: 40, color: "#153591"],
+							[value: 44, color: "#1e9cbb"],
+							[value: 59, color: "#90d2a7"],
+							[value: 74, color: "#44b621"],
+							[value: 84, color: "#f1d801"],
+							[value: 95, color: "#d04e00"],
+							[value: 96, color: "#bc2323"]
+					]
+		}
         valueTile("humidity", "device.humidity", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
             state "humidity", label:'${currentValue}% humidty', unit:"%"
-        }
-        valueTile("temperature", "device.temperature", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
-            state "temperature", label:'${currentValue}°', unit:"°"
         }
         standardTile("refresh", "device.refresh", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
             state "refresh", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
-        standardTile("spacerlastUpdatedLeft", "spacerTile", decoration: "flat", width: 1, height: 1) {
- 		}
         valueTile("lastUpdated", "device.lastUpdated", inactiveLabel: false, decoration: "flat", width: 4, height: 1) {
 			state "lastUpdated", label:'Last updated:\n${currentValue}'
 		}
-        standardTile("spacerlastUpdatedRight", "spacerTile", decoration: "flat", width: 1, height: 1) {
- 		}
+        valueTile("refreshes", "device.refreshes", inactiveLable: false, decoration: "flat", width: 2, height: 1) {
+			state "refreshes", label:'Refreshes Remaining Today:\n${currentValue}'
+		}
         main "pollution"
-        details(["pollution","carbonDioxide","voc","particle","humidity", "temperature", "refresh", "spacerlastUpdatedLeft", "lastUpdated", "spacerlastUpdatedRight"])
+        details(["pollution","carbonDioxide","voc","particle","temperature", "humidity", "refresh", "lastUpdated", "refreshes"])
 	}
 }
 private getAPIKey() {
-    return "ADD YOUR API KEY HERE";
+    return "eyJhbGciOiJIUzI1NiJ9.eyJncmFudGVlIjoibWF0dEBmcmVlc3RvbmVmYW1pbHkuY29tIiwiaWF0IjoxNDg1ODgyMjI2LCJ2YWxpZGl0eSI6LTEsImp0aSI6ImU4ZGE5MTRhLTRkNzktNGJjOC05MTJmLWJhNjc5MWM2YTJhMSIsInBlcm1pc3Npb25zIjpbInVzZXI6cmVhZCIsImRldmljZTpyZWFkIl0sInF1b3RhIjoyMDAsInJhdGVMaW1pdCI6NX0.JJIiFSl9uiOBUpMkrbHSxOCNnAkAQhONEXQxe85Yt_4";
 }
 def parse(String description) {
 	log.debug "Parsing '${description}'"
@@ -114,6 +133,9 @@ def poll() {
         httpGet(params) {resp ->
 			resp.headers.each {
            		log.debug "${it.name} : ${it.value}"
+                if (it.name=="X-API-KEY-LIMIT-REMAINING"){
+                	sendEvent(name: "refreshes", value:it.value)	
+                }
         	}
             // get an array of all headers with the specified key
         	def theHeaders = resp.getHeaders("Content-Length")
