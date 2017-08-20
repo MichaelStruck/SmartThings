@@ -2,9 +2,9 @@
  *  Ask Alexa Rooms/Groups
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.0 8/18/17
+ *  Version 1.0.0 8/20/17
  * 
- *  Version 1.0.0 (8/18/17) - Initial release
+ *  Version 1.0.0 (8/20/17) - Initial release
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -35,6 +35,7 @@ preferences {
     page name:"pageTstatRPT"
     page name:"pageTempRPT"
     page name:"pageHumidRPT"
+    page name:"pageSensors"
 }
 //Show main page
 def mainPage() {
@@ -52,6 +53,7 @@ def mainPage() {
         section ("Sensors in this room/group"){
         	href "pageTempRPT", title: "Temperature Sensors", description: getDesc("temp"), state: (temp ? "complete" : null), image: parent.imgURL() + "heating.png"
             href "pageHumidRPT", title: "Humdity Sensors", description: getDesc("humid"), state: (humid ? "complete" : null), image: parent.imgURL() + "humidity.png"
+            href "pageSensors", title: "Other Sensors", description: getDesc("sensor"), state: ( motion || contact || water ? "complete" : null), image: parent.imgURL() + "sensor.png"
 		}
         section("Custom acknowledgment (For device action only)"){
              if (!noAck) input "voicePost", "text", title: "Acknowledgment Message", description: "Enter a short statement to play after action runs", required: false, capitalization: "sentences"
@@ -142,6 +144,24 @@ def pageHumidRPT() {
         	input "humid", "capability.relativeHumidityMeasurement", title: "Humidity Sensors", multiple: true, required: false, submitOnChange: true
         	if (humid && humid.size()>1) paragraph "Please note: When multiple humidity devices are selected above, the status output will be an average of the device readings", image: parent.imgURL() + "info.png"
         }
+    }   
+}
+def pageSensors() {
+	dynamicPage(name: "pageSensors", install: false, uninstall: false) {
+    	section { paragraph "Other Sensors", image: parent.imgURL() + "sensor.png" }
+        section ("Motion sensors"){
+            input "motion", "capability.motionSensor", title: "Motion Sensors", multiple: true, required: false, submitOnChange: true
+            if (motion) input "motionOnly", "bool",title: "Report Only Sensors That Read 'Active'", defaultValue: false
+        }
+        section ("Open/Close sensors"){
+            input "contact", "capability.contactSensor", title: "Open/Close Sensors", multiple: true, required: false, submitOnChange: true
+            if (contact) input "openOnly", "bool",title: "Report Only Sensors That Read 'Open'", defaultValue: false
+        }
+        section ("Water Sensors", hideWhenEmpty: true){
+			input "water", "capability.waterSensor", title: "Water Sensors", multiple: true, required: false, submitOnChange: true
+            if (water) input "wetOnly", "bool", title: "Report Only Water Sensors That Are 'Wet'", defaultValue: false
+        }
+        
     }   
 }
 page(name: "pageExtAliases", title: "Enter alias names for this room/group"){
@@ -322,7 +342,7 @@ def colorSet(param, num){
 }
 def roomStatus(){
 	String result = ""
-    if (switchesRPT  || doorsRPT || locksRPT || shadesRPT || tstatsRPT || temp || humid) {
+    if (switchesRPT  || doorsRPT || locksRPT || shadesRPT || tstatsRPT || temp || humid || water || contact || motion) {
 		result = "The group named, '${app.label}', is reporting the following: "
         if (switches && switchesRPT){
         	if (switchesRPTOn) switches.each { if (it.currentValue("switch")=="on") result += "The ${it.label} is on. " }	
@@ -375,11 +395,46 @@ def roomStatus(){
         else if (temp && temp.size() ==1 ) result +="The temperature is ${temp.currentValue("temperature")} degrees. "
         if (humid && humid.size() > 1) result += "The average relative humidity is " + parent.getAverage(humid, "humidity") + "%. "
         else if (humid && humid.size() ==1 ) result +="The relative humidity is ${temp.currentValue("humidity")}%. "  
-	}
+		if (motion) result += motionReport()
+        if (contact) result +=contactReport()
+        if (water) result +=waterReport()
+    }
     else result="There are no devices set up to report status. "
     return result 
 }
 //Common Code
+def motionReport(type){
+    String result =""
+    def deviceList = motionOnly ?  motion.findAll{it.currentValue("motion")=="active"} : motion
+    if (deviceList) {
+        if (motionOnly) deviceList.each { result += "'${it.label}' is reading motion. "}
+        else {
+            deviceList.each {
+                def currVal = [active: "movement", inactive: "no movement"][it.latestValue("motion")] ?: it.latestValue("motion")
+                result += "The '${it.label}' is reading " + currVal + ". "
+            }
+        }
+    }
+    return result 
+}
+def contactReport(type){
+    String result =""
+    def deviceList = openOnly ? contact.findAll{it.latestValue("contact")=="open"} : contact
+    if (deviceList){
+    	if (openOnly) deviceList.each { result += "'${it.label}' is open. "}
+		else deviceList.each {result += "The '${it.label}' is reading ${it.latestValue("contact")}. "}
+    }
+    return result 
+}
+def waterReport(type){
+    String result =""
+    def deviceList = wetOnly ? water.findAll{it.latestValue("water")=="wet"} : water
+    if (deviceList){
+    	if (wetOnly) deviceList.each { result += "'${it.label}' is read moisture is present. "}
+		else deviceList.each {result += "The '${it.label}' is reading ${it.latestValue("water")}. "}
+    }
+    return result 
+}
 def extAliasCount() { return 3 }
 def extAliasDesc(){
 	def result =""
@@ -439,7 +494,7 @@ def getDesc(type){
             	countNoun = shades.size()>1 ? "s" : ""
                 countVerb = shades.size()>1 ? "are" : "is"
                 countAdj = shades.size()>1 ? "all" : "the"
-                result= "Window Shade${countNoun} configured"
+                result= "Window shade${countNoun} configured"
                 if (shadesRPT && shadessRPTOn) result += "; Include in status report only when window shade${countNoun} ${countVerb} 'Open'"
                 else if (shadesRPT && !shadessRPTOn) result += "; Include ${countAdj} window shade${countNoun} in status report"
             }
@@ -456,14 +511,33 @@ def getDesc(type){
             if (temp){
             	countNoun = temp.size()>1 ? "s" : ""
                 countVerb = temp.size()>1 ? "; Temperature status is average of all devices" : ""
-                result= "Temperature Sensor${countNoun} configured${countVerb}"
+                result= "Temperature sensor${countNoun} configured${countVerb}"
             }
     	break
         case "humid" :
             if (humid){
             	countNoun = humid.size()>1 ? "s" : ""
                 countVerb = humid.size()>1 ? "; Humidity status is average of all devices" : ""
-                result= "Humidity Sensor${countNoun} configured${countVerb}"
+                result= "Humidity sensor${countNoun} configured${countVerb}"
+            }
+    	break
+        case "sensor" :
+			if (motion || contact || water){
+                result = ""
+                if (motion){
+                    countNoun = motion.size()>1 ? "s" : ""
+                    result+= "Motion sensor${countNoun} configured"
+                }
+                if (motion && contact) result +="\n"
+                if (contact){
+                    countNoun = contact.size()>1 ? "s" : ""
+                    result+= "Open/Close sensor${countNoun} configured"
+                }
+                if (water && (motion || contact)) result +="\n"
+                if (water){
+                    countNoun = water.size()>1 ? "s" : ""
+                    result+= "Water sensor${countNoun} configured"
+                }
             }
     	break
   	}
@@ -472,4 +546,4 @@ def getDesc(type){
 //Version/Copyright/Information/Help
 private versionInt(){ return 100 }
 private def textAppName() { return "Ask Alexa Rooms/Groups" }	
-private def textVersion() { return "Rooms/Groups Version: 1.0.0 (08/18/2017)" }
+private def textVersion() { return "Rooms/Groups Version: 1.0.0 (08/20/2017)" }
