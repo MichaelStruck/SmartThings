@@ -1,12 +1,12 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.3.1 - 8/14/17 Copyright © 2017 Michael Struck
+ *  Version 2.3.1 - 8/21/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.3.1 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
- *  Version 2.3.1 (8/14/17) Added new extention: Rooms/Groups
+ *  Version 2.3.1 (8/21/17) Added new extention: Rooms/Groups, disabling of Device Groups
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -833,7 +833,10 @@ def mainPageChild(){
     	section {
             label title:"Macro Name (Required)", required: true, image: imgURL() + "speak.png"
             href "pageMacroAliases", title: "Macro Aliases", description: macroAliasDesc(), state: macroAliasState()
-            input "macroType", "enum", title: "Macro Type...", options: [["Control":"Control (Run/Execute)"],["CoRE":"WebCoRE Trigger (Run/Execute)"],["Group":"Device Group (On/Off/Toggle, Lock/Unlock, etc.)"],["GroupM":"Extension Group (Run/Execute)"]], required: false, multiple: false, submitOnChange:true
+            //Delete in version 2.3.2
+            if (macroType!="Group"){
+            	input "macroType", "enum", title: "Macro Type...", options: [["Control":"Control (Run/Execute)"],["CoRE":"WebCoRE Trigger (Run/Execute)"],["GroupM":"Extension Group (Run/Execute)"]], required: false, multiple: false, submitOnChange:true
+            }
             def fullMacroName=[GroupM: "Extension Group",CoRE:"WebCoRE Trigger", Control:"Control", Group:"Device Group"][macroType] ?: macroType
             if (macroType) {
             	href "page${macroType}", title: "${fullMacroName} Settings", description: macroTypeDesc(), state: greyOutMacro()
@@ -876,25 +879,13 @@ page(name: "pageMacroAliases", title: "Enter alias names for this macro"){
 }
 //Device Macro----------------------------------------------------
 def pageGroup() {
+	//Delete in version 2.3.2
 	dynamicPage(name: "pageGroup", install: false, uninstall: false) {
-		section { paragraph "Device Group Settings", image: imgURL() + "folder.png" }
+        section { paragraph "Device Group Settings", image: imgURL() + "folder.png" }
         section (" ") {
-            input "groupType", "enum", title: "Group Type...", options: [["colorControl": "Colored Light (On/Off/Toggle/Level/Color)"],["switchLevel":"Dimmer (On/Off/Toggle/Level)"],["doorControl": "Door (Open/Close)"],["lock":"Lock (Lock/Unlock)"],
-            	["switch":"Switch (On/Off/Toggle)"],["colorTemperature":"Temperature (Kelvin) Light (On/Off/Toggle/Level/Temperature)"],["thermostat":"Thermostat (Mode/Off/Setpoint)"],["windowShade": "Window Shades (Open/Close)"]],required: false, multiple: false, submitOnChange:true
-    		if (groupType) input "groupDevice${groupType}", "capability.${groupType}", title: "Choose devices...", required: false, multiple: true, submitOnChange:true
-        	if (((groupType == "doorControl" && parent.pwNeeded) || (groupType=="lock" && parent.pwNeeded)) && settings."groupDevice${groupType}" ){
-        		input "usePW", "bool", title: "Require PIN For Actions", defaultValue: false
-        	}	
-        }
-        if (groupType == "thermostat"){
-        	section ("Thermostat group options"){
-                if (!tstatDefaultCool) input "tstatDefaultHeat", "bool", title: "Set Heating Setpoint By Default", defaultValue:false, submitOnChange:true
-            	if (!tstatDefaultHeat) input "tstatDefaultCool", "bool", title: "Set Cooling Setpoint By Default", defaultValue:false, submitOnChange:true
-            }
-        }
-        section("Custom acknowledgment"){
-             if (!noAck) input "voicePost", "text", title: "Acknowledgment Message", description: "Enter a short statement to play after macro runs", required: false, capitalization: "sentences"
-             input "noAck", "bool", title: "No Acknowledgment Message", defaultValue: false, submitOnChange: true
+        	def dType=[colorControl: "Colored Light",switchLevel:"Dimmer ",doorControl: "Door",lock:"Lock", switch:"Switch",colorTemperature:"Temperature (Kelvin) Light",thermostat:"Thermostat", windowShade: "Window Shades"][groupType]?:groupType
+            paragraph "Group Type: ${dType}\nDevices: ${settings."groupDevice${groupType}"}\nUse Password: ${usePW ? "Yes" : "No" }"	
+        	paragraph "Please note, Device Groups have been deprecated. Please use the new Rooms/Groups extension. When you are done copying the details of this macro, please delete it.", image: imgURL()+ "info.png"
         }
 	}
 }
@@ -1169,7 +1160,7 @@ def processFollowup(){
             }
             else if (state.cmdFollowup.return == "processRoom") {
             	devIcon="room"
-                outputTxt=processRoom(state.cmdFollowup.room, state.cmdFollowup.mNum, state.cmdFollowup.op, state.cmdFollowup.param, pw)
+                outputTxt=processRoom(state.cmdFollowup.room, state.cmdFollowup.mNum, state.cmdFollowup.op, state.cmdFollowup.param, pw,state.cmdFollowup.xParam)
             }
         }
     }
@@ -1495,17 +1486,18 @@ def processSchedule(schedule,cmd, cancel){
     return outputTxt
 }
 //Room Reply
-def processRoom(room, mNum, op, param, mPW){
+def processRoom(room, mNum, op, param, mPW,xParam){
     log.debug "Room/Group Name: " + room
     log.debug "Room/Group Number Command: " + mNum
     log.debug "Room/Group Command: " + op
     log.debug "Room/Group Parameter: " + param
     log.debug "Room/Group Password: " + mPW
+    log.debug "Room/Group xParam:" + xParam
     def rm = getRM().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == room}, outputTxt
     if (pwNeeded && ((op==~/open|close/ && rm.usePWDoor && doors) || (op==~/lock|unlock/ && rm.usePWLock && locks) && mPW !=password)){
     	def pwExtra = mPW==~/undefined|null/ ? "A" : "The proper"
         outputTxt = "${pwExtra} password is required to use the ${op} action in this group. %P%"
-    	state.cmdFollowup=[return: "processRoom", room:room, mNum:mNum, op:op, param:param, mPW:0]
+    	state.cmdFollowup=[return: "processRoom", room:room, mNum:mNum, op:op, param:param, mPW:0,xParam:xParam]
     }
     else {
     	outputTxt = rm.getOutput (mNum, op, param, mPW)
@@ -1522,7 +1514,7 @@ def processMacro() {
     def cmd = params.Cmd													//Group Command
     def param = params.Param												//Parameter
     def mPW = params.MPW													//Macro Password
-    def xParam = params.xParam												//WebCoRE parameters
+    def xParam = params.xParam												//Additional parameters
     String outputTxt = ""
     def count = 0, macCount=0, wrCount=0, vrCount=0, rmCount=0, sdCount=0, macAlias
     macCount = getAskAlexa().count {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
@@ -1582,7 +1574,7 @@ def processMacro() {
         else if (wrCount) sendJSON(processWeatherReport(mac),"weather")
         else if (vrCount) sendJSON(processVoiceReport(mac),"voice")
         else if (sdCount) sendJSON(processSchedule(mac,cmd,mNum),"schedule")
-        else if (rmCount) sendJSON(processRoom(mac,mNum,cmd,param, mPW),"room")
+        else if (rmCount) sendJSON(processRoom(mac,mNum,cmd,param, mPW,xParam),"room")
 	}        
 }
 def processMacroAction(mac, mNum, cmd, param, mPW, followup,xParam){
@@ -3602,7 +3594,7 @@ private vrReq()  { return 105 }
 private schReq()  { return 103 }
 private rmReq() { return 100 }
 private versionLong(){ return "2.3.1" }
-private versionDate(){ return "08/14/17" }
+private versionDate(){ return "08/21/17" }
 private textCopyright() {return "Copyright © 2017 Michael Struck" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
