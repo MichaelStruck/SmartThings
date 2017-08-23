@@ -56,9 +56,9 @@ def mainPage() {
             href "pageSensors", title: "Other Sensors", description: getDesc("sensor"), state: ( motion || contact || water ? "complete" : null), image: parent.imgURL() + "sensor.png"
 		}
         section("Custom acknowledgment (For device action only)"){
-             if (!noAck) input "voicePost", "text", title: "Acknowledgment Message", description: "Enter a short statement to play after action runs", required: false, capitalization: "sentences"
-             input "noAck", "bool", title: "No Acknowledgment Message", defaultValue: false, submitOnChange: true
-        }
+        	if (!noAck) input "voicePost", "text", title: "Acknowledgment Message", description: "Enter a short statement to play after action runs", required: false, capitalization: "sentences"
+        	input "noAck", "bool", title: "No Acknowledgment Message", defaultValue: false, submitOnChange: true
+		}
         section("Tap below to remove this room/group"){ }
 	}
 }
@@ -180,7 +180,7 @@ def updated() {
 }
 def initialize() { }
 //Main Handlers
-def getOutput(mNum, op, param, mPW){
+def getOutput(room, mNum, op, param, mPW, xParam){
 	String outputTxt = "", result = ""
     if (mNum == "0" && op==~/undefined|null/ && param ==~/undefined|null/) op="off"
     def num = mNum ==~/undefined|null|\?/ || !mNum  ? 0 : mNum as int
@@ -189,58 +189,63 @@ def getOutput(mNum, op, param, mPW){
         if (op=="low" && parent.dimmerLow) num = parent.dimmerLow else if (op=="low" && parent.dimmerLow=="") num =0 
         if (op=="medium" && parent.dimmerMed) num = parent.dimmerMed else if (op=="medium" && !parent.dimmerMed) num = 0 
         if (op=="high" && parent.dimmerHigh) num = parent.dimmerHigh else if (op=="high" && !parent.dimmerhigh) num = 0 
-        if (num==0) result = "You don't have a default value set up for the '${op}' level. I am not making any changes to '${app.label}'. %1%"
-        else if (num > 0 && param ==~/null|undefined/) result = levelSet(num)
-        else if (num > 0 && param !="undefined" && param != "null") result = colorSet(param, num)
+        if (num==0) result = "You don't have a default value set up for the '${op}' level. I am not making any changes to '${room}'. %1%"
+        else if (num > 0 && param ==~/null|undefined/) result = levelSet(room, num,xParam)
+        else if (num > 0 && param !="undefined" && param != "null") result = colorSet(room, param, num)
     }
     else if (op == "maximum") {
-    	if (param ==~/null|undefined/) result = levelSet(100)
-        else result = colorSet(param, 100)
+    	if (param ==~/null|undefined/) result = levelSet(room, 100,xParam)
+        else result = colorSet(room, param, 100)
     }
-    else if (op==~/on|off/ && num==0) result=onOff(op)
-    else if (op==~/open|close/) result = openClose(op, mPW)
-    else if (op==~/lock|unlock/) result = lockUnlock(op, mPW)
-    else if (op=="toggle") result = roomToggle()
-    else if (op==~/increase|raise|up|decrease|down|lower|brighten|dim/ && param==~/null|undefined/) result =increaseDecrease(op)
-    else if (op==~/undefined|status|null/ && num==0 && param ==~/null|undefined/) result = roomStatus()
-    else if (num && param ==~/null|undefined/) result = levelSet(num)
-    else if (param !="undefined" && param != "null") result = colorSet(param, num)
+    else if (op==~/on|off/ && num==0) result=onOff(room, op)
+    else if (op==~/open|close/) result = openClose(room, op, mPW, xParam)
+    else if (op==~/lock|unlock/) result = lockUnlock(room, op, mPW)
+    else if (op=="toggle") result = roomToggle(room)
+    else if (op==~/increase|raise|up|decrease|down|lower|brighten|dim/ && param==~/null|undefined/) result =increaseDecrease(room, op)
+    else if (op==~/undefined|status|null/ && num==0 && param ==~/null|undefined/) {
+    	op="status"
+        result = roomStatus(room)
+    }
+    else if (num && param ==~/null|undefined/) result = levelSet(room, num,xParam)
+    else if (param !="undefined" && param != "null") result = colorSet(room, param, num)
     else result="I did not understand what you wanted to do with the room, '${room}'. %1%"
-	outputTxt =voicePost && !noAck ? parent.replaceVoiceVar(voicePost,"","","Room/Group", app.label, 0, "") : noAck ? " " : result 
+	// replaceVoiceVar(msg, delay, filter, type, name, age, xParam)
+    if (op !="status") outputTxt = voicePost && !noAck ? parent.replaceVoiceVar(voicePost,"","","Room/Group", room, 0, xParam) : noAck ? " " : result 
+    else outputTxt = result
     if (outputTxt && !outputTxt.endsWith("%") && !outputTxt.endsWith(" ")) outputTxt += " "
     if (outputTxt && !outputTxt.endsWith("%")) outputTxt += "%4%"
     return outputTxt
 }
-def onOff(op){
+def onOff(room, op){
     String result = ""
     def deviceList = switches, count = 0
     if (deviceList){
         count=deviceList.size()
         deviceList."$op"() 
         def sss= count>1 ? "es" : ""
-    	result = "I am turning ${op} the switch${sss} in the group named: '${app.label}'. "    
+    	result = "I am turning ${op} the switch${sss} in the group named: '${room}'. "    
 		if (defaultDim && defaultDim != "0" && op=="on"){
         	def lvl = defaultDim as int
             deviceList = switches.findAll{it.getSupportedCommands().name.contains("setLevel")}
             if (deviceList) deviceList.each {it.setLevel(lvl)}
     	}
     }
-    else result = "You don't have any switches to turn ${op} in the group named: '${app.label}'. %1%"
+    else result = "You don't have any switches to turn ${op} in the group named: '${room}'. %1%"
     return result
 }
-def lockUnlock(op,mPW){
+def lockUnlock(room, op, mPW){
 	String result = ""
    	def deviceList = locks, count = 0
     if (deviceList){
     	count=deviceList.size()
         deviceList."$op"()
         def sss= count>1 ? "s" : ""
-        result = "I am ${op}ing the device${sss} in the group named: '${app.label}'. "
+        result = "I am ${op}ing the device${sss} in the group named: '${room}'. "
     }
-    else result = "You don't have any locks in the group named '${app.label}' to ${op}. %1%"
+    else result = "You don't have any locks in the group named '${room}' to ${op}. %1%"
 	return result
 }
-def openClose(op,mPW){
+def openClose(room, op, mPW, xParam){
     String result = ""
     def deviceList = doors && !shades ? doors : !doors && shades ? shades : doors && shades ? doors + shades : null, count = 0
     if (deviceList){
@@ -248,12 +253,12 @@ def openClose(op,mPW){
         count=deviceList.size()
         def sss= count>1 ? "s" : ""
         def verb = op=="close" ? "clos" : "open"
-        result = "I am ${verb}ing the device${sss} in the group named: '${app.label}'. "
+        result = "I am ${verb}ing the device${sss} in the group named: '${room}'. "
     }
-    else result = "You don't have any doors or window shades to ${op} in the group named: '${app.label}'. %1%"
+    else result = "You don't have any doors or window shades to ${op} in the group named: '${room}'. %1%"
 	return result
 }
-def roomToggle(){
+def roomToggle(room){
 	String result = ""
     def deviceList = switches
     if (deviceList){
@@ -262,23 +267,23 @@ def roomToggle(){
             it."$newstate"()
         }
         def sss=deviceList.size() >1 ? "s" : ""
-    	result = "I am toggling the on and off state${sss} of the device${sss} in the group named: '${app.label}'. "   
+    	result = "I am toggling the on and off state${sss} of the device${sss} in the group named: '${room}'. "   
 	}
-	else result = "You don't have any switches to turn toggle in the group named: '${app.label}'. %1%"
+	else result = "You don't have any switches to turn toggle in the group named: '${room}'. %1%"
     return result
 }
-def levelSet(num){
+def levelSet(room, num, xParam){
 	String result = ""
     def lvl = num as int, deviceList = switches.findAll{it.getSupportedCommands().name.contains("setLevel")}, count = deviceList.size() as int
     if (deviceList) {
     	deviceList.each {it.setLevel(lvl) }
   		def sss= count > 1 ? "s" : ""
-    	result = "I am setting the dimmable device${sss} to ${lvl}% in the group named: '${app.label}'. "
+    	result = "I am setting the dimmable device${sss} to ${lvl}% in the group named: '${room}'. "
     }
-    else result = "You don't have any dimmable devices in the group named: '${app.label}'. %1%"
+    else result = "You don't have any dimmable devices in the group named: '${room}'. %1%"
 	return result
 }
-def increaseDecrease(op){
+def increaseDecrease(room, op){
 	String result = ""
 	def defMove = parent.lightAmt as int ?: 0, deviceList = switches.findAll{it.getSupportedCommands().name.contains("setLevel")}, count = 0
     if (defMove){
@@ -291,17 +296,17 @@ def increaseDecrease(op){
                 if (newLvl > 0 && newLvl <100) count++
         	}
             def sss= count>1 ? "s" : ""
-            if (count && op==~/increase|raise|up|brighten/) result = "I am increasing the dimmable device${sss} in the group named: '${app.label}'. "
-            else if (count && op==~/decrease|down|lower|dim/) result = "I am decreasing the dimmable device${sss} in the group named: '${app.label}'. "
+            if (count && op==~/increase|raise|up|brighten/) result = "I am increasing the dimmable device${sss} in the group named: '${room}'. "
+            else if (count && op==~/decrease|down|lower|dim/) result = "I am decreasing the dimmable device${sss} in the group named: '${room}'. "
             else if (!count && op==~/increase|raise|up|brighten/) result = "All of the dimmable devices are already at maximum. %1%"
             else if (!count && op==~/decrease|down|lower|dim/) result = "All of the dimmable devices are already dimmed to off. %1%"
     	}
-		else result = "You don't have any dimmable devices in the group named: '${app.label}'. %1%"
+		else result = "You don't have any dimmable devices in the group named: '${room}'. %1%"
     }
     else result = "You do not have a default ${op} value set up in your smartapp. I did not take any action. %1%."
 	return result
 }	
-def colorSet(param, num){
+def colorSet(room, param, num){
 	String result = "", level=""
     def lvl = num as int, colorData, deviceList = switches, countDim = 0, countColor=0
     def getColorData = parent.STColors().find {it.name.toLowerCase()==param}, sWhite, wWhite, cWhite, dWhite, kelvin
@@ -328,22 +333,22 @@ def colorSet(param, num){
                 if (it.getSupportedCommands().name.contains("setColorTemperature") && param==~/soft white|warm white|cool white|daylight white/ && kLights) it.setColorTemperature(kelvin)
             }
             def ssD= countDim>1 ? "s" : "", ssC= countColor>1 ? "s" : ""
-            if (!lvl && countColor && !countDim) result = "I am setting the colored light${ssC} to ${param} in the group named: '${app.label}'. "
-            else if (lvl && countColor && countDim && countColor == countDim) result = "I am setting the colored light${ssC} to ${param} and a level of ${lvl}% in the group named: '${app.label}'. "
-            else if (lvl && countColor && countDim && countColor != countDim)  result ="I am setting the dimmable device${ssD} to ${lvl}% and the colored light${ssD} to ${param} in the group named: '${app.label}'. "
-            else if (lvl && !countColor && countDim)  result ="I am setting the dimmable devices to ${lvl}% in the group named: '${app.label}'. I did not find any colored lights in this group to set to ${param}. " 
-            else if (lvl && !countColor && !countDim)  result ="I didn't find any colored or dimmable lights in the group named: '${app.label}'.  %1%"
-            else if (!lvl  && !countColor && !countDim)  result ="I didn't find any colored lights in the group named: '${app.label}'.  %1%"
+            if (!lvl && countColor && !countDim) result = "I am setting the colored light${ssC} to ${param} in the group named: '${room}'. "
+            else if (lvl && countColor && countDim && countColor == countDim) result = "I am setting the colored light${ssC} to ${param} and a level of ${lvl}% in the group named: '${room}'. "
+            else if (lvl && countColor && countDim && countColor != countDim)  result ="I am setting the dimmable device${ssD} to ${lvl}% and the colored light${ssD} to ${param} in the group named: '${room}'. "
+            else if (lvl && !countColor && countDim)  result ="I am setting the dimmable devices to ${lvl}% in the group named: '${room}'. I did not find any colored lights in this group to set to ${param}. " 
+            else if (lvl && !countColor && !countDim)  result ="I didn't find any colored or dimmable lights in the group named: '${room}'.  %1%"
+            else if (!lvl  && !countColor && !countDim)  result ="I didn't find any colored lights in the group named: '${room}'.  %1%"
         }
         else result = "I did not understand the color you wanted me to set the lights to. %1%"
     }
-    else result = "You don't have any colored lights in the group named: '${app.label}'. %1%"
+    else result = "You don't have any colored lights in the group named: '${room}'. %1%"
     return result
 }
-def roomStatus(){
+def roomStatus(room){
 	String result = ""
     if (switchesRPT  || doorsRPT || locksRPT || shadesRPT || tstatsRPT || temp || humid || water || contact || motion) {
-		result = "The group named, '${app.label}', is reporting the following: "
+		result = "The group named, '${room}', is reporting the following: "
         if (switches && switchesRPT){
         	if (switchesRPTOn) switches.each { if (it.currentValue("switch")=="on") result += "The ${it.label} is on. " }	
             else {
@@ -399,7 +404,7 @@ def roomStatus(){
         if (contact) result +=contactReport()
         if (water) result +=waterReport()
     }
-    else result="There are no devices set up to report status. "
+    else result = "There are no devices set up to report status in the '${room}' group. %1%"
     return result 
 }
 //Common Code
