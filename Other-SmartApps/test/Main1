@@ -1,12 +1,12 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.3.1 - 8/22/17 Copyright © 2017 Michael Struck
+ *  Version 2.3.1 - 8/27/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.3.1 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
- *  Version 2.3.1 (8/22/17) Added new extention: Rooms/Groups, disabling of Device Groups, add voice to message queue
+ *  Version 2.3.1 (8/27/17) Added new extention: Rooms/Groups, disabling of Device Groups, add voice to message queue
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -510,7 +510,7 @@ def pageRooms() {
     dynamicPage(name: "pageRooms", install: false, uninstall: false) {
         section{ paragraph "Rooms/Groups", image: imgURL() + "room.png" }
         def children = getRM(), rmCount = children.size()
-        if (rmCount) section(rmCount==1 ? "One room/group configured" : macroCount + " rooms/groups configured" ){}
+        if (rmCount) section(rmCount==1 ? "One room/group configured" : rmCount + " rooms/groups configured" ){}
         def duplicates = children.label.findAll{children.label.count(it)>1}.unique()
         if (duplicates){
         	section { paragraph "You have two or more rooms/groups with the same name. Please ensure each room/group has a unique name and also does not conflict with device names or other extensions.", image: imgURL() + "caution.png" }
@@ -1488,7 +1488,7 @@ def processRoom(room, mNum, op, param, mPW,xParam){
     log.debug "Room/Group Command: " + op
     log.debug "Room/Group Parameter: " + param
     log.debug "Room/Group Password: " + mPW
-    log.debug "Room/Group xParam:" + xParam
+    log.debug "Room/Group xParam: " + xParam
     def rm = getRM().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == room}, outputTxt
     if (pwNeeded && ((op==~/open|close/ && rm.usePWDoor && doors) || (op==~/lock|unlock/ && rm.usePWLock && locks) && mPW !=password)){
     	def pwExtra = mPW==~/undefined|null/ ? "A" : "The proper"
@@ -1885,11 +1885,11 @@ def getReply(devices, type, STdeviceName, op, num, param){
                          num = newValues.newLevel
                     }
                     if (num>0) {
-                        if (tstatHighLimit) num = num <= tstatHighLimit ? num : tstatHighLimit 
-                        if (tstatLowLimit) num = num >= tstatLowLimit ? num : tstatLowLimit
+                        if (tstatHighLimit) num = num <= (tstatHighLimit as int) ? num : tstatHighLimit as int
+                        if (tstatLowLimit) num = num >= (tstatLowLimit as int) ? num : tstatLowLimit as int
                     }
-                    if (op =="maximum" && tstatHighLimit) num = tstatHighLimit
-                    if (op =="minimum" && tstatLowLimit) num = tstatLowLimit
+                    if (op =="maximum" && tstatHighLimit) num = tstatHighLimit as int
+                    if (op =="minimum" && tstatLowLimit) num = tstatLowLimit as int
                     def ecobeeCustomRegEx = MyEcobeeCMD && ecobeeCMD ? getEcobeeCustomRegEx(STdevice) : null
                     if ((param==~/heat|heating|cool|cooling|auto|automatic|eco|AC|comfort|home|away|sleep|resume program/ || (ecobeeCustomRegEx && param =~ /${ecobeeCustomRegEx}/)) && num == 0 && op==~/undefined|null/) op="on" 
                     if (op ==~/on|off/) {
@@ -1937,8 +1937,8 @@ def getReply(devices, type, STdeviceName, op, num, param){
                             result="I am setting the cooling setpoint of the ${STdeviceName} to ${num} degrees. "
                             STdevice.setCoolingSetpoint(num)
                         }
-                        if (param != "undefined" && param != "null" && tstatHighLimit && num >= tstatHighLimit) result += "This is the maximum temperature I can set for this device. %1%"
-                        if (param != "undefined" && param != "null" && tstatLowLimit && num <= tstatLowLimit) result += "This is the minimum temperature I can set for this device. %1%"
+                        if (param != "undefined" && param != "null" && tstatHighLimit && num >= (tstatHighLimit as int)) result += "This is the maximum temperature I can set for this device. %1%"
+                        if (param != "undefined" && param != "null" && tstatLowLimit && num <= (tstatLowLimit as int)) result += "This is the minimum temperature I can set for this device. %1%"
                     }
             	}
             }
@@ -3545,7 +3545,7 @@ private cheat(){
             if (aliases) result += " (Aliases: " + aliases +")"
             result += "<br>"
 		}
-    if (pwNeeded) {result += "<br>* Append '<i>password ${password}</i>' if a room/group devices are set up to use a password<br>" }    
+    if (pwNeeded) {result += "<br>* Append '<i>password ${password}</i>' if a room/group has locks/doors that are set up to use a password<br>" }    
 	} 
     if (getSCHD().size()) {
     	result += "<h2><u>Schedules (Valid Command: <b>on, off, list and status {schedule name}</b>)</u></h2>"
@@ -3589,7 +3589,7 @@ private vrReq()  { return 105 }
 private schReq()  { return 103 }
 private rmReq() { return 100 }
 private versionLong(){ return "2.3.1" }
-private versionDate(){ return "08/22/17" }
+private versionDate(){ return "08/27/17" }
 private textCopyright() {return "Copyright © 2017 Michael Struck" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
