@@ -2,9 +2,10 @@
  *  Ask Alexa Rooms/Groups
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.0 9/3/17
+ *  Version 1.0.1 9/17/17
  * 
- *  Version 1.0.0 (9/3/17) - Initial release
+ *  Version 1.0.0 (9/13/17) - Initial release
+ *  Version 1.0.1 (9/17/17) - Fixed text area variable issue
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -57,8 +58,8 @@ def mainPage() {
 		}
         if ((doors && shades) || (switches && tstats)){
        		section("Command options"){
-            	if (doors && shades) input "openCMD", "enum", title: "Open/Close Command Defaults", options: ["doors":"Open/Close Doors Only", "shades":"Open/Close Window Shades Only", "both":"Open/Close All Devices"], defaultValue: "doors", required: false 
-            	if (switches && tstats) input "setCMD", "enum", title: "Set Level Command Defaults", options: ["dimmers":"Set Dimmer/Colored Lights Levels Only", "tstats":"Set Thermostats Only"], required: false, defaultValue: "dimmers"
+            	if (doors && shades) input "openCMD", "enum", title: "Open/Close Command Defaults", options: ["doors":"Open/Close Doors Only", "shades":"Open/Close Window Shades Only", "both":"Open/Close All Devices (Doors and Window Shades)"], defaultValue: "doors", required: false, submitOnChange: true 
+            	if (switches && tstats) input "setCMD", "enum", title: "Set Level Command Defaults", options: ["dimmers":"Set Dimmer/Colored Lights Levels Only", "tstats":"Set Thermostats Only"], required: false, defaultValue: "dimmers", submitOnChange: true
             }
         }
         section("Custom acknowledgment (For device action only)"){
@@ -75,16 +76,17 @@ def pageSwitchRPT() {
         	input "switches", "capability.switch", title: "Lights/Switches/Dimmers", multiple: true, required: false, submitOnChange: true
     	}
         if (switches){
-            section ("Lighting Options"){
+            section ("Lighting options"){
             	if ((!setCMD || setCMD == "dimmers")){
 					input "defaultDim", "enum", title: "Default Dimmer Level When Turned 'On'", options:
                  	[0:"Set to previous level",10:"10",20:"20",30:"30",40:"40",50:"50",60:"60",70:"70",80:"80",90:"90",100:"100"], defaultValue: 0, required: false
-            	}
+            		input "defaultColor", "enum", title: "Default Color When Turned 'On'", options: parent.STColors().name, defaultValue: 0, required: false
+                }
                 input "kLights", "bool", title:"Utilize Kelvin Temperature Settings (For White Kelvin Bulbs)", defaultValue: false
                 input "excludeLight", "enum", title: "Exclude Lights From These Commands", options:["none":"No exclusion","on": "Exclude lights from \"ON\" command", "off":"Exclude lights from \"OFF\" command"], defaultValue: "none", required: false, submitOnChange: true
             	if (excludeLight !="none") input "switchesExclude", "enum", title: "Lights/Switches/Dimmers To Exclude From Command", options: switchList(), multiple: true, required: false
             }
-            section ("Status Reporting"){
+            section ("Status reporting"){
             	input "switchesRPT", "bool", title: "Include Switches In Status Report", defaultValue: false, submitOnChange: true
         		if (switchesRPT) input "switchesRPTOn", "bool", title: "Report Only Switches That Are On", defaultValue: false
             }
@@ -111,12 +113,12 @@ def pageDoorRPT() {
         	if (locks) input "locksRPT", "bool", title: "Include Locks In Status Report", defaultValue: false, submitOnChange: true
             if (locks && locksRPT) input "locksRPTOn", "bool", title: "Report Only Locks That Are Unlocked", defaultValue: false
     	}
-        if (setCMD == "shades" && doors && shades){
+        if (openCMD == "shades" && doors && shades){
 			section ("Please note"){
 				paragraph "You have your default open/close controls set to window shades only. You can not adjust control the doors in this room, but can get the status of these devices.", image: parent.imgURL()+"info.png"
 			}
 		}
-        if (setCMD == "both" && doors && shades){
+        if (openCMD == "both" && doors && shades){
 			section ("Please note"){
 				paragraph "You have your default open/close controls set to control both doors and window shades. Both sets of devices will open or close when you give these commands.", image: parent.imgURL()+"info.png"
 			}
@@ -131,12 +133,12 @@ def pageShadeRPT() {
         	if (shades) input "shadesRPT", "bool", title: "Include Window Shades In Status Report", defaultValue: false, submitOnChange: true
             if (shades && shadesRPT) input "shadesRPTOn", "bool", title: "Report Only Window Shades That Are Open", defaultValue: false
     	}
-        if ((setCMD == "doors" || !setCMD) && shades && doors){
+        if ((openCMD == "doors" || !setCMD) && shades && doors){
 			section ("Please note"){
 				paragraph "You have your default open/close controls set to doors only. You can not adjust control the window shades in this room, but can get the status of these devices.", image: parent.imgURL()+"info.png"
 			}
 		}
-        if (setCMD == "both" && doors && shades){
+        if (openCMD == "both" && doors && shades){
 			section ("Please note"){
 				paragraph "You have your default open/close controls set to control both doors and window shades. Both sets of devices will open or close when you give these commands.", image: parent.imgURL()+"info.png"
 			}
@@ -151,7 +153,7 @@ def pageTstatRPT() {
         }
         if (tstats){
         	if (setCMD == "tstats" || !switches){
-            	section("Default Thermostat Commands"){
+            	section("Default thermostat commands"){
                     if (!tstatCool) input "tstatHeat", "bool", title: "Set Heating Setpoint By Default", defaultValue:false, submitOnChange:true
                     if (!tstatHeat) input "tstatCool", "bool", title: "Set Cooling Setpoint By Default", defaultValue:false, submitOnChange:true
                 }
@@ -199,7 +201,7 @@ def pageSensors() {
             input "contact", "capability.contactSensor", title: "Open/Close Sensors", multiple: true, required: false, submitOnChange: true
             if (contact) input "openOnly", "bool",title: "Report Only Sensors That Read 'Open'", defaultValue: false
         }
-        section ("Water Sensors", hideWhenEmpty: true){
+        section ("Water sensors", hideWhenEmpty: true){
 			input "water", "capability.waterSensor", title: "Water Sensors", multiple: true, required: false, submitOnChange: true
             if (water) input "wetOnly", "bool", title: "Report Only Water Sensors That Are 'Wet'", defaultValue: false
         }
@@ -231,7 +233,8 @@ def getOutput(room, mNum, op, param, mPW, xParam){
     if (mNum == "0" && op==~/undefined|null/ && param ==~/undefined|null/) op="off"
     def num = mNum ==~/undefined|null|\?/ || !mNum  ? 0 : mNum as int
     num = num < 1 ? 0 : num >99 ? 100 : num
-    if (param ==~/heating|cooling|heat|cool/ && num > 0) result=setTemp(room, op, param, num)
+    if (param ==~/heating|cooling|heat|cool/ && num>0) result=setTemp(room, op, param, num)
+    else if (param ==~/heating|cooling|heat|cool/ && (num==0 || num==~/null|undefined/)) result="I did not hear a valid setpoint for the temperature setting in the group named ${room}. %1%"
     else if (op ==~/low|medium|high/){
         if (op=="low" && parent.dimmerLow) num = parent.dimmerLow else if (op=="low" && parent.dimmerLow=="") num =0 
         if (op=="medium" && parent.dimmerMed) num = parent.dimmerMed else if (op=="medium" && !parent.dimmerMed) num = 0 
@@ -242,7 +245,7 @@ def getOutput(room, mNum, op, param, mPW, xParam){
         else if (num > 0 && param !="undefined" && param != "null" && param != "heating" && param != "cooling" && param != "heat" && param != "cool" ) result = colorSet(room, param, num)
     }
     else if (op == "maximum") {
-    	if (param ==~/null|undefined/) result = levelSet(room, 100,xParam)
+    	if (param ==~/null|undefined/) result = levelSet(room, 100, xParam)
         else if (param ==~/heating|cooling|heat|cool/) result=setTemp(room, op, param, num)
         else result = colorSet(room, param, 100)
     }
@@ -255,10 +258,13 @@ def getOutput(room, mNum, op, param, mPW, xParam){
     	op="status"
         result = roomStatus(room)
     }
-    else if (num && param ==~/null|undefined/) result = levelSet(room, num,xParam)
+    else if (num && param ==~/null|undefined/ && switches && !tstats) result = levelSet(room, num, xParam)
+    else if (num && param ==~/null|undefined/ && !switches && tstats) result = setTemp(room, op, param, num)
+    else if (num && param ==~/null|undefined/ && switches && tstats && setCMD=="tstats") result = setTemp(room, op, param, num)
+    else if (num && param ==~/null|undefined/ && switches && tstats && setCMD=="dimmers") result = levelSet(room, num, xParam)
     else if (param !="undefined" && param != "null") result = colorSet(room, param, num)
     else result="I did not understand what you wanted to do with the room, '${room}'. %1%"
-    if (op !="status") outputTxt = voicePost && !noAck ? parent.replaceVoiceVar(voicePost,"","","Room/Group", room, 0, xParam) : noAck ? " " : result 
+    if (op !="status") outputTxt = voicePost && !noAck ? parent.replaceVoiceVar(voicePost,"","","Room", room, 0, xParam) : noAck ? " " : result 
     else outputTxt = result
     if (outputTxt && !outputTxt.endsWith("%") && !outputTxt.endsWith(" ")) outputTxt += " "
     if (outputTxt && !outputTxt.endsWith("%")) outputTxt += "%4%"
@@ -271,17 +277,31 @@ def onOff(room, op){
     if (deviceList){       
         deviceList.each {
             if (!(switchesExclude && switchesExclude.contains(it.label) && ((excludeLight =="on" && op=="on") || (excludeLight =="off" && op=="off")))){
-            	it."$op"()
+                it."$op"()
         		count ++
-        	}
+                if (defaultDim && defaultDim != "0" && op=="on" && it.getSupportedCommands().name.contains("setLevel")) it.setLevel(defaultDim as int)
+                if (defaultColor && op=="on"){
+                    if (defaultColor==~/Soft White|Warm White|Cool Chite|Daylight White/ && kLights && it.getSupportedCommands().name.contains("setColorTemperature")){
+            			def sWhite, wWhite, cWhite, dWhite, kelvin
+                        sWhite = parent.kSoftWhite ? parent.kSoftWhite as int : 2700
+            			wWhite= parent.kWarmWhite ? parent.kWarmWhite as int: 3500
+            			cWhite= parent.kCoolWhite ? parent.kCoolWhite as int: 4500
+            			dWhite= parent.kDayWhite ? parent.kDayWhite as int: 6500
+           				kelvin = defaultColor=="Soft White" ? sWhite : defaultColor=="Warm White" ? wWhite : defaultColor=="Cool White" ? cWhite : defaultColor=="Daylight White" ? dWhite : 9999
+        				it.setColorTemperature(kelvin)
+                    }
+                    else if (it.getSupportedCommands().name.contains("setColor") && !kLights){
+                        def getColorData = parent.STColors().find {it.name==defaultColor}
+                        if (getColorData){
+            				def hueColor = Math.round(getColorData.h / 3.6), satLevel = getColorData.s, colorData = [hue: hueColor as int, saturation: satLevel as int]
+                            it.setColor(colorData) 
+                    	}
+                    }
+                }
+            }
         }
         def sss= count>1 ? "es" : ""
     	result = "I am turning ${op} the switch${sss} in the group named: '${room}'. "    
-		if (defaultDim && defaultDim != "0" && op=="on"){
-        	def lvl = defaultDim as int
-            deviceList = switches.findAll{it.getSupportedCommands().name.contains("setLevel")}
-            if (deviceList) deviceList.each {it.setLevel(lvl)}
-    	}
     }
     else result = "You don't have any switches to turn ${op} in the group named: '${room}'. %1%"
     return result
@@ -301,18 +321,18 @@ def lockUnlock(room, op, mPW){
 def openClose(room, op, mPW, xParam){
     String result = ""
     def deviceList, noun = "doors or window shades"
-    if (openCMD=="both"){ 	
-    	if (doors && shades) { 
-        	deviceList=doors + shades
-        	noun = doors.size()>1 && shades.size()>1 ? "doors and window shades" :
-            	doors.size()==1 && shades.size()>1 ? "door and window shades" :
-                doors.size()>1 && shades.size()==1 ? "door and window shade" : "door and window shade"
-        }
-		else if (doors && !shades) { deviceList=doors; noun = doors.size()>1 ? "doors": "door" }
-        else if (!doors && shades) { deviceList=shades; noun = shades.size()>1 ? "window shades" : "window shades" }
+    if (shades && doors){
+        if (openCMD=="both"){ 	
+			deviceList=doors + shades
+			noun = doors.size()>1 && shades.size()>1 ? "doors and window shades" :
+				doors.size()==1 && shades.size()>1 ? "door and window shades" :
+				doors.size()>1 && shades.size()==1 ? "door and window shade" : "door and window shade"
+		}
+        else if ((openCMD=="doors" || !openCMD) && doors) { deviceList=doors ; noun = doors.size()>1 ? "doors": "door"	}
+        else if (openCMD=="shades" && shades) { deviceList=shades ; noun = shades.size()>1 ? "window shades": "window shade" }
     }
-    else if ((openCMD=="doors" || !openCmd) && doors) { deviceList=doors ; noun = doors.size()>1 ? "doors": "door"	}
-	else if (openCMD=="shades" && shades) { deviceList=shades ; noun = shades.size()>1 ? "window shades": "window shade"	}
+    else if (doors && !shades) { deviceList=doors; noun = doors.size()>1 ? "doors": "door" }
+	else if (!doors && shades) { deviceList=shades; noun = shades.size()>1 ? "window shades" : "window shades" }
     if (deviceList){
         deviceList."$op"()
         def verb = op=="close" ? "clos" : "open"
@@ -339,13 +359,18 @@ def setTemp(room, op, param, num){
 	String result = ""
 	if (parent.getTstatLimits().hi) num = num <= (parent.getTstatLimits().hi as int)? num : parent.getTstatLimits().hi as int
 	if (parent.getTstatLimits().lo) num = num >= (parent.getTstatLimits().lo as int) ? num : parent.getTstatLimits().lo as int
-    if (op =="maximum" && parent.getTstatLimits().hi) num = parent.getTstatLimits().hi  as int
+    if (op =="maximum" && parent.getTstatLimits().hi) num = parent.getTstatLimits().hi as int
     if (op =="minimum" && parent.getTstatLimits().lo) num = parent.getTstatLimits().lo as int
     def deviceList = tstats
     if (deviceList){
-        def sss=deviceList.size() >1 ? "s" : ""
-    	result = "I am setting the ${param} setpoint of the thermostat${sss} to ${num} degrees in the group named: '${room}'. " 
-	}
+    	if (param =~/heat|cool/){
+        	if (param =~/heat/)  deviceList?.setHeatingSetpoint(num) 
+        	if (param =~/cool/) deviceList?.setCoolingSetpoint(num) 
+        	def sss=deviceList.size() >1 ? "s" : ""
+    		result = "I am setting the ${param} setpoint of the thermostat${sss} to ${num} degrees in the group named: '${room}'. " 
+		}
+        else result="You must designate a 'heating' or 'cooling' directive when setting the temperature of a group. %1%"
+    }
     else result = "You don't have any thermostats to set in the group named: '${room}'. %1%"
     return result
 }
@@ -362,7 +387,8 @@ def levelSet(room, num, xParam){
 }
 def increaseDecrease(room, op){
 	String result = ""
-	def defMove = parent.lightAmt as int ?: 0, deviceList = switches.findAll{it.getSupportedCommands().name.contains("setLevel")}, count = 0
+	def defMove = parent.lightAmt as int ?: 0, count = 0, deviceList
+    if ((setCMD=="dimmers" || !setCMD)) deviceList = switches.findAll{it.getSupportedCommands().name.contains("setLevel")}
     if (defMove){
     	if (op==~/decrease|down|lower|dim/) defMove = -defMove
         if (deviceList){
@@ -378,7 +404,8 @@ def increaseDecrease(room, op){
             else if (!count && op==~/increase|raise|up|brighten/) result = "All of the dimmable devices are already at maximum. %1%"
             else if (!count && op==~/decrease|down|lower|dim/) result = "All of the dimmable devices are already dimmed to off. %1%"
     	}
-		else result = "You don't have any dimmable devices in the group named: '${room}'. %1%"
+		else if (!deviceList && (setCMD=="dimmers" || !setCMD)) result = "You don't have any dimmable devices in the group named: '${room}'. %1%"
+        else if (setCMD=="tstats") result = "Increase and decrease commands are not yet compatible with thermostats in the group named: '${room}'. %1%"
     }
     else result = "You do not have a default ${op} value set up in your smartapp. I did not take any action. %1%."
 	return result
@@ -633,6 +660,6 @@ def getDesc(type){
     return result
 }
 //Version/Copyright/Information/Help
-private versionInt(){ return 100 }
+private versionInt(){ return 101 }
 private def textAppName() { return "Ask Alexa Rooms/Groups" }	
-private def textVersion() { return "Rooms/Groups Version: 1.0.0 (09/03/2017)" }
+private def textVersion() { return "Rooms/Groups Version: 1.0.1 (09/17/2017)" }
