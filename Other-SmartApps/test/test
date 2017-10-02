@@ -483,7 +483,7 @@ def roomStatus(room){
                 else locks.each{ result += "The ${it.label} is ${it.currentValue("locks")}. " }
             }
         }
-		if (shades && shadesRPTOn){
+		if (shades && shadesRPT){
             if (shadesRPTOn) shades.each { if (it.currentValue("windowShade").toLowerCase()=="open") result += "The '${it.label}' is open. " }	
             else {
             	if (!shades?.currentValue("windowShade").contains("closed") && !shades?.currentValue("windowShade").contains("Closed")) result += "All of the window shades are open. "
