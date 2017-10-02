@@ -485,10 +485,18 @@ def roomStatus(room){
         }
 		if (shades && shadesRPT){
             if (shadesRPTOn) shades.each { if (it.currentValue("windowShade").toLowerCase()=="open") result += "The '${it.label}' is open. " }	
-            else {
-            	if (!shades?.currentValue("windowShade").contains("closed") && !shades?.currentValue("windowShade").contains("Closed")) result += "All of the window shades are open. "
-                else if (!shades?.currentValue("windowShade").contains("open") && !shades?.currentValue("windowShade").contains("Open")) result += "All of the window shades are closed. "
-                else shades.each{ result += "The ${it.label} is ${it.currentValue("windowShade").toLowerCase()}. " }
+            else {!shades?.currentValue("windowShade").contains("Partially")
+            	if (shades?.currentValue("windowShade").contains("Closed") || shades?.currentValue("windowShade").contains("Open") || shades?.currentValue("windowShade").contains("Partially")){
+                	if (!shades?.currentValue("windowShade").contains("Closed") && !shades?.currentValue("windowShade").contains("Partially")) result += "All of the window shades are open. "
+                	else if (!shades?.currentValue("windowShade").contains("Open") && !shades?.currentValue("windowShade").contains("Partially")) result += "All of the window shades are closed. "
+                    else if (shades?.currentValue("windowShade").contains("Partially") && !shades?.currentValue("windowShade").contains("Closed") && !shades?.currentValue("windowShade").contains("Open") ) result += "All of the window shades are partially open. "
+                	else shades.each{ result += "The ${it.label} is ${it.currentValue("windowShade").toLowerCase()}. " }
+                }
+                else {
+            		if (!shades?.currentValue("windowShade").contains("closed")) result += "All of the window shades are open. "
+                	else if (!shades?.currentValue("windowShade").contains("open")) result += "All of the window shades are closed. "
+                	else shades.each{ result += "The ${it.label} is ${it.currentValue("windowShade").toLowerCase()}. " }
+            	}
             }
         }
 		if (tstats && tstatsRPT) {
