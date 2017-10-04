@@ -488,7 +488,7 @@ def roomStatus(room){
             log.debug "1 ${shades?.currentValue("windowShade")}"
             log.debug "2 Open ${shades?.currentValue("windowShade").contains("Open")}"
             log.debug "3 Closed ${shades?.currentValue("windowShade").contains("Closed")}"
-            log.debug "3 Partial ${shades?.currentValue("windowShade").contains("Partially Open")}"
+            log.debug "3 Partial ${shades?.currentValue("windowShade").contains("Partially open")}"
             log.debug "4 open ${shades?.currentValue("windowShade").contains("open")}"
             log.debug "5 closed ${shades?.currentValue("windowShade").contains("closed")}"
             log.debug "---------------------------------------------------"
@@ -497,7 +497,7 @@ def roomStatus(room){
             	if (shades?.currentValue("windowShade").contains("Closed") || shades?.currentValue("windowShade").contains("Open") || shades?.currentValue("windowShade").contains("Partially open")){
                 	if (!shades?.currentValue("windowShade").contains("Closed") && !shades?.currentValue("windowShade").contains("Partially")) result += "All of the window shades are open. "
                 	else if (!shades?.currentValue("windowShade").contains("Open") && !shades?.currentValue("windowShade").contains("Partially")) result += "All of the window shades are closed. "
-                    else if (shades?.currentValue("windowShade").contains("Partially Open") && !shades?.currentValue("windowShade").contains("Closed") && !shades?.currentValue("windowShade").contains("Open") ) result += "All of the window shades are partially open. "
+                    else if (shades?.currentValue("windowShade").contains("Partially open") && !shades?.currentValue("windowShade").contains("Closed") && !shades?.currentValue("windowShade").contains("Open") ) result += "All of the window shades are partially open. "
                 	else shades.each{ result += "The ${it.label} is ${it.currentValue("windowShade").toLowerCase()}. " }
                 }
                 else {
