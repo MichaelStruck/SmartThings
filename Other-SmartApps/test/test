@@ -460,7 +460,7 @@ def roomStatus(room){
     if ((switches && switchesRPT)  || (doors && doorsRPT ) || (locks && locksRPT) || (shades && shadesRPT) || (tstats && tstatsRPT) || temp || humid || water || contact || motion) {
         result = "The group named, '${room}', is reporting the following: "
         if (switches && switchesRPT){
-        	if (switchesRPTOn) switches.each { if (it.currentValue("switch")=="on") result += "The ${it.label} is on. " }	
+            if (switchesRPTOn) switches.each { if (it.currentValue("switch")=="on") result += "The ${it.label} is on. " }	
             else {
             	if (!switches?.currentValue("switch").contains("off")) result += "All of the switches are on. "
                 else if (!switches?.currentValue("switch").contains("on")) result += "All of the switches are off. "
@@ -484,6 +484,14 @@ def roomStatus(room){
             }
         }
 		if (shades && shadesRPT){
+            log.debug "Send the above information to Michael--------------"
+            log.debug "1 ${shades?.currentValue("windowShade")}"
+            log.debug "2 Open ${shades?.currentValue("windowShade").contains("Open")}"
+            log.debug "3 Closed ${shades?.currentValue("windowShade").contains("Closed")}"
+            log.debug "4 Partial ${shades?.currentValue("windowShade").contains("Partially")}"
+            log.debug "5 open ${shades?.currentValue("windowShade").contains("open")}"
+            log.debug "6 closed ${shades?.currentValue("windowShade").contains("closed")}"
+            log.debug "---------------------------------------------------"
             if (shadesRPTOn) shades.each { if (it.currentValue("windowShade").toLowerCase()=="open") result += "The '${it.label}' is open. " }	
             else {!shades?.currentValue("windowShade").contains("Partially")
             	if (shades?.currentValue("windowShade").contains("Closed") || shades?.currentValue("windowShade").contains("Open") || shades?.currentValue("windowShade").contains("Partially")){
