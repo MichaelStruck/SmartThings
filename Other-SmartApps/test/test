@@ -488,16 +488,16 @@ def roomStatus(room){
             log.debug "1 ${shades?.currentValue("windowShade")}"
             log.debug "2 Open ${shades?.currentValue("windowShade").contains("Open")}"
             log.debug "3 Closed ${shades?.currentValue("windowShade").contains("Closed")}"
-            log.debug "4 Partial ${shades?.currentValue("windowShade").contains("Partially")}"
-            log.debug "5 open ${shades?.currentValue("windowShade").contains("open")}"
-            log.debug "6 closed ${shades?.currentValue("windowShade").contains("closed")}"
+            log.debug "3 Partial ${shades?.currentValue("windowShade").contains("Partially Open")}"
+            log.debug "4 open ${shades?.currentValue("windowShade").contains("open")}"
+            log.debug "5 closed ${shades?.currentValue("windowShade").contains("closed")}"
             log.debug "---------------------------------------------------"
             if (shadesRPTOn) shades.each { if (it.currentValue("windowShade").toLowerCase()=="open") result += "The '${it.label}' is open. " }	
-            else {!shades?.currentValue("windowShade").contains("Partially")
-            	if (shades?.currentValue("windowShade").contains("Closed") || shades?.currentValue("windowShade").contains("Open") || shades?.currentValue("windowShade").contains("Partially")){
+            else {
+            	if (shades?.currentValue("windowShade").contains("Closed") || shades?.currentValue("windowShade").contains("Open") || shades?.currentValue("windowShade").contains("Partially open")){
                 	if (!shades?.currentValue("windowShade").contains("Closed") && !shades?.currentValue("windowShade").contains("Partially")) result += "All of the window shades are open. "
                 	else if (!shades?.currentValue("windowShade").contains("Open") && !shades?.currentValue("windowShade").contains("Partially")) result += "All of the window shades are closed. "
-                    else if (shades?.currentValue("windowShade").contains("Partially") && !shades?.currentValue("windowShade").contains("Closed") && !shades?.currentValue("windowShade").contains("Open") ) result += "All of the window shades are partially open. "
+                    else if (shades?.currentValue("windowShade").contains("Partially Open") && !shades?.currentValue("windowShade").contains("Closed") && !shades?.currentValue("windowShade").contains("Open") ) result += "All of the window shades are partially open. "
                 	else shades.each{ result += "The ${it.label} is ${it.currentValue("windowShade").toLowerCase()}. " }
                 }
                 else {
