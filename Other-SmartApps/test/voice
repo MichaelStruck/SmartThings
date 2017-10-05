@@ -59,7 +59,7 @@ def mainPage() {
         section ("Voice report items") {
             input "voicePre", "text", title: "Pre Message Before Device Report", description: "Use variables like %time%, %day%, %date% here.", required: false, capitalization: "sentences"
             href "pageSwitchReport", title: "Switch/Dimmer Report", description: getDesc("switch"), state: (voiceSwitch || voiceDimmer ? "complete" : null), image: parent.imgURL() + "power.png"
-            href "pageDoorReport", title: "Door/Window/Lock Report", description: getDesc("door"), state: (voiceDoorSensors || voiceDoorControls || voiceDoorLocks || voiceWindowShades ? "complete": null), image: parent.imgURL() + "lock.png"
+            href "pageDoorReport", title: "Door/Window/Shade/Lock Report", description: getDesc("door"), state: (voiceDoorSensors || voiceDoorControls || voiceDoorLocks || voiceWindowShades ? "complete": null), image: parent.imgURL() + "lock.png"
             href "pageEnviroReport", title: "Environmental Report", description: getDesc("temp"), state:(voiceTemperature || voiceTempSettings || voiceHumidity || voiceUV || voiceLux? "complete" : null),image: parent.imgURL() + "temp.png"
             href "pageAirReport", title: "Foobot Air Quality Report", description: getDesc("pollution"), state:(fooBot ? "complete" : null), image: parent.imgURL() + "pollution.png"
             href "pageSpeakerReport", title: "Speaker Report", description: getDesc("speaker"), state: (voiceSpeaker ? "complete": null), image: parent.imgURL() + "speaker.png"
@@ -623,10 +623,12 @@ def shadeReport(){
             if (!voiceWindowShades?.currentValue("windowShade").contains("Closed") && !voiceWindowShades?.currentValue("windowShade").contains("Partially open")) result += "All of the window shades are open. "
             else if (!voiceWindowShades?.currentValue("windowShade").contains("Open") && !voiceWindowShades?.currentValue("windowShade").contains("Partially open")) result += "All of the window shades are closed. "
             else if (voiceWindowShades?.currentValue("windowShade").contains("Partially open") && !voiceWindowShades?.currentValue("windowShade").contains("Closed") && !voiceWindowShades?.currentValue("windowShade").contains("Open") ) result += "All of the window shades are partially open. "
-		}
+			else voiceWindowShades.each{ result += "The ${it.label} is ${it.currentValue("windowShade").toLowerCase()}. " }
+        }
         else {
         	if (!voiceWindowShades?.currentValue("windowShade").contains("closed")) result += "All of the window shades are open. "
 			else if (!voiceWindowShades?.currentValue("windowShade").contains("open")) result += "All of the window shades are closed. "
+            else voiceWindowShades.each{ result += "The ${it.label} is ${it.currentValue("windowShade").toLowerCase()}. " }
 		}
 	}
 	else {    
@@ -863,6 +865,6 @@ def getDesc(type){
     return result
 }
 //Version/Copyright/Information/Help
-private versionInt(){ return 106}
+private versionInt(){ return 107}
 private def textAppName() { return "Ask Alexa Voice Report" }	
 private def textVersion() { return "Voice Report Version: 1.0.7 (10/05/2017)" }
