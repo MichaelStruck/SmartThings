@@ -1,13 +1,14 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.3.2 - 9/20/17 Copyright © 2017 Michael Struck
+ *  Version 2.3.3 - 10/3/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.3.1 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *  Version 2.3.1 (9/13/17) Added new extention: Rooms/Groups, disabling of Device Groups, add voice to message queue
- *  Version 2.3.2 (9/20/17) Removed device group macro code, added UV index to Environmentals
+ *  Version 2.3.2 (9/22/17) Removed device group macro code, added UV index to Environmentals
+ *  Version 2.3.3 (10/3/17) 
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -2895,6 +2896,7 @@ def getExtList(){
     getWR().each {extList +=["${it.id}":"${it.label}"]}
     getVR().each {extList +=["${it.id}":"${it.label}"]}
     getSCHD().each {extList +=["${it.id}":"${it.label}"]}
+    getRM().each {extList +=["${it.id}":"${it.label}"]}
     getAskAlexa().each {if (it.macroType !='CoRE') extList +=["${it.id}":"${it.label}"]}
     return extList
 }
@@ -3390,11 +3392,11 @@ private versionInt(){ return 232 }
 private LambdaReq() { return 129 }
 private mqReq() { return 106 }
 private wrReq()  { return 105 }
-private vrReq()  { return 106 }
+private vrReq()  { return 107 }
 private schReq()  { return 103 }
 private rmReq() { return 101 }
-private versionLong(){ return "2.3.2" }
-private versionDate(){ return "09/20/17" }
+private versionLong(){ return "2.3.3" }
+private versionDate(){ return "10/03/17" }
 private textCopyright() {return "Copyright © 2017 Michael Struck" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
