@@ -2,7 +2,7 @@
  *  Ask Alexa Voice Report Extension
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.7 10/5/17
+ *  Version 1.0.7 10/13/17
  * 
  *  Version 1.0.0 - Initial release
  *  Version 1.0.1 - Updated icon, added restricitions 
@@ -11,7 +11,7 @@
  *  Version 1.0.4 - (7/11/17) - Added code for additional text field variables, allow suppression of continuation messages.
  *  Version 1.0.5 - (8/3/17) - Added support for Foobot Air Quality Monitor, permanently enabled voice filters
  *  Version 1.0.6a - (9/21/17) - Added UV index reporting
- *  Version 1.0.7 - (10/5/17) - Added LUX and window shade reporting
+ *  Version 1.0.7 - (10/13/17) - Added LUX and window shade reporting along with support for custom Aeon power meter DTH
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -202,7 +202,7 @@ def pageOtherSensors(){
             if (voiceMotion) input "voiceMotionEvt", "bool",title: "Report Time Of The Last Movement", defaultValue: false 
         }
         section("Power meters", hideWhenEmpty: true){
-       		input "voicePower", "capability.powerMeter", title: "Power Meters To Report Energy Use...", multiple: true, required: false
+       		input "voicePower", "capability.powerMeter", title: "Power Meters To Report Energy Use...", multiple: true, required: false, submitOnChange: true
             if (voicePower) {
             	input "voicePowerOn", "bool", title: "Report Only Meters Drawing Power", defaultValue: false
              	input "voiceAeon", "bool", title: "Speak kWh Usage And Cost (Custom Aeon DTH)", defaultValue: false
@@ -874,4 +874,4 @@ def getDesc(type){
 //Version/Copyright/Information/Help
 private versionInt(){ return 107}
 private def textAppName() { return "Ask Alexa Voice Report" }	
-private def textVersion() { return "Voice Report Version: 1.0.7 (10/05/2017)" }
+private def textVersion() { return "Voice Report Version: 1.0.7 (10/13/2017)" }
