@@ -2230,7 +2230,7 @@ def controlHandler(){
     def data = [args: "I am activating the Control Macro: '${app.label}'."]
     sendLocationEvent(name: "askAlexa", value: app.id, data: data, displayed: true, isStateChange: true, descriptionText: "Ask Alexa activated '${app.label}' macro.")	
     if (ctlMsgQue){    
-        def expireMin=cltMQExpire ? cltMQExpire as int : 0, expireSec=expireMin*60
+        def expireMin=ctlMQExpire ? ctlMQExpire as int : 0, expireSec=expireMin*60
         def overWrite =!ctlMQNotify && !ctlMQExpire && ctlMQOverwrite
         def msgTxt = ttsMsg?: "Ask Alexa activated Control Macro: '${app.label}'."
         sendLocationEvent(
