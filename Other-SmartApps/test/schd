@@ -863,7 +863,7 @@ def mqDesc(){
     if (schMsgQue){
     	result = "Send to: ${translateMQid(schMsgQue)}"
         result += schMQNotify ? "\nNotification Mode Only" : ""
-        result += schMQExpire ? "\nExpires in ${schMQExpire} seconds" : ""
+        result += schMQExpire ? "\nExpires in ${schMQExpire} minutes" : ""
         result += schMQOverwrite ? "\nOverwrite all previous schedule messages" : ""
         result += schSuppressTDRemind ? "\nSuppress Time and Date from Alexa Playback" : ""
 	}
