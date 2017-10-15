@@ -2,7 +2,7 @@
  *  Ask Alexa Voice Report Extension
  *
  *  Copyright © 2017 Michael Struck
- *  Version 1.0.7 10/14/17
+ *  Version 1.0.7 10/15/17
  * 
  *  Version 1.0.0 - Initial release
  *  Version 1.0.1 - Updated icon, added restricitions 
@@ -11,7 +11,7 @@
  *  Version 1.0.4 - (7/11/17) - Added code for additional text field variables, allow suppression of continuation messages.
  *  Version 1.0.5 - (8/3/17) - Added support for Foobot Air Quality Monitor, permanently enabled voice filters
  *  Version 1.0.6a - (9/21/17) - Added UV index reporting
- *  Version 1.0.7 - (10/14/17) - Added LUX and window shade reporting along with support for custom Aeon power meter DTH
+ *  Version 1.0.7 - (10/15/17) - Added LUX and window shade reporting along with support for custom Aeon power meter DTH
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -386,7 +386,7 @@ def mqDesc(){
     if (vrMsgQue){
     	result = "Send to: ${translateMQid(vrMsgQue)}"
         result += vrMQNotify ? "\nNotification Mode Only" : ""
-        result += vrMQExpire ? "\nExpires in ${vrMQExpire} seconds" : ""
+        result += vrMQExpire ? "\nExpires in ${vrMQExpire} minutes" : ""
         result += vrMQOverwrite ? "\nOverwrite all previous voice report messages" : ""
         result += vrSuppressTDRemind ? "\nSuppress Time and Date from Alexa Playback" : ""
 	}
@@ -602,7 +602,7 @@ def powerReport(){
         else result += "The ${deviceName} is reading " + currVal  + " watts. "
 		if (voiceAeon){
         	def currKWH = deviceName.currentValue("currentKWH"), currPCost=deviceName.currentValue("kwhCosts")
-            if (currKWH && currPCost) result += "In addition, this device is reading the current power usage is ${currKWH} at a cost of \$" + currPCost +". "
+            if (currKWH && currPCost) result += "In addition, this device is reading the current power usage is ${currKWH} at a cost of " + currPCost +". "
     	}
     }
     return result 
@@ -874,4 +874,4 @@ def getDesc(type){
 //Version/Copyright/Information/Help
 private versionInt(){ return 107}
 private def textAppName() { return "Ask Alexa Voice Report" }	
-private def textVersion() { return "Voice Report Version: 1.0.7 (10/14/2017)" }
+private def textVersion() { return "Voice Report Version: 1.0.7 (10/15/2017)" }
