@@ -3,6 +3,51 @@
     {
       "slots": [
         {
+          "name": "DeviceA",
+          "type": "LIST_OF_DEVICES"
+        },
+        {
+          "name": "DeviceB",
+          "type": "LIST_OF_DEVICES"
+        },
+        {
+          "name": "ExtA",
+          "type": "LIST_OF_MACROS"
+        },
+        {
+          "name": "ExtB",
+          "type": "LIST_OF_MACROS"
+        },
+        {
+          "name": "OperatorA",
+          "type": "LIST_OF_OPERATORS"
+        },
+        {
+          "name": "OperatorB",
+          "type": "LIST_OF_OPERATORS"
+        },
+        {
+          "name": "NumA",
+          "type": "AMAZON.NUMBER"
+        },
+        {
+          "name": "NumB",
+          "type": "AMAZON.NUMBER"
+        },
+        {
+          "name": "ParamA",
+          "type": "LIST_OF_PARAMS"
+        },
+        {
+          "name": "ParamB",
+          "type": "LIST_OF_PARAMS"
+        }
+      ],
+      "intent": "ObjectOperation"
+    },
+    {
+      "slots": [
+        {
           "name": "Operator",
           "type": "LIST_OF_OPERATORS"
         },
