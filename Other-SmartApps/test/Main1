@@ -1,14 +1,14 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.3.3 - 10/3/17 Copyright © 2017 Michael Struck
+ *  Version 2.3.3 - 10/21/17 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.3.1 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *  Version 2.3.1 (9/13/17) Added new extention: Rooms/Groups, disabling of Device Groups, add voice to message queue
  *  Version 2.3.2 (9/22/17) Removed device group macro code, added UV index to Environmentals
- *  Version 2.3.3 (10/3/17) 
+ *  Version 2.3.3 (10/21/17) Extension version update. Begin adding code for compound commands. Removed music player (now redundent with Sonos Skill)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -43,9 +43,9 @@ preferences {
         page name:"pageSwitches"
         page name:"pageDoors"
         page name:"pageEnviro"
-        page name:"pageSpeakers"
-        	page name: "pageMemorySlots"
-            	page name: "pageSONOSReset"
+        //page name:"pageSpeakers"
+        	//page name: "pageMemorySlots"
+            	//page name: "pageSONOSReset"
         page name:"pageSensors"
         page name:"pageHomeControl"
         page name:"pageAliasMain"
@@ -99,7 +99,7 @@ def mainPageParent() {
             href "pageSwitches", title: "Lighting/Switches", description:getDesc(switchesSel() || dimmersSel() || cLightsSel() || cLightsKSel()), state: switchesSel() || dimmersSel() || cLightsSel() || cLightsKSel() ? "complete" : null, image:imgURL() + "power.png"
             href "pageDoors", title: "Doors/Windows/Locks", description: getDesc(doorsSel() || locksSel() || ocSensorsSel() || shadesSel()), state: doorsSel() || locksSel() || ocSensorsSel() || shadesSel() ? "complete" : null, image: imgURL() + "lock.png"
             href "pageEnviro", title: "Environmentals", description:getDesc(tstatsSel() || tempsSel() || humidSel() || fooBotSel() || uvSel()), state: tstatsSel() || tempsSel() || humidSel() || fooBotSel() || uvSel()? "complete" : null, image: imgURL() + "temp.png"
-            href "pageSpeakers", title: "Connected Speakers", description: getDesc(speakersSel()), state: speakersSel() ? "complete" : null, image:imgURL() + "speaker.png"     
+            //href "pageSpeakers", title: "Connected Speakers", description: getDesc(speakersSel()), state: speakersSel() ? "complete" : null, image:imgURL() + "speaker.png"     
             href "pageSensors", title: "Other Sensors", description:getDesc(waterSel() || presenceSel() || motionSel() || accelerationSel()), state: waterSel() || presenceSel() || motionSel() || accelerationSel() ? "complete" : null, image: imgURL() + "sensor.png"
             href "pageHomeControl", title: "Modes/SHM/Routines", description:getDesc(listModes || listRoutines || listSHM), state: (listModes|| listRoutines|| listSHM ? "complete" : null), image: imgURL() + "modes.png"
             if (deviceAlias && mapDevices(true)) href "pageAliasMain", title: "Device Aliases", description:getDesc(state.aliasList), state: (state.aliasList ?"complete":null), image: imgURL() + "alias.png"     
@@ -313,6 +313,7 @@ def pageEnviro(){
     	}
 	}
 }
+/*
 def pageSpeakers(){
     dynamicPage(name: "pageSpeakers",  install: false, uninstall: false) {
         section {paragraph "Connected Speakers", image: imgURL() + "speaker.png"}
@@ -343,6 +344,7 @@ def pageMemorySlots(){
         }
     }
 }
+*/
 def pageSensors(){
     dynamicPage(name: "pageSensors",  install: false, uninstall: false) {
         section {paragraph "Other Sensors", image: imgURL() + "sensor.png"}
@@ -427,8 +429,10 @@ def pageAliasAddFinal(){
         if (state.aliasList.find {it.aliasName.toLowerCase()==aliasName.toLowerCase()} || getDeviceList().find{it.name==aliasName.toLowerCase()})result ="The alias name, '${aliasName}', is already in use. Please choose another name unqiue to the Ask Alexa application."
 		else if (!aliasName || !aliasType || !aliasDevice) result="You did not enter all of the proper alias parameters. Go back and ensure all fields are filled in."
 		else {
+        	//def devType = [Switch:"switch", Dimmer:"level", "Colored Light":"color", "Temperature (Kelvin) Light": "kTemp", "Door Control":"door", "Window Shade":"shade", "Open/Close Sensor":"contact", "Temperature Sensor":"temperature", Lock:"lock",
+            //	Thermostat:"thermostat", "Humidity Sensor":"humidity", Speaker:"music", "Acceleration Sensor":"acceleration", "Water Sensor":"water", "Motion Sensor":"motion", "Presence Sensor":"presence", "Foobot Air Quality Monitor":"pollution", "UV Index Device":"uvIndex"][aliasType]?:aliasType
 			def devType = [Switch:"switch", Dimmer:"level", "Colored Light":"color", "Temperature (Kelvin) Light": "kTemp", "Door Control":"door", "Window Shade":"shade", "Open/Close Sensor":"contact", "Temperature Sensor":"temperature", Lock:"lock",
-            	Thermostat:"thermostat", "Humidity Sensor":"humidity", Speaker:"music", "Acceleration Sensor":"acceleration", "Water Sensor":"water", "Motion Sensor":"motion", "Presence Sensor":"presence", "Foobot Air Quality Monitor":"pollution", "UV Index Device":"uvIndex"][aliasType]?:aliasType
+            	Thermostat:"thermostat", "Humidity Sensor":"humidity", "Acceleration Sensor":"acceleration", "Water Sensor":"water", "Motion Sensor":"motion", "Presence Sensor":"presence", "Foobot Air Quality Monitor":"pollution", "UV Index Device":"uvIndex"][aliasType]?:aliasType
 			result = "Alias Name: ${aliasName}\nAlias Device Type: ${devType}\nDevice: ${aliasDevice}"
             state.aliasList<<["aliasName":aliasName,"aliasType":devType,"aliasDevice":"${aliasDevice}", "aliasTypeFull": aliasType, "aliasNameLC":aliasName.toLowerCase()]
 			success = true
@@ -553,9 +557,10 @@ def pageSettings(){
             href "pageContCommands", title: "Personalization", description: "Tap to personalize your overall voice experience", image: imgURL() + "personality.png"
         }
         section ("Other values / variables"){
-        	href "pageDefaultValue", title: "Default Command Values (Dimmers, Volume, etc.)", description: "", state: "complete"
-            if (speakersSel() || tstatsSel()) href "pageLimitValue", title: "Device Minimum/Maximum Values", description: "", state: "complete"
-        	if (!state.accessToken) OAuthToken()
+        	href "pageDefaultValue", title: "Default Lighting Command Values", description: "", state: "complete"
+            //if (speakersSel() || tstatsSel()) href "pageLimitValue", title: "Device Minimum/Maximum Values", description: "", state: "complete"-Removed speaker item below
+        	if (tstatsSel()) href "pageLimitValue", title: "Device Minimum/Maximum Values", description: "", state: "complete"
+            if (!state.accessToken) OAuthToken()
             if (!state.accessToken) paragraph "**You must enable OAuth via the IDE to setup this app**"
             else href url:"${getApiServerUrl()}/api/smartapps/installations/${app.id}/setup?access_token=${state.accessToken}", style:"embedded", required:false, title:"Setup Variables", description: "For Amazon developer sites", image: imgURL() + "amazon.png"
         	href "pageGlobalVariables", title: "Text Field Variables", description: none, state: getGlobeVarState() ? "complete" : null
@@ -674,7 +679,7 @@ def pageDefaultValue(){
 		section("Increase / Brighten / Decrease / Dim values\n(When no values are requested)"){
 			input "lightAmt", "number", title: "Dimmer/Colored Lights", range:"1..100", defaultValue: 20, required: false
 			input "tstatAmt", "number", title: "Thermostat Temperature", range:"1..100",defaultValue: 5, required: false
-			input "speakerAmt", "number", title: "Speaker Volume", range:"1..100",defaultValue: 5, required: false
+			//input "speakerAmt", "number", title: "Speaker Volume", range:"1..100",defaultValue: 5, required: false
 		}
        	section("Low / Medium / High values (For dimmers or colored lights)") {
 			input "dimmerLow", "number", title: "\"Low\" Value",range:"1..100", defaultValue: 10, required: false
@@ -728,15 +733,17 @@ page(name: "timeIntervalInputWhisper", title: "Whisper Only During These Times..
 		input "timeEndWhisper", "time", title: "Ending", required: false
 	}
 }
+/*
 def pageSONOSReset(){
     dynamicPage(name: "pageSONOSReset",title: "Song Database Reset", uninstall: false){
 		state.songLoc = []
     	section{ paragraph "The SONOS song database has been reset. Go into the memory slots, choose the songs you wish to play in each slot, then properly exit the SmartApp. This will rebuild the database." }
 	}
 }
+*/
 def pageLimitValue(){
     dynamicPage(name: "pageLimitValue", uninstall: false){
-        if (speakersSel()){ section("Speaker volume limits"){ input "speakerHighLimit", "number", title: "Speaker Maximum Volume", range:"0..100", defaultValue:20, required: false } }
+        //if (speakersSel()){ section("Speaker volume limits"){ input "speakerHighLimit", "number", title: "Speaker Maximum Volume", range:"0..100", defaultValue:20, required: false } }
         if (tstatsSel()){
         	section("Thermostat setpoint limits"){
             	input "tstatLowLimit", "number", title: "Thermostat Minimum Value", range:"0..100", defaultValue: 55, required: false
@@ -804,7 +811,7 @@ def pageCustomColor(){
             input "customSat", "number", title: "Custom Color Saturation",range:"0..100", required: false
         }
         section("Notes about custom colors") {
-        	paragraph "Remember to update your Amazon Developer Slots to ensure this custom name is available to use."
+        	paragraph "Remember to update your Amazon Developer Slots to ensure this custom name is available to use.", image: imgURL() + "info.png"
         }
 	}
 }
@@ -1047,7 +1054,7 @@ def initialize() {
         subscribe(location, "AskAlexaMsgQueue", msgHandler)
         subscribe(location, "AskAlexaMsgQueueDelete", msgDeleteHandler)
         subscribe(location, "AskAlexaMQRefresh", mqRefresh)
-        if (sonosCMD && sonosMemoryCount) songLocations()
+        //if (sonosCMD && sonosMemoryCount) songLocations()
         mqRefresh()
 	}
     else{
@@ -1059,6 +1066,7 @@ def initialize() {
 //--------------------------------------------------------------
 mappings {
 	path("/d") { action: [GET: "processDevice"] }
+    path("/o") { action: [GET: "processObjects"] }
 	path("/m") { action: [GET: "processMacro"] }
 	path("/h") { action: [GET: "processSmartHome"] }
 	path("/l") { action: [GET: "processList"] }
@@ -1164,6 +1172,21 @@ def processDevice() {
     if (op==~/status|undefined|null/ && param==~/undefined|null/ && numVal==~/undefined|null/) op="status"
     processDeviceAction(dev, op, numVal, param, false)
 }
+def processObjects(){
+	def obj1 = params.Object1.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") //Label of object1
+    def obj2 = params.Object2.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") //Label of object2
+	def op1 = params.Operator1												//Operation1 to perform
+    def op2 = params.Operator2												//Operation2 to perform
+    def numVal1 = params.Num1     											//Number for dimmer1/PIN type settings
+    def numVal2 = params.Num2     											//Number for dimmer2/PIN type settings
+    def param1 = params.Param1.toLowerCase()								//Other parameter (color)
+    def param2 = params.Param2.toLowerCase()								//Other parameter (color)
+    if (op1==~/status|undefined|null/ && param1==~/undefined|null/ && numVal1==~/undefined|null/) op1="status"
+    if (op2==~/undefined|null/ && param2==~/undefined|null/ && numVal2==~/undefined|null/) op2=op1
+	if (obj2==~/undefined|null/ && !(obj1==~/undefined|null/)) processDeviceAction(obj1, op1, numVal1, param1, false)
+    if (obj1==obj2) processDeviceAction(obj1, op1, numVal1, param1, false) 
+    else processObjectsAction(obj1, obj2, op1, op2, numVal1, numVal2, param1, param2)
+}
 def processDeviceAction(dev, op, numVal, param, followup){        
 	log.debug "-Device command received-"
 	log.debug "Dev: " + dev
@@ -1172,9 +1195,9 @@ def processDeviceAction(dev, op, numVal, param, followup){
 	log.debug "Param: " + param
 	def num = numVal ==~/undefined|null|\?/ || !numVal ? 0 : numVal as int
 	String outputTxt = ""
-	def deviceList, count = 0, aliasDeviceType, aliasDeviceObj, aliasDeviceList, aliasDeviceName, devIcon
+	def deviceList=[], count = 0, aliasDeviceType, aliasDeviceObj, aliasDeviceList, aliasDeviceName, devIcon
 	getDeviceList().each{if (it.name==dev) {deviceList=it; count++}}
-	if (mapDevices(true) && deviceAlias && !count && !deviceList){
+    if (mapDevices(true) && deviceAlias && !count && !deviceList){
 		aliasDeviceList = state.aliasList.each { 
 			if (it.aliasNameLC==dev) {
 				aliasDeviceType = it.aliasType
@@ -1192,7 +1215,7 @@ def processDeviceAction(dev, op, numVal, param, followup){
 	else if (deviceList || aliasDeviceList) {
         def proceed = true
         def deviceObj=deviceList ? deviceList.devices.find{it.label.replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase() == dev} : aliasDeviceObj
-		def devType=deviceList ? deviceList.type : aliasDeviceType
+        def devType=deviceList ? deviceList.type : aliasDeviceType
         devIcon=deviceList ? deviceList.type : aliasDeviceType
         if (devType =~/door|lock/ && (lockVoc().find{it==op} || doorVoc().find{it==op})) {
             def currentState = deviceObj.currentValue(devType)
@@ -1210,6 +1233,145 @@ def processDeviceAction(dev, op, numVal, param, followup){
 	if (!count) { outputTxt = "I had some problems finding the device you specified. %1%" }
 	if (followup) return outputTxt 
     else sendJSON(outputTxt,devIcon)
+}
+def processObjectsAction(obj1, obj2, op1, op2, numVal1, numVal2, param1, param2){        
+	log.debug "-Compound command received-"
+	log.debug "Obj1: " + obj1
+    log.debug "Obj2: " + obj2
+	log.debug "Op1: " + op1
+    log.debug "Op2: " + op2
+	log.debug "Num1: " + numVal1
+    log.debug "Num2: " + numVal2
+	log.debug "Param1: " + param1
+    log.debug "Param2: " + param2
+    def num1 = numVal1 ==~/undefined|null|\?/ || !numVal1 ? 0 : numVal1 as int
+    def num2 = numVal2 ==~/undefined|null|\?/ || !numVal2 ? num1 as int : numVal2 as int
+    if (param2==~/undefined|null/) param2 = param1 
+	String outputTxt = ""
+	def deviceList1=[], count1 = 0, aliasDeviceType1, aliasDeviceObj1, aliasDeviceList1, aliasDeviceName1, deviceList2=[], count2 = 0, aliasDeviceType2, aliasDeviceObj2, aliasDeviceList2, aliasDeviceName2
+	def extList1, extList2, extType1, extType2
+    getDeviceList().each{if (it.name==obj1) {deviceList1=it; count1++}}
+    getDeviceList().each{if (it.name==obj2) {deviceList2=it; count2++}}
+    if (mapDevices(true) && deviceAlias && !count1 && !deviceList1){
+		aliasDeviceList1 = state.aliasList.each { 
+			if (it.aliasNameLC==obj1) { aliasDeviceType1 = it.aliasType; aliasDeviceName1 = it.aliasDevice; count1++ }
+		}
+		if (aliasDeviceType1) {
+			aliasDeviceList1=mapDevices(true).find {it.type==aliasDeviceType1}    
+			if (aliasDeviceList1) aliasDeviceObj1=aliasDeviceList1.devices.find{it.label==aliasDeviceName1}
+			else outputTxt = "I had a problem finding the alias device you specified. Please check your SmartApp settings to ensure you have a device associated with the alias name. %1%"
+		}
+	}
+    if (mapDevices(true) && deviceAlias && !count2 && !deviceList2){
+		aliasDeviceList2 = state.aliasList.each { 
+			if (it.aliasNameLC==obj2) { aliasDeviceType2 = it.aliasType; aliasDeviceName2 = it.aliasDevice; count2++ }
+		}
+		if (aliasDeviceType2) {
+			aliasDeviceList2=mapDevices(true).find {it.type==aliasDeviceType2}    
+			if (aliasDeviceList2) aliasDeviceObj2=aliasDeviceList2.devices.find{it.label==aliasDeviceName2}
+			else outputTxt = "I had a problem finding the alias device you specified. Please check your SmartApp settings to ensure you have a device associated with the alias name. %1%"
+		}
+	}
+    if (extObj("room", obj1).count) { extList1=extObj("room", obj1).list; count1 =count1 + extObj("room", obj1).count; extType1="room" }
+	if (extObj("room", obj2).count) { extList2=extObj("room", obj2).list; count2 =count2 + extObj("room", obj2).count; extType2="room" }
+    if (extObj("vr", obj1).count) { extList1=extObj("vr", obj1).list; count1 =count1 + extObj("vr", obj1).count; extType1="vr" }
+	if (extObj("vr", obj2).count) { extList2=extObj("vr", obj2).list; count2 =count2 + extObj("vr", obj2).count; extType2="vr" }
+    if (extObj("wr", obj1).count) { extList1=extObj("wr", obj1).list; count1 =count1 + extObj("wr", obj1).count; extType1="wr" }
+	if (extObj("wr", obj2).count) { extList2=extObj("wr", obj2).list; count2 =count2 + extObj("wr", obj2).count; extType2="wr" }
+    if (extObj("macro", obj1).count) { extList1=extObj("macro", obj1).list; count1 =count1 + extObj("macro", obj1).count; extType1="macro" }
+	if (extObj("macro", obj2).count) { extList2=extObj("macro", obj2).list; count2 =count2 + extObj("macro", obj2).count; extType2="macro" }
+	if (count1 > 1 && count2 ==1) outputTxt ="The name, '${obj1}', is used multiple times in your SmartThings SmartApp. Please rename or remove duplicate items so I may properly utlize them. "
+    else if (count2 > 1 && count1 ==1) outputTxt ="The name, '${obj2}', is used multiple times in your SmartThings SmartApp. Please rename or remove duplicate items so I may properly utlize them. "
+    else if (count2 > 1 && count1 > 1) outputTxt ="The names, '${obj1}' and '${obj2}', are used multiple times in your SmartThings SmartApp. Please rename or remove duplicate items so I may properly utlize them. "
+    else if (!count1 || !count2) {
+    	if (!count1 && count2) outputTxt = "I had some problems finding '${obj1}'. I did not take any action on this compound command. %1%"
+    	else if (count1 && !count2) outputTxt = "I had some problems finding '${obj2}'. I did not take any action on this compound command. %1%"
+    	else if (!count1 && !count2) outputTxt = "I had some problems finding both '${obj1}' and '${obj2}'. I did not take any action on this compound command. %1%"
+    }
+    else if (deviceList1 || aliasDeviceList1 || deviceList2 || aliasDeviceList2 || extList1 || extList2) {	
+        def proceed = true, actionObj1, actionObj2, objType1, objType2
+        if (deviceList1 || aliasDeviceList1){
+        	actionObj1=deviceList1 ? deviceList1.devices.find{it.label.replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase() == obj1} : aliasDeviceObj1
+        	objType1=deviceList1 ? deviceList1.type : aliasDeviceType1
+        }
+        if (deviceList2 || aliasDeviceList2){	
+        	actionObj2=deviceList2 ? deviceList2.devices.find{it.label.replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase() == obj2} : aliasDeviceObj2
+        	objType2=deviceList2 ? deviceList2.type : aliasDeviceType2
+        }
+        if (extList1) {actionObj1 = extList1; objType1=extType1}
+        if (extList2) {actionObj2 = extList2; objType2=extType2}
+        if ((objType1 =~/door|lock/ || (objType2 =~/door|lock/))) {
+        	if ((objType1 =="door" || objType2 =="door") && doorPW && pwNeeded) outputTxt = "Doors are set up to require a password to operate and can not be used in a compound command. Restate your action with only the device you want to control and its password. I did not take any action for your current request. %1%"       
+        	if ((objType1 =="lock" || objType2 =="lock") && lockPW && pwNeeded) outputTxt = "Locks are set up to require a password to operate and can not be used in a compound command. Restate your action with only the device you want to control and its password. I did not take any action for your current request. %1%"       		
+        }
+        if (extList1 || extList2 && (op1==~/open|close/ || op1==~/lock|unlock/ || op2==~/open|close/ || op2==~/lock|unlock/)){
+        	def rm1 = getRM().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == extList1}
+        	def rm2 = getRM().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == extList2}
+            if (pwNeeded && ((rm1 && op1==~/open|close/ && rm1.usePWDoor && rm1.doors) || (rm1 && op1==~/lock|unlock/ && rm1.usePWLock && rm1.locks) ||
+            		(rm2 && op2==~/open|close/ && rm2.usePWDoor && rm2.doors) || (rm2 && op2==~/lock|unlock/ && rm2.usePWLock && rm2.locks)) && mPW !=password){
+				outputTxt = "Commands that require passwords can not be used in compound commands. Restate your action with only the device or group you want to control and its password. I did not take any action for your current request. %1%"
+    		}
+        }
+        proceed = outputTxt ? false : true    
+        if (proceed) {
+        	def intOutput1, intOutput2
+            if ((op1=="lock" && lockLockDisable) || (op1=="unlock" && lockUnLockDisable) || (op1=="open" && doorOpenDisable) || (op1=="open" && doorOpenDisable)) intOutput1 = "There are restrictions set up preventing the '${op1}' command from being used on this ${objType1}. %1%"
+            else if (objType1 =~/door|lock/){
+            	def currentState = actionObj1.currentValue(objType1)
+            	if ((objType1 == "door" && (currentState==op1) || (currentState == "closed" && op1=="close"))||(objType1=="lock" && currentState == op1 + "ed")) intOutput1="The ${obj1} is already ${currentState}. %1%" 
+            }	
+            else if (deviceList1 || aliasDeviceList1) intOutput1 = getReply (actionObj1, objType1, obj1, op1, num1, param1) 
+            else if (objType1=="room") intOutput1 = processRoom(actionObj1, num1, op1, param1 ,"" ,"")
+            else if (objType1=="vr") intOutput1 = processVoiceReport(actionObj1)
+            else if (objType1=="wr") intOutput1 = processWeatherReport(actionObj1)
+            else if (objType1=="macro") intOutput1 = processMacroAction(actionObj1, num1, op1, param1, "", true, "")
+            if ((op2=="lock" && lockLockDisable) || (op2=="unlock" && lockUnLockDisable) || (op2=="open" && doorOpenDisable) || (op2=="open" && doorOpenDisable)) intOutput2 = "There are restrictions set up preventing the '${op2}' command from being used on this ${objType2}. %1%"
+            else if (objType2 =~/door|lock/){
+            	def currentState = actionObj2.currentValue(objType2)
+            	if ((objType2 == "door" && (currentState==op2) || (currentState == "closed" && op2=="close"))||(objType2=="lock" && currentState == op2 + "ed")) intOutput2="The ${obj2} is already ${currentState}. %1%" 
+            }
+            else if (deviceList2 || aliasDeviceList2) intOutput2 = getReply (actionObj2, objType2, obj2, op2, num2, param2)
+            else if (objType2=="room") intOutput2 = processRoom(actionObj2, num2, op2 ,param2 ,"" ,"")
+            else if (objType2=="vr") intOutput2 = processVoiceReport(actionObj2)
+            else if (objType2=="wr") intOutput2 = processWeatherReport(actionObj2)
+            else if (objType2=="macro") intOutput2 = processMacroAction(actionObj2, num2, op2, param2, "", true, "")
+            if (intOutput1.endsWith("%1%") && intOutput2.endsWith("%1%")) outputTxt = "Both of the commands failed: " + intOutput1.replaceAll("%1%"," Also, ") + intOutput2.toLowerCase()
+            else if (intOutput1.endsWith("%1%") && !intOutput2.endsWith("%1%")) outputTxt = intOutput1.replaceAll(". %1%","; however, ") + intOutput2[0..-4]+" %1%"
+            else if (!intOutput1.endsWith("%1%") && intOutput2.endsWith("%1%")) outputTxt = intOutput2.replaceAll(". %1%","; however, ") + intOutput1[0..-4]+" %1%"
+            else if (intOutput1.endsWith("%2%") || intOutput2.endsWith("%2%")) outputTxt = intOutput1[0..-4] + intOutput2[0..-4] + "%3%"
+            else if (intOutput1.endsWith("%3%") && intOutput2.endsWith("%3%") && op1==op2) {
+                if (op1==~/on|off/) outputTxt ="I am turning ${op1} the ${obj1} and the ${obj2}. %3%"
+                if (op1==~/lock|unlock/) outputTxt ="I am ${op1}ing both the ${obj1} and the ${obj2}. %3%"
+                if (op1==~/close|open/){
+                	def verb = op1=="close"  ? "clos" : op1
+                    outputTxt ="I am ${verb}ing both the ${obj1} and the ${obj2}. %3%"	
+                }
+                if (op1==~/undefined|null|\?/) outputTxt = intOutput1.replaceAll(". %3%"," ") + "and " + intOutput2.replaceAll("I "," ")
+            }
+            else if (intOutput1.endsWith("%4%") || intOutput2.endsWith("%4%")) outputTxt = intOutput1[0..-4] + "In addition, " + intOutput2[0..-4]+" %3%"
+            else outputTxt = intOutput1[0..-6] + " and " + intOutput2[0..-4] + "%3%"
+        }
+    } 
+    sendJSON (outputTxt,"compound")
+}
+def extObj(type, object){
+	def objType, count=0, extList
+	if (type=="room") objType = getRM()
+    else if (type=="vr") objType = getVR()
+    else if (type=="wr") objType = getWR()
+    else if (type=="macro") objType = getAskAlexa()
+    if (objType.size()) {
+		objType.each { 
+			if (it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") ==object) { count ++; extList=object }
+			for (int i = 1; i<it.extAliasCount()+1; i++){
+				if (it."extAlias${i}" && it."extAlias${i}".toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "")==object) {
+                	extList = it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "")
+                    count ++
+				}
+			} 
+		}
+	}
+    return ["list":extList, "count":count]
 }
 //List Request
 def processList(){
@@ -1234,7 +1396,7 @@ def processList(){
     if (listType=~/motion/) { outputTxt = motion && motion.size()>1 ? "#motion sensors#" : motion && motion.size()==1 ? "@motion sensor@" : "%motion sensors%" ; devices=motion; aliasType="motion"  }   
     if (listType=~/open|close/) { outputTxt = ocSensors && ocSensors.size()>1 ? "#open close sensors#" : ocSensors && ocSensors.size()==1 ? "@open close sensor@" : "%open close sensors%"; devices = ocSensors; aliasType="contact" }
     if (listType=~/dimmer/) { outputTxt = dimmers && dimmers.size()>1 ? "#dimmers#"	: dimmers && dimmers.size()==1 ? "@dimmer@" : "%dimmmers%"; devices=dimmers; aliasType="level" }
-    if (listType=~/speaker/) { outputTxt = speakers && speakers.size()>1 ? "#speakers#" : speakers && speakers.size()==1 ? "@speaker@" : "%speakers%" ; devices=speakers; aliasType="music" }
+    //if (listType=~/speaker/) { outputTxt = speakers && speakers.size()>1 ? "#speakers#" : speakers && speakers.size()==1 ? "@speaker@" : "%speakers%" ; devices=speakers; aliasType="music" }
     if (listType=~/door/) { outputTxt = doors && doors.size()>1 ? "You have the following doors you can open or close: " +  getList(doors) + ". " : doors && doors.size()==1 ? "You have one door, " + getList(doors)+ ", selected that you can open or close. " : "%doors%"; aliasType="door"  }
     if (listType=~/shade|window/) { outputTxt = shades && shades.size()>1 ? "#window shades#" : shades && shades.size()==1 ? "@window shade@" :"%window shades%"; devices = shades; aliasType="shade" }
     if (listType=~/lock/) { outputTxt = locks && locks.size()>1 ? "#locks#" : locks && locks.size()==1 ? "@lock@" :"%locks%"; devices=locks; aliasType="lock" }	
@@ -1385,7 +1547,8 @@ def processMQ() {
     String outputTxt = ""
 	def children = getAAMQ(), count = children.count {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == queue}
     if (count==0 && queue=~/primary/) count = 1
-    if (count==0 && queue !="undefined" && queue !="null" ) outputTxt="I could not find a message queue named '${queue}'. Please check the message queue name in your SmartApp. %1%"
+    if (count==0 && !(queue ==~/undefined|null/)) outputTxt="I could not find a message queue named '${queue}'. Please check the message queue name in your SmartApp. %1%"
+    //if (count==0 && queue !="undefined" && queue !="null" ) outputTxt="I could not find a message queue named '${queue}'. Please check the message queue name in your SmartApp. %1%"
     else if (count<2) outputTxt = msgQueueReply(cmd,queue)
     else outputTxt ="You have multiple message queues named '${queue}'. Please check your SmartApp to fix this conflict. %1%"
     sendJSON(outputTxt,"mailbox") 
@@ -1483,7 +1646,7 @@ def processRoom(room, mNum, op, param, mPW,xParam){
     log.debug "Room/Group Password: " + mPW
     log.debug "Room/Group xParam: " + xParam
     def rm = getRM().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == room}, outputTxt
-    if (pwNeeded && ((op==~/open|close/ && rm.usePWDoor && doors) || (op==~/lock|unlock/ && rm.usePWLock && locks) && mPW !=password)){
+    if (pwNeeded && ((op==~/open|close/ && rm.usePWDoor && rm.doors) || (op==~/lock|unlock/ && rm.usePWLock && rm.locks) && mPW !=password)){
     	def pwExtra = mPW==~/undefined|null/ ? "A" : "The proper"
         outputTxt = "${pwExtra} password is required to use the ${op} action in this group. %P%"
     	state.cmdFollowup=[return: "processRoom", room:room, mNum:mNum, op:op, param:param, mPW:0,xParam:xParam]
@@ -1559,14 +1722,14 @@ def processMacro() {
     else if (!count && (mac==~/undefined|null|\?/  || !mac)) outputTxt = "I could not understand what you are attempting to do. Be sure you have populated the developer section with the device and extension names. %1%"
     if (outputTxt) sendJSON(outputTxt,"caution")
     else {
-    	if (macCount) processMacroAction(mac, mNum, cmd, param, mPW, false,xParam)
+    	if (macCount) processMacroAction(mac, mNum, cmd, param, mPW, false, xParam)
         else if (wrCount) sendJSON(processWeatherReport(mac),"weather")
         else if (vrCount) sendJSON(processVoiceReport(mac),"voice")
         else if (sdCount) sendJSON(processSchedule(mac,cmd,mNum),"schedule")
-        else if (rmCount) sendJSON(processRoom(mac,mNum,cmd,param, mPW,xParam),"room")
+        else if (rmCount) sendJSON(processRoom(mac, mNum, cmd, param, mPW, xParam), "room")
 	}        
 }
-def processMacroAction(mac, mNum, cmd, param, mPW, followup,xParam){
+def processMacroAction(mac, mNum, cmd, param, mPW, followup, xParam){
     log.debug "Macro Name: " + mac
     log.debug "mNum: " + mNum
     log.debug "Cmd: " + cmd
@@ -1813,12 +1976,14 @@ def getReply(devices, type, STdeviceName, op, num, param){
             else result += ". "
         }
             else if (type == "contact") result = "The ${STdeviceName} is currently ${STdevice.currentValue(type)}. "
+            /*
             else if (type == "music"){
                 def onOffStatus = STdevice.currentValue("status"), track = STdevice.currentValue("trackDescription"), level = STdevice.currentValue("level"), mute = STdevice.currentValue("mute")
                 result = "The ${STdeviceName} is currently ${onOffStatus}"
                 result += onOffStatus =="stopped" ? ". " : onOffStatus=="playing" && track ? ": '${track}'" : ""
                 result += onOffStatus == "playing" && level && mute =="unmuted" ? ", and it's volume is set to ${level}%. " : mute =="muted" ? ", and it's currently muted. " :""
             }
+            */
             else if (type == "water") result = "The water sensor, '${STdeviceName}', is currently ${STdevice.currentValue(type)}. "
             else if (type == "shade") result = "The window shade, '${STdeviceName}', is currently " + STdevice.currentValue('windowShade') +". "
             else if (type == "uvIndex") {
@@ -1999,11 +2164,11 @@ def getReply(devices, type, STdeviceName, op, num, param){
                 	if (type=="switch") result = "For the ${STdeviceName} switch, be sure to give an 'on', 'off' or 'toggle' command. %1%"
             		if (type=="level") result = overRideMsg ? overRideMsg: "For the ${STdeviceName} dimmer, the valid commands are: " + getList(vocab) + " or brightness a level setting. %1%"
             		if (type=="color") result = overRideMsg ? overRideMsg: "For the ${STdeviceName} color controller, remember it can be operated like a switch. You can ask me to turn it on, off, toggle "+  
-                    "the on and off states, or set a brightness level. You can also set it to a variety of colors. For listing of these colors, simply print out the Ask Alexa cheat sheet. %1%"
+                    "the on and off states, or set a brightness level. You can also set it to a variety of colors. For a listing of these colors, simply print out the Ask Alexa cheat sheet. %1%"
                 }
             }
+            /*
             if (type == "music"){             
-                log.debug param==~/undefined|null/
                 if ((op ==~/increase|raise|up|decrease|down|lower/)){
                      def newValues = upDown(STdevice, type, op, num,STdeviceName) 
                      num = newValues.newLevel
@@ -2041,6 +2206,7 @@ def getReply(devices, type, STdeviceName, op, num, param){
                 if (speakerHighLimit && num == speakerHighLimit) result += "This is the maximum volume level you have set up. %1%"
                 if (op=="maximum" && !speakerHighLimit) result = "You have not set a maximum volume level in the SmartApp. %1%"
             }
+            */
             if (type=~/door|lock|shade/){
                 if ((type == "door" && !doorVoc().find{it==op}) || (type == "shade" && !shadeVoc().find{it==op})) result= "For the ${STdeviceName}, you must give an 'open' or 'close' command. %1%"
             	else if (type == "lock" && !lockVoc().find{it==op}) result= "For the ${STdeviceName}, you must give a 'lock' or 'unlock' command. %1%"
@@ -2074,7 +2240,8 @@ def getReply(devices, type, STdeviceName, op, num, param){
             result += lux ? "The illuminance at this device's location is ${lux} lux. " : ""
             if (uv && type !="uvIndex") result += "The UV Index at this device's location is '${uvIndexReading(uv)}' with a reading of ${uv}. "
             if (pressure) result += "This device is also reading a barometric pressure of ${pressure}. "
-            if (humidity && type !="humidity" && type !="temperature") result +="And the relative humdity at this location is ${humidity} percent. "
+            if (humidity && !(type ==~/humidity|temperature|thermostat|pollution/)) result +="And the relative humidity at this location is ${humidity}%. "
+            //if (humidity && type !="humidity" && type !="temperature" && type != "thermostat") result +="And the relative humidity at this location is ${humidity} percent. "
             result += temp && type != "thermostat" && type != "humidity" && type != "temperature" ? "In addition, the temperature reading from this device is ${roundValue(temp)} degrees. " : ""
 			result += motion == "active" && type != "motion" ? "This device is also a motion sensor, and it is currently reading movement. " : ""
  			result += accel == "active" ? "This device has a vibration sensor, and it is currently reading movement. " : ""
@@ -2387,7 +2554,7 @@ def ctlMQDesc(){
     if (ctlMsgQue){
     	result = "Send to: ${translateMQid(ctlMsgQue)}"
         result += ctlMQNotify ? "\nNotification Mode Only" : ""
-        result += ctlMQExpire ? "\nExpires in ${ctlMQExpire} seconds" : ""
+        result += ctlMQExpire ? "\nExpires in ${ctlMQExpire} minutes" : ""
         result += ctlMQOverwrite ? "\nOverwrite all previous voice report messages" : ""
         result += ctlSuppressTDRemind ? "\nSuppress Time and Date from Alexa Playback" : ""
 	}
@@ -2685,11 +2852,12 @@ private tempsSel() { return temps || (deviceAlias && tempsAlias) }
 private humidSel() { return humid || (deviceAlias && humidAlias) }
 private fooBotSel() { return fooBot || (deviceAlias && fooBotAlias) }
 private uvSel() { return UV || (deviceAlias && UVAlias) }
-private speakersSel() { return speakers || (deviceAlias && speakersAlias) }
+//private speakersSel() { return speakers || (deviceAlias && speakersAlias) }
 private waterSel() { return water || (deviceAlias && waterAlias) }
 private presenceSel() { return presence || (deviceAlias && presenceAlias) }
 private motionSel() { return motion || (deviceAlias && motionAlias) }
 private accelerationSel() { return acceleration || (deviceAlias && accelerationAlias) }
+/*
 private songOptions() {
     if (speakersSel()) {
         def options = new LinkedHashSet()
@@ -2751,6 +2919,7 @@ def memoryDesc(){
     }
     return result ? result : "No memory slots configured - Tap to configure"
 }
+*/
 def getMacroList(type,exclude){
     def result=[]
     if (type ==~/all|other/) {
@@ -2878,13 +3047,13 @@ def mqCounts(list){
 }
 def purgeMQ(){
 	if (!state.msgQueue) state.msgQueue=[]
-    log.debug "Ask Alexa is purging expired messages from the Primary Message Queue."
     def deleteList = state.msgQueue.findAll{it.expires !=0 && now() > it.expires && it.trackDelete}
     state.msgQueue.removeAll{it.expires !=0 && now() > it.expires}
     if (deleteList){
     	deleteList.each{
 			sendLocationEvent(name:"askAlexaMQ", value: "${it.appName}.${it.id}",isStateChange: true, data:[[deleteType: "expire"],[queue:"Primary message queue"]], descriptionText:"Ask Alexa expired messages from the Primary message queue")
         }
+        log.debug "Ask Alexa is purging expired messages from the Primary Message Queue."
 	}
     if (!state.msgQueue.size()){
     	if (msgQueueNotifyLightsOn && msgQueueNotifyLightsOff && !state.msgQueue) msgQueueNotifyLightsOn?.off()
@@ -2961,9 +3130,9 @@ private Map customColor(){
 def getDeviceList(){
 	def result = []
     try {
-        mapDevices(false).each{
-    		def devicesGroup = it.devices, devicesType = it.type, devIcon=it.icon
-			devicesGroup.collect{ result << [name: it.label.replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase(), type: devicesType, devices: devicesGroup, icon:devIcon] }
+        mapDevices(false).each{    
+            def devicesGroup = it.devices, devicesType = it.type
+			devicesGroup.collect{ result << [name: it.label.replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase(), type: devicesType, devices: devicesGroup] }
         }
     }
     catch (e) { log.warn "There was an issue parsing the device labels. Be sure all of the devices are uniquely named/labeled and that none of them are blank (null). " }
@@ -2992,7 +3161,7 @@ def mapDevices(isAlias){
 	if (settings."shades${ext}") result << [devices: settings."shades${ext}", type : "shade",fullListName:"Window Shade", cmd:shadeVoc()]
 	if (settings."locks${ext}") result << [devices: settings."locks${ext}", type : "lock",fullListName:"Lock", cmd:lockVoc()]
 	if (settings."tstats${ext}") result << [devices: settings."tstats${ext}", type : "thermostat",fullListName:"Thermostat",cmd:tstatVoc()]
-	if (settings."speakers${ext}") result << [devices: settings."speakers${ext}", type : "music",fullListName:"Speaker", cmd:speakerVoc()]
+	//if (settings."speakers${ext}") result << [devices: settings."speakers${ext}", type : "music",fullListName:"Speaker", cmd:speakerVoc()]
 	if (settings."temps${ext}") result << [devices: settings."temps${ext}", type : "temperature",fullListName:"Temperature Sensor", cmd: tempVoc()]
 	if (settings."humid${ext}") result << [devices: settings."humid${ext}", type : "humidity",fullListName:"Humidity Sensor", cmd: humidVoc()]
 	if (settings."ocSensors${ext}") result << [devices: settings."ocSensors${ext}", type : "contact",fullListName:"Open/Close Sensor", cmd: contactVoc()]
@@ -3033,7 +3202,7 @@ def msgVoc(){ return ["play","open","erase","delete","clear"]}
 def upDown(device, type, op, num, deviceName){
     def numChange, newLevel, currLevel, defMove, txtRsp = ""
     if (type==~/color|level|kTemp/) { defMove = lightAmt as int ?: 0 ; currLevel = device.currentValue("switch")=="on" ? device.currentValue("level") as int : 0 } 
-    if (type=="music") { defMove = speakerAmt as int ?: 5 ;currLevel = device.currentValue("level") as int }
+    //if (type=="music") { defMove = speakerAmt as int ?: 5 ;currLevel = device.currentValue("level") as int }
     if (type=="thermostat") { defMove=tstatAmt as int ?: 5 ; currLevel =device.currentValue("temperature") as int }
     if (op ==~/increase|raise|up|brighten/)  numChange = num == 0 ? defMove : num > 0 ? num : 0
     if (op ==~/decrease|down|lower|dim/) numChange = num == 0 ? -defMove : num > 0 ? -num  : 0
@@ -3126,12 +3295,14 @@ def setupData(){
 	if (tstats && MyEcobeeCMD){  getEcobeeCustomList(tstats).each { PARAMS<<"${it}" } }     
     if (tstatsSel() && ecobeeCMD && MyEcobeeCMD) PARAMS<<"tips"<<"tip"
     if (presenceSel() && vPresenceCMD) PARAMS<<"check in"<<"check out"<<"arrive"<<"depart"<<"not present"<<"gone"
+    /*
     if (sonosCMD && speakersSel() && sonosMemoryCount){
     	def memCount = sonosMemoryCount as int
     	for (int i=1; i<memCount+1; i++){
     		if (settings."sonosSlot${i}Name" && settings."sonosSlot${i}Music") PARAMS<<settings."sonosSlot${i}Name".replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase()
     	}
     }
+    */
     if (cLightsSel() || cLightsKSel() || macChildren.size()) { STColors().each {PARAMS<<it.name.toLowerCase()}}
     duplicates = PARAMS.findAll{PARAMS.count(it)>1}.unique()
     if (duplicates.size()){ 
@@ -3212,13 +3383,21 @@ def setupData(){
     displayData(result)
 }
 def fillTypeList(){
-	return ["reports","report","switches","switch","dimmers","dimmer","colored lights","color","colors","speakers","speaker","water sensor","water sensors","water","lock","locks","thermostats","thermostat",
+	/*return ["reports","report","switches","switch","dimmers","dimmer","colored lights","color","colors","speakers","speaker","water sensor","water sensors","water","lock","locks","thermostats","thermostat",
     	"temperature sensors","modes","routines","smart home monitor","SHM","security","temperature","door","doors", "humidity", "humidity sensor", "humidity sensors","presence", "presence sensors", "motion", 
         "motion sensor", "motion sensors", "door sensor", "door sensors", "window sensor", "window sensors", "open close sensors","colored light", "events","macro", "macros", "group", "groups", "voice reports", 
         "voice report","control macro", "control macros","control", "controls","extension group","extension groups","core","core trigger","core macro","core macros","core triggers","sensor", "sensors","shades", 
         "window shades","shade", "window shade","acceleration", "acceleration sensor", "acceleration sensors", "alias","aliases","temperature light","temperature lights","kelvin light","kelvin lights","message queue",
         "queue","message queues","queues","weather", "weather report", "weather reports","schedule","schedules","webcore","webcore trigger", "webcore macro","webcore macros","webcore triggers","pollution","air quality",
-        "room", "rooms","uv","uv index"] 
+        "room", "rooms","uv","uv index"]
+        */
+	return ["reports","report","switches","switch","dimmers","dimmer","colored lights","color","colors","water sensor","water sensors","water","lock","locks","thermostats","thermostat",
+    	"temperature sensors","modes","routines","smart home monitor","SHM","security","temperature","door","doors", "humidity", "humidity sensor", "humidity sensors","presence", "presence sensors", "motion", 
+        "motion sensor", "motion sensors", "door sensor", "door sensors", "window sensor", "window sensors", "open close sensors","colored light", "events","macro", "macros", "group", "groups", "voice reports", 
+        "voice report","control macro", "control macros","control", "controls","extension group","extension groups","core","core trigger","core macro","core macros","core triggers","sensor", "sensors","shades", 
+        "window shades","shade", "window shade","acceleration", "acceleration sensor", "acceleration sensors", "alias","aliases","temperature light","temperature lights","kelvin light","kelvin lights","message queue",
+        "queue","message queues","queues","weather", "weather report", "weather reports","schedule","schedules","webcore","webcore trigger", "webcore macro","webcore macros","webcore triggers","pollution","air quality",
+        "room", "rooms","uv","uv index"]
 }
 def getURLs(){
 	def mName = params.mName, qName = params.qName, url, result
@@ -3285,8 +3464,9 @@ private cheat(){
     if (getCheatDisplayList("pollution") && deviceAlias) { result += "<br><u>Aliases</u><br>"; result += getCheatDisplayList("pollution") +"<br>" }
     if (uvSel()) { result += "<h2><u>UV index devices (Valid Commands: <b>"+ getList(uvVoc()) +"</b>)</u></h2>"; UV.each{ result += it.label +"<br>" } }
     if (getCheatDisplayList("uvIndex") && deviceAlias) { result += "<br><u>Aliases</u><br>"; result += getCheatDisplayList("uvIndex") +"<br>" }
-    if (speakersSel()) { result += "<h2><u>Speakers (Valid Commands: <b>{volume level}, "+ getList(speakerVoc()+basicVoc()) +"</b>)</u></h2>"; speakers.each{ result += it.label +"<br>" } }
-    if (getCheatDisplayList("music") && deviceAlias) { result += "<br><u>Aliases</u><br>"; result += getCheatDisplayList("music") +"<br>" }
+    //if (speakersSel()) { result += "<h2><u>Speakers (Valid Commands: <b>{volume level}, "+ getList(speakerVoc()+basicVoc()) +"</b>)</u></h2>"; speakers.each{ result += it.label +"<br>" } }
+    //if (getCheatDisplayList("music") && deviceAlias) { result += "<br><u>Aliases</u><br>"; result += getCheatDisplayList("music") +"<br>" }
+    /*
     if (speakersSel() && sonosCMD && sonosMemoryCount){
         def memCount = sonosMemoryCount as int, slots=""
         for (int i=1; i<memCount+1; i++){
@@ -3294,6 +3474,7 @@ private cheat(){
         }
         if (slots) result += "<br><u>Memory Slots</u><br>" + slots
     }
+    */
     if (waterSel()) { result += "<h2><u>Water Sensors (Valid Command: <b>"+ getList(waterVoc()) +"</b>)</u></h2>"; water.each{ result += it.label +"<br>" } }
     if (getCheatDisplayList("water") && deviceAlias) { result += "<br><u>Aliases</u><br>"; result += getCheatDisplayList("water") +"<br>" }
     if (presenceSel()) {
@@ -3388,15 +3569,15 @@ private textVersion() {
     if (getRM().size()) aaRMVer="\n"+getRM()[0].textVersion()
     return "${version}${lambdaVersion}${aaMQVer}${aaRMVer}${aaSCHVer}${aaVRVer}${aaWRVer}"
 }
-private versionInt(){ return 232 }
+private versionInt(){ return 233 }
 private LambdaReq() { return 129 }
-private mqReq() { return 106 }
+private mqReq() { return 107 }
 private wrReq()  { return 105 }
 private vrReq()  { return 107 }
 private schReq()  { return 103 }
 private rmReq() { return 101 }
 private versionLong(){ return "2.3.3" }
-private versionDate(){ return "10/03/17" }
+private versionDate(){ return "10/21/17" }
 private textCopyright() {return "Copyright © 2017 Michael Struck" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
