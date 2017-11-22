@@ -25,6 +25,7 @@ ObjectOperation turn {DeviceA} and {DeviceB} {OperatorA}
 ObjectOperation turn the {DeviceA} and {DeviceB} {OperatorA}
 ObjectOperation turn the {DeviceA} and the {DeviceB} {OperatorA}
 ObjectOperation turn {DeviceA} and the {DeviceB} {OperatorA}
+ObjectOperation turn {DeviceA} and the {DeviceB} to {OperatorA}
 
 ObjectOperation turn the {DeviceA} {OperatorA} and set {DeviceB} to {NumB} percent
 ObjectOperation turn {OperatorA} {DeviceA} and set {DeviceB} to {NumB}
@@ -55,9 +56,12 @@ ObjectOperation turn {DeviceA} {OperatorA} and set the {DeviceB} to {NumB}  perc
 ObjectOperation set {DeviceA} and {DeviceB} to {NumA}
 ObjectOperation set {DeviceA} and {DeviceB} to {NumA} percent
 ObjectOperation set the {DeviceA} and the {DeviceB} to {NumA}
+ObjectOperation set the {DeviceA} and the {DeviceB} to {NumA} percent
 ObjectOperation set the {DeviceA} and {DeviceB} to {NumA} percent
 ObjectOperation set {DeviceA} and the {DeviceB} to {NumA} 
 ObjectOperation set {DeviceA} and the {DeviceB} to {NumA} percent
+ObjectOperation set {DeviceA} and {DeviceB} to a level of {NumA}
+ObjectOperation set {DeviceA} and {DeviceB} to a level of {NumA} percent
 
 ObjectOperation {DeviceA} {NumA} and {DeviceB} {NumB} 
 ObjectOperation set {DeviceA} {NumA} and {DeviceB} {NumB} 
@@ -93,12 +97,20 @@ ObjectOperation {DeviceA} to {NumA}  and set {DeviceB} to {NumB} percent
 ObjectOperation set {DeviceA} to {NumA}  and set {DeviceB} to {NumB} percent
 
 ObjectOperation set {DeviceA} to {ParamA} and turn {OperatorB} the {DeviceB}
+ObjectOperation set the {DeviceA} to {ParamA} and turn {OperatorB} the {DeviceB}
+ObjectOperation set the {DeviceA} to {ParamA} and turn {OperatorB} {DeviceB}
 
 ObjectOperation {DeviceA} {OperatorA} and set {DeviceB} to {ParamB}
+ObjectOperation {DeviceA} {OperatorA} and set the {DeviceB} to {ParamB}
 
 ObjectOperation set {DeviceA} to {ParamA} and set {DeviceB} to {ParamB}
 ObjectOperation {DeviceA} to {ParamA} and {DeviceB} to {ParamB}
 ObjectOperation set {DeviceA} to {ParamA} and {DeviceB} to {ParamB}
+ObjectOperation set the {DeviceA} to {ParamA} and set the {DeviceB} to {ParamB}
+ObjectOperation {DeviceA} to {ParamA} and the {DeviceB} to {ParamB}
+ObjectOperation set the {DeviceA} to {ParamA} and the {DeviceB} to {ParamB}
+ObjectOperation set {DeviceA} to {ParamA} and set the {DeviceB} to {ParamB}
+ObjectOperation set {DeviceA} to {ParamA} and the {DeviceB} to {ParamB}
 
 
 ObjectOperation {DeviceA} and {DeviceB} {ParamA}
@@ -134,6 +146,14 @@ ObjectOperation turn {DeviceA} {OperatorA} and run {ExtB}
 ObjectOperation turn {OperatorA} {DeviceA} and run {ExtB}
 ObjectOperation turn {DeviceA} {OperatorA} and play {ExtB}
 ObjectOperation turn {OperatorA} {DeviceA} and play {ExtB}
+ObjectOperation {ExtA} {OperatorA} and the {DeviceB} {OperatorB}
+ObjectOperation run {ExtA} and the {DeviceB} {OperatorB}
+ObjectOperation turn the {DeviceA} {OperatorA} and run {ExtB}
+ObjectOperation turn {OperatorA} the {DeviceA} and run {ExtB}
+ObjectOperation turn the {DeviceA} {OperatorA} and play {ExtB}
+ObjectOperation turn {OperatorA} the {DeviceA} and play {ExtB}
+ObjectOperation {ExtA} {OperatorA} and the {ExtB} {OperatorB}
+ObjectOperation {DeviceA} {OperatorA} and the {ExtB} {OperatorB}
 
 ObjectOperation {OperatorA} {ExtA} and {DeviceB} {OperatorB}
 ObjectOperation {OperatorA} {ExtA} and {OperatorB} {DeviceB}
@@ -141,6 +161,10 @@ ObjectOperation {OperatorA} {ExtA} and turn {OperatorB} {DeviceB}
 ObjectOperation {OperatorA} {ExtA} and turn {OperatorB} the {DeviceB}
 ObjectOperation {OperatorA} {ExtA} and set {DeviceB} {OperatorB} 
 ObjectOperation {OperatorA} {ExtA} and set {DeviceB} to {OperatorB} 
+ObjectOperation {OperatorA} {ExtA} and the {DeviceB} {OperatorB}
+ObjectOperation {OperatorA} {ExtA} and {OperatorB} the {DeviceB}
+ObjectOperation {OperatorA} {ExtA} and set the {DeviceB} {OperatorB} 
+ObjectOperation {OperatorA} {ExtA} and set the {DeviceB} to {OperatorB} 
 
 ObjectOperation turn {OperatorA} {ExtA} and turn {OperatorB} {DeviceB}
 ObjectOperation turn {OperatorA} the {ExtA} and turn {OperatorB} the {DeviceB}
@@ -148,8 +172,14 @@ ObjectOperation set {OperatorA} {ExtA} and set {DeviceB} {OperatorB}
 ObjectOperation set {OperatorA} to {ExtA} and set {DeviceB} to {OperatorB} 
 
 ObjectOperation {ExtA} and {DeviceB} {OperatorA}
+ObjectOperation {ExtA} and the {DeviceB} {OperatorA}
 ObjectOperation {DeviceA} and {ExtB} {OperatorA}
 ObjectOperation {ExtA} and {ExtB} {OperatorA}
+ObjectOperation set {ExtA} and {ExtB} {OperatorA}
+ObjectOperation set {ExtA} and the {DeviceB} {OperatorA}
+ObjectOperation set the {ExtA} and the {ExtB} {OperatorA}
+ObjectOperation set {ExtA} and the {ExtB} {OperatorA}
+ObjectOperation set the {ExtA} and the {DeviceB} {OperatorA}
 
 ObjectOperation set {DeviceA} to {NumA} and turn {OperatorB} {DeviceB} 
 ObjectOperation set {DeviceA} to {NumA} percent and turn {OperatorB} {DeviceB} 
@@ -180,6 +210,7 @@ ObjectOperation set {DeviceA} to {NumA} percent and turn {OperatorB} the {Device
 ObjectOperation set {DeviceA} to {NumA} percent and turn the {DeviceB} {OperatorB}
 ObjectOperation set {DeviceA} to {NumA} percent and turn {DeviceB} {OperatorB}
 ObjectOperation set the {DeviceA} to {NumA} percent and turn {OperatorB} the {DeviceB}
+
 
 DeviceOperation turn {Operator} {Device}
 DeviceOperation turn {Operator} the {Device}
