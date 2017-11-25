@@ -361,8 +361,13 @@ def doAction(){
             outputTxt += schAppendPost ? schMsgTxt + schAppendPost: schMsgTxt
             sendMsg(outputTxt)
         }
-        if (schAction=="macro") parent.processMacroAction(schMacro.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", ""), 0, "", false,"")
-        if (schAction=="VR") {
+        if (schAction=="macro") {
+		log.debug "*****Send Info To Michael*****"
+		log.debug schMacro
+		log.debug schMacro.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "")
+		parent.processMacroAction(schMacro.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", ""), "undefined", "undefined", false,"undefined")
+        }
+	if (schAction=="VR") {
         	outputTxt = schAppendPre ? schAppendPre + " " : ""
             outputTxt += parent.processOtherRpt(schVR)
             if (outputTxt.endsWith("%")) result = result[0..-4]
