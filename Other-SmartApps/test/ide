@@ -692,7 +692,9 @@ def pageContCommands(){
             input "speakPitch", "enum", title: "Alexa Speaking Pitch", options: ["x-low":"Extra Low", "low":"Low", "medium":"Default", "high":"High", "x-high":"Extra High"], defaultValue: "medium", submitOnChange: true, required: false
             if (speakPitch=="medium" || !speakPitch) input "whisperMode", "bool", title: "Enable Whisper Mode", defaultValue: false, submitOnChange: true
             if ((speakPitch=="medium" || !speakPitch)  && whisperMode) {
-            	href "timeIntervalInputWhisper",  title: "Whisper Only During These Times...", description: getTimeLabel(timeStartWhisper, timeEndWhisper), state: (timeStartWhisper || timeEndWhisper? "complete":null), image: imgURL() + "clock.png"
+            	input "timeStartWhisper", "time", title: "Starting", required: false
+				input "timeEndWhisper", "time", title: "Ending", required: false
+                //href "timeIntervalInputWhisper",  title: "Whisper Only During These Times...", description: getTimeLabel(timeStartWhisper, timeEndWhisper), state: (timeStartWhisper || timeEndWhisper? "complete":null), image: imgURL() + "clock.png"
             	input "runModeWhisper", "mode", title: "Whisper Only In The Following Modes...", multiple: true, required: false, image: imgURL() + "modes.png"
             }
             input "invocationName", title: "Invocation Name (Only Used For Examples)", defaultValue: "SmartThings", required: false 
