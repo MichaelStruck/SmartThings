@@ -673,9 +673,9 @@ def pageContCommands(){
 			input "contError", "bool", title: "After Error", defaultValue: false
             input "contStatus", "bool", title: "After Status/List", defaultValue: false
             input "contAction", "bool", title: "After Action/Event History", defaultValue: false, submitOnChange: true
-           //if (contAction && briefReply) paragraph "Please note that 'Brief Device Action Reply' is turned on. "+
-           // 	"There will be no prompt for continuation commands, but Alexa will still be active waiting "+
-           //     "for these additional commands with this option enabled.", image: imgURL()+"info.png"
+           if (contAction && briefReply) paragraph "Please note that 'Brief Device Action Reply' is turned on. "+
+            	"There will be no prompt for continuation commands, but Alexa will still be active waiting "+
+                "for these additional commands with this option enabled.", image: imgURL()+"info.png"
             input "contMacro", "bool", title: "After Macro/Extension Execution", defaultValue: false
 		}
         section ("Personality"){
