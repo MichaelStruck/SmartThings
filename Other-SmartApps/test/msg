@@ -137,7 +137,10 @@ def msgHandler(date, descriptionText, unit, value, overwrite, expires, notifyOnl
 		if (mqAlertType == "3") mqSpeaker?.playTrack (msgSFX.uri)
 		if (mqAlertType != "3" && mqAppendSound)  mqSpeaker?.playSoundAndTrack(msgSFX.uri,msgSFX.duration,msgVoice.uri)
 	}
-    if (mqSynth && ((restrictAudio && getOkToRun())||!restrictAudio)) mqSynth?.speak(msgTxt)
+    if (mqSynth && ((restrictAudio && getOkToRun())||!restrictAudio)) { 
+    	msgTxt= !mqAlertType ||mqAlertType as int ==0 || mqAlertType as int ==1 ? "New message received in ${app.label} message queue from : " + value : ""
+        mqSynth?.speak(msgTxt)
+    }
     if (mqPush || mqSMS || mqContacts && ((restrictMobile && getOkToRun())||!restrictMobile)){
     	def mqMsg = "New message received by Ask Alexa in the '${app.label}' message queue from : " + value + ": "+ descriptionText
     	parent.sendMSG(mqSMS, mqMsg , mqPush, mqContacts)
