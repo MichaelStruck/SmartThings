@@ -1,6 +1,6 @@
 {
   "languageModel": {
-    "types": [{*/*Slots*/*}],
+    "types": [*/*Slots*/*],
     "intents": [
       {
         "name": "AMAZON.CancelIntent",
