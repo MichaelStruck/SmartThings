@@ -935,14 +935,14 @@
           {
             "id": null,
             "name": {
-              "value": "primary message queue",
+              "value": "primary",
               "synonyms": []
             }
           },
           {
             "id": null,
             "name": {
-              "value": "primary",
+              "value": "primary message queue",
               "synonyms": []
             }
           }
@@ -2274,7 +2274,50 @@
       },
       {
         "name": "LIST_OF_SHCMD",
-        "values": []
+        "values": [
+          {
+            "id": null,
+            "name": {
+              "value": "routine",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "mode",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "smart home monitor",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "security",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "smart home",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "SHM",
+              "synonyms": []
+            }
+          }
+        ]
       },
       {
         "name": "LIST_OF_SHPARAM",
@@ -3601,6 +3644,6 @@
         "slots": []
       }
     ],
-    "invocationName": "Smart Things"
+    "invocationName": "smart things"
   }
 }
