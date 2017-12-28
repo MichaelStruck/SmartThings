@@ -2283,7 +2283,7 @@ def macroSwitchHandler(evt){
 //WebCoRE Handler-----------------------------------------------------------
 def WebCoREResults(sDelay,xParam){	
 	String result = ""
-    if (xferMNum){
+    if (xferMNum && sDelay > 0){
     	xParam=sDelay
         sDelay=0
     }
