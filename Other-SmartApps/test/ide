@@ -2282,8 +2282,9 @@ def macroSwitchHandler(evt){
 //WebCoRE Handler-----------------------------------------------------------
 def WebCoREResults(sDelay,xParam){	
 	String result = ""
+    def delay
     state.xParam = (xParam !="undefined" && xParam!="?" && pxParam !="null" ) ? xParam : ""
-    def xParamLog = state.xParam ? " with the extra parameter: ${state.xParam}" : "", delay
+    def xParamLog = state.xParam ? " with the extra parameter: ${state.xParam}" : ""
     if (cDelay>0 || sDelay>0) delay = sDelay==0 ? cDelay as int : sDelay as int
     if (!advWebCore || (advWebCore && state.xParam)){
         result = (!delay || delay == 0) ? "I am triggering the WEBCORE macro named '${app.label}'${xParamLog}. " : delay==1 ? "I'll trigger the '${app.label}' WEBCORE macro in ${delay} minute. " : "I'll trigger the '${app.label}' WEBCORE macro in ${delay} minutes. "
@@ -2308,7 +2309,7 @@ def WebCoREResults(sDelay,xParam){
 }
 def WebCoREHandler(){ 
 	state.scheduled = false
-    def data = state.xParam ? [xParam : state.xParam, nNum : 5] : null
+    def data = state.xParam ? [xParam : state.xParam] : null
     parent.webCoRE_execute(CoREName,data)
     state.xParam=""
 }
@@ -3562,7 +3563,7 @@ private textVersion() {
     if (getRM().size()) aaRMVer="\n"+getRM()[0].textVersion()
     return "${version}${lambdaVersion}${aaMQVer}${aaRMVer}${aaSCHVer}${aaVRVer}${aaWRVer}"
 }
-private versionInt(){ return 235 }
+private versionInt(){ return 236 }
 private LambdaReq() { return 130 }
 private mqReq() { return 107 }
 private wrReq()  { return 106 }
