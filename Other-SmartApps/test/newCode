@@ -828,7 +828,10 @@ def mainPageChild(){
         if (macroType) {
         	section ("Switch trigger for this macro", hideable: true, hidden: !(macroTriggerSwitch)){
             	input "macroTriggerSwitch", "capability.switch", title: "Trigger Switch", multiple: false, required: false, submitOnChange:true
-                if (macroType=="CoRE" && macroTriggerSwitch) input "triggerXParam", "text", title: "xParam To Send When Switch Triggered (optional)", description: "Use lower case for the xParam", required: false, capitalization: "none"
+                if (macroType=="CoRE" && macroTriggerSwitch){
+                	input "triggerXParam", "text", title: "xParam To Send When Switch Triggered (optional)", description: "Use lower case for the xParam", required: false, capitalization: "none"
+                	input "triggermNum", "num", title: "mNum To Send When Switch Triggered (optional)", description: "Enter a number ", required: false
+                }
                 paragraph "A momentary switch is recommended (but not required) to trigger a macro. You may associate the switch with other automations (including native Alexa Routines) to execute this macro when the switch state change. "+
                 	"Please note: No passwords are passed to this macro and no output from this macro will be heard unless you output it via a Message Queue.", image: imgURL()+"info.png"
             }
@@ -865,18 +868,19 @@ def pageCoRE() {
         section { paragraph "WebCoRE Trigger Settings", image: "https://cdn.rawgit.com/ady624/${webCoRE_handle()}/master/resources/icons/app-CoRE@2x.png" }
 		section (" "){
    			input "CoREName", "enum", title: "Choose WebCoRE Piston", options: parent.webCoRE_list('enum'), required: false, multiple: false
-        	if (!xferMNum) input "cDelay", "number", title: "Default Delay (Minutes) To Trigger", range:"0..*", defaultValue: 0, required: false
+        	if (!sendmNum) input "cDelay", "number", title: "Default Delay (Minutes) To Trigger", range:"0..*", defaultValue: 0, required: false
             if (parent.pwNeeded) input "usePW", "bool", title: "Require PIN To Run This WebCoRE Macro", defaultValue: false
         }
         section("Advanced features"){
-        	paragraph "You may pass a parameter (xParam) to the WebCoRE piston by adding your list of words to proper developer slot and speaking the addition parameter when executing the piston. "+
-            	"To use numeric parameters, enable the option below. This WILL disable the ability to delay execution of this macro. Please see the documentation from more information.", image: parent.imgURL() + "info.png"
-        	input "xferMNum", "bool", title: "Transfer Number Parameter to xParam", defaultValue: false, submitOnChange:true
-            input "advWebCore", "bool", title: "Require Additional Parameter To Run Macro", defaultValue: false, submitOnChange:true
+        	paragraph "You may pass a non-numeric parameter (xParam) to the WebCoRE piston by adding the parameters to the proper developer slot and speaking the addition parameter when executing the piston. "+
+            	"To use numeric values, enable the option below which WILL disable the ability to delay execution of this macro. Please see the documentation from more information.", image: parent.imgURL() + "info.png"
+        	input "sendmNum", "bool", title: "Send Number (mNum) to WebCore", defaultValue: false, submitOnChange:true
+            if (sendmNum) input "xferMNum", "bool", title: "Transfer Number (mNum) to xParam", defaultValue: false
+            input "advWebCore", "bool", title: "Require Additional Parameters (xParam or mNum) To Run Macro", defaultValue: false, submitOnChange:true
         }
         section("Custom acknowledgment"){
              if (!noAck) input "voicePost", "text", title: "Acknowledgment Message", description: "Enter a short statement to play after macro runs", required: false, capitalization: "sentences"
-             if (!noAck && advWebCore ) input "voicePostAdv", "text", title: "Message When No Advanced Parameter Received", required: false, capitalization: "sentences"
+             if (!noAck && advWebCore ) input "voicePostAdv", "text", title: "Message When No Advanced Parameters Received", required: false, capitalization: "sentences"
              input "noAck", "bool", title: "No Acknowledgment Message", defaultValue: false, submitOnChange: true
         }
         if (!parent.webCoRE_list('enum')){
@@ -2283,16 +2287,18 @@ def macroSwitchHandler(evt){
 //WebCoRE Handler-----------------------------------------------------------
 def WebCoREResults(sDelay,xParam){	
 	String result = ""
-    if (xferMNum && sDelay > 0){
-    	xParam=sDelay
+    if (sendmNum && sDelay > 0){
+    	state.mNum=sDelay
+        if (xferMNum) xParam=sDelay
         sDelay=0
     }
     def delay
     state.xParam = !(xParam==~/undefined|\?|null/) ? xParam : ""
-    def xParamLog = state.xParam ? " with the extra parameter: ${state.xParam}" : ""
+    def logOutput = state.xParam || state.mNum ? " with the extra parameter" : ""
+    logOutput += state.xParam && !state.mNum ? ": ${state.xParam}" : !state.xParam && state.mNum ? ": a number value of ${state.mNum}" : state.xParam && state.mNum ? "s: ${state.xParam} and a number value of ${state.mNum}" :""
     if (cDelay>0 || sDelay>0) delay = sDelay==0 ? cDelay as int : sDelay as int
-    if (!advWebCore || (advWebCore && state.xParam)){
-        result = (!delay || delay == 0) ? "I am triggering the WEBCORE macro named '${app.label}'${xParamLog}. " : delay==1 ? "I'll trigger the '${app.label}' WEBCORE macro in ${delay} minute. " : "I'll trigger the '${app.label}' WEBCORE macro in ${delay} minutes. "
+    if (!advWebCore || (advWebCore && (state.xParam || state.mNum))){
+        result = (!delay || delay == 0) ? "I am triggering the WEBCORE macro named '${app.label}'${logOutput}. " : delay==1 ? "I'll trigger the '${app.label}' WEBCORE macro in ${delay} minute. " : "I'll trigger the '${app.label}' WEBCORE macro in ${delay} minutes. "
             if (sDelay == 9999) { 
             result = "I am cancelling all scheduled executions of the WEBCORE macro, '${app.label}'. "  
             state.scheduled = false
@@ -2308,15 +2314,17 @@ def WebCoREResults(sDelay,xParam){
     }
     else {
     	if (advWebCore && voicePostAdv) result = parent.replaceVoiceVar(voicePostAdv, delay,"",macroType,app.label, 0, xParamVar)
-        else result = "I did not hear the required additional parameter required to execute the macro, '${app.label}'. The execution was aborted. %1%"
+        else result = "I did not hear the required additional parameters required to execute the macro, '${app.label}'. The execution was aborted. %1%"
 	}
     return result
 }
 def WebCoREHandler(){ 
 	state.scheduled = false
-    def data = state.xParam ? [xParam : state.xParam] : null
+    def mNum = state.mNum ? state.mNum as int : 0
+    def data = state.xParam ? [mName: app.label, mNum: mNum, xParam : state.xParam] : [mName: app.label, mNum: mNum, xParam : null]
     parent.webCoRE_execute(CoREName,data)
     state.xParam=""
+    state.mNum=""
 }
 //Control Handler-----------------------------------------------------------
 def controlResults(sDelay){	
