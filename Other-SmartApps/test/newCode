@@ -1,7 +1,7 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.3.6a - 1/5/18 Copyright © 2017 Michael Struck
+ *  Version 2.3.6b - 1/5/18 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.3.5 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
@@ -304,6 +304,7 @@ def pageEnviro(){
                 input "nestCMD", "bool", title: "Nest-Specific Thermostat Presence Commands (Home/Away)", defaultValue: false, submitOnChange: true
                 if (nestCMD) input "nestMGRCMD", "bool", title: "NST Manager Specific Reports (Report)", defaultValue: false
                 input "stelproCMD", "bool", title: "Stelpro Baseboard\nThermostat Modes (Eco/Comfort)", defaultValue:false
+                if (nestCMD) input "MyNestCMD", "bool", title: "MyNextTstat Specific Tips\n(Get Tips/Play Tips/Erase Tips)", defaultValue: false             
             }
     	}
         if (fooBotSel()) {
@@ -2025,7 +2026,7 @@ def getReply(devices, type, STdeviceName, op, num, param){
         else {
             if (type == "thermostat"){
                 if (param =~/tip/ || op=~/tip/) {
-                	if (MyEcobeeCMD && ecobeeCMD) {
+                	if (MyEcobeeCMD && ecobeeCMD || (MyNextCMD)) {
                         if (op ==~/repeat|replay/) {
                             def currentTipNum= state.tipCount>0 ? state.tipCount : 1 
                             def previousTipNum= currentTipNum - 1                    
@@ -3391,7 +3392,7 @@ def fillParamsList(){
     if (tstatsSel() && (nestCMD || ecobeeCMD) || vPresenceCMD) PARAMS<<"home"<<"away"
     if (tstatsSel() && ecobeeCMD) PARAMS<<"sleep"<<"resume program"
 	if (tstats && MyEcobeeCMD){  getEcobeeCustomList(tstats).each { PARAMS<<"${it}" } }     
-    if (tstatsSel() && ecobeeCMD && MyEcobeeCMD) PARAMS<<"tips"<<"tip"
+    if (tstatsSel() && ( ecobeeCMD && MyEcobeeCMD) || (MyNextCMD)) PARAMS<<"tips"<<"tip"
     if (presenceSel() && vPresenceCMD) PARAMS<<"check in"<<"check out"<<"arrive"<<"depart"<<"not present"<<"gone"
     if (cLightsSel() || cLightsKSel() || getAskAlexa().size()) { STColors().each {PARAMS<<it.name.toLowerCase()}}
     return PARAMS
@@ -3479,7 +3480,7 @@ private cheat(){
     if (shadesSel()) { result += "<h2><u>Doors (Valid Commands: <b>"+ getList(shadeVoc()+basicVoc()) +"</b>)</u></h2>"; shades.each{ result += it.label +"<br>" } }
     if (getCheatDisplayList("shade") && deviceAlias) { result += "<br><u>Aliases</u><br>"; result += getCheatDisplayList("shade") +"<br>" }
     if (tstatsSel()) { result += "<h2><u>Thermostats (Valid Commands: <b>{temperature setpoint}, "+ getList(tstatVoc()+basicVoc()) +"</b>)</u></h2>"; tstats.each{ result += it.label +"<br>" }
-    	if (ecobeeCMD && MyEcobeeCMD) result +="<br><b>* Please Note:</b> Some commands are MyEcobee specific such as Get Tips {level}, Play Tips and Erase Tips<br>"
+    	if ((ecobeeCMD && MyEcobeeCMD) || (MyNextCMD)) result +="<br><b>* Please Note:</b> Some commands are MyEcobee specific such as Get Tips {level}, Play Tips and Erase Tips<br>"
     }
     if (getCheatDisplayList("thermostat") && deviceAlias) { result += "<br><u>Aliases</u><br>"; result += getCheatDisplayList("thermostat") +"<br>" }
     if (tempsSel()) { result += "<h2><u>Temperature Sensors (Valid Commands: <b>"+ getList(tempVoc()) +"</b>)</u></h2>"; temps.each{ result += it.label +"<br>" } }
