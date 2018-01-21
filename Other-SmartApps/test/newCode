@@ -1,7 +1,7 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.3.8 - 1/20/18 Copyright © 2017 Michael Struck
+ *  Version 2.3.8 - 1/21/18 Copyright © 2017 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.3.5 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
@@ -9,7 +9,7 @@
  *  Version 2.3.5a (12/14/17) Added output of extension groups to message queue, optimized code, added optimized setup features.
  *  Version 2.3.6a (1/5/18) Improved setup process, reducing number of steps to get program operating, changed copyright to 2018, updated WebCoRE macro to send more data to the piston
  *  Version 2.3.7 (1/15/18) Added section to settings to define List_of_WCP for xParams (in WebCoRE macros), update to work with MyNextManager, minor bug fixes
- *  Version 2.3.8 (1/20/18) Added occupancy sensors to main devices
+ *  Version 2.3.8 (1/21/18) Added occupancy sensors to main devices
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -396,7 +396,7 @@ def pageAliasAdd(){
 		mapDevices(true).each {getList<<it.fullListName}        
         section ("Alias information"){
         	input "aliasName", "text", title: "Alias Name"
-        	input "aliasType", "enum", title: "Alias Device Type...", options: getList,required:false, submitOnChange: true 
+        	input "aliasType", "enum", title: "Alias Device Type...", options: getList, required:false, submitOnChange: true 
 			if (aliasType) input "aliasDevice", "enum", title: "Select Device The Alias Name Will Use...", options: getDeviceAliasList(aliasType), required: false, submitOnChange: true
 		}
         if (aliasDevice && aliasName && aliasType && getDeviceAliasList(aliasType)) {
@@ -413,7 +413,8 @@ def pageAliasAddFinal(){
 		else if (!aliasName || !aliasType || !aliasDevice) result="You did not enter all of the proper alias parameters. Go back and ensure all fields are filled in."
 		else {
         	def devType = [Switch:"switch", Dimmer:"level", "Colored Light":"color", "Temperature (Kelvin) Light": "kTemp", "Door Control":"door", "Window Shade":"shade", "Open/Close Sensor":"contact", "Temperature Sensor":"temperature", Lock:"lock",
-            	Thermostat:"thermostat", "Humidity Sensor":"humidity", Speaker:"music", "Acceleration Sensor":"acceleration", "Water Sensor":"water", "Motion Sensor":"motion", "Presence Sensor":"presence", "Foobot Air Quality Monitor":"pollution", "UV Index Device":"uvIndex"][aliasType]?:aliasType
+            	Thermostat:"thermostat", "Humidity Sensor":"humidity", Speaker:"music", "Acceleration Sensor":"acceleration", "Water Sensor":"water", "Motion Sensor":"motion", "Presence Sensor":"presence", "Foobot Air Quality Monitor":"pollution", 
+                	"UV Index Device":"uvIndex", "Occupancy Sensor":"beacon"][aliasType]?:aliasType
 			result = "Alias Name: ${aliasName}\nAlias Device Type: ${devType}\nDevice: ${aliasDevice}"
             state.aliasList<<["aliasName":aliasName,"aliasType":devType,"aliasDevice":"${aliasDevice}", "aliasTypeFull": aliasType, "aliasNameLC":aliasName.toLowerCase()]
 			success = true
@@ -1501,7 +1502,7 @@ def processList(){
     if (listType =~/control/) outputTxt = parseMacroLists("Control","control macro","run")
     if (listType =~/pollution|air|quality/) { outputTxt = fooBot && fooBot.size()>1 ? "#Foobot air quality monitors#" : fooBot && fooBot.size()==1 ? "@Foobot air quality monitor@" : "%Foobot air quality monitors%"; devices=fooBot; aliasType="pollution" }
     if (listType =~/uv|index/) { outputTxt = UV && UV.size()>1 ? "#UV Index Devices#" : UV && UV.size()==1 ? "@UV Index Device@" : "%UV Index Devices%"; devices=UV; aliasType="uvIndex" }
-    if (listType =~/occupancy/) { outputTxt = occupancy && occupancy.size()>1 ? "#occupancy sensors#" : occupancy && occupancy.size()==1 ? "@occupancy sensor@" : "%occupancy sensors%"; devices=occupancy; aliasType="occupancy" }
+    if (listType =~/occupancy/) { outputTxt = occupancy && occupancy.size()>1 ? "#occupancy sensors#" : occupancy && occupancy.size()==1 ? "@occupancy sensor@" : "%occupancy sensors%"; devices=occupancy; aliasType="beacon" }
     if (listType =~/core|webcore|trigger/) outputTxt = parseMacroLists("CoRE","WEBCORE trigger","run")
     if (listType =~/extension group|group extention/) outputTxt = parseMacroLists("GroupM","extension group","run")
     if (listType =~/weather/) outputTxt = parseMacroLists("Weather","weather report","play")
@@ -1516,7 +1517,7 @@ def processList(){
     if (listType ==~/macro|macros/) outputTxt ="Please be a bit more specific about which macros you want me to list. You can ask me about 'webcore triggers', 'extension groups' and 'control macros'. %1%"
     if (listType ==~/group|groups|room|rooms/) outputTxt = parseMacroLists("Rooms/Groups","group","take action")
     if (listType ==~/extension|extensions/) outputTxt ="Please be a bit more specific about which extensions you want me to list. You can ask me about 'voice reports', 'weather reports', 'schedules', and 'message queues'. %1%"
-    if (listType ==~/sensor|sensors/) outputTxt ="Please be a bit more specific about what kind of sensors you want me to list. You can ask me to list items like 'water', 'open close', 'presence', 'acceleration, or 'motion sensors'. %1%"
+    if (listType ==~/sensor|sensors/) outputTxt ="Please be a bit more specific about what kind of sensors you want me to list. You can ask me to list items like 'water', 'occupancy', 'open close', 'presence', 'acceleration, or 'motion sensors'. %1%"
     if (listType ==~/light|lights/) outputTxt ="Please be a bit more specific about what kind of lighting devices you want me to list. You can ask me to list devices like 'switches', 'dimmers' or 'colored lights'. %1%"
     if (outputTxt.startsWith("%") && outputTxt.endsWith("%")) outputTxt = "There are no" + outputTxt.replaceAll("%", " ") + "set up within your Ask Alexa SmartApp. "
     if (outputTxt.startsWith("@") && outputTxt.endsWith("@")){
@@ -3217,7 +3218,7 @@ def optionCount(start, end){
 def mapDevices(isAlias){
 	def result =[],  ext= isAlias ? "Alias": ""
 	if (settings."switches${ext}") result << [devices: settings."switches${ext}", type : "switch",fullListName:"Switch", cmd:switchVoc()]
-	if (settings."dimmers${ext}") result << [devices: settings."dimmers${ext}", type : "level",fullListName:"Dimmer",cmd:levelVoc()]
+	if (settings."dimmers${ext}") result << [devices: settings."dimmers${ext}", type : "level",fullListName:"Dimmer", cmd:levelVoc()]
 	if (settings."cLights${ext}") result << [devices: settings."cLights${ext}", type : "color",fullListName:"Colored Light", cmd:colorVoc()]
     if (settings."cLightsK${ext}") result << [devices: settings."cLightsK${ext}", type : "kTemp", fullListName:"Temperature (Kelvin) Light", cmd:kTempVoc()]
 	if (settings."doors${ext}") result << [devices: settings."doors${ext}", type : "door",fullListName:"Door Control", cmd:doorVoc()]
@@ -3704,7 +3705,7 @@ private vrReq()  { return 107 }
 private schReq()  { return 103 }
 private rmReq() { return 102 }
 private versionLong(){ return "2.3.7" }
-private versionDate(){ return "01/20/2018" }
+private versionDate(){ return "01/21/2018" }
 private textCopyright() {return "Copyright © 2018 Michael Struck" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
