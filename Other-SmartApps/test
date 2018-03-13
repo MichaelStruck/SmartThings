@@ -1,7 +1,7 @@
 {
   "languageModel": {
     "types": [
-      */*Slots*/*
+    */*Slots*/*
     ],
     "intents": [
       {
@@ -1335,6 +1335,6 @@
         "slots": []
       }
     ],
-    "invocationName": "smart things"
+    "invocationName": "*/*Invocation*/*"
   }
 }
