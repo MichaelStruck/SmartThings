@@ -1,13 +1,14 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.3.9c - 3/17/18 Copyright © 2018 Michael Struck
+ *  Version 2.4.0 - 3/24/18 Copyright © 2018 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.3.8 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
  *  Version 2.3.8 (2/8/18) Added occupancy sensors to main devices and macros, updated code for new ST actions and restrictions for playback, setup data now sends POST data
- *  Version 2.3.9c (3/17/18) Added Alexa speaker idenification to many aspects of the applications, extensions and restrictions
+ *  Version 2.3.9c (3/16/18) Added Alexa speaker idenification to many aspects of the applications, extensions and restrictions
+ *  Version 2.4.0 (3/24/18) Updated Help Screen, additional prep for auto deploy routine
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -538,8 +539,11 @@ def pageRooms() {
 }
 def pageAbout(){
 	dynamicPage(name: "pageAbout", uninstall: true) {
-        section { paragraph "${textAppName()}\n${textCopyright()}", image: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa.src/AskAlexa@2x.png" }
-        section ("Version numbers") { paragraph "${textVersion()}" } 
+        section { 
+        	element(name: "logo", element: "image", type: "image", image: imgURL() + "AskAlexaMP.png")
+        }
+        section ("Copyright") {paragraph textCopyright()}
+        section ("Version numbers") { paragraph textVersion() } 
         section (title: "Access token / Application ID", hideable: true, hidden: true){
             if (!state.accessToken) OAuthToken()
             def msg = state.accessToken != null ? state.accessToken : "Could not create Access Token. OAuth may not be enabled. Go to the IDE settings to enable OAuth for Ask Alexa."
@@ -568,9 +572,7 @@ def pageAbout(){
 def pageSettings(){
     dynamicPage(name: "pageSettings", uninstall: false){
         section { paragraph "Settings", image: imgURL() + "settings.png" }
-        section ("Setup") {
-        	href "pageSetup", title: "Setup Ask Alexa", description: "Tap to setup Ask Alexa", image: imgURL() + "setup.png"
-        }
+        section ("Setup") { href "pageSetup", title: "Setup Ask Alexa", description: "Tap to setup Ask Alexa", image: imgURL() + "setup.png" }
         section ("Additional voice settings"){
         	input "compoundCmd", "bool", title: "Accept Compound Commands", defaultValue: false
             href "pageDeviceVoice", title: "Device/Event Voice Settings", description: "Tap to configure your device or event voice settings", image: imgURL() + "smartthings.png"
@@ -631,8 +633,15 @@ def pageSetup(){
             input "invocationName", title: "Skill Invocation Name", defaultValue: "Smart Things", required: false, submitOnChange: true
         }
         section("Manual Amazon Lambda and skill installation"){
+        	 
         	if (!state.accessToken) paragraph "**You must enable OAuth via the IDE to setup this app**"
-            else href url:"${getApiServerUrl()}/api/smartapps/installations/${app.id}/setup?access_token=${state.accessToken}", style:"embedded", required:false, title:"Setup Variables", description: "For Amazon developer sites", image: imgURL() + "amazon.png"
+            else {
+            	def echoCount = 0
+				if (getRM().size()) getRM().each {echoCount += it.getEchoAliasList().size() }
+            	if (echoCount ) input "showRoomSkill", "bool", title: "Show Room Skill Variables", defaultValue: false
+            	href url:"${getApiServerUrl()}/api/smartapps/installations/${app.id}/setupLink?access_token=${state.accessToken}", style:"embedded", required:false, title:"Setup Variables Link", 
+                description: "Use Live Logging in the SmartThings IDE to obtain the URL for use on your computer browser.", image: imgURL() + "amazon.png"
+        	}
         }
 		/*if (azRegion && invocationName){
             section("Automated Amazon Lambda and skill installation"){
@@ -642,7 +651,7 @@ def pageSetup(){
         }*/
         section("Help") {
         	if (!state.accessToken) paragraph "**You must enable OAuth via the IDE to produce the command cheat sheet**"
-            else href url:"${getApiServerUrl()}/api/smartapps/installations/${app.id}/cheat?access_token=${state.accessToken}", style:"embedded", required:false, title:"Display Ask Alexa Cheat Sheet", 
+            else href url:"${getApiServerUrl()}/api/smartapps/installations/${app.id}/cheatLink?access_token=${state.accessToken}", style:"embedded", required:false, title:"Ask Alexa Cheat Sheet Link", 
             	description: "Use Live Logging in the SmartThings IDE to obtain the URL for use on your computer browser.", image: imgURL() + "list.png"
         }
     }
@@ -927,7 +936,7 @@ def pageGlobalVariables(){
         section ("Random responses"){
         	href "pageRandom1", title: "Random Responses 1 (%random1%)", description: getRandDesc(1), state: random1A || random1B|| random1C? "complete" : null
             href "pageRandom2", title: "Random Responses 2 (%random2%)", description: getRandDesc(2), state: random2A || random2B|| random2C? "complete" : null
-            href "pageRandom2", title: "Random Responses 3 (%random3%)", description: getRandDesc(3), state: random3A || random3B|| random3C? "complete" : null
+            href "pageRandom3", title: "Random Responses 3 (%random3%)", description: getRandDesc(3), state: random3A || random3B|| random3C? "complete" : null
         }
         section ("Built-in variables"){
         	paragraph "The following variables are built in:\n\n%time% - Time the variable is called\n%day% - Day of the week\n%date% - Full date\n" +
@@ -1275,6 +1284,8 @@ mappings {
 	path("/setup") { action: [GET: "setupData"] }
     path("/flash") { action: [GET: "flash"] }
     path("/cheat") { action: [GET: "cheat"] }
+    path("/cheatLink") { action: [GET: "cheatLink"] }
+    path("/setupLink") { action: [GET: "setupLink"] }
     path("/newSetup") { action: [GET: "devSetup"] }
     path("/newSetupRoom") { action: [GET: "devRoomSetup"] }
     path("/cancelList") { action: [GET: "cancelList"] }
@@ -3625,6 +3636,18 @@ def roomsList(result=""){
     fillRoomList().unique().each{result+=it+"<br>"}
     displayMiniHTML(result)
 }
+def setupLink() { showLink("setup") }
+def cheatLink() { showLink("cheat") }
+def showLink(type){
+	def siteLink = "${getApiServerUrl()}/api/smartapps/installations/${app.id}/${type}?access_token=${state.accessToken}"
+    def siteType = type =="setup" ? "Setup web page" : "Cheat sheet web page"
+    log.info "${siteType} located at : ${siteLink}"
+	def result ="""<div style='padding:10px'><h1>See your SmartThings IDE Live Logging for the URL of the <i>${siteType}</i> so you may display it on your computer browser</h1>
+    <b>${siteType} URL:</b><textarea rows='4' style='width: 99%'>${siteLink}</textarea><br><br><br>
+    <button onclick="location.reload();">Reload this page to display URL on Live Logging again</button>
+    <br><br><br>Click '<' above to return to the Ask Alexa SmartApp.</div>"""
+    displayData(result)
+}
 def setupData(){
 	def iName = invocationName ? invocationName.toLowerCase() : "smart things"
     def httpPOSTAWS ="<form name='Lambda' action='https://ask-alexa.com/cgi-bin/lambda.php' method='POST' target='_blank'><input type='hidden' name='appID' value='${app.id}'>" +
@@ -3637,8 +3660,7 @@ def setupData(){
         "<input type='hidden' name='token' value='${state.accessToken}'><input type='hidden' name='url' value='${getApiServerUrl()}'><input type='submit' value='Download Developer Code'></form>"
 	def dupCounter=0, devCodeTxt = "Click the button below, copy the JSON code on the page, then paste to the Interaction Model Builder on the <a href='https://developer.amazon.com' target='_blank'>Amazon Developer</a> page<br>${httpPOSTDev}"
 	def devDLTxt = "Or, click the botton below to download a text copy of the JSON code, then load into to the Interaction Model Builder on the <a href='https://developer.amazon.com' target='_blank'>Amazon Developer</a> page<br>${httpPOSTDevDL}"
-	log.info "Set up web page located at : ${getApiServerUrl()}/api/smartapps/installations/${app.id}/setup?access_token=${state.accessToken}"
-    def result ="<div style='padding:10px'><i><b>One-step Personalized Code (Main Ask Alexa Skill):</b></i><br>"
+	def result ="<div style='padding:10px'><i><b>One-step Personalized Code (Main Ask Alexa Skill):</b></i><br>"
     result += "<br><b>Lambda Full Code:</b><br>Click button below, copy the code on the page, then paste to <a href='http://aws.amazon.com' target='_blank'>AWS Lambda</a><br>${httpPOSTAWS}"
     result += "You can also download a text copy of the code for backup or to use your text editor to copy/paste to AWS Lambda. To download, click the button below<br>${httpPOSTAWSDL}"
     result += "<br><br><b>Developer Code:</b><br>${devCodeTxt}${devDLTxt}<br>"
@@ -3661,7 +3683,7 @@ def setupData(){
         result += "<b><font color='red'>**NOTICE: </b>The following duplicate(s) are only listed once below in LIST_OF_DEVICES:<br><br>"
         duplicates.each{result +="* " + it +" *<br><br>"}
         result += "Be sure to have unique names for each device/alias and only use each name once within the parent app.**<br><br></font>" 	
-    }  
+    }
     result +="""<table><tr><th align="center">CANCEL_CMDS</th><th align="center">DEVICE_TYPE_LIST</th><th align="center">LIST_OF_DEVICES</th><th align="center">LIST_OF_FOLLOWUPS</th></tr><tr>
     <td><iframe src='${getApiServerUrl()}/api/smartapps/installations/${app.id}/cancelList?access_token=${state.accessToken}' width = '175'></iframe><br></td>
     <td><iframe src='${getApiServerUrl()}/api/smartapps/installations/${app.id}/typeList?access_token=${state.accessToken}' width = '175'></iframe><br></td>
@@ -3726,7 +3748,7 @@ def setupData(){
   	</tr></table>"""
     def echoCount = 0
 	if (getRM().size()) getRM().each {echoCount += it.getEchoAliasList().size() }
-	/*if (echoCount){
+	if (echoCount && showRoomSkill){
     	httpPOSTDev ="<form name='Dev' action='https://ask-alexa.com/cgi-bin/devSiteRoom.php' method='POST' target='_blank'><input type='hidden' name='appID' value='${app.id}'><input type='hidden' name='invocation' value='here'>"+
         "<input type='hidden' name='token' value='${state.accessToken}'><input type='hidden' name='url' value='${getApiServerUrl()}'><input type='submit' value='Display Developer JSON Code-Room Code'></form>"   
 		httpPOSTDevDL ="<form name='DevDL' action='https://ask-alexa.com/cgi-bin/devSiteRoomDL.php' method='POST'><input type='hidden' name='appID' value='${app.id}'><input type='hidden' name='invocation' value='here'>"+
@@ -3769,7 +3791,7 @@ def setupData(){
         </tr></table><table><tr><th align="center">DEVICE_TYPE_LIST</th><th align="center"></tr><tr>
         <td><iframe src='${getApiServerUrl()}/api/smartapps/installations/${app.id}/typeList?access_token=${state.accessToken}' width = '175'></iframe><br></td>
         </tr></table>"""
-    }*/
+    }
     result += "<br><hr><br><i><b>URL of this setup page:</b></i><br><br>${getApiServerUrl()}/api/smartapps/installations/${app.id}/setup?access_token=${state.accessToken}<br><br><hr>"
 	result += "<br><i><b>Lastest version of the Lambda code:</b></i><br><br><a href='https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa.src/Node.js'>https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa.src/Node.js</a><br><br><hr>"
     result += "<br><i><b>Lastest version of the Sample Utterances:</b></i><br><br><a href='https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa.src/Sample%20Utterances'>https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa.src/Sample%20Utterances</a><br><br><hr>"
@@ -3924,10 +3946,9 @@ def findDeviceReserverd(devResCount=0) {
 }
 private resList() {def resList =/room|group|here|this room|this group|in here|echo/}
 private cheat(){
-	log.info "Cheat sheet web page located at : ${getApiServerUrl()}/api/smartapps/installations/${app.id}/cheat?access_token=${state.accessToken}"
-    def result ="<div style='padding:10px'><h2><i><b>Ask Alexa Device/Command 'Cheat Sheet'</b></i></h2>To expand on this sheet, please see the <a href='http://thingsthataresmart.wiki/index.php?title=Ask_Alexa#Ask_Alexa_Usage' target='_blank'>Things That Are Smart Wiki</a><br>"
-	result += "Most commands will begin with 'Alexa, ask ${invocationName}' or 'Alexa, tell ${invocationName}' and then the command and device. For example:<br>"
-    result +="<i>'Alexa, tell ${invocationName} to Open {DoorName}</i>'<br><i>'Alexa, ask ${invocationName} the {SwitchName} status'</i><br><br><hr>"
+	def result ="""<div style='padding:10px'><h2><i><b>Ask Alexa Device/Command 'Cheat Sheet'</b></i></h2>To expand on this sheet, please see the <a href='http://thingsthataresmart.wiki/index.php?title=Ask_Alexa#Ask_Alexa_Usage' 
+    target='_blank'>Things That Are Smart Wiki</a><br><br>Most commands will begin with 'Alexa, ask ${invocationName}' or 'Alexa, tell ${invocationName}' and then the command and device. For example:<br>
+    <i>'Alexa, tell ${invocationName} to Open {DoorName}</i>'<br><i>'Alexa, ask ${invocationName} the {SwitchName} status'</i><br><br><hr>"""
     if (switchesSel()) { result += "<h2><u>Switches</u> (Valid Commands: <b>" + getList(switchVoc()+basicVoc()) + "</b>)</h2>"; switches.each{ result += it.label +"<br>" } }
     if (getCheatDisplayList("switch") && deviceAlias) { result += "<br><u>Aliases</u><br>"; result += getCheatDisplayList("switch") +"<br>" }
     if (dimmersSel()) { result += "<h2><u>Dimmers</u> (Valid Commands: <b>{brightness number}, " + getList(levelVoc()+basicVoc()) + "</b>)</h2>"; dimmers.each{ result += it.label +"<br>" } }
@@ -4043,7 +4064,8 @@ private getAliasCheatList(obj, type){
 }
 //Version/Copyright/Information/Help-----------------------------------------------------------
 private webCoRE_handle(){ return'webCoRE' }
-private textAppName() { return "Ask Alexa" }	
+private textAppName() { return "Ask Alexa" }
+private authorsNames() {return ["Michael Struck"]}
 private textVersion() {  
     def version = "SmartApp Version: ${versionLong()} (${versionDate()})", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : "", aaMQVer ="", aaWRVer ="", aaVRVer="", aaSCHVer="", aaRMVer=""
     if (getAAMQ().size()) aaMQVer="\n"+ getAAMQ()[0].textVersion() 
@@ -4053,16 +4075,16 @@ private textVersion() {
     if (getRM().size()) aaRMVer="\n"+getRM()[0].textVersion()
     return "${version}${lambdaVersion}${aaMQVer}${aaRMVer}${aaSCHVer}${aaVRVer}${aaWRVer}"
 }
-private versionInt(){ return 239 }
+private versionInt(){ return 240 }
 private LambdaReq() { return 131 }
 private mqReq() { return 108 }
 private wrReq() { return 108 }
 private vrReq() { return 109 }
 private schReq() { return 104 }
 private rmReq() { return 104 }
-private versionLong(){ return "2.3.9c" }
-private versionDate(){ return "03/17/2018" }
-private textCopyright() {return "Copyright © 2018 Michael Struck" }
+private versionLong(){ return "2.4.0" }
+private versionDate(){ return "03/24/2018" }
+private textCopyright() {return "Copyright © 2018 ${getList(authorsNames())}" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
 		"  http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an 'AS IS' BASIS, "+
