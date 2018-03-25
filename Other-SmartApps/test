@@ -3578,7 +3578,8 @@ def devSetup(){
     displayRaw(result)
 }
 def devRoomSetup(){
-	def result = fillDevJSON("LIST_OF_OPERATORS",fillOperatorsList()) +",<br>"
+	def result = fillDevJSON("DEVICE_TYPE_LIST", fillTypeList()) +",<br>"
+    result += fillDevJSON("LIST_OF_OPERATORS",fillOperatorsList()) +",<br>"
     result += fillDevJSON("LIST_OF_PARAMS",fillParamsList())+",<br>"
     result += fillDevJSON("LIST_OF_ROOMS",fillRoomList())+",<br>"
     result += fillDevJSON("LIST_OF_FOLLOWUPS",fillFollowupList()) 
