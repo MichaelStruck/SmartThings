@@ -1,12 +1,12 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.4.0 - 4/15/18 Copyright © 2018 Michael Struck
+ *  Version 2.4.0 - 5/3/18 Copyright © 2018 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.4.0 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
- *  Version 2.4.0 (4/15/18) Updated Help Screen, additional prep for auto deploy routine and updated setup variables page (to reflect change in Amazon Dev site), added repeat commands, added fans to device types(suggestion from @toyebox)
+ *  Version 2.4.0 (5/3/18) Updated Help Screen, additional prep for auto deploy routine and updated setup variables page (to reflect change in Amazon Dev site), added repeat commands, added fans to device types(suggestion from @toyebox)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -4047,7 +4047,7 @@ private vrReq() { return 109 }
 private schReq() { return 104 }
 private rmReq() { return 105 }
 private versionLong(){ return "2.4.0" }
-private versionDate(){ return "04/15/2018" }
+private versionDate(){ return "05/03/2018" }
 private textCopyright() {return "Copyright © 2018 ${getList(authorsNames())}" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
