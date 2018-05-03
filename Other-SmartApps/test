@@ -198,7 +198,7 @@ def pageSchdr() {
         		if (schCount && (aaSCVer < schReq())) paragraph "You are using an outdated version of the schedules extension. Please update the software and try again.", image: imgURL() + "caution.png" 
         	}
         }
-		if (schCount) section(schCount==1 ? "One schedule configured" : schCount + " schedules configured" ){}
+		if (schCount) section(schCount==1 ? "One schedule configured" : schCount + " schedules configured" )
         section(" "){
         	app(name: "childSCHD", appName: "Ask Alexa Schedule", namespace: "MichaelStruck", title: "Create A New Schedule...", description: "Tap to create a new schedule", multiple: true, image: imgURL() + "add.png")
         }
@@ -482,7 +482,7 @@ def pageVoiceRPT() {
         		if (vrCount && (aaVRVer < vrReq())) paragraph "You are using an outdated version of the voice report extension. Please update the software and try again.", image: imgURL() + "caution.png" 
         	}
         }
-        if (vrCount) section(vrCount==1 ? "One voice report configured" : vrCount + " voice reports configured" ){} 
+        if (vrCount) section(vrCount==1 ? "One voice report configured" : vrCount + " voice reports configured" )
         section(" "){
         	app(name: "childVR", appName: "Ask Alexa Voice Report", namespace: "MichaelStruck", title: "Create A New Voice Report...", description: "Tap to create a new report", multiple: true, image: imgURL() + "add.png")
         }
@@ -499,7 +499,7 @@ def pageWeather() {
         		if (wrCount && (aaWRVer < wrReq())) paragraph "You are using an outdated version of the weather report extension. Please update the software and try again.", image: imgURL() + "caution.png" 
         	}
         }
-        if (wrCount) section(wrCount==1 ? "One weather report configured" : wrCount + " weather reports configured" ){}    
+        if (wrCount) section(wrCount==1 ? "One weather report configured" : wrCount + " weather reports configured" ) 
         section(" "){
         	app(name: "childWR", appName: "Ask Alexa Weather Report", namespace: "MichaelStruck", title: "Create A New Weather Report...", description: "Tap to create a new report", multiple: true, image: imgURL() + "add.png")
         }
@@ -512,7 +512,7 @@ def pageMacros() {
         if (duplicates){
         	section ("**Warning**"){ paragraph "You have two or more macros with the same name. Please ensure each macro has a unique name and also does not conflict with device names or other extensions.", image: imgURL() + "caution.png" }
         }
-        if (macroCount) section(macroCount==1 ? "One macro configured" : macroCount + " macros configured" ){}
+        if (macroCount) section(macroCount==1 ? "One macro configured" : macroCount + " macros configured" )
         section(" "){
         	app(name: "childMacros", appName: "Ask Alexa", namespace: "MichaelStruck", title: "Create A New Macro...", description: "Tap to create a new macro", multiple: true, image: imgURL() + "add.png")
         }
@@ -528,7 +528,7 @@ def pageRooms() {
        			if (findRoomReserved()) paragraph "You have used the reserved words 'echo', 'room', 'this room', 'group', 'this group', 'here' or 'in here' as a room/group alias or name. Please rename these to ensure Ask Alexa functions properly.", image: imgURL() + "caution.png"
        		}
        }
-       if (rmCount) section(rmCount==1 ? "One room / group configured" : rmCount + " rooms / groups configured" ){}
+       if (rmCount) section(rmCount==1 ? "One room / group configured" : rmCount + " rooms / groups configured" )
        section(" "){
         	app(name: "childRooms", appName: "Ask Alexa Rooms/Groups", namespace: "MichaelStruck", title: "Create A New Room/Group...", description: "Tap to create a room/group", multiple: true, image: imgURL() + "add.png")
         }
