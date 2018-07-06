@@ -4,7 +4,7 @@
  *	Copyright © 2018 Michael Struck
  *  Original Author: Matt Lebaugh (@mlebaugh)
  *
- *  Version 1.0.1 7/5/18 
+ *  Version 1.0.1 7/6/18 
  *
  *  Version 1.0.1 Format and syntax updates
  *  Version 1.0.0 Original release by Matt Lebaugh. Great Work!
@@ -33,10 +33,10 @@ metadata {
 
 		command "toggleMode"
         command "occupied"
-        command "Occupancy"
+        command "occupancy"
         command "vacant"
-        command "Vacancy"
-        command "Manual"
+        command "vacancy"
+        command "manual"
         command "setMotionSenseOff"
         command "setMotionSenseHigh"
         command "setMotionSenseMed"
@@ -367,21 +367,21 @@ def toggleMode() {
   	cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
     sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
 }*/
-def occupied() { Occupancy() }
-def Occupancy() {
+def occupied() { occupancy() }
+def occupancy() {
 	def cmds = []
     cmds << zwave.configurationV1.configurationSet(configurationValue: [3] , parameterNumber: 3, size: 1)
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
     sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
 }
-def vacant() { Vacancy() }
-def Vacancy() {
+def vacant() { vacancy() }
+def vacancy() {
 	def cmds = []
     cmds << zwave.configurationV1.configurationSet(configurationValue: [2] , parameterNumber: 3, size: 1)
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
 	sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
 }
-def Manual() {
+def manual() {
 	def cmds = []
     cmds << zwave.configurationV1.configurationSet(configurationValue: [1] , parameterNumber: 3, size: 1)
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
@@ -568,4 +568,4 @@ private parseAssocGroupList(list, group) {
     }   
     return nodes
 }
-def showVersion() { sendEvent (name: "about", value:"Version 1.0.1 (07/05/18)") }
+def showVersion() { sendEvent (name: "about", value:"Version 1.0.1 (07/06/18)") }
