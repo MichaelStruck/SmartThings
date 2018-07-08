@@ -1,12 +1,12 @@
 /**
  *  Ask Alexa 
  *
- *  Version 2.4.0 - 5/3/18 Copyright © 2018 Michael Struck
+ *  Version 2.4.0 - 6/29/18 Copyright © 2018 Michael Struck
  *  Special thanks for Keith DeLong for overall code and assistance; jhamstead for Ecobee climate modes, Yves Racine for My Ecobee thermostat tips
  * 
  *  Version information prior to 2.4.0 listed here: https://github.com/MichaelStruck/SmartThingsPublic/blob/master/smartapps/michaelstruck/ask-alexa.src/Ask%20Alexa%20Version%20History.md
  *
- *  Version 2.4.0 (5/3/18) Updated Help Screen, additional prep for auto deploy routine and updated setup variables page (to reflect change in Amazon Dev site), added repeat commands, added fans to device types(suggestion from @toyebox)
+ *  Version 2.4.0 (6/29/18) Updated Help Screen, added Expression extention, additional prep for auto deploy routine and updated setup variables page (to reflect change in Amazon Dev site), added repeat commands, added fans to device types(suggestion from @toyebox)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -50,6 +50,7 @@ preferences {
             page name:"pageAliasDel"
             	page name: "pageAliasDelFinal"
         page name:"pageExtensions"
+        	page name:"pageExpress"
         	page name:"pageMacros"
             page name:"pageMsgQue"
             	page name:"pagePriQueue"
@@ -101,7 +102,7 @@ def mainPageParent() {
                 if (findNullDevices()) paragraph findNullDevices(), image: imgURL() + "caution.png"  
             }
         }
-        if (msgQueueGUI && mqCounts(msgQueueGUI)) section ("Message Queues"){ href "pageMQGUI", title: "Message Queue", description: mqCounts(msgQueueGUI) + " - Tap to read", state: "complete", image:imgURL() + "mailbox.png" }            
+        if (msgQueueGUI && mqCounts(msgQueueGUI)) section ("Message queues"){ href "pageMQGUI", title: "Message Queue", description: mqCounts(msgQueueGUI) + " - Tap to read", state: "complete", image:imgURL() + "mailbox.png" }            
         section("Items to interface to Alexa") {
             href "pageSwitches", title: "Lighting/Switches", description:getDesc(switchesSel() || dimmersSel() || cLightsSel() || cLightsKSel()), state: switchesSel() || dimmersSel() || cLightsSel() || cLightsKSel() ? "complete" : null, image:imgURL() + "power.png"
             href "pageDoors", title: "Doors/Windows/Locks", description: getDesc(doorsSel() || locksSel() || ocSensorsSel() || shadesSel()), state: doorsSel() || locksSel() || ocSensorsSel() || shadesSel() ? "complete" : null, image: imgURL() + "lock.png"
@@ -120,11 +121,12 @@ def mainPageParent() {
 }
 def pageExtensions(){
     dynamicPage(name: "pageExtensions", install: false, uninstall: false) {
-    	def macroCount = getAskAlexa().size(), mqCount = getAAMQ().size(), vrCount=getVR().size, schCount =getSCHD().size(), rmCount=getRM().size, wrCount =getWR().size
+    	def macroCount = getAskAlexa().size(), mqCount = getAAMQ().size(), vrCount=getVR().size, schCount =getSCHD().size(), rmCount=getRM().size, wrCount =getWR().size, expCount=getEXP().size
         section { paragraph "Ask Alexa Extensions", image: imgURL() + "exadd.png" }
         section("Installed extensions"){
             def macResCount = findMacroReserved() + findMQReserved()
         	def duplicates =getAskAlexa().label.findAll{getAskAlexa().label.count(it)>1}.unique()
+            duplicates +=getEXP().label.findAll{getEXP().label.count(it)>1}.unique()
             duplicates +=getWR().label.findAll{getWR().label.count(it)>1}.unique()
             duplicates +=getVR().label.findAll{getVR().label.count(it)>1}.unique()
             duplicates +=getAAMQ().label.findAll{getAAMQ().label.count(it)>1}.unique()
@@ -132,6 +134,7 @@ def pageExtensions(){
             duplicates +=getRM().label.findAll{getRM().label.count(it)>1}.unique()
             if (duplicates) paragraph "You have two or more extensions that have the same name. Please ensure each extension has a unique name and also does not conflict with device or other extension names.", image: imgURL() + "caution.png" 
         	if (macResCount) paragraph "You have used the reserved words 'echo', 'room', 'group' or 'here' in your extension names or aliases. Please change these extensions to ensure Ask Alexa functions properly.", image: imgURL() + "caution.png"
+            href "pageExpress", title: "Expressions", description: expDesc(expCount), state: (expCount ? "complete" : null), image: imgURL() + "expression.png" 
             href "pageMacros", title: "Macros", description: macroDesc(macroCount), state: (macroCount ? "complete" : null), image: imgURL() + "speak.png" 
      		href "pageMsgQue", title: "Message Queues", description: mqDesc(mqCount), state: "complete", image: imgURL() + "mailbox.png"
             href "pageRooms", title: "Rooms/Groups", description: rmDesc(rmCount), state: (rmCount ? "complete" : null), image: imgURL() + "room.png" 
@@ -198,7 +201,7 @@ def pageSchdr() {
         		if (schCount && (aaSCVer < schReq())) paragraph "You are using an outdated version of the schedules extension. Please update the software and try again.", image: imgURL() + "caution.png" 
         	}
         }
-		if (schCount) section(schCount==1 ? "One schedule configured" : schCount + " schedules configured" )
+		if (schCount) section(schCount==1 ? "One schedule configured" : schCount + " schedules configured" ){}
         section(" "){
         	app(name: "childSCHD", appName: "Ask Alexa Schedule", namespace: "MichaelStruck", title: "Create A New Schedule...", description: "Tap to create a new schedule", multiple: true, image: imgURL() + "add.png")
         }
@@ -227,15 +230,15 @@ def pageSwitches(){
     dynamicPage(name: "pageSwitches", install: false, uninstall: false) {
         section { paragraph "Lighting/Switches", image: imgURL() + "power.png"} 
         section("Choose the devices to interface", hideWhenEmpty: true) {
-            input "switches", "capability.switch", title: "Choose Switches (On/Off/Toggle/Status)", multiple: true, required: false
-            input "dimmers", "capability.switchLevel", title: "Choose Dimmers (On/Off/Toggle/Level/Status)", multiple: true, required: false
+            input "switches", "capability.switch", title: "Choose Switches (On/Off/Toggle/Status)", multiple: true, required: false, submitOnChange: true
+            input "dimmers", "capability.switchLevel", title: "Choose Dimmers (On/Off/Toggle/Level/Status)", multiple: true, required: false, submitOnChange: true
             input "cLights", "capability.colorControl", title: "Choose Colored Lights (On/Off/Toggle/Level/Color/Status)", multiple: true, required: false, submitOnChange: true
             input "cLightsK", "capability.colorTemperature", title: "Choose Temperature (Kelvin) Lights (On/Off/Toggle/Level/Temperature/Status)", multiple: true, required: false, submitOnChange: true
         }
         if (deviceAlias){
             section("Devices that can have aliases", hideWhenEmpty: true) {
-                input "switchesAlias", "capability.switch", title: "Choose Switches", multiple: true, required: false
-                input "dimmersAlias", "capability.switchLevel", title: "Choose Dimmers", multiple: true, required: false
+                input "switchesAlias", "capability.switch", title: "Choose Switches", multiple: true, required: false, submitOnChange: true
+                input "dimmersAlias", "capability.switchLevel", title: "Choose Dimmers", multiple: true, required: false, submitOnChange: true
                 input "cLightsAlias", "capability.colorControl", title: "Choose Colored Lights", multiple: true, required: false, submitOnChange: true
                 input "cLightsKAlias", "capability.colorTemperature", title: "Choose Temperature (Kelvin) Lights", multiple: true, required: false, submitOnChange: true
             }
@@ -245,12 +248,19 @@ def pageSwitches(){
             	paragraph "The following color temperatures are valid:\nSoft White, Warm White, Cool White, Daylight White", image: imgURL() + "info.png"
             }
         }
-        if (cLightsSel()){
-        	section ("Colored Light model specific commands"){
-            	input "osramCMD", "bool", title: "OSRAM Specialized Device Handeler (Loop/Pulse)", defaultValue: false
-            }
+        if ((cLights?.getSupportedCommands().findAll{ it.name.contains("loopOn") } || cLightsK?.getSupportedCommands().findAll{ it.name.contains("loopOn") } ||
+        	cLightsAlias?.getSupportedCommands().findAll{ it.name.contains("loopOn") } || cLightsKAlias?.getSupportedCommands().findAll{ it.name.contains("loopOn") }) && cLightsSel()){
+        		section ("Colored Light model specific commands"){
+                	input "osramCMD", "bool", title: "OSRAM Specialized Device Handler (Loop/Pulse)", defaultValue: false
+            	}
         }
-	}
+        if ((switches?.getSupportedCommands().findAll{ it.name.contains("Occupancy") } || dimmers?.getSupportedCommands().findAll{ it.name.contains("Occupancy") } ||   
+        	switchesAlias?.getSupportedCommands().findAll{ it.name.contains("Occupancy")} || dimmersAlias?.getSupportedCommands().findAll{ it.name.contains("Occupancy")} ) && switchesSel() ) {
+            	section ("Switches/Dimmers model specific commands") {
+                	input "geopCMD", "bool", title: "GE Specialized Device Handler (Occupancy/Vacancy)", defaultValue: false
+				}	
+    	}
+    }
 }
 def pageDoors() {
     dynamicPage(name: "pageDoors", install: false, uninstall: false) {
@@ -305,7 +315,7 @@ def pageEnviro(){
             }
         }
         if (tstatsSel()){
-            section("Default Thermostat Commands"){
+            section("Default thermostat commands"){
             	if (!tstatCool) input "tstatHeat", "bool", title: "Set Heating Setpoint By Default", defaultValue:false, submitOnChange:true
             	if (!tstatHeat) input "tstatCool", "bool", title: "Set Cooling Setpoint By Default", defaultValue:false, submitOnChange:true
     		}
@@ -318,7 +328,7 @@ def pageEnviro(){
                 if (nestCMD) input "MyNestCMD", "bool", title: "MyNextTstat Specific Tips\n(Get Tips/Play Tips/Erase Tips)", defaultValue: false  
             }
     	}
-        if (fooBotSel()) section("Foobot Refresh"){ input "fooBotPoll", "bool", title: "Refresh Foobot Data Before Speaking Status", defaultValue: false }
+        if (fooBotSel()) section("Foobot refresh"){ input "fooBotPoll", "bool", title: "Refresh Foobot Data Before Speaking Status", defaultValue: false }
 	}
 }
 def pageSpeakers(){
@@ -377,8 +387,8 @@ def pageHomeControl(){
         if (findNull || missingRtn || missingMode) {
         	section("**Warning**"){
             	if (findNull) paragraph "You have a null routine present in your SmartThings setup. Go to your SmartThings IDE to resolve this situation. This routine has been removed from the list below.", image: imgURL() + "caution.png"
-            	if (missingRtn) paragraph "The following routine(s) are missing from your SmartThing setup.\n\n${getList(missingRtn)}\n\nDeselect the routine(s) marked in the list below to prevent issue.", image: imgURL() + "caution.png"
-            	if (missingMode) paragraph "The following mode(s) are missing from your SmartThing setup.\n\n${getList(missingMode)}\n\nDeselect the mode(s) marked in the list below to prevent issue.", image: imgURL() + "caution.png"
+            	if (missingRtn) paragraph "The following routine(s) are missing from your SmartThing setup.\n\n${getList(missingRtn)}\n\nDeselect the routine(s) marked in the list below to prevent issues.", image: imgURL() + "caution.png"
+            	if (missingMode) paragraph "The following mode(s) are missing from your SmartThing setup.\n\n${getList(missingMode)}\n\nDeselect the mode(s) marked in the list below to prevent issues.", image: imgURL() + "caution.png"
             }
         }
         section ("Mode options", hideWhenEmpty: true) {
@@ -499,15 +509,28 @@ def pageWeather() {
         		if (wrCount && (aaWRVer < wrReq())) paragraph "You are using an outdated version of the weather report extension. Please update the software and try again.", image: imgURL() + "caution.png" 
         	}
         }
-        if (wrCount) section(wrCount==1 ? "One weather report configured" : wrCount + " weather reports configured" ) 
+        if (wrCount) section(wrCount==1 ? "One weather report configured" : wrCount + " weather reports configured" )    
         section(" "){
         	app(name: "childWR", appName: "Ask Alexa Weather Report", namespace: "MichaelStruck", title: "Create A New Weather Report...", description: "Tap to create a new report", multiple: true, image: imgURL() + "add.png")
         }
 	}
 }
+def pageExpress() {
+    dynamicPage(name: "pageExpress", install: false, uninstall: false) {
+        section{ paragraph "Expressions", image: imgURL() + "expression.png" }
+        def children = getEXP(), expCount = children.size(), duplicates = children.label.findAll{children.label.count(it)>1}.unique()
+        if (duplicates){
+        	section ("**Warning**"){ paragraph "You have two or more expression with the same name. Please ensure each macro has a unique name and also does not conflict with device names or other extensions.", image: imgURL() + "caution.png" }
+        }
+        if (expCount) section(expCount==1 ? "One expression configured" : expCount + " expressions configured" )
+        section(" "){
+        	app(name: "childExp", appName: "Ask Alexa Expression", namespace: "MichaelStruck", title: "Create A New Expression...", description: "Tap to create a new expression", multiple: true, image: imgURL() + "add.png")
+        }
+	}
+}
 def pageMacros() {
     dynamicPage(name: "pageMacros", install: false, uninstall: false) {
-        section{ paragraph "Macros", image: imgURL() + "speak.png" }
+        section{ paragraph "Expressions", image: imgURL() + "speak.png" }
         def children = getAskAlexa(), macroCount = children.size(), duplicates = children.label.findAll{children.label.count(it)>1}.unique()
         if (duplicates){
         	section ("**Warning**"){ paragraph "You have two or more macros with the same name. Please ensure each macro has a unique name and also does not conflict with device names or other extensions.", image: imgURL() + "caution.png" }
@@ -879,6 +902,7 @@ def pageGlobalOptions(){
         }    
         if (!muteAll && !cmdMute) {
         	section ("Playback options"){
+                input "speakVoice", "enum", title: "Alexa Speaking Voice", options: voicesList(), description: "Coming Soon", submitOnChange: true, required: false
                 input "speakSpeed", "enum", title: "Alexa Speaking Speed", options: ["x-slow":"Extra Slow", "slow":"Slow", "medium":"Default", "fast":"Fast", "x-fast":"Extra Fast"], defaultValue: "medium", required: false
                 input "speakPitch", "enum", title: "Alexa Speaking Pitch", options: ["x-low":"Extra Low", "low":"Low", "medium":"Default", "high":"High", "x-high":"Extra High"], defaultValue: "medium", submitOnChange: true, required: false
                 if (speakPitch=="medium" || !speakPitch) input "whisperMode", "bool", title: "Enable Whisper Mode", defaultValue: false, submitOnChange: true
@@ -980,7 +1004,7 @@ page(name: "pageRandom3", title: "Random Responses 3"){
 def pageCustomColor(){
 	dynamicPage(name: "pageCustomColor", uninstall: false){
         section{ paragraph "Custom Color Setup", image: imgURL() + "colors.png" }
-        section("Custom Color") {
+        section("Custom color") {
             input "customName", "text", title: "Custom Color Name", required: false
             input "customHue", "number", title: "Custom Color Hue",range:"0..100",required: false
             input "customSat", "number", title: "Custom Color Saturation",range:"0..100", required: false
@@ -1330,11 +1354,13 @@ def processBegin(){
     contOption += contAction ? "1" : "0"
     contOption += contMacro ? "1" : "0"
     def enableWhisper = speakPitch=="medium" && whisperMode && getTimeOk(timeStartWhisper,timeEndWhisper) && (!runModeWhisper || runModeWhisper.contains(location.mode)) 
+    //def pollyVoice = speakVoice ?: null
+    def pollyVoice = null
     def speed  = speakSpeed ?:"medium"
     def pitch = speakPitch ?:"medium"
     def disabled = getOkToRunMute(echoID) && muteAll
     def mute = getOkToRunMute(echoID) && cmdMute
-    return ["OOD":OOD, "continue":contOption,"personality":persType, "SmartAppVer": versionLong(),"IName":invocationName,"pName":pName,"whisper": enableWhisper,"speed":speed, "pitch":pitch, "mute":mute, "disabled" : disabled ]
+    return ["OOD":OOD, "continue":contOption,"personality":persType, "SmartAppVer": versionLong(),"IName":invocationName,"pName":pName,"pollyVoice":pollyVoice, "whisper": enableWhisper,"speed":speed, "pitch":pitch, "mute":mute, "disabled" : disabled ]
 }
 def sendJSON(outputTxt, icon){
     if (outputTxt && msgQueueNotify && mqCounts(msgQueueNotify) && outputTxt.endsWith("%") && outputTxt[-3..-1] != "%M%") {
@@ -1941,6 +1967,16 @@ def processRoom(room, mNum, op, param, mPW, mType, echoID){
     }
     return outputTxt
 }
+//Expression Reply
+def processExpression(expression, echoID){
+    log.debug "Expression Statement: " + exp		//Expression
+    log.debug "Echo ID: " + (echoID !="undefined"? "..."+echoID[-10..-1] : "Simulator or unknown device")
+    def exp = getEXP().find {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == expression}, outputTxt
+   	outputTxt = exp.getOutput (expression, echoID)
+    def data = outputTxt ? [alexaOutput: outputTxt[0..-4]] : [alexaOutput: "No Output"] 
+   	sendLocationEvent(name: "askAlexa", value: exp.id, data: data, displayed: true, isStateChange: true, descriptionText: "Ask Alexa triggered '${exp.label}' expression extension.")
+    return outputTxt
+}
 //Macro Processing
 def processMacro() {
     log.debug "-Macro/extension command received-"
@@ -1953,7 +1989,7 @@ def processMacro() {
     def xParam = params.xParam												//Additional parameters
     def echoID = params.echoID												//Echo device being addressed
     String outputTxt = ""
-    def count = 0, macCount=0, wrCount=0, vrCount=0, rmCount=0, sdCount=0, macAlias
+    def count = 0, macCount=0, wrCount=0, vrCount=0, rmCount=0, sdCount=0, macAlias, expCount
     if (cmd ==~/associate|setup|link|sync/ && mac =="undefined") outputTxt="I did not hear the group you want to associate with this Echo device. Valid group names are: ${getList(getRM().label)}. %1%"
     if (mac==~/room|here|group|this room|in here|this group/ && echoID !="undefined" && doRmCheck(echoID)) mac=doRmCheck(echoID).toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "")
     else if (mac==~/room|here|group|this room|in here|this group/ && echoID =="undefined") outputTxt="I could not identify the Echo device you are speaking to. %1%"
@@ -1965,7 +2001,8 @@ def processMacro() {
         vrCount = getVR().count {it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
         sdCount = getSCHD().count{it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
         rmCount = getRM().count{it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
-        count = macCount + wrCount + vrCount + sdCount + rmCount
+        expCount = getEXP().count{it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "") == mac}
+        count = macCount + wrCount + vrCount + sdCount + rmCount + expCount
         if (!count) {    
             getAskAlexa().each{
                 for (int i = 1; i<macAliasCount()+1; i++){
@@ -2006,7 +2043,17 @@ def processMacro() {
                 }	   
             }
         }
-        count = macCount + wrCount + vrCount + sdCount + rmCount
+        if (!count && !macCount && !wrCount && !vrCount && !rmCount) {    
+            getEXP().each{
+                for (int i = 1; i<it.extAliasCount()+1; i++){
+                    if (it."extAlias${i}" && it."extAlias${i}".toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "")==mac) {
+                        macAlias = it.label.toLowerCase().replaceAll("[^a-zA-Z0-9 ]", "")
+                        expCount ++
+                    }
+                }	   
+            }
+        }
+        count = macCount + wrCount + vrCount + sdCount + rmCount + expCount
         if (count == 1 && macAlias) mac = macAlias
         if (count > 1) outputTxt ="You have duplicate macros, aliases, or extensions named '${mac}'. Please check your Ask Alexa SmartApp to fix this conflict. %1%"
         if (!count && mac && !(mac==~/null|undefined|\?/)) outputTxt = "I could not find a macro, alias or any extension named '${mac}'. %1%"
@@ -2018,6 +2065,7 @@ def processMacro() {
         	else if (vrCount) sendJSON(processVoiceReport(mac,echoID),"voice")
 			else if (sdCount) sendJSON(processSchedule(mac,cmd,mNum),"schedule")
 			else if (rmCount) sendJSON(processRoom(mac, mNum, cmd, param, mPW, mType, echoID), "room")
+            else if (expCount) sendJSON(processExpression(mac, echoID), "expression")
 		}
     }
 }
@@ -2530,7 +2578,8 @@ def getReply(devices, type, STdeviceName, op, num, param, echoID){
         }
         if (otherStatus && op=="status"){
             def temp = STdevice.currentValue("temperature"), accel=STdevice.currentValue("acceleration"), motion=STdevice.currentValue("motion"), 
-            	uv=STdevice.currentValue("ultravioletIndex"), pressure=STdevice.currentPressure, humidity=STdevice.currentValue("humidity"), tamper=STdevice.currentValue("tamper")
+            	uv=STdevice.currentValue("ultravioletIndex"), pressure=STdevice.currentPressure, humidity=STdevice.currentValue("humidity"), tamper=STdevice.currentValue("tamper"),
+                opMode=STdevice.currentValue("operatingMode")
             def lux = supportedCaps.name.contains("Illuminance Measurement") ? STdevice.currentValue("illuminance") : null
             result += lux ? "The illuminance at this device's location is ${lux} lux. " : ""
             if (uv !=null && type !="uvIndex") result += "The UV Index at this device's location is '${uvIndexReading(uv)}', with a reading of ${uv}. "
@@ -2540,6 +2589,7 @@ def getReply(devices, type, STdeviceName, op, num, param, echoID){
 			result += motion == "active" && type != "motion" ? "This device is also a motion sensor, and it is currently reading movement. " : ""
  			result += accel == "active" ? "This device has a vibration sensor, and it is currently reading movement. " : ""
             result += tamper == "detected" ? "This device is also a tamper detector and it is reading active. " : ""
+        	result += opMode ? "The operations mode of this device is set to: ${opMode}. " : ""
         }
         if (healthWarn && STdevice.status=="OFFLINE") result +="This device's status is reporting offline. "
         if (supportedCaps.name.contains("Battery") && batteryWarn){
@@ -2829,6 +2879,7 @@ def getSCHD() { return findAllChildAppsByNamespaceAndName("MichaelStruck", "Ask 
 def getWR() { return findAllChildAppsByNamespaceAndName("MichaelStruck", "Ask Alexa Weather Report") }
 def getVR() { return findAllChildAppsByNamespaceAndName("MichaelStruck", "Ask Alexa Voice Report") }
 def getRM() { return findAllChildAppsByNamespaceAndName("MichaelStruck", "Ask Alexa Rooms/Groups") }
+def getEXP() { return findAllChildAppsByNamespaceAndName("MichaelStruck", "Ask Alexa Expression") }
 def macAliasCount() { return 3 }
 def getList(items){
 	def result = "", itemCount=items.size() as int
@@ -3166,6 +3217,7 @@ private setColoredLights(switches, color, level){
     switches?.setLevel(newLevel as int)
 }
 //Common Code (Parent)---------------------------------
+private voicesList(){ return ["Salli","Kimberly","Kendra", "Joann","Ivy","Matthew","Justin","Joey"] }
 def pollHandler(evt)	{
 	sendLocationEvent(name: "askAlexaMQ", value: "refresh", data: [queues: getMQListID(false)] , isStateChange: true, descriptionText: "Ask Alexa message queue list refresh")
 }
@@ -3404,6 +3456,7 @@ def OAuthToken(){
 	} catch (e) { log.error "Access Token not defined. OAuth may not be enabled. Go to the IDE settings to enable OAuth within Ask Alexa." }
 }
 def macroDesc(count){def results = count ? count==1 ? "One Macro Configured" : count + " Macros Configured" : "No Macros Configured\nTap to create a new macro"}
+def expDesc(count){def results = count ? count==1 ? "One Expression Configured" : count + " Expressions Configured" : "No Expressions Configured\nTap to create a new expression"}
 def mqDesc(count){def results = count ? count==1 ? "Primary + One Addition Message Queue Configured" :  "Primary + " + count + " Message Queues Configured" : "Primary Messsage Queue"}
 def schDesc(count) {def results = count ? count==1 ? "One Schedule Configured" : count + " Schedules Configured" : "No Schedules Configured\nTap to create a new schedule"}
 def voiceDesc(count) {def results = count ? count==1 ? "One Voice Report Configured" : count + " Voice Reports Configured" : "No Voice Reports Configured\nTap to create a new report"}
@@ -3682,13 +3735,13 @@ def showLink(type){
 }
 def setupData(){
 	def iName = invocationName ? invocationName.toLowerCase() : "smart things"
-    def httpPOSTAWS ="<form name='Lambda' action='https://ask-alexa.com/cgi-bin/lambda.php' method='POST' target='_blank'><input type='hidden' name='appID' value='${app.id}'>" +
+    def httpPOSTAWS ="<form name='Lambda' action='https://ask-alexa.com/code/lambda.php' method='POST' target='_blank'><input type='hidden' name='appID' value='${app.id}'>" +
     "<input type='hidden' name='token' value='${state.accessToken}'><input type='hidden' name='url' value='${getApiServerUrl()}'><input type='submit' value='Display Lambda Code'></form>"   
-	def httpPOSTAWSDL ="<form name='LambdaDL' action='https://ask-alexa.com/cgi-bin/lambdaDL.php' method='POST'><input type='hidden' name='appID' value='${app.id}'>"+
+	def httpPOSTAWSDL ="<form name='LambdaDL' action='https://ask-alexa.com/code/lambdaDL.php' method='POST'><input type='hidden' name='appID' value='${app.id}'>"+
         "<input type='hidden' name='token' value='${state.accessToken}'><input type='hidden' name='url' value='${getApiServerUrl()}'><input type='submit' value='Download Lambda Code'></form>"
-	def httpPOSTDev ="<form name='Dev' action='https://ask-alexa.com/cgi-bin/devSite.php' method='POST' target='_blank'><input type='hidden' name='appID' value='${app.id}'><input type='hidden' name='invocation' value='${iName}'>"+
+	def httpPOSTDev ="<form name='Dev' action='https://ask-alexa.com/code/devSite.php' method='POST' target='_blank'><input type='hidden' name='appID' value='${app.id}'><input type='hidden' name='invocation' value='${iName}'>"+
         "<input type='hidden' name='token' value='${state.accessToken}'><input type='hidden' name='url' value='${getApiServerUrl()}'><input type='submit' value='Display Developer JSON Code'></form>"   
-	def httpPOSTDevDL ="<form name='DevDL' action='https://ask-alexa.com/cgi-bin/devSiteDL.php' method='POST'><input type='hidden' name='appID' value='${app.id}'><input type='hidden' name='invocation' value='${iName}'>"+
+	def httpPOSTDevDL ="<form name='DevDL' action='https://ask-alexa.com/code/devSiteDL.php' method='POST'><input type='hidden' name='appID' value='${app.id}'><input type='hidden' name='invocation' value='${iName}'>"+
         "<input type='hidden' name='token' value='${state.accessToken}'><input type='hidden' name='url' value='${getApiServerUrl()}'><input type='submit' value='Download Developer Code'></form>"
 	def devCodeTxt = "Click the button below, copy the JSON code on the page, then paste to the Interaction Model Builder on the <a href='https://developer.amazon.com' target='_blank'>Amazon Developer</a> page<br>${httpPOSTDev}"
 	def devDLTxt = "Or, click the botton below to download a text copy of the JSON code, then load into to the Interaction Model Builder on the <a href='https://developer.amazon.com' target='_blank'>Amazon Developer</a> page<br>${httpPOSTDevDL}"
@@ -3743,9 +3796,9 @@ def setupData(){
     def echoCount = 0
 	if (getRM().size()) getRM().each {echoCount += it.getEchoAliasList().size() }
 	if (echoCount && showRoomSkill){
-    	httpPOSTDev ="<form name='Dev' action='https://ask-alexa.com/cgi-bin/devSiteRoom.php' method='POST' target='_blank'><input type='hidden' name='appID' value='${app.id}'><input type='hidden' name='invocation' value='here'>"+
+    	httpPOSTDev ="<form name='Dev' action='https://ask-alexa.com/code/devSiteRoom.php' method='POST' target='_blank'><input type='hidden' name='appID' value='${app.id}'><input type='hidden' name='invocation' value='here'>"+
         "<input type='hidden' name='token' value='${state.accessToken}'><input type='hidden' name='url' value='${getApiServerUrl()}'><input type='submit' value='Display Developer JSON Code-Room Code'></form>"   
-		httpPOSTDevDL ="<form name='DevDL' action='https://ask-alexa.com/cgi-bin/devSiteRoomDL.php' method='POST'><input type='hidden' name='appID' value='${app.id}'><input type='hidden' name='invocation' value='here'>"+
+		httpPOSTDevDL ="<form name='DevDL' action='https://ask-alexa.com/code/devSiteRoomDL.php' method='POST'><input type='hidden' name='appID' value='${app.id}'><input type='hidden' name='invocation' value='here'>"+
         "<input type='hidden' name='token' value='${state.accessToken}'><input type='hidden' name='url' value='${getApiServerUrl()}'><input type='submit' value='Download Developer Code-Room Code'></form>"
         devCodeTxt = "Click the button below, copy the JSON code on the page, then paste to the Interaction Model Builder on the <a href='https://developer.amazon.com' target='_blank'>Amazon Developer</a> page<br>${httpPOSTDev}"
 		devDLTxt = "Or, click the botton below to download a text copy of the JSON code, then load into to the Interaction Model Builder on the <a href='https://developer.amazon.com' target='_blank'>Amazon Developer</a> page<br>${httpPOSTDevDL}"
@@ -3794,6 +3847,7 @@ def fillOperatorsList(){
     doorVoc().each{deviceCMDlist<<it}
     getDevList.cmd.each{list->list.each{deviceCMDlist<<it} }
     rmVoc().each{deviceCMDlist<<it}
+    occVoc().each{deviceCMDlist<<it}
 	return deviceCMDlist
 }
 def fillSHParamList(SHPARAM = []){
@@ -4031,23 +4085,25 @@ private webCoRE_handle(){ return'webCoRE' }
 private textAppName() { return "Ask Alexa" }
 private authorsNames() {return ["Michael Struck"]}
 private textVersion() {  
-    def version = "SmartApp Version: ${versionLong()} (${versionDate()})", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : "", aaMQVer ="", aaWRVer ="", aaVRVer="", aaSCHVer="", aaRMVer=""
+    def version = "SmartApp Version: ${versionLong()} (${versionDate()})", lambdaVersion = state.lambdaCode ? "\n" + state.lambdaCode : "", aaMQVer ="", aaWRVer ="", aaVRVer="", aaSCHVer="", aaRMVer="",aaEXPVer=""
+    if (getEXP().size()) aaEXPVer="\n"+ getEXP()[0].textVersion() 
     if (getAAMQ().size()) aaMQVer="\n"+ getAAMQ()[0].textVersion() 
     if (getWR().size()) aaWRVer="\n"+ getWR()[0].textVersion() 
     if (getVR().size()) aaVRVer="\n"+getVR()[0].textVersion()
     if (getSCHD().size()) aaSCHVer="\n"+getSCHD()[0].textVersion()
     if (getRM().size()) aaRMVer="\n"+getRM()[0].textVersion()
-    return "${version}${lambdaVersion}${aaMQVer}${aaRMVer}${aaSCHVer}${aaVRVer}${aaWRVer}"
+    return "${version}${lambdaVersion}${aaEXPVer}${aaMQVer}${aaRMVer}${aaSCHVer}${aaVRVer}${aaWRVer}"
 }
 private versionInt(){ return 240 }
-private LambdaReq() { return 131 }
+private LambdaReq() { return 132 }
 private mqReq() { return 109 }
 private wrReq() { return 108 }
 private vrReq() { return 109 }
 private schReq() { return 104 }
 private rmReq() { return 105 }
+private expReq() { return 100 }
 private versionLong(){ return "2.4.0" }
-private versionDate(){ return "05/03/2018" }
+private versionDate(){ return "06/29/2018" }
 private textCopyright() {return "Copyright © 2018 ${getList(authorsNames())}" }
 private textLicense() {
 	def text = "Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n"+
