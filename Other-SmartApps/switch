@@ -4,7 +4,7 @@
  *	Copyright © 2018 Michael Struck
  *  Original Author: Matt Lebaugh (@mlebaugh)
  *
- *  Version 1.0.1 7/6/18 
+ *  Version 1.0.1 7/8/18 
  *
  *  Version 1.0.1 Format and syntax updates. Thanks to @Darwin for the motion sensativity idea!
  *  Version 1.0.0 Original release by Matt Lebaugh. Great Work!
@@ -60,14 +60,13 @@ metadata {
 	preferences {
         	input title: "", description: "Select your preferences here, they will be sent to the device once updated.\n\nTo verify the current settings of the device, they will be shown in the 'Recently' page once any setting is updated", displayDuringSetup: false, type: "paragraph", element: "paragraph"
 			input (
-                name: "operationmode",
-                title: "Operating Mode",
-                description: "Select the mode of the switch",
+                name: "operationmode", title: "Operating Mode",
+                description: "Select the mode of the switch (no entry will keep the current mode)",
                 type: "enum",
                 options: [
                     "1" : "Manual (no auto-on/off)",
                     "2" : "Vacancy (auto-off)",
-                    "3" : "Occupancy (auto-on/off) (Default)"
+                    "3" : "Occupancy (auto-on/off)"
                 ],
                 required: false
             )
@@ -174,8 +173,8 @@ metadata {
 		standardTile("refresh", "device.switch", width: 2, height: 2, inactiveLabel: false, decoration: "flat") {
 			state "default", label:'', action:"refresh.refresh", icon:"st.secondary.refresh"
 		}            
-		standardTile("operatingMode", "device.operatingMode", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-			state "default", label:'Operating Mode: ${currentValue}', unit:"", action:"toggleMode"
+		valueTile("operatingMode", "device.operatingMode", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+			state "default", label:'Mode: ${currentValue}', unit:"", action:"toggleMode"
 		}
 		main(["switch"])
 		details(["switch", "motion", "operatingMode", "refresh"])
@@ -343,24 +342,12 @@ def refresh() {
 }
 def toggleMode() {
 	log.debug("Toggling Mode") 
-    def cmds = [], newMode = ""
-    if (device.currentValue("operatingMode") == "Manual") { 
-    	cmds << zwave.configurationV1.configurationSet(configurationValue: [2] , parameterNumber: 3, size: 1)
-		newMode = "Vacancy"
-    }
-    else if (device.currentValue("operatingMode") == "Vacancy") {
-    	cmds << zwave.configurationV1.configurationSet(configurationValue: [3], parameterNumber: 3, size: 1)
-        newMode = "Occupancy"
-    }
-    else if (device.currentValue("operatingMode") == "Occupancy") {
-    	cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 3, size: 1)
-        newMode = "Manual"
-    }
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
-    sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
-	log.debug "New mode is: ${newMode}" 
+    def cmds = []
+    if (device.currentValue("operatingMode") == "Manual")  vacancy()
+    else if (device.currentValue("operatingMode") == "Vacancy") occupancy()
+    else if (device.currentValue("operatingMode") == "Occupancy") manual()
 }
-/*def SetModeNumber(value) {
+/*def setModeNumber(value) {
 	log.debug("Setting mode by number: ${value}") 
     def cmds = []
     cmds << zwave.configurationV1.configurationSet(configurationValue: [value] , parameterNumber: 3, size: 1)
@@ -369,19 +356,22 @@ def toggleMode() {
 }*/
 def occupied() { occupancy() }
 def occupancy() {
-	def cmds = []
+	log.debug "Setting operating mode to: Occupancy"
+    def cmds = []
     cmds << zwave.configurationV1.configurationSet(configurationValue: [3] , parameterNumber: 3, size: 1)
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
     sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
 }
 def vacant() { vacancy() }
 def vacancy() {
+	log.debug "Setting operating mode to: Vacancy"
 	def cmds = []
     cmds << zwave.configurationV1.configurationSet(configurationValue: [2] , parameterNumber: 3, size: 1)
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
 	sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
 }
 def manual() {
+	log.debug "Setting operating mode to: Manual"
 	def cmds = []
     cmds << zwave.configurationV1.configurationSet(configurationValue: [1] , parameterNumber: 3, size: 1)
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
@@ -467,15 +457,9 @@ def updated() {
        	cmds << zwave.configurationV1.configurationSet(configurationValue: [2], parameterNumber: 15, size: 1)
        	cmds << zwave.configurationV1.configurationGet(parameterNumber: 15)
     }
-    //param 3 operating mode
-    if (settings.operationmode) {
-       	cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.operationmode.toInteger()], parameterNumber: 3, size: 1)
-       	cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
-    }
-    else {
-       	cmds << zwave.configurationV1.configurationSet(configurationValue: [3], parameterNumber: 3, size: 1)
-       	cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
-    }
+    //param 3 operating mode (no default...no entry=no change)
+    if (settings.operationmode) cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.operationmode.toInteger()], parameterNumber: 3, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
     //param 6 motion
     if (settings.motion) {
        	cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.motion.toInteger()], parameterNumber: 6, size: 1)
@@ -519,22 +503,22 @@ def updated() {
     sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 500)
     showVersion()
 }
-def Up() {
-	sendEvent(name: "button", value: "pushed", data: [buttonNumber: "1"], descriptionText: "On/Up (button 1) on $device.displayName was pushed", isStateChange: true, type: "digital")
+/*def Up() {
+    sendEvent(name: "button", value: "pushed", data: [buttonNumber: "1"], descriptionText: "On/Up xx (button 1) on $device.displayName was pushed", isStateChange: true, type: "digital")
     on()
 }
 def Down() {
 	sendEvent(name: "button", value: "pushed", data: [buttonNumber: "2"], descriptionText: "Off/Down (button 2) on $device.displayName was pushed", isStateChange: true, type: "digital")
     off()
-}
+}*/
 def configure() {
-        def cmds = []
-		// Make sure lifeline is associated - was missing on a dimmer:
-		cmds << zwave.associationV1.associationSet(groupingIdentifier:0, nodeId:zwaveHubNodeId)
-        cmds << zwave.associationV1.associationSet(groupingIdentifier:1, nodeId:zwaveHubNodeId)
-		cmds << zwave.associationV1.associationSet(groupingIdentifier:2, nodeId:zwaveHubNodeId)
-		cmds << zwave.associationV1.associationSet(groupingIdentifier:3, nodeId:zwaveHubNodeId)
-        sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+	def cmds = []
+	// Make sure lifeline is associated - was missing on a dimmer:
+	cmds << zwave.associationV1.associationSet(groupingIdentifier:0, nodeId:zwaveHubNodeId)
+    cmds << zwave.associationV1.associationSet(groupingIdentifier:1, nodeId:zwaveHubNodeId)
+	cmds << zwave.associationV1.associationSet(groupingIdentifier:2, nodeId:zwaveHubNodeId)
+	cmds << zwave.associationV1.associationSet(groupingIdentifier:3, nodeId:zwaveHubNodeId)
+    sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
 }
 private parseAssocGroupList(list, group) {
     def nodes = group == 2 ? [] : [zwaveHubNodeId]
@@ -568,4 +552,4 @@ private parseAssocGroupList(list, group) {
     }   
     return nodes
 }
-def showVersion() { sendEvent (name: "about", value:"Version 1.0.1 (07/06/18)") }
+def showVersion() { sendEvent (name: "about", value:"DTH Version 1.0.1 (07/08/18)") }
