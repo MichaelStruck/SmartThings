@@ -4,9 +4,9 @@
  *	Copyright © 2018 Michael Struck
  *  Original Author: Matt Lebaugh (@mlebaugh)
  *
- *  Version 1.0.1 7/8/18 
+ *  Version 1.0.1 7/9/18 
  *
- *  Version 1.0.1 Format and syntax updates. Thanks to @Darwin for the motion sensativity idea!
+ *  Version 1.0.1 Format and syntax updates. Thanks to @Darwin for the motion sensitivity/timeout minutes idea!
  *  Version 1.0.0 Original release by Matt Lebaugh. Great Work!
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -43,6 +43,11 @@ metadata {
         command "setMotionSenseLow"
         command "lightSenseOn"
         command "lightSenseOff"
+        command "setTimeout5Seconds"
+        command "setTimeout1Minute"
+        command "setTimeout5Minutes"
+        command "setTimeout15Minutes"
+        command "setTimeout30Minutes"
         
         attribute "operatingMode", "enum", ["Manual", "Vacancy", "Occupancy"]
 
@@ -79,8 +84,7 @@ metadata {
                     "1" : "1 minute",
                     "5" : "5 minutes (Default)",
                     "15" : "15 minutes",
-                    "30" : "30 minutes",
-                    "255" : "Disabled"
+                    "30" : "30 minutes"
                 ],
                 required: false
             )
@@ -241,7 +245,7 @@ def zwaveEvent(physicalgraph.zwave.commands.configurationv2.ConfigurationReport 
     def config = cmd.scaledConfigurationValue
     def result = []
     if (cmd.parameterNumber == 1) {
-		def value = config == 0 ? "Test 5s" : config == 1 ? "1 minute" : config == 5 ? "5 minute" : config == 15 ? "15 minute" : config == 30 ? "30 minute" : "255 minute" 
+		def value = config == 0 ? "5 seconds" : config == 1 ? "1 minute" : config == 5 ? "5 minutes" : config == 15 ? "15 minutes" :"30 minutes"
     	result << createEvent([name:"TimeoutDuration", value: value, displayed:true, isStateChange:true])
     } else if (cmd.parameterNumber == 13) {
 		def value = config == 1 ? "High" : config == 2 ? "Medium" : "Low"
@@ -354,6 +358,23 @@ def toggleMode() {
   	cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
     sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
 }*/
+def setTimeout5Seconds() { setTimeoutMinutes(0) }
+def setTimeout1Minute() { setTimeoutMinutes(1) }
+def setTimeout5Minutes() { setTimeoutMinutes(5) }
+def setTimeout15Minutes() { setTimeoutMinutes(15) }
+def setTimeout30Minutes() { setTimeoutMinutes(30) }
+def setTimeoutMinutes(value){
+    def cmds = [], newTimeOut
+    if (value==0) newTimeOut="5 seconds"
+    else if (value==1) newTimeOut="1 minute"
+    else if (value==5) newTimeOut="5 minutes"
+    else if (value==15) newTimeOut="15 minutes"
+    else if (value==30) newTimeOut="30 minutes"
+	cmds << zwave.configurationV1.configurationSet(configurationValue: [value], parameterNumber: 1, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 1)
+    sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+    log.debug "Setting timeout duration to: ${newTimeOut}"
+}
 def occupied() { occupancy() }
 def occupancy() {
 	log.debug "Setting operating mode to: Occupancy"
@@ -384,7 +405,8 @@ def setMotionSenseOff(){ setMotionSensitivity(0) }
 def setMotionSensitivity(value) {
       def cmds = []
       if (value>0){
-      	log.debug("Setting motion sensitivity to: ${value}")
+      	def mode=value==1 ? "High" : value==2 ? "Medium" : "Low"
+      	log.debug("Setting motion sensitivity to: ${mode}")
         cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 6, size: 1)
         cmds << zwave.configurationV1.configurationGet(parameterNumber: 6)
       	cmds << zwave.configurationV1.configurationSet(configurationValue: [value] , parameterNumber: 13, size: 1)
@@ -552,4 +574,4 @@ private parseAssocGroupList(list, group) {
     }   
     return nodes
 }
-def showVersion() { sendEvent (name: "about", value:"DTH Version 1.0.1 (07/08/18)") }
+def showVersion() { sendEvent (name: "about", value:"DTH Version 1.0.1 (07/09/18)") }
