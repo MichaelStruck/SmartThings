@@ -4,7 +4,7 @@
  *	Copyright © 2018 Michael Struck
  *  Original Author: Matt Lebaugh (@mlebaugh)
  *
- *  Version 1.0.1 7/12/18 
+ *  Version 1.0.1 7/13/18 
  *
  *  Version 1.0.1 Format and syntax updates. Thanks to @Darwin for the motion sensitivity/timeout minutes idea!
  *  Version 1.0.0 Original release by Matt Lebaugh. Great Work!
@@ -157,7 +157,10 @@ metadata {
 			state "default", label:'', action:"refresh.refresh", icon:"st.secondary.refresh"
 		}            
 		valueTile("operatingMode", "device.operatingMode", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-			state "default", label:'Mode: ${currentValue}', unit:"", action:"toggleMode"
+			state "Occupied",label:'Mode: ${currentValue}', unit:"",action:"toggleMode", backgroundColor:"#53a7c0"
+            state "Manual",label:'Mode: ${currentValue}', unit:"", action:"toggleMode", backgroundColor:"#ffffff"
+            state "Vacancy",label:'Mode: ${currentValue}', unit:"", action:"toggleMode", backgroundColor:"#56c056"
+            //state "default", label:'Mode: ${currentValue}', unit:"", action:"toggleMode"
 		}
         valueTile("dashboard", "device.dashboard", inactiveLabel: false, decoration: "flat", width: 6, height: 2) {
 			state "default", label:'${currentValue}', unit:""
@@ -562,8 +565,8 @@ def showDashboard(timeDelay, motionSensor, lightSensor) {
     def motionSensorTxt = motionSensor == 1 ? "High" : motionSensor == 2 ? "Medium" : motionSensor==3 ? "Low" : "Disabled"
     def lightSensorTxt = lightSensor == 0 ? "Disabled" : "Enabled"
     def timeDelayTxt = timeDelay == 0 ? "5 seconds" : timeDelay == 1 ? "1 minute" : timeDelay == 5 ? "5 minutes" : timeDelay == 15 ? "15 minutes" : "30 minutes"
-    def motionSync = (motion.toInteger() && motionSensorTxt !="Disabled" && state.currentMotionSensor==motionsensitivity.toInteger()) ||
-    	(!motion.toInteger() && motionSensorTxt =="Disabled")  ? "✔" : "‼"
+    def motionSync = ((((!motion || (motion && motion=="1")) && motionSensorTxt !="Disabled" && motionsensitivity && state.currentMotionSensor==motionsensitivity.toInteger()) || (!motionsensitivity && state.currentMotionSensor==2)) ||
+    	(motion && motion=="0" && motionSensorTxt =="Disabled"))  ? "✔" : "‼"
     def lightSync = state.currentLightSensor == lightsense.toInteger() ? "✔" : "‼"
     def timeSync = state.currentTimeDelay == timeoutduration.toInteger()? "✔" : "‼"    
     result +="\n${motionSync} Motion Sensitivity: " + motionSensorTxt
@@ -571,4 +574,4 @@ def showDashboard(timeDelay, motionSensor, lightSensor) {
 	result +="\n${timeSync} Timeout Duration: " + timeDelayTxt
 	sendEvent (name:"dashboard", value: result ) 
 }
-def showVersion() { sendEvent (name: "about", value:"DTH Version 1.0.1 (07/12/18)") }
+def showVersion() { sendEvent (name: "about", value:"DTH Version 1.0.1 (07/13/18)") }
