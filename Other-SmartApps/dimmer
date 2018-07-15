@@ -6,7 +6,7 @@
  *
  *  Based off of the Dimmer Switch under Templates in the IDE 
  *
- *  Version 1.0.1 7/10/18 
+ *  Version 1.0.1 7/15/18 
  *
  *  Version 1.0.1 Format and syntax updates. Thanks to @Darwin for the motion sensitivity/timeout minutes ideas!
  *  Version 1.0.0 Original release by Matt Lebaugh. Great Work!
@@ -82,6 +82,18 @@ metadata {
                 ],
                 required: false
             )
+            input (name: "timeoutdurationPress", title: "Double Press Timeout (Occupancy/Vacancy)",
+                description: "If 'on' is physically pressed twice within 10 seconds, override timeout duration. Resets when light goes off",
+                type: "enum",
+                options: [
+                    "0" : "5 seconds",
+                    "1" : "1 minute",
+                    "5" : "5 minutes",
+                    "15" : "15 minutes",
+                    "30" : "30 minutes"
+                ],
+                required: false
+            )
             //param 6
 			input ("motion","enum",title: "Motion Sensor",
                 description: "Enable/Disable Motion Sensor.",
@@ -145,7 +157,7 @@ metadata {
                 ]
             )
             //param 17
-            input "switchlevel","number", title: "Default Dim level", description:"Default 0: Return to last state, Max 99", range: "0..99", defaultValue: 0
+            input "switchlevel","number", title: "Default Dim Level", description:"Default 0: Return to last state, Max 99", range: "0..99", defaultValue: 0
             
             //descrip
             input title: "", description: "**Manual Ramp Rate Settings**\nFor push and hold\nDefaults: Step: 1, Duration: 3", type: "paragraph", element: "paragraph"
@@ -196,7 +208,6 @@ simulator {
 		reply "20014B,delay 5000,2602": "command: 2603, payload: 4B"
 		reply "200163,delay 5000,2602": "command: 2603, payload: 63"
 	}
-
 	tiles(scale: 2) {
 		multiAttributeTile(name:"switch", type: "lighting", width: 6, height: 4, canChangeIcon: true){
 		tileAttribute ("device.switch", key: "PRIMARY_CONTROL") {
@@ -216,8 +227,11 @@ simulator {
 		valueTile("operatingMode", "device.operatingMode", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "default", label:'Mode: ${currentValue}', unit:"", action:"toggleMode"
 		}
+        valueTile("dashboard", "device.dashboard", inactiveLabel: false, decoration: "flat", width: 6, height: 2) {
+			state "default", label:'${currentValue}', unit:""
+        }
 		main(["switch"])
-		details(["switch", "motion", "operatingMode", "refresh"])
+		details(["switch", "motion", "operatingMode", "refresh","dashboard"])
 	}
 }
 def parse(String description) {
@@ -254,6 +268,15 @@ def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicSet cmd) {
 	def result = []
     if (cmd.value == 255) {
     	result << createEvent([name: "button", value: "pushed", data: [buttonNumber: "1"], descriptionText: "On/Up on (button 1) $device.displayName was pushed", isStateChange: true, type: "physical"])
+    	if (timeoutdurationPress && state.Timer && (now()-state.Timer)<10000) {
+        	log.debug "Double press in less than 10 seconds-Overridng timeout"
+        	def cmds=[]
+            cmds << zwave.configurationV1.configurationSet(configurationValue: [timeoutdurationPress.toInteger()], parameterNumber: 1, size: 1)
+       		cmds << zwave.configurationV1.configurationGet(parameterNumber: 1)
+            sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+            showDashboard(timeoutdurationPress.toInteger(), "", "", "")
+    	}
+        state.Timer=now()
     }
 	else if (cmd.value == 0) {
     	result << createEvent([name: "button", value: "pushed", data: [buttonNumber: "2"], descriptionText: "Off/Down (button 2) on $device.displayName was pushed", isStateChange: true, type: "physical"])
@@ -279,7 +302,7 @@ def zwaveEvent(physicalgraph.zwave.commands.configurationv2.ConfigurationReport 
     def config = cmd.scaledConfigurationValue
     def result = []
     if (cmd.parameterNumber == 1) {
-		def value = config == 0 ? "Test 5s" : config == 1 ? "1 minute" : config == 5 ? "5 minute" : config == 15 ? "15 minute" : "30 minute"
+		def value = config == 0 ? "5 seconds" : config == 1 ? "1 minute" : config == 5 ? "5 minutes" : config == 15 ? "15 minutes" : "30 minutes"
     	result << createEvent([name:"TimeoutDuration", value: value, displayed:true, isStateChange:true])
     } else if (cmd.parameterNumber == 13) {
 		def value = config == 1 ? "High" : config == 2 ? "Medium" : "Low"
@@ -321,7 +344,7 @@ def zwaveEvent(physicalgraph.zwave.commands.configurationv2.ConfigurationReport 
     } else if (cmd.parameterNumber == 18) {
     	result << createEvent([name:"DimRate", value: config, displayed:true, isStateChange:true])
     } else {
-     log.warn "Parameter  ${cmd.parameterNumber} ${config}"}
+    log.warn "Parameter  ${cmd.parameterNumber} ${config}"}
     //
    return result
 }
@@ -379,7 +402,15 @@ def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv3.SwitchMultilevelS
 private dimmerEvents(physicalgraph.zwave.Command cmd) {
     def value = (cmd.value ? "on" : "off")
 	def result = [createEvent(name: "switch", value: value)]
-	if (cmd.value && cmd.value <= 100) {
+	if (cmd.value==0 && timeoutdurationPress){
+    	log.debug "Resetting timeout duration"
+        def cmds=[],timeoutValue = timeoutduration ? timeoutduration.toInteger() : 5
+        cmds << zwave.configurationV1.configurationSet(configurationValue: [timeoutValue], parameterNumber: 1, size: 1)
+       	cmds << zwave.configurationV1.configurationGet(parameterNumber: 1)
+        sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+        showDashboard(timeoutValue, "", "", "")
+    }
+    if (cmd.value && cmd.value <= 100) {
 		result << createEvent(name: "level", value: cmd.value, unit: "%")
 	}
 	return result
@@ -393,8 +424,7 @@ def off() {
 def setLevel(value) {
 	def valueaux = value as Integer
 	def level = Math.min(valueaux, 99)
-    def cmds = []
-    	
+    def cmds = []    	
     if (settings.setlevelmode == "1"){ 
     	log.debug "setlevel with advanced mode"
     	if (device.currentValue("switch") == "on") {
@@ -453,6 +483,7 @@ def setTimeoutMinutes(value){
 	cmds << zwave.configurationV1.configurationSet(configurationValue: [value], parameterNumber: 1, size: 1)
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 1)
     sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+    showDashboard(value, "", "","")
     log.debug "Setting timeout duration to: ${newTimeOut}"
 }
 def occupied() { occupancy() }
@@ -484,6 +515,7 @@ def setDefaultLevel(value) {
     cmds << zwave.configurationV1.configurationSet(configurationValue: [value] , parameterNumber: 17, size: 1)
   	cmds << zwave.configurationV1.configurationGet(parameterNumber: 17)
     sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+    showDashboard("", "", "", value)
 }
 def setMotionSenseLow(){ setMotionSensitivity(3) }
 def setMotionSenseMed(){ setMotionSensitivity(2) }
@@ -505,18 +537,21 @@ def setMotionSensitivity(value) {
         cmds << zwave.configurationV1.configurationGet(parameterNumber: 6)
      }
      sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+     showDashboard("", value, "", "")
 }
 def lightSenseOn() {
 	log.debug("Setting Light Sense On") 
     def cmds = []
     cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 14, size: 1)
     sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+    showDashboard("", "", 1,"")
 }
 def lightSenseOff() {
 	log.debug("Setting Light Sense Off") 
     def cmds = []
     cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 14, size: 1)
     sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+    showDashboard("", "", 0,"")
 }
 def installed() {
 	// Device-Watch simply pings if no device events received for 32min(checkInterval)
@@ -525,36 +560,43 @@ def installed() {
 }
 def updated() {
 	sendEvent(name: "checkInterval", value: 2 * 15 * 60 + 2 * 60, displayed: false, data: [protocol: "zwave", hubHardwareId: device.hub.hardwareID])
+    if (!state.settingVar) state.settingVar=[]
     if (state.lastUpdated && now() <= state.lastUpdated + 3000) return
     state.lastUpdated = now()
-	def cmds = []
+	def cmds = [], timeDelay, motionSensor, lightSensor, dimLevel
 	//switch and dimmer settings
     //param 1 timeout duration
     if (settings.timeoutduration) {
        	cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.timeoutduration.toInteger()], parameterNumber: 1, size: 1)
        	cmds << zwave.configurationV1.configurationGet(parameterNumber: 1)
+  		timeDelay = timeoutduration.toInteger()
     }
     else{
        	cmds << zwave.configurationV1.configurationSet(configurationValue: [5], parameterNumber: 1, size: 1)
        	cmds << zwave.configurationV1.configurationGet(parameterNumber: 1)
+        timeDelay = 5
     }
     //param 13 motion sensitivity
     if (settings.motionsensitivity) {
         cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.motionsensitivity.toInteger()], parameterNumber: 13, size: 1)
         cmds << zwave.configurationV1.configurationGet(parameterNumber: 13)
+        motionSensor=motionsensitivity.toInteger()
     }
     else {
         cmds << zwave.configurationV1.configurationSet(configurationValue: [2], parameterNumber: 13, size: 1)
         cmds << zwave.configurationV1.configurationGet(parameterNumber: 13)
+        motionSensor=2
     }
     //param 14 lightsense
     if (settings.lightsense) {
         cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.lightsense.toInteger()], parameterNumber: 14, size: 1)
         cmds << zwave.configurationV1.configurationGet(parameterNumber: 14)
+        lightSensor=lightsense.toInteger()
     }
     else{
         cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 14, size: 1)
         cmds << zwave.configurationV1.configurationGet(parameterNumber: 14)
+        lightSensor=1
     }
 	//param 15 reset cycle
 	if (settings.resetcycle) {
@@ -572,6 +614,7 @@ def updated() {
     if (settings.motion) {
        	cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.motion.toInteger()], parameterNumber: 6, size: 1)
        	cmds << zwave.configurationV1.configurationGet(parameterNumber: 6)
+        motionSensor = !settings.motion.toInteger() ? 0 : motionSensor
     }
     else {
        	cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 6, size: 1)
@@ -586,14 +629,6 @@ def updated() {
         cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 5, size: 1)
        	cmds << zwave.configurationV1.configurationGet(parameterNumber: 5)
     }
-    /*/association groups-May remove after testing....copied from switch code
-	cmds << zwave.associationV1.associationSet(groupingIdentifier:0, nodeId:zwaveHubNodeId)
-    cmds << zwave.associationV1.associationSet(groupingIdentifier:1, nodeId:zwaveHubNodeId)
-	//don't think we need this - only one group needs to be associated for buttons
-    cmds << zwave.associationV1.associationRemove(groupingIdentifier:2, nodeId:zwaveHubNodeId)
-    //needed for button presses
-    cmds << zwave.associationV1.associationSet(groupingIdentifier:3, nodeId:zwaveHubNodeId)
-	//add endpoints to groups*/
     cmds << zwave.associationV1.associationSet(groupingIdentifier:0, nodeId:zwaveHubNodeId)
     cmds << zwave.associationV1.associationSet(groupingIdentifier:1, nodeId:zwaveHubNodeId)
 	cmds << zwave.associationV1.associationSet(groupingIdentifier:2, nodeId:zwaveHubNodeId)
@@ -649,10 +684,12 @@ def updated() {
     //switch level param 17
     if (settings.switchlevel == "0" || !switchlevel) {
        	cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 17, size: 1)
+        dimLevel =0
     } 
     else if (settings.switchlevel) {
        	cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.switchlevel.toInteger()], parameterNumber: 17, size: 1)
     	cmds << zwave.configurationV1.configurationGet(parameterNumber: 17)
+        dimLevel =switchlevel.toInteger()
     }
     //dim rate param 18
     if (settings.dimrate) {
@@ -665,23 +702,12 @@ def updated() {
     }
     //end of dimmer specific params   
     sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 500)
+    showDashboard(timeDelay, motionSensor, lightSensor, dimLevel)
     showVersion()
 }
-/*
 def configure() {
 	def cmds = []
-	// association groups
-	cmds << zwave.associationV1.associationSet(groupingIdentifier:0, nodeId:zwaveHubNodeId)
-	cmds << zwave.associationV1.associationSet(groupingIdentifier:1, nodeId:zwaveHubNodeId)
-	//don't think we need this
-    cmds << zwave.associationV1.associationRemove(groupingIdentifier:2, nodeId:zwaveHubNodeId)
-    //needed for button presses
-    cmds << zwave.associationV1.associationSet(groupingIdentifier:3, nodeId:zwaveHubNodeId)
-	sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
-}*/
-def configure() {
-	def cmds = []
-	// Make sure lifeline is associated - was missing on a dimmer:
+	// Make sure lifeline is associated
 	cmds << zwave.associationV1.associationSet(groupingIdentifier:0, nodeId:zwaveHubNodeId)
     cmds << zwave.associationV1.associationSet(groupingIdentifier:1, nodeId:zwaveHubNodeId)
 	cmds << zwave.associationV1.associationSet(groupingIdentifier:2, nodeId:zwaveHubNodeId)
@@ -720,4 +746,29 @@ private parseAssocGroupList(list, group) {
     }  
     return nodes
 }
-def showVersion() { sendEvent (name: "about", value:"DTH Version 1.0.1 (07/10/18)") }
+def showDashboard(timeDelay, motionSensor, lightSensor, dimLevel) {
+    if (timeDelay=="") timeDelay=state.currentTimeDelay
+    if (motionSensor=="") motionSensor=state.currentMotionSensor
+    if (lightSensor=="") lightSensor=state.currentLightSensor
+    if (dimLevel=="") dimLevel=state.currentDimLevel
+    state.currentTimeDelay=timeDelay
+    state.currentMotionSensor=motionSensor
+    state.currentLightSensor=lightSensor
+    state.currentDimLevel = dimLevel
+    def motionSensorTxt = motionSensor == 1 ? "High" : motionSensor == 2 ? "Medium" : motionSensor==3 ? "Low" : "Disabled"
+    def lightSensorTxt = lightSensor == 0 ? "Disabled" : "Enabled"
+    def timeDelayTxt = timeDelay == 0 ? "5 seconds" : timeDelay == 1 ? "1 minute" : timeDelay == 5 ? "5 minutes" : timeDelay == 15 ? "15 minutes" : "30 minutes"
+    def dimLevelTxt = dimLevel +"%"
+    def dimSync = (switchlevel && state.currentDimLevel == switchlevel.toInteger()) || (!switchlevel && state.currentDimLevel== 0) ? "✔" : "‼"
+    def motionSync = ((((!motion || (motion && motion=="1")) && motionSensorTxt !="Disabled" && motionsensitivity && state.currentMotionSensor==motionsensitivity.toInteger()) || (!motionsensitivity && state.currentMotionSensor==2)) ||
+    	(motion && motion=="0" && motionSensorTxt =="Disabled"))  ? "✔" : "‼"
+    def lightSync = (lightsense && state.currentLightSensor == lightsense.toInteger()) || (!lightsense && state.currentLightSensor == 1) ? "✔" : "‼"
+    def timeSync = (timeoutduration && state.currentTimeDelay == timeoutduration.toInteger()) || (!timeoutduration && state.currentTimeDelay == 5)  ? "✔" : "‼"
+    String result =""
+   	result +="${dimSync} Default Dim Level: " + dimLevelTxt
+    result +="\n${motionSync} Motion Sensitivity: " + motionSensorTxt
+   	result +="\n${lightSync} Light Sensing: " + lightSensorTxt
+	result +="\n${timeSync} Timeout Duration: " + timeDelayTxt
+	sendEvent (name:"dashboard", value: result ) 
+}
+def showVersion() { sendEvent (name: "about", value:"DTH Version 1.0.1 (07/15/18)") }
