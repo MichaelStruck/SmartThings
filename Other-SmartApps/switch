@@ -4,7 +4,7 @@
  *	Copyright © 2018 Michael Struck
  *  Original Author: Matt Lebaugh (@mlebaugh)
  *
- *  Version 1.0.1 7/13/18 
+ *  Version 1.0.1 7/15/18 
  *
  *  Version 1.0.1 Format and syntax updates. Thanks to @Darwin for the motion sensitivity/timeout minutes idea!
  *  Version 1.0.0 Original release by Matt Lebaugh. Great Work!
@@ -86,6 +86,18 @@ metadata {
                 ],
                 required: false
             )
+            input (name: "timeoutdurationPress", title: "Double Press Timeout (Occupancy/Vacancy)",
+                description: "If 'on' is physically pressed twice within 10 seconds, override timeout duration. Resets when light goes off",
+                type: "enum",
+                options: [
+                    "0" : "5 seconds",
+                    "1" : "1 minute",
+                    "5" : "5 minutes",
+                    "15" : "15 minutes",
+                    "30" : "30 minutes"
+                ],
+                required: false
+            )
             input (name: "motion", title: "Motion Sensor",
                 description: "Enable/Disable Motion Sensor.",
                 type: "enum",
@@ -157,10 +169,7 @@ metadata {
 			state "default", label:'', action:"refresh.refresh", icon:"st.secondary.refresh"
 		}            
 		valueTile("operatingMode", "device.operatingMode", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-			state "Occupied",label:'Mode: ${currentValue}', unit:"",action:"toggleMode", backgroundColor:"#53a7c0"
-            state "Manual",label:'Mode: ${currentValue}', unit:"", action:"toggleMode", backgroundColor:"#ffffff"
-            state "Vacancy",label:'Mode: ${currentValue}', unit:"", action:"toggleMode", backgroundColor:"#56c056"
-            //state "default", label:'Mode: ${currentValue}', unit:"", action:"toggleMode"
+			state "default", label:'Mode: ${currentValue}', unit:"", action:"toggleMode"
 		}
         valueTile("dashboard", "device.dashboard", inactiveLabel: false, decoration: "flat", width: 6, height: 2) {
 			state "default", label:'${currentValue}', unit:""
@@ -201,10 +210,19 @@ def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicReport cmd) {
 }
 def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicSet cmd) {
     log.debug "---BASIC SET V1--- ${device.displayName} sent ${cmd}"
-	def result = []
+    def result = []
     result << createEvent([name: "switch", value: cmd.value ? "on" : "off", type: "physical"])
     if (cmd.value == 255) {
-    	result << createEvent([name: "button", value: "pushed", data: [buttonNumber: "1"], descriptionText: "On/Up on (button 1) $device.displayName was pushed", isStateChange: true, type: "physical"])
+        if (timeoutdurationPress && state.Timer && (now()-state.Timer)<10000) {
+        	log.debug "Double press in less than 10 seconds-Overridng timeout"
+        	def cmds=[]
+            cmds << zwave.configurationV1.configurationSet(configurationValue: [timeoutdurationPress.toInteger()], parameterNumber: 1, size: 1)
+       		cmds << zwave.configurationV1.configurationGet(parameterNumber: 1)
+            sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+            showDashboard(timeoutdurationPress.toInteger(), "", "")
+    	}
+		state.Timer=now()
+        result << createEvent([name: "button", value: "pushed", data: [buttonNumber: "1"], descriptionText: "On/Up on (button 1) $device.displayName was pushed", isStateChange: true, type: "physical"])
     }
 	else if (cmd.value == 0) {
     	result << createEvent([name: "button", value: "pushed", data: [buttonNumber: "2"], descriptionText: "Off/Down (button 2) on $device.displayName was pushed", isStateChange: true, type: "physical"])
@@ -260,6 +278,14 @@ def zwaveEvent(physicalgraph.zwave.commands.configurationv2.ConfigurationReport 
 }
 def zwaveEvent(physicalgraph.zwave.commands.switchbinaryv1.SwitchBinaryReport cmd) {
     log.debug "---BINARY SWITCH REPORT V1--- ${device.displayName} sent ${cmd}"
+    if (cmd.value==0 && timeoutdurationPress){
+    	log.debug "Resetting timeout duration"
+        def cmds=[],timeoutValue = timeoutduration ? timeoutduration.toInteger() : 5
+        cmds << zwave.configurationV1.configurationSet(configurationValue: [timeoutValue], parameterNumber: 1, size: 1)
+       	cmds << zwave.configurationV1.configurationGet(parameterNumber: 1)
+        sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+        showDashboard(timeoutValue, "", "")
+    }
     createEvent([name: "switch", value: cmd.value ? "on" : "off", type: "digital"])
 }
 def zwaveEvent(physicalgraph.zwave.commands.manufacturerspecificv2.ManufacturerSpecificReport cmd) {
@@ -298,18 +324,16 @@ def zwaveEvent(physicalgraph.zwave.Command cmd) {
     log.warn "${device.displayName} received unhandled command: ${cmd}"
 }
 def on() {
-	//sendEvent(name: "switch", value: "on")
 	delayBetween([
 		zwave.basicV1.basicSet(value: 0xFF).format(),
 		zwave.switchBinaryV1.switchBinaryGet().format()
 	],100)
 }
 def off() {
-	//sendEvent(name: "switch", value: "off")
-	delayBetween([
+    delayBetween([
 		zwave.basicV1.basicSet(value: 0x00).format(),
 		zwave.switchBinaryV1.switchBinaryGet().format()
-	],100)
+	],100)  
 }
 def poll() {
 	delayBetween([
@@ -414,8 +438,6 @@ def lightSenseOff() {
     showDashboard("", "", 0)
 }
 def installed() {
-	// Device-Watch simply pings if no device events received for 32min(checkInterval)
-	// sendEvent(name: "checkInterval", value: 2 * 15 * 60 + 2 * 60, displayed: false, data: [protocol: "zwave", hubHardwareId: device.hub.hardwareID])
 	updated()
 }
 def updated() {
@@ -473,6 +495,7 @@ def updated() {
     if (settings.motion) {
        	cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.motion.toInteger()], parameterNumber: 6, size: 1)
        	cmds << zwave.configurationV1.configurationGet(parameterNumber: 6)
+        motionSensor = !settings.motion.toInteger() ? 0 : motionSensor
     }
     else {
        	cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 6, size: 1)
@@ -567,11 +590,11 @@ def showDashboard(timeDelay, motionSensor, lightSensor) {
     def timeDelayTxt = timeDelay == 0 ? "5 seconds" : timeDelay == 1 ? "1 minute" : timeDelay == 5 ? "5 minutes" : timeDelay == 15 ? "15 minutes" : "30 minutes"
     def motionSync = ((((!motion || (motion && motion=="1")) && motionSensorTxt !="Disabled" && motionsensitivity && state.currentMotionSensor==motionsensitivity.toInteger()) || (!motionsensitivity && state.currentMotionSensor==2)) ||
     	(motion && motion=="0" && motionSensorTxt =="Disabled"))  ? "✔" : "‼"
-    def lightSync = state.currentLightSensor == lightsense.toInteger() ? "✔" : "‼"
-    def timeSync = state.currentTimeDelay == timeoutduration.toInteger()? "✔" : "‼"    
+    def lightSync = (lightsense && state.currentLightSensor == lightsense.toInteger()) || (!lightsense && state.currentLightSensor == 1) ? "✔" : "‼"
+    def timeSync = (timeoutduration && state.currentTimeDelay == timeoutduration.toInteger()) || (!timeoutduration && state.currentTimeDelay == 5)  ? "✔" : "‼"    
     result +="\n${motionSync} Motion Sensitivity: " + motionSensorTxt
    	result +="\n${lightSync} Light Sensing: " + lightSensorTxt
 	result +="\n${timeSync} Timeout Duration: " + timeDelayTxt
 	sendEvent (name:"dashboard", value: result ) 
 }
-def showVersion() { sendEvent (name: "about", value:"DTH Version 1.0.1 (07/13/18)") }
+def showVersion() { sendEvent (name: "about", value:"DTH Version 1.0.1 (07/15/18)") }
