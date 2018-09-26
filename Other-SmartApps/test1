@@ -1,15 +1,15 @@
 /**
- *  Ask Alexa Rooms/Groups
+ *  GE Portable Smart Motion Sensor (Model 34193) DTH
  *
  *  Copyright © 2018 Michael Struck
- *  Version 1.0.5 5/28/18
- * 
- *  Version 1.0.0 (9/13/17) - Initial release
- *  Version 1.0.1a (9/26/17) - Fixed text area variable issue
- *  Version 1.0.2 (10/31/17) - Added a summary option for switch status outputs
- *  Version 1.0.3 (2/8/18) - Added room occupancy (beacon) capabilties
- *  Version 1.0.4a (3/9/18) - Added Echo indentification, fixed code issues with xParam
- *  Version 1.0.5 (5/28/18) - Added additional parameter for dimmers verses thermostat when giving a numeric command, also added fan controls and better statusing
+ *  Original Author: Jeremy Williams (@jwillaz)
+ *
+ *  Version 1.0.1 9/25/18 
+ *
+ *  Version 1.0.0 (11/17/17)- Original release by Jeremy Williams . Great Work!
+ *  Version 1.0.1 (9/25/18)- Updated by Michael Struck-Streamlined interface, added additional logging, added programming interfaces
+ *
+ *  Uses code from SmartThings
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -21,781 +21,294 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  */
-definition(
-    name: "Ask Alexa Rooms/Groups",
-    namespace: "MichaelStruck",
-    author: "Michael Struck",
-    description: "Extension Application of Ask Alexa. Do not install directly from the Marketplace",
-    category: "My Apps",
-    parent: "MichaelStruck:Ask Alexa",
-    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/ext.png",
-    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/ext@2x.png",
-    iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/img/ext@2x.png",
-    )
-preferences {
-    page name:"mainPage"
-    page name:"pageSwitchRPT"
-    page name:"pageDoorRPT"
-    page name:"pageShadeRPT"
-    page name:"pageTempRPT"
-    page name:"pageHumidRPT"
-    page name:"pageSensors"
-    page name:"pageExtAliases"
-    page name:"pageEchoAliasDelete"
-}
-//Show main page
-def mainPage() {
-	dynamicPage(name: "mainPage", title:"Ask Alexa Rooms/Groups Options", install: true, uninstall: true) {
-        if (!state.rmEchos) state.rmEchos=[]
-        section {
-        	label title:"Room/Group Name (Required)", required: true, image: parent.imgURL() + "room.png"
-            href "pageExtAliases", title: "Room/Group Aliases", description: extAliasDesc(), state: extAliasState()
-        }
-        section ("Devices to control this room / group"){
-        	href "pageSwitchRPT", title: "Lights/Switches/Dimmers", description: getDesc("switch"), state: (switches || switchesFans ? "complete" : null), image: parent.imgURL() + "power.png"
-            href "pageDoorRPT", title: "Doors/Locks", description: getDesc("door"), state: (locks||doors ? "complete" : null), image: parent.imgURL() + "lock.png"
-            href "pageShadeRPT", title: "Window Shades", description: getDesc("shade"), state: (shades ? "complete" : null), image: parent.imgURL() + "shade.png"
-        }
-        section ("Sensors in this room / group"){
-        	href "pageTempRPT", title: "Temperature Sensors", description: getDesc("temp"), state: (temp ? "complete" : null), image: parent.imgURL() + "heating.png"
-            href "pageHumidRPT", title: "Humidity Sensors", description: getDesc("humid"), state: (humid ? "complete" : null), image: parent.imgURL() + "humidity.png"
-            href "pageSensors", title: "Other Sensors", description: getDesc("sensor"), state: ( motion || contact || water || occupy ? "complete" : null), image: parent.imgURL() + "sensor.png"
-		}
-        if (doors && shades){
-       		section("Command options"){
-            	input "openCMD", "enum", title: "Open/Close Command Default When Device Type Not Specified", options: ["doors":"Open/Close Doors Only", "shades":"Open/Close Window Shades Only", "both":"Open/Close All Devices (Doors and Window Shades)"], defaultValue: "doors", required: false, submitOnChange: true 
-            }
-        }
-        section("Custom acknowledgment"){
-        	if (!noAck && !voiceShortStatus) input "voicePost", "text", title: "Action Acknowledgment Message", description: "Enter a short statement to play after action runs (overrides default message)", required: false, capitalization: "sentences"   
-            input "noAck", "bool", title: "No Action Acknowledgment Message", defaultValue: false, submitOnChange: true
-            input "voiceShortStatus", "bool", title: "Shorter Group Status Reply", defaultValue: false, submitOnChange: true	
-        }
-        section("Tap below to remove this room / group"){ }
-        remove("Remove Room/Group" + (app.label ? ": ${app.label}" : ""),"PLEASE NOTE","This action will only remove this room/group. Ask Alexa, other macros and extensions will remain.")
+metadata {
+	definition (name: "GE Portable Smart Motion Sensor 34193", namespace: "MichaelStruck", author: "Michael Struck", ocfDeviceType: "x.com.st.d.sensor.motion") {
+		capability "Motion Sensor"
+		capability "Sensor"
+		capability "Battery"
+		capability "Health Check"
+        
+        command "setMotionSenseOff"
+        command "setMotionSenseLow"
+        command "setMotionSenseMed"
+        command "setMotionSenseHigh"
+        command "LEDFlashOn"
+		command "LEDFlashOff"
+
+		fingerprint mfr: "0063", prod: "4953", model: "3133", deviceJoinName: "GE Portable Smart Motion Sensor"
 	}
-}
-def pageSwitchRPT() {
-	dynamicPage(name: "pageSwitchRPT", install: false, uninstall: false) {
-    	section { paragraph "Lights/Switches/Dimmers", image: parent.imgURL() + "power.png" }
-        def duplicates = switchList().findAll{switchList().count(it)>1}.unique()
-        if (duplicates){
-        	section ("**WARNING**"){
-        		paragraph "You have the following switches used in both the lights and fans areas:\n\n${parent.getList(duplicates)}\n\nThis may cause undesired results when turning on and off the group.", image: parent.imgURL() + "caution.png"
-            }
-        }
-    	section (" "){
-        	input "switches", "capability.switch", title: "Lights/Switches/Dimmers", multiple: true, required: false, submitOnChange: true
-            input "switchesFans", "capability.switchLevel", title: "Dimmers Connected To Fans", multiple: true, required: false, submitOnChange: true
-    	}
-        if (switches || switchesFans){
-        	section ("Switch device options", hideWhenEmpty: true){
-            	if (switches.findAll{it.getSupportedCommands().name.contains("setLevel")} ) input "defaultDim", "enum", title: "Default Dimmer Level When Turned 'On'", options: dimmerEnum(), defaultValue: 0, required: false
-                if (switchesFans) input "defaultFan", "enum", title: "Default Fan Level When Turned 'On'", options: dimmerEnum(), defaultValue: 0, required: false
-                if (switches.findAll{it.getSupportedCommands().name.contains("setColor")}) input "defaultColor", "enum", title: "Default Color When Turned 'On'", options: parent.STColors().name, required: false
-                if (switches && switches.size()>1) input "on100", "bool", title: "Turn On All Switches When 100% Level Command Is Given", defaultValue: false 
-                if (switches.findAll{it.getSupportedCommands().name.contains("setColorTemperature")}) input "kLights", "bool", title:"Utilize Kelvin Temperature Settings (For White Kelvin Bulbs)", defaultValue: false
-           	}    
-           	section ("Exclusions"){
-                 	input "switchesExcludeOn", "enum", title: "Switch Devices To Exclude From 'On' Command", options: switchList(), multiple: true, required: false
-                   	input "switchesExcludeOff", "enum", title: "Switch Devices To Exclude From 'Off' Command", options: switchList(), multiple: true, required: false
-            }
-            section ("Status reporting"){
-            	input "switchesRPT", "bool", title: "Include Switch Devices In Group Status Report", defaultValue: false, submitOnChange: true
-                if (!switchesRPTSummary) input "switchesRPTOn", "bool", title: "Report Only Switch Devices That Are On (Group/Category Status) ", defaultValue: false, submitOnChange: true
-                if (!switchesRPTOn && ((switches && switches.size()>1) || (switchesFans && switchesFans.size()>1))) input "switchesRPTSummary", "bool", title: "Group Switches By Count When All Devices Are Not In Same State", defaultValue: false , submitOnChange: true
-            }
-        }
-    }   
-}
-def pageDoorRPT() {
-	dynamicPage(name: "pageDoorRPT", install: false, uninstall: false) {
-    	section { paragraph "Doors/Locks", image: parent.imgURL() + "lock.png" }
-    	section ("Doors"){
-        	input "doors", "capability.doorControl", title: "Doors", multiple: true, required: false, submitOnChange: true
-            if (doors && parent.pwNeeded) input "usePWDoor", "bool", title: "Require PIN For Door Actions", defaultValue: false
-        	if (doors) input "doorsRPT", "bool", title: "Include Doors In Group Status Report", defaultValue: false, submitOnChange: true
-            if (doors && doorsRPT) input "doorsRPTOn", "bool", title: "Report Only Doors That Are Open", defaultValue: false
-    	}
-        section ("Locks"){
-        	input "locks", "capability.lock", title: "Locks", multiple: true, required: false, submitOnChange: true
-            if (locks && parent.pwNeeded) input "usePWLock", "bool", title: "Require PIN For Lock Actions", defaultValue: false
-        	if (locks) input "locksRPT", "bool", title: "Include Locks In Group Status Report", defaultValue: false, submitOnChange: true
-            if (locks && locksRPT) input "locksRPTOn", "bool", title: "Report Only Locks That Are Unlocked", defaultValue: false
-    	}
-        if (openCMD == "shades" && doors && shades){
-			section ("Please note"){
-				paragraph "You have your default open/close controls set to window shades only. You can not adjust control the doors in this room, but can get the status of these devices.", image: parent.imgURL()+"info.png"
-			}
-		}
-        if (openCMD == "both" && doors && shades){
-			section ("Please note"){
-				paragraph "You have your default open/close controls set to control both doors and window shades. Both sets of devices will open or close when you give these commands.", image: parent.imgURL()+"info.png"
-			}
-		}
-    }   
-}
-def pageShadeRPT() {
-	dynamicPage(name: "pageShadeRPT", install: false, uninstall: false) {
-    	section { paragraph "Window Shades", image: parent.imgURL() + "shade.png" }
-    	section (" "){
-        	input "shades", "capability.windowShade", title: "Window Shades", multiple: true, required: false, submitOnChange: true
-        	if (shades) input "shadesRPT", "bool", title: "Include Window Shades In Group Status Report", defaultValue: false, submitOnChange: true
-            if (shades && shadesRPT) input "shadesRPTOn", "bool", title: "Report Only Window Shades That Are Open", defaultValue: false
-    	}
-        if ((openCMD == "doors" || !openCMD) && shades && doors){
-			section ("Please note"){
-				paragraph "You have your default open/close controls set to doors only. You can not adjust control the window shades in this room, but can get the status of these devices.", image: parent.imgURL()+"info.png"
-			}
-		}
-        if (openCMD == "both" && doors && shades){
-			section ("Please note"){
-				paragraph "You have your default open/close controls set to control both doors and window shades. Both sets of devices will open or close when you give these commands.", image: parent.imgURL()+"info.png"
-			}
-		}
-    }   
-}
-def pageTempRPT() {
-	dynamicPage(name: "pageTempRPT", install: false, uninstall: false) {
-    	section { paragraph "Temperature Sensors", image: parent.imgURL() + "heating.png" }
-    	section (" "){
-        	input "temp", "capability.temperatureMeasurement", title: "Temperature Sensors", multiple: true, required: false, submitOnChange: true
-    		if (temp && temp.size()>1) paragraph "Please note: When multiple temperature devices are selected above, the status output will be an average of the device readings", image: parent.imgURL() + "info.png"
-        }
-    }   
-}
-def pageHumidRPT() {
-	dynamicPage(name: "pageHumidRPT", install: false, uninstall: false) {
-    	section { paragraph "Humidity Sensors", image: parent.imgURL() + "humidity.png" }
-    	section (" "){
-        	input "humid", "capability.relativeHumidityMeasurement", title: "Humidity Sensors", multiple: true, required: false, submitOnChange: true
-        	if (humid && humid.size()>1) paragraph "Please note: When multiple humidity devices are selected above, the status output will be an average of the device readings", image: parent.imgURL() + "info.png"
-        }
-    }   
-}
-def pageSensors() {
-	dynamicPage(name: "pageSensors", install: false, uninstall: false) {
-    	section { paragraph "Other Sensors", image: parent.imgURL() + "sensor.png" }
-        section ("Motion sensors"){
-            input "motion", "capability.motionSensor", title: "Motion Sensors", multiple: true, required: false, submitOnChange: true
-            if (motion) input "motionOnly", "bool",title: "Report Only Sensors That Read 'Active'", defaultValue: false
-        }
-        section ("Occupancy sensors", hideWhenEmpty: true){
-            input "occupy", "capability.beacon", title: "Occupancy Sensors", multiple: true, required: false, submitOnChange: true
-            if (occupy) {
-            	input "occupiedOnly", "bool",title: "Report Only Sensors That Read 'Occupied'", defaultValue: false
-            	def sss= occupy && occupy.size()>1 ? "these sensors" : "this sensor"  
-                paragraph "You can also control the occupancy state of ${sss}. Simply use the commands: ${parent.getList(parent.occVoc())}.", image: parent.imgURL() + "info.png" 
-        	}
-        }
-        section ("Open/Close sensors"){
-            input "contact", "capability.contactSensor", title: "Open/Close Sensors", multiple: true, required: false, submitOnChange: true
-            if (contact) input "openOnly", "bool",title: "Report Only Sensors That Read 'Open'", defaultValue: false
-        }
-        section ("Water sensors", hideWhenEmpty: true){
-			input "water", "capability.waterSensor", title: "Water Sensors", multiple: true, required: false, submitOnChange: true
-            if (water) input "wetOnly", "bool", title: "Report Only Water Sensors That Are 'Wet'", defaultValue: false
-        }
-    }   
-}
-def pageExtAliases() {
-    dynamicPage(name: "pageExtAliases", title: "Enter alias names for this room/group"){
-        section {
-            for (int i = 1; i < extAliasCount()+1; i++){
-                input "extAlias${i}", "text", title: "Room/Group Alias Name ${i}", required: false
-            }
-        }
-        if (state.rmEchos.size()){
-            section("Echo devices associated with this room / group"){
-                def echoName="", count=0
-                state.rmEchos.each{	
-                	echoName+="● "+ it[0..15] + "......." + it[-15..-1]
-                    count ++
-                    if (count<getEchoAliasCount()) echoName+="\n"
-                }
-                paragraph echoName
-            }
-            section("Delete Echo devices associated with this room / group"){
-            	href "pageEchoAliasDelete", title: "Delete Echo Device Associations", description: "Tap to delete associations", image: parent.imgURL() + "delete.png"
-                paragraph "It is recommended you check all Echo-based restrictions before removing associations.", image: parent.imgURL()+"caution.png"
-        	}
-        }
+	simulator {
+		status "inactive": "command: 3003, payload: 00"
+		status "active": "command: 3003, payload: FF"
 	}
-}
-def pageEchoAliasDelete() {
-    dynamicPage(name: "pageEchoAliasDelete", title: "Associations deleted"){
-        state.rmEchos=[]
-        section{
-            paragraph "You have deleted your Echo devices from this room/group. To setup new associations, simply say 'Alexa, tell ${parent.invocationName} to setup ${app.label}.'", image: parent.imgURL()+"info.png"
-            href "mainPage", title: "Tap Here To Return To The Room/Group Main Menu", description:none
-        }
+        preferences {
+        input "parameterSix", "bool", title: "Enable Motion Sensor", defaultValue: true
+        input "parameterThirteen", "enum", title: "Motion Sensitivity (Default: 'High')", options: [1: "Low", 2 :"Medium", 3:"High"],  defaultValue: 3, required: false
+        input "parameterEighteen", "number", title: "Motion Timeout Duration (1 to 60 minutes or 255 = 5 seconds) Default: 4 minutes",  defaultValue: 4, required: false
+		input "parameterTwentyEight", "bool", title: "Enable LED Flash Indicator", defaultValue: true
     }
+	tiles(scale: 2) {
+		multiAttributeTile(name:"motion", type: "generic", width: 6, height: 4){
+			tileAttribute("device.motion", key: "PRIMARY_CONTROL") {
+				attributeState("active", label:'motion', icon:"st.motion.motion.active", backgroundColor:"#00A0DC")
+				attributeState("inactive", label:'no motion', icon:"st.motion.motion.inactive", backgroundColor:"#CCCCCC")
+			}
+            tileAttribute ("battery", key: "SECONDARY_CONTROL") {
+				attributeState "battery", label:'Battery: ${currentValue}%'
+			}
+		}
+        valueTile("dashboard", "device.dashboard", inactiveLabel: false, decoration: "flat", width: 6, height: 2) {
+			state "default", label:'${currentValue}', unit:""
+        }
+		main "motion"
+		details(["motion", "dashboard"])
+	}
 }
 def installed() {
-    initialize()
+// Device wakes up every 4 hours, this interval allows us to miss one wakeup notification before marking offline
+	sendEvent(name: "checkInterval", value: 8 * 60 * 60 + 2 * 60, displayed: false, data: [protocol: "zwave", hubHardwareId: device.hub.hardwareID])
 }
 def updated() {
-	unsubscribe() 
-    initialize()
+	//Device wakes up every 4 hours, this interval allows us to miss one wakeup notification before marking offline
+	sendEvent(name: "checkInterval", value: 8 * 60 * 60 + 2 * 60, displayed: false, data: [protocol: "zwave", hubHardwareId: device.hub.hardwareID])   
+    response(configure())
 }
-def initialize() { }
-//Main Handlers
-def getOutput(room, mNum, op, param, mPW, mType, echoID){
-    String outputTxt = "", result = ""
-    if (mNum ==~/undefined|null/ && op==~/undefined|null/ && param ==~/undefined|null/) op="status"
-    def num = mNum ==~/undefined|null|\?/ || !mNum  ? 0 : mNum as int
-    num = num < 1 ? 0 : num >99 ? 100 : num
-    if (num == 0 && op==~/undefined|null/ && param ==~/undefined|null/) op="off"
-	if (mType=="thermostat") result ="Room control does not allow for changing thermostat temperatures. It is recommended you control the heating and cooling of the room by using direct thermostat device control. %1%"
-    else if (op ==~/low|medium|high/){
-        if (op=="low" && parent.dimmerLow) num = parent.dimmerLow else if (op=="low" && parent.dimmerLow=="") num =0 
-        if (op=="medium" && parent.dimmerMed) num = parent.dimmerMed else if (op=="medium" && !parent.dimmerMed) num = 0 
-        if (op=="high" && parent.dimmerHigh) num = parent.dimmerHigh else if (op=="high" && !parent.dimmerhigh) num = 0 
-        if (num==0) result = "You don't have a default value set up for the '${op}' level. I am not making any changes to '${room}'. %1%"
-        else if (num > 0 && param ==~/null|undefined/) result = levelSet(room, num, mType)
-        else result = colorSet(room, param, num)
-    }
-    else if (op == "maximum") {
-    	if (param ==~/null|undefined/) result = levelSet(room, 100, mType)
-        else result = colorSet(room, param, 100)
-    }
-    else if (parent.rmVoc().contains(op)) {
-    	if (echoID != "undefined") {
-        	if (state.rmEchos.contains(echoID)) result="This Echo device is already associated with the group, '${app.label}'. I am taking no action. %1%"
-            else{
-                if (!parent.doRmCheck(echoID)){
-                    state.rmEchos<<echoID
-                    result = "I am associating this Echo device with the group named: ${room}. You may now reference this group by using the phrase: 'in here', 'this room', or, 'this group', instead of using: '${room}', when giving commands to the group. "
-                    if (state.rmEchos.size()>1) result +="Please note: You have more than one Echo device associated with this group. Please check your Ask Alexa SmartApp for more information. "
-                }
-            	else result="You can not associate this Echo device to, ${room}, because it is already associated with the group, '${parent.doRmCheck(echoID)}'. Each Echo device can only be associated with one group at a time. %1%"
-        	}
-        }	
-        else result ="You are using a simulator or the Echo device you are speaking to is not indentifying itself. I am unable to associate this Echo device with: '${room}'. %1%"
-    }
-    else if (op==~/on|off/ && num==0) result=onOff(room, op, mType)
-    else if (parent.doorVoc().contains(op)) result = openClose(room, op, mPW)
-    else if (parent.lockVoc().contains(op)) result = lockUnlock(room, op, mPW)
-    else if (parent.occVoc().contains(op) || parent.occVoc().contains(param)) {
-    	op= !(op==~/null|undefined/) ? op : param
-        result=occupyChg(room, op)
-    }
-    else if (op=="toggle") result = roomToggle(room, mType)
-    else if (op==~/increase|raise|up|decrease|down|lower|brighten|dim/ && param==~/null|undefined/) result=increaseDecrease(room, op, mType)
-    else if (op=="status") result = roomStatus(room,mType)
-    else if (num && param ==~/null|undefined/ && switches) result = levelSet(room, num, mType)
-    else if (!(param ==~/null|undefined/)) result = colorSet(room, param, num)
-    else result="I did not understand what you wanted to do with the room, '${room}'. %1%"
-    if (op !="status") outputTxt = voicePost && !noAck ? parent.replaceVoiceVar(voicePost,"","","Room", room, 0, "") : noAck ? " " : result 
-    else outputTxt = result
-    if (outputTxt && !outputTxt.endsWith("%") && !outputTxt.endsWith(" ")) outputTxt += " "
-    if (outputTxt && !outputTxt.endsWith("%")) outputTxt += "%4%"
-    return outputTxt
+private getCommandClassVersions() {
+	[0x20: 1, 0x30: 1, 0x31: 5, 0x80: 1, 0x84: 1, 0x71: 3, 0x9C: 1]
 }
-def occupyChg(room, op){
-	String result = ""
-    if (occupy){       
-        occupy?."${op}"
-        def sss= occupy.size()>1 ? "s" : ""
-    	result = "I am setting the occupancy sensor${sss} to '${op}' in the group named: '${room}'. " 
-    }
-    else result = "You don't have any occupancy sensors in the group named: '${room}'. %1%"
-    return result
-}
-def onOff(room, op, mType){
-    String result = ""
-    def deviceList, count = 0, noun="device"
-    if (mType==~/null|undefined|device|devices|switch|switches/) {
-    	deviceList = switches ? switches : null
-        if (switchesFans && !deviceList) deviceList = switchesFans
-        else if (switchesFans && deviceList) deviceList = deviceList + switchesFans
-    }
-    else if (mType =~/color/) {deviceList = switches.findAll{it.getSupportedCommands().name.contains("setColor")}; noun = "colored light"}   
-    else if (mType =~/light/) {deviceList = switches; noun ="light"}
-    else if (mType =~/dimmer/) {deviceList = switches.findAll{it.getSupportedCommands().name.contains("setLevel")} ; noun = "dimmer"}
-    else if (mType =~/fan/) {deviceList =switchesFans; noun = "fan"}
-    else if (mType =~/Kelvin/ || mType ==~/temperature light|temperature lights/) {deviceList = switches.findAll{it.getSupportedCommands().name.contains("setColorTemperature")}; noun = "Kelvin light"}
-    if (deviceList){
-        deviceList.each {deviceName->
-            if (!((switchesExcludeOn && switchesExcludeOn.contains(deviceName.label) && op=="on") || (switchesExcludeOff && switchesExcludeOff.contains(deviceName.label) && op=="off"))){
-                deviceName."$op"()
-        		count ++
-                if (op=="on" && ((defaultDim && defaultDim != "0") || (defaultFan && defaultFan != "0"))){
-                	if (defaultDim && defaultDim != "0" && switches.find{it==deviceName} && deviceName.getSupportedCommands().name.contains("setLevel")) deviceName.setLevel(defaultDim as int)
-                	if (defaultFan && defaultFan != "0" && op=="on" && switchesFans.find{it==deviceName}) deviceName.setLevel(defaultFan as int)
-                }
-                if (defaultColor && op=="on"){
-                    if (defaultColor==~/Soft White|Warm White|Cool Chite|Daylight White/ && kLights && deviceName.getSupportedCommands().name.contains("setColorTemperature")){
-            			def sWhite, wWhite, cWhite, dWhite, kelvin
-                        sWhite = parent.kSoftWhite ? parent.kSoftWhite as int : 2700
-            			wWhite= parent.kWarmWhite ? parent.kWarmWhite as int: 3500
-            			cWhite= parent.kCoolWhite ? parent.kCoolWhite as int: 4500
-            			dWhite= parent.kDayWhite ? parent.kDayWhite as int: 6500
-           				kelvin = defaultColor=="Soft White" ? sWhite : defaultColor=="Warm White" ? wWhite : defaultColor=="Cool White" ? cWhite : defaultColor=="Daylight White" ? dWhite : 9999
-        				deviceName.setColorTemperature(kelvin)
-                    }
-                    else if (deviceName.getSupportedCommands().name.contains("setColor") && !kLights){
-                        def getColorData = parent.STColors().find {it.name==defaultColor}
-                        if (getColorData){
-            				def hueColor = Math.round(getColorData.h / 3.6), satLevel = getColorData.s, colorData = [hue: hueColor as int, saturation: satLevel as int]
-                            deviceName.setColor(colorData) 
-                    	}
-                    }
-                }
-            }
-        }
-        noun= count>1 || (!count && deviceList) ? "${noun}s" : noun
-    	if (count && deviceList) result = "I am turning ${op} the ${noun} in the group named: '${room}'. "
-        else if (!count && deviceList) result = "I attempted to take action on the ${noun}, but you may have restrictions within the group setup that prevented them from turning ${op}. %1%"
-    }
-    else result = "You don't have any ${noun}s to turn ${op} in the group named: '${room}'. %1%"
-    return result
-}
-def lockUnlock(room, op, mPW){
-	String result = ""
-    if (locks){
-        locks."$op"()
-        def sss= locks.size()>1 ? "s" : ""
-        result = "I am ${op}ing the device${sss} in the group named: '${room}'. "
-    }
-    else result = "You don't have any locks in the group named: '${room}'. %1%"
-	return result
-}
-def openClose(room, op, mPW){
-    String result = ""
-    def deviceList, noun = "doors or window shades"
-    if (shades && doors){
-        if (openCMD=="both"){ 	
-			deviceList=doors + shades
-			noun = doors.size()>1 && shades.size()>1 ? "doors and window shades" :
-				doors.size()==1 && shades.size()>1 ? "door and window shades" :
-				doors.size()>1 && shades.size()==1 ? "door and window shade" : "door and window shade"
+def parse(String description) {
+	def result = null
+	if (description.startsWith("Err")) {
+	    result = createEvent(descriptionText:description)
+	} else {
+		def cmd = zwave.parse(description, commandClassVersions)
+		if (cmd) {
+			result = zwaveEvent(cmd)
+		} else {
+			result = createEvent(value: description, descriptionText: description, isStateChange: false)
 		}
-        else if ((openCMD=="doors" || !openCMD) && doors) { deviceList=doors ; noun = doors.size()>1 ? "doors": "door"	}
-        else if (openCMD=="shades" && shades) { deviceList=shades ; noun = shades.size()>1 ? "window shades": "window shade" }
-    }
-    else if (doors && !shades) { deviceList=doors; noun = doors.size()>1 ? "doors": "door" }
-	else if (!doors && shades) { deviceList=shades; noun = shades.size()>1 ? "window shades" : "window shades" }
-    if (deviceList){
-        deviceList."$op"()
-        def verb = op=="close" ? "clos" : "open"
-        result = "I am ${verb}ing the ${noun} in the group named: '${room}'. "
-    }
-    else result = "You don't have any ${noun} to ${op} in the group named: '${room}'. %1%"
+	}
 	return result
 }
-def roomToggle(room, mType){
-	String result = ""
-    def deviceList, noun="device"
-    if (mType==~/null|undefined|device|devices|switch|switches/) {
-    	deviceList = switches ? switches: null
-        if (switchesFans && !deviceList) deviceList = switchesFans
-        else if (switchesFans && deviceList) deviceList = deviceList + switchesFans
-    }
-    else if (mType =~/light/) {deviceList = switches; noun ="light"}
-    else if (mType =~/dimmer/) {deviceList = switches.findAll{it.getSupportedCommands().name.contains("setLevel")} ; noun = "dimmer"}
-    else if (mType =~/fan/) {deviceList =switchesFans; noun = "fan"}
-    else if (mType =~/color/) {deviceList = switches.findAll{it.getSupportedCommands().name.contains("setColor")}; noun = "colored light"}   
-    else if (mType =~/Kelvin/ || mType ==~/temperature light|temperature lights/) {deviceList = switches.findAll{it.getSupportedCommands().name.contains("setColorTemperature")}; noun = "Kelvin light"}
-    if (deviceList){
-        deviceList.each{ 
-            def oldstate = it.currentValue("switch"), newstate = oldstate == "off" ? "on" : "off"
-            it."$newstate"()
-        }
-        def sss=deviceList.size() >1 ? "s" : ""
-        noun= "${noun}${sss}"
-    	result = "I am toggling the on and off state${sss} of the ${noun} in the group named: '${room}'. "   
+def sensorValueEvent(value) {
+	if (value) {
+		createEvent(name: "motion", value: "active", descriptionText: "$device.displayName detected motion")
+	} else {
+		createEvent(name: "motion", value: "inactive", descriptionText: "$device.displayName motion has stopped")
 	}
-	else result = "You don't have any ${noun}s to toggle in the group named: '${room}'. %1%"
-    return result
 }
-def levelSet(room, num, mType){
-	String result = ""
-    def lvl = num as int, deviceList, noun="the dimmable device"    
-    if (mType==~/null|undefined|device|devices|switch|switches/) {
-    	deviceList = switches ? switches.findAll{it.getSupportedCommands().name.contains("setLevel")} : null
-        if (switchesFans && !deviceList) deviceList = switchesFans
-        else if (switchesFans && deviceList) deviceList = deviceList + switchesFans
-    }
-    else if (mType =~/light|dimmer/) deviceList = switches.findAll{it.getSupportedCommands().name.contains("setLevel")}
-    else if (mType =~/fan/) {deviceList =switchesFans; noun = "fan"}
-    else if (mType =~/color/) { deviceList = switches.findAll{it.getSupportedCommands().name.contains("setColor")}; noun = "colored light"}   
-    else if (mType =~/Kelvin|temperature/) {deviceList = switches.findAll{it.getSupportedCommands().name.contains("setColorTemperature")}; noun = "Kelvin light"}
-    def count = deviceList ? deviceList.size() as int : 0
-    if (count>1 && noun=="the dimmable device" ) noun = "all "+ noun
-    else if (count==1 && noun!="the dimmable device") noun = "the "+ noun
-    if (deviceList) {
-    	deviceList.each { it.setLevel(lvl) }
-  		def sss= count > 1 ? "s" : ""
-    	result = "I am setting ${noun}${sss} to ${lvl}% in the group named: '${room}'. "
-    }
-    if (on100 && switches && lvl==100) {
-		switches?.on()
-        count ++
-        result = "I am turning on all of the devices and setting them to ${lvl}% in the group named: '${room}'. "
-    }
-    else if (!count) {
-    	if (noun=="the dimmable device") result = "You don't have any dimmable devices in the group named: '${room}'. %1%"
-		else result = "You don't have any ${noun}s in the group named: '${room}'. %1%"
-    }
-    return result
+def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicReport cmd)
+{
+	sensorValueEvent(cmd.value)
 }
-def increaseDecrease(room, op, mType){
-    String result = ""
-	def defMove = parent.lightAmt as int ?: 0, count = 0, deviceList, noun="dimmable device"  
-    if (mType==~/null|undefined|device|devices|switch|switches/){
-        deviceList = switches ? switches.findAll{it.getSupportedCommands().name.contains("setLevel")} : null
-    	if (switchesFans && !deviceList) deviceList = switchesFans
-        else if (switchesFans && deviceList) deviceList = deviceList + switchesFans
-    }
-    else if (mType =~/light|dimmer/) deviceList = switches.findAll{it.getSupportedCommands().name.contains("setLevel")}
-    else if (mType =~/fan/) {deviceList =switchesFans; noun = "Fan"}
-    else if (mType =~/color/) { deviceList = switches.findAll{it.getSupportedCommands().name.contains("setColor")}; noun = "Colored light"}   
-    else if (mType =~/Kelvin|temperature/) {deviceList = switches.findAll{it.getSupportedCommands().name.contains("setColorTemperature")}; noun = "Kelvin light"}
-	if (defMove){
-    	if (op==~/decrease|down|lower|dim/) defMove = -defMove
-        if (deviceList){
-        	def orgCount = deviceList.size()
-            deviceList.each{
-            	def newLvl = it.currentValue("level") + defMove
-                def newLevel = newLvl > 100 ? 100 : newLvl <0 ? 0 : newLvl
-                it.setLevel(newLevel)
-                if (newLvl > 0 && newLvl <100) count++
-        	}
-            def sss= count>1 ? "s" : ""
-            if (count>1 && noun=="dimmable device" ) noun ="All the dimmable device"
-    		else if (count==1 && noun !="dimmable device") noun = "The "+ noun.toLowerCase()	
-            if (count && op==~/increase|raise|up|brighten/) result = "I am increasing ${noun.toLowerCase()}${sss} in the group named: '${room}'. "
-            else if (count && op==~/decrease|down|lower|dim/) result = "I am decreasing ${noun.toLowerCase()}${sss} in the group named: '${room}'. "
-            else if (!count && op==~/increase|raise|up|brighten/ && orgCount) result = "You are already at maximum level for ${noun}s in the group named: '${room}'. %1%"
-            else if (!count && op==~/decrease|down|lower|dim/ && orgCount) result = "${noun}s in the group named: '${room}', are already dimmed to: 'off'. %1%"
-        }
-        if (noun=="dimmable device") result = "You don't have any dimmable devices in the group named: '${room}'. %1%"
-        else result = "You don't have any ${noun} devices in the group named: '${room}'. %1%"
+def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicSet cmd)
+{
+	sensorValueEvent(cmd.value)
+}
+def zwaveEvent(physicalgraph.zwave.commands.switchbinaryv1.SwitchBinaryReport cmd)
+{
+	sensorValueEvent(cmd.value)
+}
+def zwaveEvent(physicalgraph.zwave.commands.sensorbinaryv1.SensorBinaryReport cmd)
+{
+	sensorValueEvent(cmd.sensorValue)
+}
+def zwaveEvent(physicalgraph.zwave.commands.sensoralarmv1.SensorAlarmReport cmd)
+{
+	sensorValueEvent(cmd.sensorState)
+}
+def zwaveEvent(physicalgraph.zwave.commands.notificationv3.NotificationReport cmd)
+{
+	def result = []
+	if (cmd.notificationType == 0x07) {
+		if (cmd.v1AlarmType == 0x07) {  // special case for nonstandard messages from Monoprice ensors
+			result << sensorValueEvent(cmd.v1AlarmLevel)
+		} else if (cmd.event == 0x01 || cmd.event == 0x02 || cmd.event == 0x07 || cmd.event == 0x08) {
+			result << sensorValueEvent(1)
+		} else if (cmd.event == 0x00) {
+			result << sensorValueEvent(0)
+		} else if (cmd.event == 0x03) {
+			result << createEvent(name: "tamper", value: "detected", descriptionText: "$device.displayName covering was removed", isStateChange: true)
+			result << response(zwave.batteryV1.batteryGet())
+		} else if (cmd.event == 0x05 || cmd.event == 0x06) {
+			result << createEvent(descriptionText: "$device.displayName detected glass breakage", isStateChange: true)
+		}
+	} else if (cmd.notificationType) {
+		def text = "Notification $cmd.notificationType: event ${([cmd.event] + cmd.eventParameter).join(", ")}"
+		result << createEvent(name: "notification$cmd.notificationType", value: "$cmd.event", descriptionText: text, isStateChange: true, displayed: false)
+	} else {
+		def value = cmd.v1AlarmLevel == 255 ? "active" : cmd.v1AlarmLevel ?: "inactive"
+		result << createEvent(name: "alarm $cmd.v1AlarmType", value: value, isStateChange: true, displayed: false)
 	}
-    else result = "You do not have a default ${op} value set up in your smartapp. I did not take any action. %1%."
-	return result
-}	
-def colorSet(room, param, num){
-	String result = "", level=""
-    def lvl = num as int, colorData, deviceList = switches, countDim = 0, countColor=0
-    def getColorData = parent.STColors().find {it.name.toLowerCase()==param}, sWhite, wWhite, cWhite, dWhite, kelvin
-    if (deviceList){
-        if (param==~/soft white|warm white|cool white|daylight white/ && kLights){
-            sWhite = parent.kSoftWhite ? parent.kSoftWhite as int : 2700
-            wWhite= parent.kWarmWhite ? parent.kWarmWhite as int: 3500
-            cWhite= parent.kCoolWhite ? parent.kCoolWhite as int: 4500
-            dWhite= parent.kDayWhite ? parent.kDayWhite as int: 6500
-            kelvin = param=="soft white" ? sWhite : param=="warm white" ? wWhite : param=="cool white" ? cWhite : param=="daylight white" ? dWhite : 9999
-        }
-        if (getColorData){
-            def hueColor = Math.round(getColorData.h / 3.6), satLevel = getColorData.s
-            colorData = [hue: hueColor as int, saturation: satLevel as int] 
-            deviceList.each{ 
-                if (it.getSupportedCommands().name.contains("setLevel") && lvl>0) {
-                    it.setLevel(lvl)
-                    countDim ++
-                }
-                if (it.getSupportedCommands().name.contains("setColor") && colorData) {
-                    it.setColor(colorData) 
-                    countColor ++
-                }
-                if (it.getSupportedCommands().name.contains("setColorTemperature") && param==~/soft white|warm white|cool white|daylight white/ && kLights) it.setColorTemperature(kelvin)
-            }
-            def ssD= countDim>1 ? "s" : "", ssC= countColor>1 ? "s" : ""
-            if (!lvl && countColor && !countDim) result = "I am setting the colored light${ssC} to ${param} in the group named: '${room}'. "
-            else if (lvl && countColor && countDim && countColor == countDim) result = "I am setting the colored light${ssC} to ${param} and a level of ${lvl}% in the group named: '${room}'. "
-            else if (lvl && countColor && countDim && countColor != countDim)  result ="I am setting the dimmable device${ssD} to ${lvl}% and the colored light${ssD} to ${param} in the group named: '${room}'. "
-            else if (lvl && !countColor && countDim)  result ="I am setting the dimmable devices to ${lvl}% in the group named: '${room}'. I did not find any colored lights in this group to set to ${param}. " 
-            else if (lvl && !countColor && !countDim)  result ="I didn't find any colored or dimmable lights in the group named: '${room}'.  %1%"
-            else if (!lvl  && !countColor && !countDim)  result ="I didn't find any colored lights in the group named: '${room}'.  %1%"
-        }
-        else result = "I did not understand the color you wanted me to set in the group named: '${room}'. %1%"
-    }
-    else result = "You don't have any colored lights in the group named: '${room}'. %1%"
-    return result
+	result
 }
-def roomStatus(room, mType){
-	String result = "", type="devices"
-    if (mType!="undefined"){
-   		if (mType=~/door/) {type = "doors"; if (doors) result = doorReport()}
-    	else if (mType=~/lock/) {type = "locks"; if (locks) result=lockReport()}
-        else if (mType=~/switch|light|dimmer|fan/) {        	
-            if (!(mType=~"fan")) { 
-            	type = "switches"
-                if (switches || switchesFans) result = switchReport()
-            }
-            else {
-            	type = "fans"
-                if (switchesFans) result = fanReport()
-            }
-        	if (!result && switchesRPTOn && (switches || switchesFans)) result = "All of the ${type} are off. "
-        }
-        else if (mType=~/temperature/){
-        	type = "temperature sensors"
-            if (temp && temp.size() > 1) result = "The average temperature is ${parent.getAverage(temp, "temperature")} degrees. "
-       		else if (temp && temp.size() ==1) result ="The temperature is ${parent.getAverage(temp, "temperature") } degrees. "
-        }
-        else if (mType=~/humid/){
-        	type = "humidity sensors"
-        	if (humid && humid.size() > 1) result = "The average relative humidity is ${parent.getAverage(humid, "humidity")}%. "
-        	else if (humid && humid.size() ==1 ) result ="The relative humidity is ${parent.getAverage(humid, "humidity")}%. "
-        }
-        else if (mType=~/motion/) { type = "motion sensors";  result = motionReport() }
-        else if (mType=~/water/) { type = "water sensors"; result =waterReport() }
-        else if (mType=~/contact/) { type = "contact sensors"; result =contactReport() }
-        else if (mType=~/occupancy/) { type = "occupancy sensors"; result =occupyReport() }
-    	if (result) result = voiceShortStatus ?  result :"The status of the ${type} in the group named, '${room}', is as follows: ${result} " 
-    	else result = "You don't appear to have any ${type} setup in the group named, '${room}'. %1%" 
-    }
-    else if (((switches || switchesFans) && switchesRPT)  || (doors && doorsRPT ) || (locks && locksRPT) || (shades && shadesRPT) || temp || humid || water || contact || motion || occupy) {
-        if ((switches || switchesFans) && switchesRPT) result += switchReport()  
-		if (doors && doorsRPT) result +=doorReport()
-        if (locks && locksRPT) result +=lockReport()
-		if (shades && shadesRPT) result +=shadeReport()
-        if (temp && temp.size() > 1) result += "The average temperature is ${parent.getAverage(temp, "temperature")} degrees. "
-        else if (temp && temp.size() ==1) result +="The temperature is ${parent.getAverage(temp, "temperature") } degrees. "
-        if (humid && humid.size() > 1) result += "The average relative humidity is ${parent.getAverage(humid, "humidity")}%. "
-        else if (humid && humid.size() ==1 ) result +="The relative humidity is ${parent.getAverage(humid, "humidity")}%. "
-		if (motion)  result += motionReport()
-        if (occupy) result += occupyReport()
-        if (contact) result +=contactReport()
-        if (water) result +=waterReport()
-        if (result) result = voiceShortStatus ? result :"The group named, '${room}', is reporting the following: " + result 
-        else result = "None of the devices in the group named, '${room}', are reporting information. This may be normal based on your setup. %1%"
-    }
-    else result = "There are no ${type} set up to report status in the group named: '${room}'. %1%"
-    return result 
-}
-//Common Code
-private dimmerEnum() {return [0:"Set to previous level",10:"10",20:"20",30:"30",40:"40",50:"50",60:"60",70:"70",80:"80",90:"90",100:"100"]}
-def getEchoAliasCount(){ return state.rmEchos ? state.rmEchos.size() : 0 }
-def getEchoAliasList(result=[]){
-    state.rmEchos.each {result<<it}
-    return result   
-}
-def switchList(result=[]) { 
-    switches.each{result << it.label}
-    switchesFans.each{result<< it.label}
-	return result
-}
-def shadeReport(String result =""){
-    if (shadesRPTOn) shades.each { if (it.currentValue("windowShade").toLowerCase()=="open") result += "The '${it.label}' is open. " }	
-	else {
-      	if (shades?.currentValue("windowShade").contains("Closed") || shades?.currentValue("windowShade").contains("Open") || shades?.currentValue("windowShade").contains("Partially open")){
-           	if (!shades?.currentValue("windowShade").contains("Closed") && !shades?.currentValue("windowShade").contains("Partially open")) result += "All of the window shades are open. "
-           	else if (!shades?.currentValue("windowShade").contains("Open") && !shades?.currentValue("windowShade").contains("Partially open")) result += "All of the window shades are closed. "
-            else if (shades?.currentValue("windowShade").contains("Partially open") && !shades?.currentValue("windowShade").contains("Closed") && !shades?.currentValue("windowShade").contains("Open") ) result += "All of the window shades are partially open. "
-           	else shades.each{ result += "The ${it.label} is ${it.currentValue("windowShade").toLowerCase()}. " }
-    	}
-        else {
-          	if (!shades?.currentValue("windowShade").contains("closed")) result += "All of the window shades are open. "
-           	else if (!shades?.currentValue("windowShade").contains("open")) result += "All of the window shades are closed. "
-           	else shades.each{ result += "The ${it.label} is ${it.currentValue("windowShade").toLowerCase()}. " }
-        }
+def zwaveEvent(physicalgraph.zwave.commands.wakeupv1.WakeUpNotification cmd)
+{
+	def result = [createEvent(descriptionText: "${device.displayName} woke up", isStateChange: false)]
+
+	if (state.MSR == "011A-0601-0901" && device.currentState('motion') == null) {  // Enerwave motion doesn't always get the associationSet that the hub sends on join
+		result << response(zwave.associationV1.associationSet(groupingIdentifier:1, nodeId:zwaveHubNodeId))
 	}
-    return result
-}
-def switchReport(String result=""){
-	def switchList = switches ? switches : null
-   	if (switchesFans && !switchList) switchList = switchesFans
-    else if (switchesFans && switchList) switchList = switchList + switchesFans
-    def countOn = switchList?.findAll{it.currentValue("switch")=="on"}.size() as int, countOff=switchList?.findAll{it.currentValue("switch")=="off"}.size() as int, onVerb=countOn==1 ? "is" : "are", offVerb = countOff==1 ? "is" : "are"
-    if (switchesRPTOn) switchList.each { if (it.currentValue("switch")=="on") result += "The ${it.label} is on. " }	
-    else if (switchList?.size()>1 && switchesRPTSummary && countOn && countOff) result += "Of the ${countOn+countOff} switches, ${countOn} ${onVerb} on, ${countOff} ${offVerb} off. "
-    else {
-    	if (!switchList?.currentValue("switch").contains("off")) result += "All of the switches are on. "
-        else if (!switchList?.currentValue("switch").contains("on")) result += "All of the switches are off. "
-        else switchList.each{ result += "The ${it.label} is ${it.currentValue('switch')}. " }
-    }
-	return result
-}
-def doorReport(String result=""){
-	if (doorsRPTOn) doors.each { if (it.currentValue("door")=="open") result += "The '${it.label}' is open. " }	
-    else {
-    	if (!doors?.currentValue("door").contains("closed")) result += "All of the doors are open. "
-        else if (!doors?.currentValue("door").contains("open")) result += "All of the doors are closed. "
-        else doors.each{ result += "The ${it.label} is ${it.currentValue('door')}. " }
-    }
-    return result
-}
-def lockReport(String result=""){
-	if (locksRPTOn) locks.each { if (it.currentValue("lock")=="unlocked") result += "The '${it.label}' is unlocked. " }	
-    else {
-    	if (!locks?.currentValue("lock").contains("unlocked")) result += "All of the locks are locked. "
-        else if (!locks?.currentValue("lock").contains("locked")) result += "All of the locks are unlocked. "
-        else locks.each{ result += "The ${it.label} is ${it.currentValue("locks")}. " }
+	if (!state.lastbat || (new Date().time) - state.lastbat > 53*60*60*1000) {
+		result << response(zwave.batteryV1.batteryGet())
+	} else {
+		result << response(zwave.wakeUpV1.wakeUpNoMoreInformation())
 	}
-    return result
+	result
 }
-def fanReport(String result=""){
-    def switchList = switchesFans, countOn = switchList?.findAll{it.currentValue("switch")=="on"}.size() as int, countOff = switchList?.findAll{it.currentValue("switch")=="off"}.size() as int
-    def onVerb= countOn==1 ? "is" : "are", offVerb = countOff==1 ? "is" : "are"
-    if (switchesRPTOn) { switchList.each { if (it.currentValue("switch")=="on") result += "The ${it.label} is on and set to ${it.currentValue('level')}%. " }}
-    else if (switchList?.size()>1 && switchesRPTSummary && countOn && countOff) result += "Of the ${countOn+countOff} fans, ${countOn} ${onVerb} on, ${countOff} ${offVerb} off. "
-    else {
-    	if (!switchList?.currentValue("switch").contains("off")) result += "All of the fans are on. "
-        else if (!switchList?.currentValue("switch").contains("on")) result += "All of the fans are off. "
-        else switchList.each{ 
-        	def fanLvl=""
-        	if (it.currentValue('switch')=="on") fanLvl =" and is set to ${it.currentValue('level')}%"
-        	result += "The ${it.label} is ${it.currentValue('switch')} ${fanLvl}. " 
-    	}
-    }
-	return result    
-}
-def motionReport(String result=""){
-    def deviceList = motionOnly ?  motion.findAll{it.currentValue("motion")=="active"} : motion
-    if (deviceList) {
-        if (motionOnly) deviceList.each { result += "'${it.label}' is reading motion. "}
-        else {
-            deviceList.each {
-                def currVal = [active: "movement", inactive: "no movement"][it.latestValue("motion")] ?: it.latestValue("motion")
-                result += "The '${it.label}' is reading " + currVal + ". "
-            }
-        }
-    }
-    return result 
-}
-def contactReport(String result=""){
-    def deviceList = openOnly ? contact.findAll{it.latestValue("contact")=="open"} : contact
-    if (deviceList){
-    	if (openOnly) deviceList.each { result += "'${it.label}' is open. "}
-		else deviceList.each {result += "The '${it.label}' is reading ${it.latestValue("contact")}. "}
-    }
-    return result 
-}
-def waterReport(String result=""){
-    def deviceList = wetOnly ? water.findAll{it.latestValue("water")=="wet"} : water
-    if (deviceList){
-    	if (wetOnly) deviceList.each { result += "'${it.label}' is reading moisture is present. "}
-		else deviceList.each {result += "The '${it.label}' is reading ${it.latestValue("water")}. "}
-    }
-    return result 
-}
-def occupyReport(String result=""){
-    def deviceList = occupiedOnly ? occupy.findAll{it.latestValue("occupancy")=="occupied"} : occupy
-    if (deviceList){
-    	if (occupiedOnly) deviceList.each { result += "The occupancy sensor, '${it.label}', is reading: occupied. "}
-		else deviceList.each {result += "The occupancy sensor, '${it.label}', is reading: ${it.latestValue("occupancy")}. "}
-    }
-    return result 
-}
-def extAliasCount() { return 3 }
-def extAliasDesc(){
-	def result =""
-	for (int i= 1; i<extAliasCount()+1; i++){
-		result += settings."extAlias${i}" ? settings."extAlias${i}" : ""
-		result += (result && settings."extAlias${i+1}") ? "\n" : ""
+def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
+	def map = [ name: "battery", unit: "%" ]
+	if (cmd.batteryLevel == 0xFF) {
+		map.value = 1
+		map.descriptionText = "${device.displayName} has a low battery"
+		map.isStateChange = true
+	} else {
+		map.value = cmd.batteryLevel
 	}
-    if (state.rmEchos.size()) {
-    	if (result) result+="\n"
-    	result += getEchoAliasCount()==1 ? "One Echo device associated with this room" : getEchoAliasCount() +" Echo devices associated with this room"
+	state.lastbat = new Date().time
+	[createEvent(map), response(zwave.wakeUpV1.wakeUpNoMoreInformation())]
+}
+def zwaveEvent(physicalgraph.zwave.commands.sensormultilevelv5.SensorMultilevelReport cmd)
+{
+	def map = [ displayed: true, value: cmd.scaledSensorValue.toString() ]
+	switch (cmd.sensorType) {
+		case 1:
+			map.name = "temperature"
+			map.unit = cmd.scale == 1 ? "F" : "C"
+			break;
+		case 3:
+			map.name = "illuminance"
+			map.value = cmd.scaledSensorValue.toInteger().toString()
+			map.unit = "lux"
+			break;
+		case 5:
+			map.name = "humidity"
+			map.value = cmd.scaledSensorValue.toInteger().toString()
+			map.unit = cmd.scale == 0 ? "%" : ""
+			break;
+		case 0x1E:
+			map.name = "loudness"
+			map.unit = cmd.scale == 1 ? "dBA" : "dB"
+			break;
+	}
+	createEvent(map)
+}
+def zwaveEvent(physicalgraph.zwave.commands.securityv1.SecurityMessageEncapsulation cmd) {
+	def encapsulatedCommand = cmd.encapsulatedCommand(commandClassVersions)
+	// log.debug "encapsulated: $encapsulatedCommand"
+	if (encapsulatedCommand) {
+		state.sec = 1
+		zwaveEvent(encapsulatedCommand)
+	}
+}
+def zwaveEvent(physicalgraph.zwave.commands.crc16encapv1.Crc16Encap cmd)
+{
+	// def encapsulatedCommand = cmd.encapsulatedCommand(commandClassVersions)
+	def version = commandClassVersions[cmd.commandClass as Integer]
+	def ccObj = version ? zwave.commandClass(cmd.commandClass, version) : zwave.commandClass(cmd.commandClass)
+	def encapsulatedCommand = ccObj?.command(cmd.command)?.parse(cmd.data)
+	if (encapsulatedCommand) {
+		return zwaveEvent(encapsulatedCommand)
+	}
+}
+def zwaveEvent(physicalgraph.zwave.commands.multichannelv3.MultiChannelCmdEncap cmd) {
+	def result = null
+	def encapsulatedCommand = cmd.encapsulatedCommand(commandClassVersions)
+	log.debug "Command from endpoint ${cmd.sourceEndPoint}: ${encapsulatedCommand}"
+	if (encapsulatedCommand) {
+		result = zwaveEvent(encapsulatedCommand)
+	}
+	result
+}
+def zwaveEvent(physicalgraph.zwave.commands.multicmdv1.MultiCmdEncap cmd) {
+	log.debug "MultiCmd with $numberOfCommands inner commands"
+	cmd.encapsulatedCommands(commandClassVersions).collect { encapsulatedCommand ->
+		zwaveEvent(encapsulatedCommand)
+	}.flatten()
+}
+def zwaveEvent(physicalgraph.zwave.Command cmd) {
+	createEvent(descriptionText: "$device.displayName: $cmd", displayed: false)
+}
+def zwaveEvent(physicalgraph.zwave.commands.manufacturerspecificv2.ManufacturerSpecificReport cmd) {
+	def result = []
+	def msr = String.format("%04X-%04X-%04X", cmd.manufacturerId, cmd.productTypeId, cmd.productId)
+	log.debug "msr: $msr"
+	updateDataValue("MSR", msr)
+	result << createEvent(descriptionText: "$device.displayName MSR: $msr", isStateChange: false)
+	result
+}
+def LEDFlashOn(){
+	log.info "Sending parameter 28, LED flash indicator: 1=On"
+    delayBetween([
+    	zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 28, size: 1).format()
+	],500)
+    showDashboard("",1)
+}
+def LEDFlashOff(){
+	log.info "Sending parameter 28, LED flash indicator: 0=Off"
+    zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 28, size: 1).format()
+    showDashboard("",0)
+}
+def setMotionSenseOff(){ setMotionSensitivity(0) }
+def setMotionSenseLow(){ setMotionSensitivity(1) }
+def setMotionSenseMed(){ setMotionSensitivity(2) }
+def setMotionSenseHigh(){ setMotionSensitivity(3) }
+def setMotionSensitivity(value) {
+   	if (value<1){
+        log.info "Sending parameter 6, enable motion sensor: 1=On"
+        log.info "Sending parameter 13, motion sensitivity: " + value + "${value==1 ? "=Low" : value==2 ? "=Medium" : "=High"}"
+        delayBetween([
+            zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 6, size: 1).format(),
+            zwave.configurationV1.configurationSet(configurationValue: [value as int], parameterNumber: 13, size: 1).format()
+        ], 500)
     }
-    result = result ? "Alias Names currently configured; Tap to edit:\n"+result :"Tap to add alias names to this room/group"
-    return result
+    else{
+    	log.info "Sending parameter 6, enable motion sensor: 0=Off"
+        delayBetween([
+            zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 6, size: 1).format()
+        ], 500)
+	}
+    showDashboard(value,"")
 }
-def extAliasState(){
-    def count = 0
-    for (int i= 1; i<extAliasCount()+1; i++){
-    	if (settings."extAlias${i}") count ++
+def configure() {
+    def param6 = parameterSix ? 1 : 0  
+    def param13 = parameterThirteen ? parameterThirteen as int : 3    
+    def param18 = !parameterEighteen ? 4 : parameterEighteen as int 
+    def param28 = parameterTwentyEight ? 1 : 0
+    log.info "Adjusting parameters..."
+    log.info "Sending parameter 6, enable motion sensor: " + param6 + "${param6==1 ? "=On" : "=Off"}"
+    log.info "Sending parameter 13, motion sensitivity: " + param13 + "${param13==1 ? "=Low" : param13==2 ? "=Medium" : "=High"}"
+    if (param18 < 1 || param18 >255 || (param18 > 60 && param18 != 255)) {
+    	param18 = 255
+        log.warn "Invalid motion timeout. Using 255 (5 seconds)"
     }
-    count +=getEchoAliasCount()
-    return count ? "complete" : null
+    def timing = param18==1 ? "Minute" : "Minutes"
+    log.info "Sending parameter 18, Motion timeout: ${param18==255 ? " 5 Seconds" : param18 + " ${timing}"}"
+    log.info "Sending parameter 28, LED flash indicator: " + param28 + "${param28==1 ? "=On" : "=Off"}"
+    delayBetween([
+        zwave.configurationV1.configurationSet(configurationValue: [param6], parameterNumber: 6, size: 1).format(),
+        zwave.configurationV1.configurationSet(configurationValue: [param13], parameterNumber: 13, size: 1).format(),
+        zwave.configurationV1.configurationSet(configurationValue: [param18], parameterNumber: 18, size: 1).format(),
+        zwave.configurationV1.configurationSet(configurationValue: [param28], parameterNumber: 28, size: 1).format()
+    ], 500)
+    def motionSensor = param6==0 ? param6 : param13
+	showDashboard(motionSensor, param28)
 }
-def getDesc(type){
-	def result="Status: UNCONFIGURED - Tap to configure", countNoun, countVerb, countAdj
-    switch (type){
-    	case "switch" :
-            if (switches || switchesFans){
-            	Integer sCount = switches ? switches.size() : 0
-                Integer fCount = switchesFans ? switchesFans.size() : 0
-                countNoun = (sCount + fCount)>1 ? "es" : ""
-                countVerb = (sCount + fCount)>1 ? "are" : "is"
-                countAdj = (sCount + fCount)>1 ? "all" : "the"
-                result= "Switch${countNoun} configured"
-                if (switchesExcludeOn || switchesExcludeOff) result +="; Some switches excluded from ${switchesExcludeOn && !switchesExcludeOff ? "'On' command" : switchesExcludeOff && !switchesExcludeOn ? "'Off' command" : "'On' and 'Off' commands"}"
-                if (switchesRPT && switchesRPTOn) result += "; Include in group status report only when switch${countNoun} ${countVerb} 'On'"
-                else if (switchesRPT && switchesRPTSummary) result += "; Summarize status of switch${countNoun}"
-                else if (switchesRPT && !switchesRPTOn && !switchesRPTSummary) result += "; Include ${countAdj} switch${countNoun} in group status report"
-            }
-    	break
-		case "door" :
-            if (doors || locks){
-                def devices
-                if (doors && !locks) devices = doors.size()>1 ? "Doors" : "Door"
-                if (doors && locks) devices = doors.size()>1 && locks.size()>1 ? "Doors & locks" : doors.size()==1 && locks.size()>1 ? "Door & locks" : doors.size()==1 && locks.size()>1 ? "Doors & Lock" :  "Door & Lock"
-                if (!doors && locks) devices = locks.size()>1 ? "Locks" : "Lock"
-                result = "${devices} configured"   
-                if (doors) {
-                    countNoun = doors.size()>1 ? "s" : ""
-                    countAdj = doors.size()>1 ? "all" : "the"
-                    if (doorsRPT && doorsRPTOn) result += "; Include door${countNoun} in group status report only when 'Open'"
-                    else if (doorsRPT && !doorsRPTOn) result += "; Include ${countAdj} door${countNoun} in group status report"
-            		if (usePWDoor) result +="; Password required for 'Open'/'Close' actions"
-                }
-                result += locks && doors && doorsRPT && locksRPT ? "\n" : locks && !doors && locksRPT? "; " : ""
-                if (locks) {
-                	countNoun = locks.size()>1 ? "s" : ""
-                	countAdj = locks.size()>1 ? "all" : "the"
-                	if (locksRPT && locksRPTOn) result += "Include lock${countNoun} in summary status report only when 'Unlocked'"
-                	else if (locksRPT && !locksRPTOn) result += "Include ${countAdj} lock${countNoun} in group summary status report"
-                    if (usePWLock) result +="; Password required for 'Lock'/'Unlock' actions"
-             	}
-            }
-    	break
-        case "shade" :
-            if (shades){
-            	countNoun = shades.size()>1 ? "s" : ""
-                countVerb = shades.size()>1 ? "are" : "is"
-                countAdj = shades.size()>1 ? "all" : "the"
-                result= "Window shade${countNoun} configured"
-                if (shadesRPT && shadessRPTOn) result += "; Include in summary status report only when window shade${countNoun} ${countVerb} 'Open'"
-                else if (shadesRPT && !shadessRPTOn) result += "; Include ${countAdj} window shade${countNoun} in group summary status report"
-            }
-    	break
-        case "temp" :
-            if (temp){
-            	countNoun = temp.size()>1 ? "s" : ""
-                countVerb = temp.size()>1 ? "; Temperature status is average of all devices" : ""
-                result= "Temperature sensor${countNoun} configured${countVerb}"
-            }
-    	break
-        case "humid" :
-            if (humid){
-            	countNoun = humid.size()>1 ? "s" : ""
-                countVerb = humid.size()>1 ? "; Humidity status is average of all devices" : ""
-                result= "Humidity sensor${countNoun} configured${countVerb}"
-            }
-    	break
-        case "sensor" :
-			if (motion || contact || water || occupy){
-                result = ""
-                if (motion){
-                    countNoun = motion.size()>1 ? "s" : ""
-                    result+= "Motion sensor${countNoun} configured"
-                }
-                if (motion && occupy) result +="\n"
-                if (occupy){
-                    countNoun = occupy.size()>1 ? "s" : ""
-                    result+= "Occupancy sensor${countNoun} configured"
-                }
-                if (water && (motion || occupy)) result +="\n"
-                if (contact){
-                    countNoun = contact.size()>1 ? "s" : ""
-                    result+= "Open/Close sensor${countNoun} configured"
-                } 
-                if (water && (motion || contact || occupy)) result +="\n"
-                if (water){
-                    countNoun = water.size()>1 ? "s" : ""
-                    result+= "Water sensor${countNoun} configured"
-                }
-            }
-    	break
-  	}
-    return result
+def showDashboard(motionSensor,LEDFlash) {
+    String result =""
+    if (motionSensor=="") motionSensor=state.currentMotionSensor
+    if (LEDFlash=="") LEDFlash=state.currentLEDFlash
+    
+    state.currentMotionSensor=motionSensor
+    state.currentLEDFlash=LEDFlash
+    
+    def motionSensorTxt = motionSensor == 1 ? "Low" : motionSensor == 2 ? "Medium" : motionSensor==3 ? "High" : "Disabled"
+    def LEDFlashTxt = LEDFlash == 0 ? "Disabled" : "Enabled"
+	def motionSync = ((parameterSix && motionSensorTxt !="Disabled" && parameterThirteen && state.currentMotionSensor==parameterThirteen.toInteger()) || (!parameterThirteen && state.currentMotionSensor==2)) ||
+    	(!parameterSix && motionSensorTxt =="Disabled")  ? "✔" : "‼"
+    def LEDSync = (!parameterTwentyEight && state.currentLEDFlash == 0) || (parameterTwentyEight && state.currentLEDFlash == 1) ? "✔" : "‼"
+	
+    result +="${motionSync} Motion Sensitivity: " + motionSensorTxt
+   	result +="\n${LEDSync} LED Flash Indicator: " + LEDFlashTxt
+	sendEvent (name:"dashboard", value: result ) 
 }
-//Version/Copyright/Information/Help
-private versionInt(){ return 105 }
-private def textAppName() { return "Ask Alexa Rooms/Groups" }	
-private def textVersion() { return "Rooms/Groups Version: 1.0.5 (05/28/2018)" }
