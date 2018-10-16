@@ -1,28 +1,18 @@
 /**
- *  Talking Alarm Clock-Schedule
+ *  GE Motion Dimmer Switch (Model 26933) DTH
  *
  *  Copyright © 2018 Michael Struck
+ *  Original Author: Matt Lebaugh (@mlebaugh)
  *
- *  Version 1.5.6 (9/10/18)
+ *  Based off of the Dimmer Switch under Templates in the IDE 
  *
- *  Version 1.0.0 - Initial release
- *  Version 1.0.1 - Small syntax changes for consistency
- *  Version 1.1.0 - Added switch alarm restriction
- *  Version 1.2.0 - Added custom alarm sound selection
- *  Version 1.3.0 - Added presence voice variables (requires presence sensor used under the restrictions page), optimized code
- *  Verison 1.4.0 - Added switches that can trigger alarms in addition to time
- *  Version 1.4.1 - Added the trigger switches to the summary page
- *  Version 1.4.2 - Syntax changes and minor revisions
- *  Version 1.4.3 - Code Optimizations and work around for playTrack()
- *  Version 1.4.4 - Minor syntax updates
- *  Version 1.5.0 - Added additional triggers to set off alarm
- *  Version 1.5.1a - Added time restricitions to allow for new triggers
- *  Version 1.5.2a - Added delay after presence option
- *  Version 1.5.3c - Cleaned up reporting after addition of new triggers
- *  Version 1.5.4 - Icons for restrictions
- *  Version 1.5.5 - Minor GUI changes to accomodate new mobile app structure
- *  Version 1.5.6 - Added error trapping for situations where the SmartThings location is null.
- *  
+ *  Version 1.0.4 10/15/18 
+ *
+ *  Version 1.0.4 (10/15/18) - Changed to triple push for options for switches to activate special functions.
+ *  Version 1.0.3 (8/21/18) - Changed the setLevel mode to boolean
+ *  Version 1.0.2 (8/2/18) - Updated some of the text, added/updated options on the Settings page
+ *  Version 1.0.1 (7/15/18) - Format and syntax updates. Thanks to @Darwin for the motion sensitivity/timeout minutes idea!
+ *  Version 1.0.0 (3/17/17) Original release by Matt Lebaugh. Great Work!
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -33,618 +23,739 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- */ 
-definition(
-    name: "Talking Alarm Clock-Schedule",
-    namespace: "MichaelStruck",
-    author: "Michael Struck",
-    description: "Child app (do not publish) to control various waking schedules using a SmartThings connected speaker as an alarm.",
-    category: "Convenience",
-    parent: "MichaelStruck:Talking Alarm Clock",
-    iconUrl: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock.png",
-    iconX2Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock@2x.png",
-	iconX3Url: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/Talkingclock@2x.png"
-    )
-preferences {
-	page name:"pageSetup"
-    page name:"pageWeatherSettings"
-    page name:"pageRestrictions"
-    page name:"pageAlarmTriggers"
-}
-// Show setup page
-def pageSetup() {
-	dynamicPage(name: "pageSetup", title: "Alarm Settings", install: true, uninstall: true) {
-        section() {
-			label title:"Alarm Schedule Name", required: true
-            def status = parent.getSchedStatus(app.id) ? "ENABLED" : "DISABLED"
-            if (status) paragraph "This schedule is currently ${status}. To change this status, go to the 'Alarm Summary' page on the Talking Alarm Clock main page"
-    	}
-        section("Alarm Settings"){
-        	input "alarmSpeaker", "capability.musicPlayer", title: "Choose A Speaker", required: true, submitOnChange:true
-            if (alarmSpeaker){
-            	if (!alarmSpeaker.name.contains("Sonos")){
-                	paragraph "This application is intended to be used with Sonos speakers only. You may get undesired results if you "+
-                    	"attempt to use this application with your ${alarmSpeaker} speaker."
-                }
-                input "alarmVolume", "number", title: "Alarm Volume", description: "0-100%", required: false
-                href "pageAlarmTriggers", title: "Alarm Triggers...", description: getTriggersDesc(), state: greyOutTriggers()
-                input "alarmType", "enum", title: "Select A Primary Alarm Type...", multiple: false, required: true, options: [[1:"Alarm sound (up to 20 seconds)"],[3:"Music track/internet radio"],[2:"Voice Greeting"],], submitOnChange:true
-                if (alarmType != "3") {
-                    if (alarmType == "1") input "secondAlarm", "enum", title: "Select A Second Alarm After The First Is Completed", multiple: false, required: false, options: [[2:"Music track/internet Radio"],[1:"Voice Greeting"]], submitOnChange:true
-                    if (alarmType == "2") input "secondAlarmMusic", "bool", title: "Play A Track After Voice Greeting", defaultValue: "false", required: false, submitOnChange:true
-                }
-                href "pageRestrictions", title: "Alarm Restrictions", description: getRestrictionDesc(), state: greyOutRestrictions()
-            }
+ */
+metadata {
+	definition (name: "GE Motion Dimmer Switch 26933", namespace: "MichaelStruck", author: "Michael Struck") {
+		capability "Motion Sensor"
+        capability "Actuator"
+ 		capability "Switch"
+        capability "Switch Level"
+		capability "Polling"
+		capability "Refresh"
+		capability "Sensor"
+		capability "Health Check"
+		capability "Light"
+        capability "Button"
+        
+		command "toggleMode"
+        command "occupancy"
+        command "occupied"
+        command "vacancy"
+        command "vacant"
+        command "manual"
+        command "setDefaultLevel"
+        command "setMotionSenseLow"
+        command "setMotionSenseMed"
+        command "setMotionSenseHigh"
+        command "setMotionSenseOff"
+        command "lightSenseOn"
+		command "lightSenseOff"
+        command "setTimeout5Seconds"
+        command "setTimeout1Minute"
+        command "setTimeout5Minutes"
+        command "setTimeout15Minutes"
+        command "setTimeout30Minutes"
+        command "switchModeOn"
+        command "switchModeOff"
+        
+        attribute "operatingMode", "enum", ["Manual", "Vacancy", "Occupancy"]
+        attribute "defaultLevel", "number"
+        
+        fingerprint mfr:"0063", prod:"494D", model: "3034", deviceJoinName: "GE Z-Wave Plus Motion Wall Dimmer"
+	}
+		preferences {
+        	input title: "", description: "Select your preferences here, they will be sent to the device once updated.\n\nTo verify the current settings of the device, they will be shown in the 'Recently' page once any setting is updated", displayDuringSetup: false, type: "paragraph", element: "paragraph"
+			//param 3
+            input ("operationmode","enum",title: "Operating Mode",
+                description: "Select the mode of the dimmer (no entry will keep the current mode)",
+                options: [
+                    "1" : "Manual (no auto-on/no auto-off)",
+                    "2" : "Vacancy (no auto-on/auto-off)",
+                    "3" : "Occupancy (auto-on/auto-off)"
+                ],
+                required: false
+            )
+            //param 1
+            input ("timeoutduration","enum", title: "Timeout Duration (Occupancy/Vacancy)",
+                description: "Time after no motion for light to turn off",
+                options: [
+                    "0" : "5 seconds",
+                    "1" : "1 minute",
+                    "5" : "5 minutes (Default)",
+                    "15" : "15 minutes",
+                    "30" : "30 minutes"
+                ],
+                required: false
+            )
+            input (name: "timeoutdurationPress", title: "Triple Press Timeout (Occupancy/Vacancy)",
+                description: "Physically press 'on' three times within 10 seconds to override timeout. Resets when light goes off",
+                type: "enum",
+                options: [
+                    "0" : "5 seconds",
+                    "1" : "1 minute",
+                    "5" : "5 minutes",
+                    "15" : "15 minutes",
+                    "30" : "30 minutes"
+                ],
+                required: false
+            )
+            input (name: "modeOverride", title: "Triple Press Operating Mode Override",
+            	description: "Physically press 'off' three times within 10 seconds to override the current operating mode",
+                type: "enum",
+                options: [
+                    "1" : "Manual (no auto-on/no auto-off)",
+                    "2" : "Vacancy (no auto-on/auto-off)",
+                    "3" : "Occupancy (auto-on/auto-off)"
+                ],
+                required: false
+            )
+            //param 6
+            input "motion", "bool", title: "Enable Motion Sensor", defaultValue:true
+            //param 13
+			input ("motionsensitivity","enum", title: "Motion Sensitivity (When Motion Sensor Enabled)",
+            	description: "Motion Sensitivity",
+                options: [
+                    "1" : "High",
+                    "2" : "Medium (Default)",
+                    "3" : "Low"
+                ]
+            )
+            //param 14
+            input "lightsense", "bool", title: "Enable Light Sensing (Occupancy)", defaultValue:true
+            //param 5
+            input "invertSwitch", "bool", title: "Invert Remote Switch Orientation", defaultValue:false
+            //param 15
+            input ("resetcycle","enum",title: "Motion Reset Cycle", description: "Time to stop reporting motion once motion has stopped",
+                options: [
+                    "0" : "Disabled",
+                    "1" : "10 sec",
+                    "2" : "20 sec (Default)",
+                    "3" : "30 sec",
+                    "4" : "45 sec",
+                    "110" : "27 mins"
+                ]
+            )           
+            //dimmersettings           
+            //description
+            input title: "", description: "**Z-Wave Dimmer Ramp Rate Settings**\nDefaults: Step: 1, Duration: 3", type: "paragraph", element: "paragraph"
+            //param 9
+            input "stepSize", "number", title: "Z-Wave Step Size (%)", range: "1..99", defaultValue: 1
+       		//param 10
+            input "stepDuration", "number", title: "Z-Wave Step Intervals Each 10 ms", range: "1..255", defaultValue: 3
+            
+            //description
+            input title: "", description: "**Single Tap Ramp Rate Settings**", displayDuringSetup: false, type: "paragraph", element: "paragraph"
+            //param 18
+            input "dimrate", "bool", title: "Enable Slow Dim Rate (Off=Quick)", defaultValue:false
+            //param 17
+            input "switchlevel","number", title: "Default Dim Level", description:"Default 0: Return to last state, Max 99", range: "0..99", defaultValue: 0
+            //descrip
+            input title: "", description: "**Manual Ramp Rate Settings**\nFor push and hold\nDefaults: Step: 1, Duration: 3", type: "paragraph", element: "paragraph"
+            //param 7
+            input "manualStepSize", "number", title: "Manual Step Size (%)", range: "1..99", defaultValue: 1
+       		//param 8
+            input "manualStepDuration", "number", title: "Manual Step Intervals Each 10 ms", range: "1..255", defaultValue: 3
+            //param 16
+            input "switchmode", "bool", title: "Enable Switch Mode", defaultValue:false                             
+            //association groups
+        	input ( type: "paragraph", element: "paragraph",
+            title: "", description: "**Configure Association Groups**\nDevices in association group 2 will receive Basic Set commands directly from the switch when it is turned on or off. Use this to control another device as if it was connected to this switch.\n\n" +
+                         "Devices in association group 3 Same as Group 2 for this device\n\n" +
+                         "Devices are entered as a comma delimited list of the Device Network IDs in hexadecimal format."
+        	)			           
+        	input ( name: "requestedGroup2", title: "Association Group 2 Members (Max of 5):", description: "Use the 'Device Network ID' for each device", type: "text", required: false )
+        	input ( name: "requestedGroup3", title: "Association Group 3 Members (Max of 4):", description: "Use the 'Device Network ID' for each device", type: "text", required: false )            
+            //description
+            input title: "", description: "**setLevel Default Function (Advanced)**\nDefines how 'setLevel' behavior affects the light.",  type: "paragraph", element: "paragraph"
+            input "setlevelmode", "bool", title: "setLevel Does Not Activate Light", defaultValue:false
+    }
+simulator {
+		status "on":  "command: 2003, payload: FF"
+		status "off": "command: 2003, payload: 00"
+		status "09%": "command: 2003, payload: 09"
+		status "10%": "command: 2003, payload: 0A"
+		status "33%": "command: 2003, payload: 21"
+		status "66%": "command: 2003, payload: 42"
+		status "99%": "command: 2003, payload: 63"
+
+		// reply messages
+		reply "2001FF,delay 5000,2602": "command: 2603, payload: FF"
+		reply "200100,delay 5000,2602": "command: 2603, payload: 00"
+		reply "200119,delay 5000,2602": "command: 2603, payload: 19"
+		reply "200132,delay 5000,2602": "command: 2603, payload: 32"
+		reply "20014B,delay 5000,2602": "command: 2603, payload: 4B"
+		reply "200163,delay 5000,2602": "command: 2603, payload: 63"
+	}
+	tiles(scale: 2) {
+		multiAttributeTile(name:"switch", type: "lighting", width: 6, height: 4, canChangeIcon: true){
+		tileAttribute ("device.switch", key: "PRIMARY_CONTROL") {
+			attributeState "on", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#00A0DC"
+			attributeState "off", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
 		}
-        if (alarmType == "1"){
-        	section ("Alarm sound options"){
-				input "soundAlarm", "enum", title: "Play This Sound...", required:false, multiple: false, 
-                	options: [[1:"Alien-8 seconds"],[2:"Bell-12 seconds"], [3:"Buzzer-20 seconds"], 
-                    [4:"Fire-20 seconds"], [5:"Rooster-2 seconds"], [6:"Siren-20 seconds"],[7:"Custom-User Defined"]], submitOnChange:true
-				if (soundAlarm){
-                	if (soundAlarm == "7") input "alarmCustom", "text", title:"URL/Location Of Custom Sound...", required: false	
-                    input "soundLength", "number", title: "Maximum time to play sound (empty=use sound default)", description: "1-20", required: false        
-       			}
-            }
+			tileAttribute ("device.level", key: "SLIDER_CONTROL") { attributeState "level", action:"switch level.setLevel" }
+            tileAttribute ("device.about", key: "SECONDARY_CONTROL") { attributeState "aboutTxt", label:'${currentValue}' }
 		}
-        if (alarmType == "2" || (alarmType == "1" && secondAlarm =="1")) {
-        	section ("Voice greeting options") {
-            	input "wakeMsg", "text", title: "Wake Voice Message", defaultValue: "Good morning! It is %time% on %day%, %date%.", required: false
-				href "pageWeatherSettings", title: "Weather Reporting Settings", description: getWeatherDesc(), state: greyOut()
-			}
+        standardTile("motion","device.motion", inactiveLabel: false, width: 2, height: 2) {
+                state "inactive",label:'no motion',icon:"st.motion.motion.inactive",backgroundColor:"#ffffff"
+                state "active",label:'motion',icon:"st.motion.motion.active",backgroundColor:"#53a7c0"
+		}
+		standardTile("refresh", "device.switch", width: 2, height: 2, inactiveLabel: false, decoration: "flat") {
+			state "default", label:'', action:"refresh.refresh", icon:"st.secondary.refresh"
+		}            
+		valueTile("operatingMode", "device.operatingMode", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+			state "default", label:'Mode: ${currentValue}', unit:"", action:"toggleMode"
+		}
+        valueTile("dashboard", "device.dashboard", inactiveLabel: false, decoration: "flat", width: 6, height: 3) {
+			state "default", label:'${currentValue}', unit:""
         }
-        if (alarmType == "3" || (alarmType == "1" && secondAlarm =="2") || (alarmType == "2" && secondAlarmMusic)){
-        	section ("Music track/internet radio options"){
-            	input "musicTrack", "enum", title: "Play This Track/Internet Radio Station", required:false, multiple: false, options: songOptions()
-        	}
-      	}
-        if (alarmSpeaker){
-            section("Devices to control at alarm time") {
-                input "switches", "capability.switch",title: "Turn On The Following Switches...", multiple: true, required: false, submitOnChange:true
-                href "pageDimmers", title: "Dimmer Settings", description: dimmerDesc(), state: greyOutDimmer(), submitOnChange:true
-                href "pageThermostats", title: "Thermostat Settings", description: tstatDesc(), state: greyOutTstat(), submitOnChange:true
-                if ((switches || dimmers || thermostats) && (alarmType == "2" || (alarmType == "1" && secondAlarm =="1"))){
-                    input "confirmSwitches", "bool", title: "Confirm Switches/Thermostats Status In Voice Message", defaultValue: "false"
-                }
-            }
-            section ("Other actions at alarm time"){
-                def phrases = location.helloHome?.getPhrases()*.label
-                if (phrases) {
-                    phrases.sort()
-                    input "triggerPhrase", "enum", title: "Alarm Triggers The Following Routine", required: false, options: phrases, multiple: false, submitOnChange:true
-                    if (triggerPhrase  && (alarmType == "2" || (alarmType == "1" && secondAlarm =="1"))){
-                        input "confirmPhrase", "bool", title: "Confirm Routine In Voice Message", defaultValue: "false"
-                    }
-                }
-                input "triggerMode", "mode", title: "Alarm Triggers The Following Mode", required: false, submitOnChange:true
-                if (triggerMode  && (alarmType == "2" || (alarmType == "1" && secondAlarm =="1"))){
-                    input "confirmMode", "bool", title: "Confirm Mode In Voice Message", defaultValue: "false"
-                }
-            }
-        }
-        section("Tap below to remove this alarm schedule only"){
-		}
+		main(["switch"])
+		details(["switch", "motion", "operatingMode", "refresh","dashboard"])
 	}
 }
-def pageAlarmTriggers(){
-    dynamicPage(name: "pageAlarmTriggers", title: "Alarm Triggers", install: false, uninstall: false) {
-        section{
-            input "alarmStart", "time", title: "At Specific Time", required: false,
-            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/img/clock.png"
-            input "alarmTrigger", "capability.switch", title: "When Switches Turned On...", required: false, multiple: true,
-            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/img/on.png"
-            input "alarmPresenceTrigger", "capability.presenceSensor", title: "When Someone Arrives...", multiple: true, required: false, submitOnChange:true,
-            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/img/people.png"
-            if (alarmPresenceTrigger) input "alarmPresenceTriggerTime", "number", title: "Minutes After Presence to Alarm", defaultValue: 0, required: false
+def parse(String description) {
+    def result = null
+	if (description != "updated") {
+		log.debug "parse() >> zwave.parse($description)"
+		def cmd = zwave.parse(description, [0x20: 1, 0x25: 1, 0x56: 1, 0x70: 2, 0x72: 2, 0x85: 2, 0x71: 3, 0x56: 1])
+		if (cmd) {
+			result = zwaveEvent(cmd)
+        }
+	}
+    if (!result) { log.warn "Parse returned ${result} for $description" }
+    else {log.debug "Parse returned ${result}"}
+	return result
+	if (result?.name == 'hail' && hubFirmwareLessThan("000.011.00602")) {
+		result = [result, response(zwave.basicV1.basicGet())]
+		log.debug "Was hailed: requesting state update"
+	}
+	return result
+}
+def zwaveEvent(physicalgraph.zwave.commands.crc16encapv1.Crc16Encap cmd) {
+	log.debug("zwaveEvent(): CRC-16 Encapsulation Command received: ${cmd}")
+	def encapsulatedCommand = zwave.commandClass(cmd.commandClass)?.command(cmd.command)?.parse(cmd.data)
+	if (!encapsulatedCommand) {
+		log.debug("zwaveEvent(): Could not extract command from ${cmd}")
+	} else {
+		return zwaveEvent(encapsulatedCommand)
+	}
+}
+def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicReport cmd) {
+	dimmerEvents(cmd)
+}
+def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicSet cmd) {
+	def result = []
+    if (cmd.value == 255) {
+    	result << createEvent([name: "button", value: "pushed", data: [buttonNumber: "1"], descriptionText: "On/Up on (button 1) $device.displayName was pushed", isStateChange: true, type: "physical"])
+    	if (timeoutdurationPress){
+        	if (!state.onCounter || state.onCounter>3) state.onCounter=0
+            state.onCounter = state.onCounter + 1
+            if (state.onCounter==1) state.Timer=now() 
+        	if (state.onCounter==3 && (now()-state.Timer)<10000) {
+                log.info "Triple press in less than 10 seconds-Overriding timeout"
+                def cmds=[]
+                cmds << zwave.configurationV1.configurationSet(configurationValue: [timeoutdurationPress.toInteger()], parameterNumber: 1, size: 1)
+                cmds << zwave.configurationV1.configurationGet(parameterNumber: 1)
+                sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+                showDashboard(timeoutdurationPress.toInteger(), "", "", "", "")
+            }
+        }
+    }
+	else if (cmd.value == 0) {
+    	result << createEvent([name: "button", value: "pushed", data: [buttonNumber: "2"], descriptionText: "Off/Down (button 2) on $device.displayName was pushed", isStateChange: true, type: "physical"])
+    	if (modeOverride) {
+        	if (!state.offCounter || state.offCounter>3) state.offCounter=0
+            state.offCounter = state.offCounter + 1
+            if (state.offCounter==1) state.timerOff=now()
+            if (state.offCounter==3 && (now()-state.timerOff)<10000) {
+                log.info "Triple press in less than 10 seconds-Overriding mode"
+                def cmds=[]
+                cmds << zwave.configurationV1.configurationSet(configurationValue: [modeOverride.toInteger()], parameterNumber: 3, size: 1)
+                cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
+                sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+            }
+        }
+    }
+    return result
+}
+def zwaveEvent(physicalgraph.zwave.commands.associationv2.AssociationReport cmd) {
+	log.debug "---ASSOCIATION REPORT V2--- ${device.displayName} sent groupingIdentifier: ${cmd.groupingIdentifier} maxNodesSupported: ${cmd.maxNodesSupported} nodeId: ${cmd.nodeId} reportsToFollow: ${cmd.reportsToFollow}"
+    state.group3 = "1,2"
+    if (cmd.groupingIdentifier == 3) {
+    	if (cmd.nodeId.contains(zwaveHubNodeId)) {
+        	sendEvent(name: "numberOfButtons", value: 2, displayed: false)
+        }
+        else {
+        	sendEvent(name: "numberOfButtons", value: 0, displayed: false)
+			sendHubCommand(new physicalgraph.device.HubAction(zwave.associationV2.associationSet(groupingIdentifier: 3, nodeId: zwaveHubNodeId).format()))
+			sendHubCommand(new physicalgraph.device.HubAction(zwave.associationV2.associationGet(groupingIdentifier: 3).format()))
         }
     }
 }
-def pageRestrictions(){
-    dynamicPage(name: "pageRestrictions", title: "Alarm Restrictions", install: false, uninstall: false){
-        section{
-            input "alarmDay", "enum", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], title: "Only Certain Days Of The Week...", multiple: true, required: false,
-            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/img/calendar.png"
-            href "timeIntervalInput", title: "Only During Certain Times...", description: getTimeLabel(timeStart, timeEnd), state: greyOutState(timeStart, timeEnd),
-            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/img/clock.png"
-            input "alarmMode", "mode", title: "Only In The Following Modes...", multiple: true, required: false,
-            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/img/modes.png"
-            input "alarmPresence", "capability.presenceSensor", title: "Only When Present...", multiple: true, required: false, submitOnChange:true,
-            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/img/people.png"
-            if (alarmPresence && alarmPresence.size()>1) input "alarmPresAll", "bool", title: "Off=Any Present; On=All Present", defaultValue: false
-            input "alarmSwitchActive", "capability.switch", title: "Only When Switches Are On...", multiple: true, required: false,
-            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/img/on.png"
-            input "alarmSwitchNotActive", "capability.switch", title: "Only When Switches Are Off...", multiple: true, required: false,
-            	image: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/img/off.png"
+def zwaveEvent(physicalgraph.zwave.commands.configurationv2.ConfigurationReport cmd) {
+	log.debug "---CONFIGURATION REPORT V2--- ${device.displayName} sent ${cmd}"
+    def config = cmd.scaledConfigurationValue
+    def result = []
+    if (cmd.parameterNumber == 1) {
+		def value = config == 0 ? "5 seconds" : config == 1 ? "1 minute" : config == 5 ? "5 minutes" : config == 15 ? "15 minutes" : "30 minutes"
+    	result << createEvent([name:"TimeoutDuration", value: value, displayed:true, isStateChange:true])
+    } else if (cmd.parameterNumber == 13) {
+		def value = config == 1 ? "High" : config == 2 ? "Medium" : "Low"
+    	result << createEvent([name:"MotionSensitivity", value: value, displayed:true, isStateChange:true])
+	} else if (cmd.parameterNumber == 14) {
+		def value = config == 0 ? "Disabled" : "Enabled"
+    	result << createEvent([name:"LightSense", value: value, displayed:true, isStateChange:true])
+    } else if (cmd.parameterNumber == 15) {
+    	def value = config == 0 ? "Disabled" : config == 1 ? "10 sec" : config == 2 ? "20 sec" : config == 3 ? "30 sec" : config == 4 ? "45 sec" : "27 minute" 
+    	result << createEvent([name:"ResetCycle", value: value, displayed:true, isStateChange:true])
+    } else if (cmd.parameterNumber == 3) {
+    	if (config == 1 ) {
+        	result << createEvent([name:"operatingMode", value: "Manual", displayed:true, isStateChange:true])
+         } else if (config == 2 ) {
+        	result << createEvent([name:"operatingMode", value: "Vacancy", displayed:true, isStateChange:true])
+        } else if (config == 3 ) {
+        	result << createEvent([name:"operatingMode", value: "Occupancy", displayed:true, isStateChange:true])
+        }
+    } else if (cmd.parameterNumber == 6) {
+    	def value = config == 0 ? "Disabled" : "Enabled"
+    	result << createEvent([name:"MotionSensor", value: value, displayed:true, isStateChange:true])
+    } else if (cmd.parameterNumber == 5) {
+    	def value = config == 0 ? "Normal" : "Inverted"
+    	result << createEvent([name:"SwitchOrientation", value: value, displayed:true, isStateChange:true])
+    } 
+    //dimmer settings
+    	else if (cmd.parameterNumber == 7) {
+    	result << createEvent([name:"StepSize", value: config, displayed:true, isStateChange:true])
+    } else if (cmd.parameterNumber == 8) {
+    	result << createEvent([name:"StepDuration", value: config, displayed:true, isStateChange:true])
+    } else if (cmd.parameterNumber == 9) {
+    	result << createEvent([name:"ManualStepSize", value: config, displayed:true, isStateChange:true])
+    } else if (cmd.parameterNumber == 10) {
+    	result << createEvent([name:"ManualStepDuration", value: config, displayed:true, isStateChange:true])
+    } else if (cmd.parameterNumber == 16) {
+    	result << createEvent([name:"SwitchMode", value: config, displayed:true, isStateChange:true])
+    } else if (cmd.parameterNumber == 17) {
+    	result << createEvent([name:"defaultLevel", value: config, displayed:true, isStateChange:true])
+    } else if (cmd.parameterNumber == 18) {
+    	result << createEvent([name:"DimRate", value: config, displayed:true, isStateChange:true])
+    } else {
+    log.warn "Parameter  ${cmd.parameterNumber} ${config}"}
+    //
+   return result
+}
+def zwaveEvent(physicalgraph.zwave.commands.switchbinaryv1.SwitchBinaryReport cmd) {
+    log.debug "---BINARY SWITCH REPORT V1--- ${device.displayName} sent ${cmd}"
+    sendEvent(name: "switch", value: cmd.value ? "on" : "off", type: "digital")
+}
+def zwaveEvent(physicalgraph.zwave.commands.manufacturerspecificv2.ManufacturerSpecificReport cmd) {
+    log.debug "---MANUFACTURER SPECIFIC REPORT V2--- ${device.displayName} sent ${cmd}"
+	log.debug "manufacturerId:   ${cmd.manufacturerId}"
+	log.debug "manufacturerName: ${cmd.manufacturerName}"
+    state.manufacturer=cmd.manufacturerName
+	log.debug "productId:        ${cmd.productId}"
+	log.debug "productTypeId:    ${cmd.productTypeId}"
+	def msr = String.format("%04X-%04X-%04X", cmd.manufacturerId, cmd.productTypeId, cmd.productId)
+	updateDataValue("MSR", msr)	
+    sendEvent([descriptionText: "$device.displayName MSR: $msr", isStateChange: false])
+}
+def zwaveEvent(physicalgraph.zwave.commands.versionv1.VersionReport cmd) {
+	def fw = "${cmd.applicationVersion}.${cmd.applicationSubVersion}"
+	updateDataValue("fw", fw)
+	log.debug "---VERSION REPORT V1--- ${device.displayName} is running firmware version: $fw, Z-Wave version: ${cmd.zWaveProtocolVersion}.${cmd.zWaveProtocolSubVersion}"
+}
+def zwaveEvent(physicalgraph.zwave.commands.hailv1.Hail cmd) {
+	createEvent([name: "hail", value: "hail", descriptionText: "Switch button was pressed", displayed: false])
+}
+def zwaveEvent(physicalgraph.zwave.commands.notificationv3.NotificationReport cmd){
+	log.debug "---NOTIFICATION REPORT V3--- ${device.displayName} sent ${cmd}"
+	def result = []
+    def cmds = []
+	if (cmd.notificationType == 0x07) {
+		if ((cmd.event == 0x00)) { 
+           	result << createEvent(name: "motion", value: "inactive", descriptionText: "$device.displayName motion has stopped")
+         } else if (cmd.event == 0x08) {
+            result << createEvent(name: "motion", value: "active", descriptionText: "$device.displayName detected motion")	  
         }
     }
+	result  
 }
-page(name: "timeIntervalInput", title: "Alarm Triggers Only During A Certain Time") {
-	section {
-		input "timeStart", "time", title: "Starting", required: false
-		input "timeEnd", "time", title: "Ending", required: false
-	}
-} 
-page(name: "pageDimmers", title: "Dimmer Settings", install: false, uninstall: false) {
-	section {
-       	input "dimmers", "capability.switchLevel", title: "Dim The Following...", multiple: true, required: false	
-		input "dimmersLevel", "enum", options: [[5:"5%"],[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]],title: "Set dimmers to this level", multiple: false, required: false
-	}
+def zwaveEvent(physicalgraph.zwave.Command cmd) {
+    log.warn "${device.displayName} received unhandled command: ${cmd}"
 }
-page(name: "pageThermostats", title: "Thermostat Settings", install: false, uninstall: false) {
-	section {
-       	input "thermostats", "capability.thermostat", title: "Thermostat To Control...", multiple: false, required: false
-	}
-    section {
-        input "temperatureH", "number", title: "Heating Setpoint", required: false, description: "Temperature when in heat mode"
-		input "temperatureC", "number", title: "Cooling Setpoint", required: false, description: "Temperature when in cool mode"
-	}
+def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv3.SwitchMultilevelReport cmd) {
+	log.debug "---SWITCH MULTILEVEL REPORT V3--- ${device.displayName} sent ${cmd}"
+	dimmerEvents(cmd)
 }
-def pageWeatherSettings() {
-	dynamicPage(name: "pageWeatherSettings", title: "Weather Reporting Settings", install: false, uninstall: false) {
-		section {
-            input "includeTemp", "bool", title: "Speak Current Temperature (From Local Forecast)", defaultValue: false
-        	input "localTemp", "capability.temperatureMeasurement", title: "Speak Local Temperature (From Device)", required: false, multiple: false
-        	input "localHumidity", "capability.relativeHumidityMeasurement", title: "Speak Local Humidity (From Device)", required: false, multiple: false
-        	input "speakWeather", "bool", title: "Speak Today's Weather Forecast", defaultValue: false
-        	input "includeSunrise", "bool", title: "Speak Today's Sunrise", defaultValue: false
-    		input "includeSunset", "bool", title: "Speak Today's Sunset", defaultValue: false
-		}
-        section ("Zip code") {
-        	input "zipCode", "text", title: "Zip Code For Weather Report", required: false
-		}
+def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv3.SwitchMultilevelSet cmd) {
+	log.debug "---SWITCH MULTILEVEL SET V3--- ${device.displayName} sent ${cmd}"
+	dimmerEvents(cmd)
+}
+def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv3.SwitchMultilevelStopLevelChange cmd) {
+	log.debug "---SWITCH MULTILEVEL Stop Level Change--- ${device.displayName} sent ${cmd}"
+	dimmerEvents(cmd)
+}
+private dimmerEvents(physicalgraph.zwave.Command cmd) {
+    def value = (cmd.value ? "on" : "off")
+	def result = [createEvent(name: "switch", value: value)]
+	if (cmd.value==0 && timeoutdurationPress){
+    	log.info "Resetting timeout duration"
+        def cmds=[],timeoutValue = timeoutduration ? timeoutduration.toInteger() : 5
+        cmds << zwave.configurationV1.configurationSet(configurationValue: [timeoutValue], parameterNumber: 1, size: 1)
+       	cmds << zwave.configurationV1.configurationGet(parameterNumber: 1)
+        sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+        showDashboard(timeoutValue, "", "", "", "")
+    }
+    if (cmd.value && cmd.value <= 100) {
+		result << createEvent(name: "level", value: cmd.value, unit: "%")
 	}
+	return result
+}
+def on() {
+    delayBetween([zwave.basicV1.basicSet(value: 0xFF).format(), zwave.switchMultilevelV3.switchMultilevelGet().format()], 5000) 
+}
+def off() {
+	delayBetween ([zwave.basicV1.basicSet(value: 0x00).format(), zwave.switchMultilevelV3.switchMultilevelGet().format()], 5000)
+}
+def setLevel(value) {
+	def valueaux = value as Integer
+	def level = Math.min(valueaux, 99)
+    def cmds = []    	
+    if (settings.setlevelmode){ 
+    	log.debug "setlevel does not activate light"
+    	if (device.currentValue("switch") == "on") {
+            sendEvent(name: "level", value: level, unit: "%")
+            cmds << zwave.configurationV1.configurationSet(configurationValue: [level] , parameterNumber: 17, size: 1)
+            cmds << zwave.basicV1.basicSet(value: level)
+            cmds << zwave.configurationV1.configurationGet(parameterNumber: 17)
+            cmds << zwave.switchMultilevelV3.switchMultilevelGet()
+        } else if (device.currentValue("switch") == "off") {
+            cmds << zwave.configurationV1.configurationSet(configurationValue: [level] , parameterNumber: 17, size: 1)
+            cmds << zwave.configurationV1.configurationGet(parameterNumber: 17)
+        }        
+        sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 500)
+    } else {
+    	log.debug "setlevel activates light"
+    	sendEvent(name: "level", value: level, unit: "%")
+		delayBetween ([zwave.basicV1.basicSet(value: level).format(), zwave.switchMultilevelV3.switchMultilevelGet().format()], 500)
+    }
+}
+def setLevel(value, duration) {
+	def valueaux = value as Integer
+	def level = Math.min(valueaux, 99)
+	def dimmingDuration = duration < 128 ? duration : 128 + Math.round(duration / 60)
+    sendEvent(name: "level", value: level, unit: "%")
+	zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: dimmingDuration).format()
+}
+def poll() { zwave.switchMultilevelV3.switchMultilevelGet().format() }
+def ping() { refresh() }
+def refresh() {
+	log.debug "refresh() is called"
+    delayBetween([
+    	zwave.notificationV3.notificationGet(notificationType: 7).format(),
+        zwave.switchMultilevelV3.switchMultilevelGet().format()
+	],100)
+    showVersion()
+}
+def toggleMode() {
+	log.debug("Toggling Mode") 
+    def cmds = []
+    if (device.currentValue("operatingMode") == "Manual")  vacancy()
+    else if (device.currentValue("operatingMode") == "Vacancy") occupancy()
+    else if (device.currentValue("operatingMode") == "Occupancy") manual()
+}
+def setTimeout5Seconds() { setTimeoutMinutes(0) }
+def setTimeout1Minute() { setTimeoutMinutes(1) }
+def setTimeout5Minutes() { setTimeoutMinutes(5) }
+def setTimeout15Minutes() { setTimeoutMinutes(15) }
+def setTimeout30Minutes() { setTimeoutMinutes(30) }
+def setTimeoutMinutes(value){
+    def cmds = [], newTimeOut
+    if (value==0) newTimeOut="5 seconds"
+    else if (value==1) newTimeOut="1 minute"
+    else if (value==5) newTimeOut="5 minutes"
+    else if (value==15) newTimeOut="15 minutes"
+    else if (value==30) newTimeOut="30 minutes"
+	cmds << zwave.configurationV1.configurationSet(configurationValue: [value], parameterNumber: 1, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 1)
+    sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+    showDashboard(value, "", "","", "")
+    log.debug "Setting timeout duration to: ${newTimeOut}"
+}
+def occupied() { occupancy() }
+def occupancy() {
+	log.debug "Setting operating mode to: Occupancy"
+    def cmds = []
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [3] , parameterNumber: 3, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
+    sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+}
+def vacant() { vacancy() }
+def vacancy() {
+	log.debug "Setting operating mode to: Vacancy"
+	def cmds = []
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [2] , parameterNumber: 3, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
+	sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+}
+def manual() {
+	log.debug "Setting operating mode to: Manual"
+	def cmds = []
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [1] , parameterNumber: 3, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
+	sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+}
+def setDefaultLevel(value) {
+	log.debug("Setting default level: ${value}%") 
+    def cmds = []
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [value.toInteger()] , parameterNumber: 17, size: 1)
+  	cmds << zwave.configurationV1.configurationGet(parameterNumber: 17)
+    sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+    showDashboard("", "", "", value, "")
+}
+def setMotionSenseLow(){ setMotionSensitivity(3) }
+def setMotionSenseMed(){ setMotionSensitivity(2) }
+def setMotionSenseHigh(){ setMotionSensitivity(1) }
+def setMotionSenseOff(){ setMotionSensitivity(0) }
+def setMotionSensitivity(value) {
+      def cmds = []
+      if (value>0){
+      	def mode=value==1 ? "High" : value==2 ? "Medium" : "Low"
+      	log.debug("Setting motion sensitivity to: ${mode}")
+        cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 6, size: 1)
+        cmds << zwave.configurationV1.configurationGet(parameterNumber: 6)
+      	cmds << zwave.configurationV1.configurationSet(configurationValue: [value] , parameterNumber: 13, size: 1)
+        cmds << zwave.configurationV1.configurationGet(parameterNumber: 13)        
+      }
+      else if (value==0){
+      	log.debug("Turning off motion sensor")
+        cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 6, size: 1)
+        cmds << zwave.configurationV1.configurationGet(parameterNumber: 6)
+     }
+     sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+     showDashboard("", value, "", "", "")
+}
+def lightSenseOn() {
+	log.debug("Setting Light Sense On") 
+    def cmds = []
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 14, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 14)
+    sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+    showDashboard("", "", 1,"", "")
+}
+def lightSenseOff() {
+	log.debug("Setting Light Sense Off") 
+    def cmds = []
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 14, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 14)
+    sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+    showDashboard("", "", 0,"", "")
+}
+def switchModeOn() {
+	log.debug ("Enabling Switch Mode")
+	def cmds = []
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 16, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 16)
+    sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+    showDashboard("", "", "" ,"", 1)
+}
+def switchModeOff(){
+	log.debug ("Disabling Switch Mode (Dimmer Mode)")
+	def cmds = []
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 16, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 16)
+    sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+    showDashboard("", "", "" , "", 0)
 }
 def installed() {
-    log.debug "Installed with settings: ${settings}"
-    initialize()
+	updated()
 }
 def updated() {
-    log.debug "Updated with settings: ${settings}"
-    unsubscribe()
-    unschedule()
-    initialize()
-}
-def initialize() {
-	if (alarmType =="1" && soundAlarm) alarmSoundUri()
-    if ((alarmStart || alarmTrigger || alarmPresenceTrigger) && alarmSpeaker && alarmType){
-        if (alarmStart) schedule (alarmStart, alarmHandler)
-        if (alarmTrigger) subscribe (alarmTrigger, "switch.on", alarmHandler)
-        if (alarmPresenceTrigger) subscribe (alarmPresenceTrigger, "presence.present", alarmHandlerTrigger)
-        if (musicTrack) saveSelectedSong()
-	}
-}
-//Handlers----------------
-def alarmHandlerTrigger(evt){
-	if (!alarmPresenceTriggerTime || alarmPresenceTriggerTime == 0) alarmHandler()
-    else runIn (alarmPresenceTriggerTime*60, alarmHandler, [overwrite: true])
-}
-def alarmHandler(evt) {
-    log.debug "Alarm time: Evaluating restrictions"
-    if (parent.getSchedStatus(app.id) && (!alarmMode || alarmMode.contains(location.mode)) && getDayOk() && getTimeOk(timeStart,timeEnd) && everyoneIsPresent() && switchesOnStatus() && switchesOffStatus()) {	
-        if (switches || dimmers || thermostats) {
-        	def dimLevel = dimmersLevel as Integer
-            switches?.on()
-    		dimmers?.setLevel(dimLevel)
-            if (thermostats) {
-        		def thermostatState = thermostats.currentThermostatMode
-				if (thermostatState == "auto") {
-					thermostats.setHeatingSetpoint(A_temperatureH)
-					thermostats.setCoolingSetpoint(A_temperatureC)
-				}
-				else if (thermostatState == "heat") {
-					thermostats.setHeatingSetpoint(A_temperatureH)
-        			log.info "Set ${thermostats} Heat ${temperature}H°"
-				}
-				else {
-					A_thermostats.setCoolingSetpoint(A_temperatureC)
-        			log.info "Set ${thermostats} Cool ${temperature}C°"
-            	}         
-       		}
-        }
-        if (triggerPhrase) {location.helloHome.execute(triggerPhrase)}
-        if (triggerMode && location.mode != triggerMode) {
-			if (location.modes?.find{it.name == triggerMode}) setLocationMode(triggerMode)
-            else log.debug "Unable to change to undefined mode '${triggerMode}'"
-		}
-        if (alarmVolume) {alarmSpeaker.setLevel(alarmVolume)}
-        if (alarmType == "2" || (alarmType == "1" && secondAlarm =="1")) {
-        	state.fullMsg = ""
-            if (wakeMsg) getGreeting(wakeMsg)
-            if (speakWeather || LocalHumidity || includeTemp || localTemp) getWeatherReport()
-        	if (includeSunrise || includeSunset) getSunriseSunset()
-            if ((switches || dimmers || thermostats) && confirmSwitches) {
-				def msg = ""
-                if ((switches || dimmers) && !thermostats) msg = "All switches"	
-                if (!switches && !dimmers && thermostats) msg = "All Thermostats"
-                if ((switches || dimmers) && thermostats) msg = "All switches and thermostats"
-                msg = "${msg} are now on and set. "
-              	compileMsg(msg)
-       		}
-            if (triggerPhrase && confirmPhrase) {
-	        	def msg="The Smart Things routine, ${triggerPhrase}, has been activated. "
-				compileMsg(msg)
-        	}
-            if (triggerMode && confirmMode){
-            	def msg="The Smart Things mode is now being set to, ${triggerMode}. "
-				compileMsg(msg)
-            }
-            state.sound = textToSpeech(state.fullMsg, true)
-		}
-        if (alarmType == "1"){
-        	if (secondAlarm == "1" && state.soundAlarm) alarmSpeaker.playSoundAndTrack (state.soundAlarm.uri, state.soundAlarm.duration, state.sound.uri)	
-            if (secondAlarm == "2" && state.selectedSong && state.soundAlarm) alarmSpeaker.playSoundAndTrack (state.soundAlarm.uri, state.soundAlarm.duration, state.selectedSong)
-            if (!secondAlarm) alarmSpeaker.playSoundAndTrack(state.soundAlarm.uri, state.soundAlarm.duration, "")
-        }
-        if (alarmType == "2") {
-        	if (secondAlarmMusic && state.selectedSong) alarmSpeaker.playSoundAndTrack (state.sound.uri, state.sound.duration, state.selectedSong)
-            else alarmSpeaker.playTrack(state.sound.uri)
-        }
-        if (alarmType == "3") {
-        	def text = textToSpeech(" ", true)
-            alarmSpeaker.playSoundAndTrack(text.uri,text.duration,state.selectedSong)
-        }
-	}
-}
-//Common Methods-------------
-def getAlarmDesc() {
-	def desc = ""
-	if (alarmStart || alarmTrigger || alarmPresenceTrigger) {
-    	def triggerMethod = alarmStart ? "at " + parseDate(alarmStart,"", "h:mm a") : ""
-        triggerMethod += triggerMethod && alarmTrigger ? " or " : ""
-        triggerMethod += alarmTrigger ? "when switches are activated" : ""
-        triggerMethod += triggerMethod && alarmPresenceTrigger ? " or " : ""
-        if (alarmPresenceTrigger) {
-        	triggerMethod += "when "
-            def aptCount = alarmPresenceTrigger.size()
-            def verb = aptCount == 1 ? " arrives" : " arrive"
-            def nameList = ""
-            for (aptName in alarmPresenceTrigger){
-            	nameList += "${aptName}"
-                aptCount = aptCount -1
-                if (aptCount == 1) nameList += " or "
-                if (aptCount > 1) nameList += ", "
-            }
-            triggerMethod += nameList + verb
-            triggerMethod += alarmPresenceTriggerTime == 0 || !alarmPresenceTriggerTime ? "" : alarmPresenceTriggerTime > 1 ? " (after ${alarmPresenceTriggerTime} minutes)" : " (after one minute)"
-        }
-        desc = "Alarm plays on ${alarmSpeaker} ${triggerMethod}"		
-        def dayListSize = alarmDay ? alarmDay.size() : 7            
-        if (alarmDay && dayListSize < 7) {
-        	desc += " on"
-            for (dayName in alarmDay) {
- 				desc += " ${dayName}"
-    			dayListSize = dayListSize -1
-                if (dayListSize) desc += ", "
-        	}
-        }
-        else desc += " every day"   	
-        if (alarmPresence){
-        	def presListSize = alarmPresence.size()
-            desc += " when "
-            def verb = "are"
-            if (presListSize > 1 && !alarmPresAll) desc += "either "
-            if (presListSize > 1 && alarmPresAll) verb += " all are"
-            if (presListSize == 1) verb = "is"
-            desc += getPresenceNames(1)
-        	desc += " ${verb} present"
-        }
-        if (alarmMode) {
-    		def modeListSize = alarmMode.size()
-        	def modePrefix = modeListSize == 1 ? " in the following mode: " : " in the following modes: "
-            desc += "${modePrefix}" 
-       		for (modeName in alarmMode) {
-        		desc += "'${modeName}'"
-    			modeListSize = modeListSize -1
-            	if (modeListSize) desc += ", "
-        	}
-		}
-     	else desc += " in all modes"
-        if (alarmSwitchActive){
-        	def switchOnSize = alarmSwitchActive.size()
-            def switchPrefix =switchOnSize == 1 ? " when the following switch is on: " : " when the following switches are on: "
-            desc += "${switchPrefix}"
-            for (switchName in alarmSwitchActive) {
-            	desc += "'${switchName}'"
-                switchOnSize = switchOnSize -1
-                if (switchOnSize) desc += ", "
-			}
-        }
-        if (alarmSwitchNotActive){
-        	def switchOffSize = alarmSwitchNotActive.size()
-            def switchPrefix = switchOffSize == 1 ? " when the following switch is off: " : " when the following switches are off: "
-            desc += "${switchPrefix}"
-            for (switchName in alarmSwitchNotActive) {
-            	desc += "'${switchName}'"
-                switchOffSize = switchOffSize -1
-                if (switchOffSize) desc += ", "
-			}
-        }
+	sendEvent(name: "checkInterval", value: 2 * 15 * 60 + 2 * 60, displayed: false, data: [protocol: "zwave", hubHardwareId: device.hub.hardwareID])
+    if (!state.settingVar) state.settingVar=[]
+    if (state.lastUpdated && now() <= state.lastUpdated + 3000) return
+    state.lastUpdated = now()
+	def cmds = [], timeDelay, motionSensor, lightSensor, dimLevel, switchMode
+	//switch and dimmer settings
+    //param 1 timeout duration
+    if (settings.timeoutduration) {
+       	cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.timeoutduration.toInteger()], parameterNumber: 1, size: 1)
+       	cmds << zwave.configurationV1.configurationGet(parameterNumber: 1)
+  		timeDelay = timeoutduration.toInteger()
     }
-    else desc = "No time or trigger for this alarm schedule set."
-	desc
-}
-def getTimeLabel(start, end){
-	def timeLabel = "Tap to set"
-    if(start && end) timeLabel = "Between " + parseDate("${start}","","h:mm a") + " and " +  parseDate("${end}","", "h:mm a")
-    else if (start) timeLabel = "After " + parseDate("${start}","", "h:mm a")
-    else if (end) timeLabel = "Before " + parseDate("${end}","", "h:mm a")
-	timeLabel	
-}
-def getWeatherDesc() {
-	def desc = includeTemp || localTemp ? "Speak temperature" : ""
-    desc += desc && localHumidity ? " and humidity" : ""
-    desc += !desc && localHumidity ? "Speak humidity" : ""
-    desc += desc && (speakWeather) ? "\n" : ""
-    desc += speakWeather ? "Speak the weather forecast" : ""
-    desc += desc && (includeSunrise || includeSunrise) ? "\n" : ""
-    desc += includeSunrise  ? "Speak sunrise" : ""
-    desc += includeSunrise && includeSunset ?" and sunset" : ""
-    desc += !includeSunrise && includeSunset ? "Speak sunset" : ""
-    desc = desc ? desc : "Tap to setup weather reporting options"
-}
-def getAlarmMethod(){
-	def result = ""
-    if (alarmStart) result += "for ${parseDate(alarmStart, "", "h:mm a")}"
-    if (alarmStart && alarmTrigger) result += ", or "
-    if (alarmTrigger) result += "to trigger when switches are activated"
-    if (result && alarmPresenceTrigger) result += ", or "
-    if (alarmPresenceTrigger) result += "when people arrive"
-	result    
-}
-def tstatDesc(){
-	def desc = thermostats ? "${thermostats}" : "Tap to set thermostat settings"
-	desc += thermostats && (temperatureH || temperatureC)  ? " set to ": ""
-    desc += thermostats && temperatureH  ? "${temperatureH} (heating)" : ""
-    desc += thermostats && temperatureH && temperatureC ? "/" : ""
-    desc += thermostats && temperatureC ? " ${temperatureC} (cooling)" : ""
-	desc
-}
-def getTriggersDesc(){
-	def result = alarmStart ? "Time: " + parseDate(alarmStart,"", "h:mm a") : ""
-    result += result && alarmTrigger   ? "\n" :""
-    result += alarmTrigger ? "Switches: ${alarmTrigger}" : ""
-    result += result && alarmPresenceTrigger   ? "\n" :""
-    result += alarmPresenceTrigger ? "Arrival: ${alarmPresenceTrigger}" : ""
-	result += alarmPresenceTrigger && alarmPresenceTriggerTime ? " (after ${alarmPresenceTriggerTime} min)" : ""
-    result = result ? result : "Tap to configure alarm triggers"
-}
-def getRestrictionDesc(){
-	def result = alarmDay ? "Days: ${alarmDay}" : ""
-    result += result && getTimeLabel(timeStart, timeEnd) != "Tap to set" ? "\n" : ""
-    result += getTimeLabel(timeStart, timeEnd) != "Tap to set" ? "Time: "+ getTimeLabel(timeStart, timeEnd) : ""
-    result += result && alarmMode ? "\n" : ""
-    result += alarmMode ? "Modes: ${alarmMode}" : ""
-    result += result && alarmPresence ? "\n" : ""
-    result += alarmPresence && alarmPresence.size()==1 ? "Present: ${alarmPresence}" : ""
-    result += alarmPresence && alarmPresAll && alarmPresence.size()>1 ? "All Present: ${alarmPresence}" : ""
-    result += alarmPresence && !alarmPresAll && alarmPresence.size()>1 ? "Any Present: ${alarmPresence}" : ""
-    result += result && (alarmSwitchActive || alarmSwitchNotActive) ? "\n" : ""
-    result += alarmSwitchActive ? "Switches (ON): ${alarmSwitchActive}" : ""
-    result += result && alarmSwitchNotActive ? "\n" : ""
-    result += alarmSwitchNotActive ? "Switches (OFF): ${alarmSwitchNotActive} " : ""
-    result = result ? result : "Tap to configure alarm restrictions"
-}
-def greyOut(){def result = speakWeather || includeSunrise || includeSunset || includeTemp || localHumidity || localTemp? "complete" : ""}
-def greyOutState(param1, param2){def result = param1 || param2 ? "complete" : ""}
-def dimmerDesc(){def desc = dimmers && dimmersLevel ? "${dimmers} set to ${dimmersLevel}%" : "Tap to set dimmers settings"}
-def greyOutDimmer(){def result = dimmers && dimmersLevel  ? "complete" : ""}
-def greyOutRestrictions(){def result = alarmDay || alarmMode || alarmPresence || alarmSwitchActive || alarmSwitchNotActive ? "complete" : ""}
-def greyOutTriggers(){def result = alarmStart || alarmTrigger || alarmPresenceTrigger ? "complete" : ""}
-def greyOutTstat(){def result = thermostats && (temperatureH || temperatureC)  ? "complete" : ""}
-private getPresenceNames(param){
-    def nameList = ""
-    if (!param){
-    	def presentCount = 0
-        for (sensor in alarmPresence) if (sensor.currentPresence == "present"){presentCount ++}
-        for (presName in alarmPresence){
-        	if (presName.currentPresence == "present"){
-            	nameList += "${presName}"
-                presentCount = presentCount - 1
-                if (presentCount > 1) {nameList += ", "}
-                if (presentCount == 1) {nameList += " and "}
-            }
-		}
+    else{
+       	cmds << zwave.configurationV1.configurationSet(configurationValue: [5], parameterNumber: 1, size: 1)
+       	cmds << zwave.configurationV1.configurationGet(parameterNumber: 1)
+        timeDelay = 5
+    }
+    //param 13 motion sensitivity
+    if (settings.motionsensitivity) {
+        cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.motionsensitivity.toInteger()], parameterNumber: 13, size: 1)
+        cmds << zwave.configurationV1.configurationGet(parameterNumber: 13)
+        motionSensor=motionsensitivity.toInteger()
     }
     else {
-        def presListSize = alarmPresence.size()
-        for (presName in alarmPresence){
-            nameList += "${presName}"
-            presListSize = presListSize - 1
-            if (presListSize > 1) {nameList += ", "}
-            if (alarmPresAll && presListSize == 1){nameList += " and "}
-            if (presListSize == 1 && !alarmPresAll){nameList += " or "}
-        }
-	}
-    nameList
-}
-private getDayOk() {
-	def result = true
-	if (alarmDay) {result = alarmDay.contains(getDay())}
-    log.debug "Day ok ${result}"
-    result
-}
-private getDay(){
-	def df = new java.text.SimpleDateFormat("EEEE")
-	location.timeZone ? df.setTimeZone(location.timeZone) : df.setTimeZone(TimeZone.getTimeZone("America/New_York"))
-	def day = df.format(new Date())
-}
-private everyoneIsPresent() {
-    def result = true
-    if (alarmPresAll && alarmPresence) result = alarmPresence.find {it.currentPresence == "not present"} ? false : true
-    else if (!alarmPresAll && alarmPresence) result = alarmPresence.find {it.currentPresence == "present"}
-    log.debug "Presence: ${result}"
-    result
-}
-private switchesOnStatus(){
-	def result = alarmSwitchActive && alarmSwitchActive.find{it.currentValue("switch") == "off"} ? false : true	
-	log.debug "Switch on restrictions: ${result}"
-    result
-}
-private switchesOffStatus(){
-	def result = alarmSwitchNotActive && alarmSwitchNotActive.find{it.currentValue("switch") == "on"} ? false : true	
-	log.debug "Switch off restrictions: ${result}"
-    result
-}
-private getSunriseSunset(){
-    if (location.timeZone || zipCode) {
-    	def todayDate = new Date()
-    	def s = getSunriseAndSunset(zipcode: zipCode, date: todayDate)	
-		def riseTime = parseDate("", s.sunrise.time, "h:mm a")
-		def setTime = parseDate ("", s.sunset.time, "h:mm a")
-   		def msg = ""
-    	def currTime = now()
-        def verb1 = currTime >= s.sunrise.time ? "rose" : "will rise"
-        def verb2 = currTime >= s.sunset.time ? "set" : "will set"
-        if (includeSunrise && includeSunset) msg = "The sun ${verb1} this morning at ${riseTime} and ${verb2} at ${setTime}. "
-    	else if (includeSunrise && !includeSunset) msg = "The sun ${verb1} this morning at ${riseTime}. "
-    	else if (!includeSunrise && includeSunset) msg = "The sun ${verb2} tonight at ${setTime}. "
-    	compileMsg(msg)
-	}
-	else {
-		msg = "Please set the location of your hub with the SmartThings mobile app, or enter a zip code to receive sunset and sunrise information. "
-		compileMsg(msg)
-	}
-}
-private getWeatherReport() {
-    if (location.timeZone || zipCode) {
-        def isMetric = location.temperatureScale == "C"
-        def sb = new StringBuilder()
-        if (includeTemp){
-        	def current = getWeatherFeature("conditions", zipCode)
-        	if (isMetric) sb << "The current temperature from the weather service is ${Math.round(current.current_observation.temp_c)} degrees. "
-        	else sb << "The current temperature from the weather service is ${Math.round(current.current_observation.temp_f)} degrees. "
-        }
-        if (localTemp) sb << "The temperature from your Smart Things device, ${localTemp.label}, is ${Math.round(localTemp.currentTemperature)} degrees. "
-        if (localHumidity) sb << "The relative humidity from your Smart Things device, ${localHumidity.label}, is ${localHumidity.currentValue("humidity")}%. "
-        if (speakWeather) {
-            def weather = getWeatherFeature("forecast", zipCode)
-            sb << "Today's forecast is "
-			if (isMetric) sb << weather.forecast.txt_forecast.forecastday[0].fcttext_metric 
-        	else sb << weather.forecast.txt_forecast.forecastday[0].fcttext
-        }
-		def msg = sb.toString()
-        //message pronunciation filters....
-        msg = msg.replaceAll(/([0-9]+)C/,'$1 degrees')
-        msg = msg.replaceAll(/([0-9]+)F/,'$1 degrees')
-        msg = msg.replaceAll("0s.","0's  .")
-        compileMsg(msg)
-	}
-	else {
-		msg = "Please set the location of your hub with the SmartThings mobile app, or enter a zip code to receive weather forecasts."
-        compileMsg(msg)
+        cmds << zwave.configurationV1.configurationSet(configurationValue: [2], parameterNumber: 13, size: 1)
+        cmds << zwave.configurationV1.configurationGet(parameterNumber: 13)
+        motionSensor=2
     }
-}
-private alarmSoundUri(){
-    def soundUri, newSoundLength 
-    switch(soundAlarm) {
-    	case "1":
-        	newSoundLength = soundLength >0 && soundLength < 8 ? soundLength : 8
-            soundUri = [uri: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/AlarmSounds/AlarmAlien.mp3", duration: "${newSoundLength}"]
-        	break
-        case "2":
-        	newSoundLength = soundLength >0 && soundLength < 12 ? soundLength : 12
-            soundUri = [uri: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/AlarmSounds/AlarmBell.mp3", duration: "${newSoundLength}"]
-        	break
-        case "3":
-        	newSoundLength = soundLength >0 && soundLength < 20 ? soundLength : 20
-            soundUri = [uri: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/AlarmSounds/AlarmBuzzer.mp3", duration: "${newSoundLength}"]
-        	break
-        case "4":
-        	newSoundLength = soundLength >0 && soundLength < 20 ? soundLength : 20
-            soundUri = [uri: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/AlarmSounds/AlarmFire.mp3", duration: "${newSoundLength}"]
-        	break
-        case "5":
-        	newSoundLength = soundLength >0 && soundLength < 2 ? soundLength : 2
-            soundUri = [uri: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/AlarmSounds/AlarmRooster.mp3", duration: "${newSoundLength}"]
-        	break
-        case "6":
-        	newSoundLength = soundLength >0 && soundLength < 20 ? soundLength : 20
-            soundUri = [uri: "https://raw.githubusercontent.com/MichaelStruck/SmartThings/master/Other-SmartApps/Talking-Alarm-Clock/AlarmSounds/AlarmSiren.mp3", duration: "${newSoundLength}"]
-			break
-		case "7":
-        	newSoundLength = soundLength >0 && soundLength < 20 ? soundLength : 20
-            soundUri = [uri: "${alarmCustom}", duration: "${newSoundLength}"]
-            break
+    //param 14 lightsense
+    lightSensor = lightsense ? 1 : 0
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [lightSensor], parameterNumber: 14, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 14)
+	//param 15 reset cycle
+	if (settings.resetcycle) {
+		cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.resetcycle.toInteger()], parameterNumber: 15, size: 1)
+		cmds << zwave.configurationV1.configurationGet(parameterNumber: 15)
+	}
+    else {
+       	cmds << zwave.configurationV1.configurationSet(configurationValue: [2], parameterNumber: 15, size: 1)
+       	cmds << zwave.configurationV1.configurationGet(parameterNumber: 15)
     }
-	state.soundAlarm = soundUri
-}
-private songOptions() {
-    if (alarmSpeaker) {
-		// Make sure current selection is in the set
-		def options = new LinkedHashSet()
-           	if (state.selectedSong?.station) options << state.selectedSong.station
-			else if (state.selectedSong?.description) options << state.selectedSong.description
-        // Query for recent tracks
-		def states = alarmSpeaker.statesSince("trackData", new Date(0), [max:30])
-		def dataMaps = states.collect{it.jsonValue}
-		options.addAll(dataMaps.collect{it.station})
-		log.trace "${options.size()} songs in list"
-        options.take(20) as List
+    //param 3 operating mode (no default...no entry=no change)
+    if (settings.operationmode) cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.operationmode.toInteger()], parameterNumber: 3, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 3)
+    //param 6 motion
+    motionSensor = !motion ? 0 : motionSensor
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [motion ? 1 : 0], parameterNumber: 6, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 6)
+    //param 5 invert switch
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [invertSwitch ? 1 : 0 ], parameterNumber: 5, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 5)
+
+    cmds << zwave.associationV1.associationSet(groupingIdentifier:0, nodeId:zwaveHubNodeId)
+    cmds << zwave.associationV1.associationSet(groupingIdentifier:1, nodeId:zwaveHubNodeId)
+	cmds << zwave.associationV1.associationSet(groupingIdentifier:2, nodeId:zwaveHubNodeId)
+	cmds << zwave.associationV1.associationSet(groupingIdentifier:3, nodeId:zwaveHubNodeId)
+        
+	def nodes = []
+	if (settings.requestedGroup2 != state.currentGroup2) {
+        nodes = parseAssocGroupList(settings.requestedGroup2, 2)
+       	cmds << zwave.associationV2.associationRemove(groupingIdentifier: 2, nodeId: [])
+       	cmds << zwave.associationV2.associationSet(groupingIdentifier: 2, nodeId: nodes)
+       	cmds << zwave.associationV2.associationGet(groupingIdentifier: 2)
+       	state.currentGroup2 = settings.requestedGroup2
 	}
-}
-def compileMsg(msg){
-	log.debug "msg=${msg}"
-    state.fullMsg = state.fullMsg + "${msg}"
-}
-private getGreeting(msg) {
-	if (!location.timeZone)msg="Your timezone is not set within SmartThings. Please set this to ensure you get the proper time and date reports"		    
-	else {
-        def day = getDay()
-        def time = parseDate("", now(), "h:mm a")
-        def month = parseDate("", now(), "MMMM")
-        def year = parseDate("", now(), "yyyy")
-        def dayNum = parseDate("", now(), "d")
-        msg = msg.replace('%day%', day)
-        msg = msg.replace('%date%', "${month} ${dayNum}, ${year}")
-        msg = msg.replace('%time%', "${time}")
-        msg = alarmPresence ? msg.replace('%people%', "${getPresenceNames()}") : msg.replace('%people%', "")
-        msg = "${msg} "
-        compileMsg(msg)
+    if (settings.requestedGroup3 != state.currentGroup3) {
+       	nodes = parseAssocGroupList(settings.requestedGroup3, 3)
+       	cmds << zwave.associationV2.associationRemove(groupingIdentifier: 3, nodeId: [])
+       	cmds << zwave.associationV2.associationSet(groupingIdentifier: 3, nodeId: nodes)
+       	cmds << zwave.associationV2.associationGet(groupingIdentifier: 3)
+       	state.currentGroup3 = settings.requestedGroup3
+    }
+	// end switch and dimmer settings
+		        
+    // dimmer specific settings
+    //param 7 zwave step
+    if (settings.stepSize) {
+       	cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.stepSize.toInteger()], parameterNumber: 7, size: 1)    
+       	cmds << zwave.configurationV1.configurationGet(parameterNumber: 7)
+    }
+    //param 8 zwave duration
+    if (settings.stepDuration) {
+       	cmds << zwave.configurationV1.configurationSet(configurationValue: [0,settings.stepDuration.toInteger()], parameterNumber: 8, size: 2)
+       	cmds << zwave.configurationV1.configurationGet(parameterNumber: 8)
+    }
+    //param 9 manual step
+    if (settings.manualStepSize) {
+       	cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.manualStepSize.toInteger()], parameterNumber: 9, size: 1)
+       	cmds << zwave.configurationV1.configurationGet(parameterNumber: 9)
+    }
+    //param 10 manual duration
+    if (settings.manualStepDuration) {
+      	cmds << zwave.configurationV1.configurationSet(configurationValue: [0,settings.manualStepDuration.toInteger()], parameterNumber: 10, size: 2)
+      	cmds << zwave.configurationV1.configurationGet(parameterNumber: 10)  
 	}
+    //switch mode param 16
+    switchMode = switchmode ? 1 : 0
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [switchMode], parameterNumber: 16, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 16)
+    //switch level param 17
+    if (settings.switchlevel == "0" || !switchlevel) {
+       	cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 17, size: 1)
+        dimLevel =0
+    } 
+    else if (settings.switchlevel) {
+       	cmds << zwave.configurationV1.configurationSet(configurationValue: [settings.switchlevel.toInteger()], parameterNumber: 17, size: 1)
+    	cmds << zwave.configurationV1.configurationGet(parameterNumber: 17)
+        dimLevel =switchlevel.toInteger()
+    }
+    //dim rate param 18
+	cmds << zwave.configurationV1.configurationSet(configurationValue: [dimrate ? 1 : 0], parameterNumber: 18, size: 1)
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 18)
+
+    //end of dimmer specific params   
+    sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 500)
+    showDashboard(timeDelay, motionSensor, lightSensor, dimLevel, switchMode)
+    showVersion()
 }
-private parseDate(date, epoch, type){
-    if (date){
-        def parseDate = ""
-        if (epoch){
-            long longDate = Long.valueOf(epoch).longValue()
-            parseDate = new Date(longDate).format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", location.timeZone)
+def configure() {
+	def cmds = []
+	// Make sure lifeline is associated
+	cmds << zwave.associationV1.associationSet(groupingIdentifier:0, nodeId:zwaveHubNodeId)
+    cmds << zwave.associationV1.associationSet(groupingIdentifier:1, nodeId:zwaveHubNodeId)
+	cmds << zwave.associationV1.associationSet(groupingIdentifier:2, nodeId:zwaveHubNodeId)
+	cmds << zwave.associationV1.associationSet(groupingIdentifier:3, nodeId:zwaveHubNodeId)
+    sendHubCommand(cmds.collect{ new physicalgraph.device.HubAction(it.format()) }, 1000)
+}
+private parseAssocGroupList(list, group) {
+    def nodes = group == 2 ? [] : [zwaveHubNodeId]
+    if (list) {
+        def nodeList = list.split(',')
+        def max = group == 2 ? 5 : 4
+        def count = 0
+
+        nodeList.each { node ->
+            node = node.trim()
+            if ( count >= max) {
+                log.warn "Association Group ${group}: Number of members is greater than ${max}! The following member was discarded: ${node}"
+            }
+            else if (node.matches("\\p{XDigit}+")) {
+                def nodeId = Integer.parseInt(node,16)
+                if (nodeId == zwaveHubNodeId) {
+                	log.warn "Association Group ${group}: Adding the hub as an association is not allowed (it would break double-tap)."
+                }
+                else if ( (nodeId > 0) & (nodeId < 256) ) {
+                    nodes << nodeId
+                    count++
+                }
+                else {
+                    log.warn "Association Group ${group}: Invalid member: ${node}"
+                }
+            }
+            else {
+                log.warn "Association Group ${group}: Invalid member: ${node}"
+            }
         }
-        else parseDate = date
-        new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", parseDate).format("${type}", timeZone(parseDate))
-	} 
+    }  
+    return nodes
 }
-private saveSelectedSong() {
-	try {
-		def thisSong = musicTrack
-		log.info "Looking for $thisSong"
-		def songs = alarmSpeaker.statesSince("trackData", new Date(0), [max:30]).collect{it.jsonValue}
-		log.info "Searching ${songs.size()} records"
-		def data = songs.find {s -> s.station == thisSong}
-		log.info "Found ${data?.station}"
-		if (data) {
-			state.selectedSong = data
-			log.debug "Selected song = ${data}"
-		}
-		else if (song == state.selectedSong?.station) {
-			log.debug "Selected existing entry '$song', which is no longer in the last 20 list"
-		}
- 		else {
-			log.warn "Selected song '$song' not found"
-		}
-	}
-	catch (Throwable t) {
-		log.error t
-	}
+def showDashboard(timeDelay, motionSensor, lightSensor, dimLevel, switchMode) {
+    if (timeDelay=="") timeDelay=state.currentTimeDelay
+    if (motionSensor=="") motionSensor=state.currentMotionSensor
+    if (lightSensor=="") lightSensor=state.currentLightSensor
+    if (dimLevel=="") dimLevel=state.currentDimLevel
+    if (switchMode=="") switchMode = state.currentSwitchMode
+    state.currentTimeDelay=timeDelay
+    state.currentMotionSensor=motionSensor
+    state.currentLightSensor=lightSensor
+    state.currentDimLevel = dimLevel
+    state.currentSwitchMode = switchMode
+    def motionSensorTxt = motionSensor == 1 ? "High" : motionSensor == 2 ? "Medium" : motionSensor==3 ? "Low" : "Disabled"
+    def lightSensorTxt = lightSensor == 0 ? "Disabled" : "Enabled"
+    def timeDelayTxt = timeDelay == 0 ? "5 seconds" : timeDelay == 1 ? "1 minute" : timeDelay == 5 ? "5 minutes" : timeDelay == 15 ? "15 minutes" : "30 minutes"
+    def dimLevelTxt = dimLevel +"%"
+    def switchModeTxt = switchMode ? "Enabled" : "Disabled"
+    def dimSync = (switchlevel && state.currentDimLevel == switchlevel.toInteger()) || (!switchlevel && state.currentDimLevel== 0) ? "✔" : "‼"
+    def motionSync = ((motion && motionSensorTxt !="Disabled" && motionsensitivity && state.currentMotionSensor==motionsensitivity.toInteger()) || (!motionsensitivity && state.currentMotionSensor==2)) ||
+    	(!motion && motionSensorTxt =="Disabled")  ? "✔" : "‼"
+    def lightSync = (!lightsense && state.currentLightSensor == 0) || (lightsense && state.currentLightSensor == 1) ? "✔" : "‼"
+    def timeSync = (timeoutduration && state.currentTimeDelay == timeoutduration.toInteger()) || (!timeoutduration && state.currentTimeDelay == 5)  ? "✔" : "‼"
+    def switchSync = (switchmode && state.currentSwitchMode == 1) || (!switchmode && state.currentSwitchMode == 0) ? "✔" : "‼"
+    String result =""
+   	result +="${dimSync} Default Dim Level: " + dimLevelTxt
+    result +="\n${motionSync} Motion Sensitivity: " + motionSensorTxt
+   	result +="\n${lightSync} Light Sensing: " + lightSensorTxt
+	result +="\n${timeSync} Timeout Duration: " + timeDelayTxt
+    result +="\n${switchSync} Switch Mode: " + switchModeTxt
+	sendEvent (name:"dashboard", value: result ) 
 }
-private getTimeOk(startTime, endTime) {
-	def result = true
-    def currTime = now()
-	def start = startTime ? timeToday(startTime).time : null
-	def stop = endTime ? timeToday(endTime).time : null
-	if (startTime && endTime) result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start
-	else if (startTime) result = currTime >= start
-    else if (endTime) result = currTime <= stop
-    result
-}
-//Version
-private def textVersion() {def text = "Child App Version: 1.5.6 (09/10/2018)"}
+def showVersion() { sendEvent (name: "about", value:"DTH Version 1.0.4 (10/15/18)") }
