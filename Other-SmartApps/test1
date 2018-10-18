@@ -212,7 +212,6 @@ def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicSet cmd) {
     	if (timeoutdurationPress){
         	if (!state.onCounter || state.onCounter >3) state.onCounter=0
             state.onCounter = state.onCounter + 1
-            log.info state.onCounter
             if (state.onCounter==1) state.Timer=now() 
         	if (state.onCounter==3 && (now()-state.Timer)<10000) {
                 log.info "Triple press in less than 10 seconds-Overriding timeout"
